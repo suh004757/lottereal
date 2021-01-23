@@ -18,14 +18,13 @@
 * {
   margin: 0;
   padding: 0;
-  overflow:scroll; 
-  -webkit-overflow-scrolling:touch;
+
  
 }
   
 body {
   font-family: "Roboto", sans-serif; 
-     
+  
 }
 
 h1,
