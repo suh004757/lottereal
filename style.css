@@ -17,9 +17,12 @@
 /* :: Base CSS */
 * {
   margin: 0;
-  padding: 0; 
-  -webkit-overflow-scrolling:touch;}
-
+  padding: 0;
+  overflow:scroll; 
+  -webkit-overflow-scrolling:touch;
+ 
+}
+  
 body {
   font-family: "Roboto", sans-serif; 
      
