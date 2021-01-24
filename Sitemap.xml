@@ -4,4 +4,17 @@
         <loc>https://lottestate.site/index.html</loc>
       <priority>1.0</priority>
    </url>
+     <url>
+        <loc>https://lottestate.site/EN.html</loc>
+      <priority>0.5</priority>
+   </url>
+   <url>
+        <loc>https://lottestate.site/contact.html</loc>
+      <priority>0.5</priority>
+   </url>
+
+   <url>
+        <loc>https://lottestate.site/contact_EN.html</loc>
+      <priority>0.5</priority>
+   </url>
 </urlset>
