@@ -811,7 +811,7 @@ img {
 .sonar-call-to-action-area {
   position: relative;
   z-index: 1;
-  overflow: hidden; }
+  overflow: hidden; } /*모바일에서 스크롤 안되는 현상 테스트중 overflow:hidden*/
   .sonar-call-to-action-area .backEnd-content h2 {
     position: absolute;
     font-size: 230px;
