@@ -18,14 +18,13 @@
 * {
   margin: 0;
   padding: 0;
-  -webkit-overflow-scrolling: touch;
   
  
 }
   
 body {
   font-family: "Roboto", sans-serif; 
-  
+
 }
 
 h1,
@@ -595,7 +594,7 @@ img {
   padding: 0 40px 100px;
   -webkit-transition-duration: 800ms;
   transition-duration: 800ms;
-  overflow: visible;
+  overflow: visible; /*overflow: visible 원래 설정, 모바일스크롤*/
   cursor: pointer; }
   .hero-slides .single-hero-slide .hero-slides-content {
     position: relative;
