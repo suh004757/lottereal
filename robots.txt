@@ -1,4 +1,4 @@
-Sitemap: https://lottestate.site/Sitemap.xml
+Sitemap: https://lottes.co.kr/Sitemap.xml
 User-agent: *
 Allow: /
 
