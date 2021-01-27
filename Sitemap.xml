@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <urlset xmlns="https://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
    <url>
-        <loc>https://lottestate.site/index.html</loc>
+        <loc>https://lottes.co.kr/index.html</loc>
       <priority>1.0</priority>
    </url>
      <url>
-        <loc>https://lottestate.site/EN.html</loc>
+        <loc>https://lottes.co.kr/EN.html</loc>
       <priority>0.5</priority>
    </url>
    <url>
-        <loc>https://lottestate.site/contact.html</loc>
+        <loc>https://lotte.co.kr/contact.html</loc>
       <priority>0.5</priority>
    </url>
 
    <url>
-        <loc>https://lottestate.site/contact_EN.html</loc>
+        <loc>https://lottes.co.kr/contact_EN.html</loc>
       <priority>0.5</priority>
    </url>
 </urlset>
