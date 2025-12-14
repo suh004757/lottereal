@@ -205,8 +205,8 @@
     }
 
     // :: PreventDefault a Click
-    $("a[href='#']").on('click', function ($) {
-        $.preventDefault();
+    $("a[href='#']").on('click', function (e) {
+        e.preventDefault();
     });
 
     // :: wow Active Code
