@@ -5,8 +5,8 @@ var stylez = [{
     elementType: "all",
     stylers: [{
         saturation: -25
-            }]
-        }];
+    }]
+}];
 var mapOptions = {
     zoom: 15,
     center: latlng,
@@ -19,7 +19,7 @@ var mapOptions = {
 };
 map = new google.maps.Map(document.getElementById("googleMap"), mapOptions);
 var geocoder_map = new google.maps.Geocoder();
-var address = 'Riga';
+var address = '29, Baekjegobun-ro 27-gil, Songpa-gu, Seoul, Republic of Korea';
 geocoder_map.geocode({
     'address': address
 }, function (results, status) {
