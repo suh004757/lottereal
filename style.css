@@ -6,7 +6,7 @@
 /* Variables */
 /* mixin */
 /* :: Import Fonts */
-@import url("https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700");
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
 /* :: Import All CSS */
 @import url(css/bootstrap.min.css);
 @import url(css/animate.css);
@@ -24,7 +24,7 @@
 }
 
 body {
-  font-family: "Roboto", sans-serif;
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
 
 }
 
@@ -431,6 +431,10 @@ img {
   line-height: 64px;
   padding: 0;
   background-color: #ffffff;
+  border-radius: 50px;
+  /* Pill Shape */
+  transition: all 0.3s ease;
+
 }
 
 .sonar-btn:hover,
