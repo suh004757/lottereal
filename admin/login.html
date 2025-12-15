@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>관리자 로그인 | 롯데부동산</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="../img/core-img/favicon.ico">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body class="admin-shell">
+  <div class="admin-hero">
+    <div class="admin-hero__pill">Admin</div>
+    <h1>롯데부동산<br>관리자 로그인</h1>
+    <p>외부에서는 노출되지 않는 전용 페이지입니다. 30분 미사용 시 자동 로그아웃됩니다.</p>
+    <div class="admin-checklist">
+      <div class="admin-checklist__item">• 성공/실패 로그인 기록 저장</div>
+      <div class="admin-checklist__item">• 사용자·브라우저·접속시각 기록</div>
+      <div class="admin-checklist__item">• IP 화이트리스트는 추후 설정 메뉴에서 관리</div>
+    </div>
+  </div>
+
+  <main class="admin-panel">
+    <section class="admin-card">
+      <div class="admin-card__header">
+        <div>
+          <p class="admin-kicker">Secure Access</p>
+          <h2>팀원 전용 로그인</h2>
+          <p class="admin-sub">사무실 IP 화이트리스트는 추후 설정 가능하게 준비돼 있습니다.</p>
+        </div>
+        <div class="admin-session" id="sessionStatus">세션 대기 중</div>
+      </div>
+      <form id="adminLoginForm" class="admin-form">
+        <label class="admin-field">
+          <span>이메일</span>
+          <input type="email" name="email" placeholder="admin@example.com" autocomplete="username" required>
+        </label>
+        <label class="admin-field">
+          <span>비밀번호</span>
+          <input type="password" name="password" placeholder="비밀번호를 입력하세요" autocomplete="current-password" required>
+        </label>
+        <div class="admin-inline">
+          <button type="button" id="geoButton" class="admin-ghost">위치 정보 추가(선택)</button>
+          <span id="geoStatus" class="admin-meta">위치 미수집</span>
+        </div>
+        <div class="admin-actions">
+          <button type="submit" class="admin-primary">로그인</button>
+          <button type="button" id="logoutButton" class="admin-text">로그아웃</button>
+        </div>
+        <div id="loginMessage" class="admin-message" role="alert" aria-live="polite"></div>
+      </form>
+      <div class="admin-footnote">
+        <p>문의: 보안 담당자에게 연락하시고, 로그인 오류 시 메시지를 캡처해 주세요.</p>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="../js/admin-login.js"></script>
+</body>
+</html>
