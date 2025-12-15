@@ -25,6 +25,7 @@
     <script>
       (function redirectByLocale() {
         try {
+          if (window.location.search.includes('lang=en')) return;
           var lang = (navigator.language || navigator.userLanguage || '').toLowerCase();
           var page = (window.location.pathname.split('/').pop() || '').toLowerCase();
           if (lang.startsWith('ko') && page === 'en.html') {
