@@ -695,6 +695,90 @@
         </div>
     </div>
 
+
+    <!-- Inline script for navigation (works in file:// protocol) -->
+    <script>
+        // Navigation functionality - works without server
+        document.addEventListener('DOMContentLoaded', () => {
+            const navItems = document.querySelectorAll('.admin-nav__item');
+            const sections = document.querySelectorAll('.admin-section');
+
+            navItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+
+                    // Remove active class from all items
+                    navItems.forEach(nav => nav.classList.remove('active'));
+
+                    // Add active class to clicked item
+                    item.classList.add('active');
+
+                    // Hide all sections
+                    sections.forEach(section => section.classList.remove('active'));
+
+                    // Show corresponding section
+                    const sectionId = item.getAttribute('data-section') + '-section';
+                    const targetSection = document.getElementById(sectionId);
+                    if (targetSection) {
+                        targetSection.classList.add('active');
+                    }
+                });
+            });
+
+            // Logout button
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', () => {
+                    if (confirm('로그아웃 하시겠습니까?')) {
+                        sessionStorage.clear();
+                        localStorage.clear();
+                        window.location.href = './login.html';
+                    }
+                });
+            }
+
+            // Add property button
+            const addPropertyBtn = document.getElementById('addPropertyBtn');
+            const propertyModal = document.getElementById('propertyModal');
+            const closeModalBtn = document.getElementById('closeModal');
+            const cancelModalBtn = document.getElementById('cancelModal');
+
+            if (addPropertyBtn && propertyModal) {
+                addPropertyBtn.addEventListener('click', () => {
+                    propertyModal.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                });
+            }
+
+            if (closeModalBtn) {
+                closeModalBtn.addEventListener('click', () => {
+                    propertyModal.classList.remove('active');
+                    document.body.style.overflow = '';
+                });
+            }
+
+            if (cancelModalBtn) {
+                cancelModalBtn.addEventListener('click', () => {
+                    propertyModal.classList.remove('active');
+                    document.body.style.overflow = '';
+                });
+            }
+
+            // Close modal on overlay click
+            if (propertyModal) {
+                const overlay = propertyModal.querySelector('.admin-modal__overlay');
+                if (overlay) {
+                    overlay.addEventListener('click', () => {
+                        propertyModal.classList.remove('active');
+                        document.body.style.overflow = '';
+                    });
+                }
+            }
+
+            console.log('Dashboard navigation initialized (inline script)');
+        });
+    </script>
+
     <script type="module" src="../js/admin-dashboard.js"></script>
 </body>
 
