@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>매물 상세 | 롯데부동산</title>
+  <link rel="icon" href="img/core-img/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="lr-header">
+    <div class="lr-container">
+      <div class="lr-brand"><a href="index.html#hero">롯데부동산</a></div>
+      <nav class="lr-nav">
+        <a href="index.html#hero">홈</a>
+        <a href="listings.html">매물리스트</a>
+        <a href="contact.html">문의/방문</a>
+        <a href="EN.html">ENGLISH</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="lr-section">
+      <div class="lr-container lr-detail">
+        <div class="lr-detail__media">
+          <img data-detail-image src="" alt="매물 이미지">
+        </div>
+        <div class="lr-detail__body">
+          <p class="lr-kicker">매물 상세</p>
+          <h1 data-detail-title></h1>
+          <p class="lr-lead" data-detail-info></p>
+          <div class="lr-tags" data-detail-tags></div>
+          <h4>특징</h4>
+          <ul class="lr-feature-list" data-detail-features></ul>
+          <div class="lr-note" data-detail-note></div>
+          <div class="lr-detail__cta">
+            <a class="lr-btn lr-btn--primary" href="tel:050714025055">전화 문의</a>
+            <a class="lr-btn lr-btn--ghost" href="https://goo.gl/maps/FVawYassWFUoJJBT7" target="_blank" rel="noreferrer">지도 보기</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="lr-section lr-section--muted" id="inquiry">
+      <div class="lr-container">
+        <div class="lr-section__head">
+          <div>
+            <p class="lr-kicker">문의하기</p>
+            <h2>이 매물에 대해 연락받기</h2>
+            <p class="lr-lead">연락처와 요청 사항을 남겨주시면 바로 답변드립니다.</p>
+          </div>
+        </div>
+        <form class="lr-form" data-inquiry-form>
+          <div class="lr-form__grid">
+            <label>
+              이름
+              <input class="lr-input" name="name" type="text" required />
+            </label>
+            <label>
+              연락처
+              <input class="lr-input" name="phone" type="tel" required />
+            </label>
+            <label>
+              이메일
+              <input class="lr-input" name="email" type="email" />
+            </label>
+          </div>
+          <label>
+            요청 사항
+            <textarea class="lr-input" name="message" rows="4" placeholder="예) 입주 시기, 예산, 원하는 조건"></textarea>
+          </label>
+          <button class="lr-btn lr-btn--primary" type="submit">문의 보내기</button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="lr-footer">
+    <div class="lr-container lr-footer__content">
+      <div>
+        <p class="lr-kicker">롯데부동산</p>
+        <p class="lr-text">서울시 송파구 백제고분로 27길 93-12 1층</p>
+        <p class="lr-text">대표전화 0507-1402-5055</p>
+      </div>
+      <div class="lr-footer__links">
+        <a href="https://goo.gl/maps/FVawYassWFUoJJBT7" target="_blank" rel="noreferrer">Google Maps</a>
+        <a href="https://naver.me/xMnYYRpo" target="_blank" rel="noreferrer">Naver Map</a>
+        <a href="EN.html">ENGLISH</a>
+      </div>
+    </div>
+    <p class="lr-footer__copy">© <script>document.write(new Date().getFullYear());</script> 롯데부동산. All rights reserved.</p>
+  </footer>
+
+  <script src="js/jquery/jquery-3.7.1.min.js"></script>
+  <script src="js/popper.min.js"></script>
+  <script src="js/bootstrap.min.js"></script>
+  <script src="js/plugins.js"></script>
+  <script src="js/active.js"></script>
+  <script type="module" src="js/listingDetail.js"></script>
+</body>
+</html>
