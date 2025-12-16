@@ -2531,6 +2531,11 @@ h1 {
   margin: 6px 0 12px;
 }
 
+.lr-input option {
+  background: var(--lr-surface);
+  color: var(--lr-text);
+}
+
 .lr-card--listing .lr-tags {
   display: flex;
   flex-wrap: wrap;
