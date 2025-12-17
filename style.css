@@ -2479,8 +2479,7 @@ h1 {
 }
 
 .lr-footer__links {
-  display: flex;
-  flex-direction: column;
+  display: grid;
   gap: 8px;
 }
 
@@ -2488,6 +2487,11 @@ h1 {
   color: var(--lr-primary);
   text-decoration: none;
   font-weight: 600;
+  padding: 10px 12px;
+  border: 1px solid var(--lr-border);
+  border-radius: var(--lr-radius-sm);
+  background: rgba(79, 209, 197, 0.06);
+  display: block;
 }
 
 .lr-footer__copy {
