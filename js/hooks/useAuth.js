@@ -1,44 +1,43 @@
-import {
-  getCurrentSessionUser,
-  getSessionExpiry,
-  getSessionRemainingMs,
-  onAuthStateChange,
-  signInAdmin,
-  signOutAdmin
-} from '../services/authService.js';
+import { supabase } from '../config/supabaseConfig.js';
 
-let cachedUser = null;
-hydrateUser();
-
+/**
+ * Hook to manage authentication state
+ */
 export function useAuth() {
-  return {
-    user: cachedUser,
-    isAuthenticated: Boolean(cachedUser),
-    login: loginAdmin,
-    logout: logoutAdmin,
-    refreshUser,
-    onAuthStateChange,
-    getSessionExpiry,
-    getSessionRemainingMs
+  // Current User
+  const user = supabase ? supabase.auth.user() : null; // v1 syntax, checking for v2 below
+
+  // For Supabase v2, getting user is async or requires session check
+  // This is a simplified synchronous hook wrapper. 
+  // In a real React app this would be a real hook. 
+  // For Vanilla JS, we expose methods.
+
+  const getUser = async () => {
+    if (!supabase) return null;
+    const { data: { user } } = await supabase.auth.getUser();
+    return user;
   };
-}
 
-async function loginAdmin(email, password, options = {}) {
-  const result = await signInAdmin(email, password, options);
-  if (result?.user) cachedUser = result.user;
-  return result;
-}
+  const signIn = async (email, password) => {
+    if (!supabase) return;
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+    if (error) throw error;
+    return data;
+  };
 
-async function logoutAdmin(options = {}) {
-  await signOutAdmin(options);
-  cachedUser = null;
-}
+  const signOut = async () => {
+    if (!supabase) return;
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+  };
 
-async function refreshUser() {
-  cachedUser = await getCurrentSessionUser();
-  return cachedUser;
-}
-
-async function hydrateUser() {
-  cachedUser = await getCurrentSessionUser();
+  return {
+    user: user, // Note: this might be null initially
+    getUser,
+    signIn,
+    signOut
+  };
 }

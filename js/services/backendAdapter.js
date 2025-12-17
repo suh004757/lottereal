@@ -1,7 +1,5 @@
-import { APP_CONFIG } from '../config/appConfig.js';
+import { supabase } from '../config/supabaseConfig.js';
 
-// Listing payload contract to keep UI and backend aligned.
-// Extend as needed when fields are added to the backend.
 export const LISTING_PAYLOAD_SCHEMA = {
   title: '',
   description: '',
@@ -21,54 +19,73 @@ export const LISTING_PAYLOAD_SCHEMA = {
     phone: '',
     email: ''
   },
-  metadata: {}
+  metadata: {
+    source: 'web-form',
+    submittedAt: null,
+    userId: null
+  }
 };
 
+/**
+ * Creates a new property listing in Supabase
+ */
 export async function createListing(payload) {
-  const provider = (APP_CONFIG.BACKEND_PROVIDER || 'mock').toLowerCase();
-  if (provider === 'supabase') return _createSupabase(payload);
-  if (provider === 'api') return _createApi(payload);
-  return _mockCreate(payload);
+  if (!supabase) throw new Error('Supabase client not initialized');
+
+  // Flatten payload for SQL table
+  const dbPayload = {
+    title: payload.title,
+    description: payload.description,
+    price: payload.price,
+    currency: payload.currency || 'KRW',
+    address: payload.location?.address,
+    city: payload.location?.city,
+    district: payload.location?.district,
+    latitude: payload.location?.latitude,
+    longitude: payload.location?.longitude,
+    property_type: payload.propertyType,
+    images: payload.images, // Supabase handles array text[]
+    contact_name: payload.contact?.name,
+    contact_phone: payload.contact?.phone,
+    contact_email: payload.contact?.email,
+    user_id: payload.metadata?.userId
+  };
+
+  const { data, error } = await supabase
+    .from('property_listings')
+    .insert([dbPayload])
+    .select();
+
+  if (error) {
+    console.error('Supabase Error:', error);
+    throw error;
+  }
+
+  return data;
 }
 
+/**
+ * Uploads an image file to Supabase Storage
+ */
 export async function uploadImage(file) {
-  const provider = (APP_CONFIG.BACKEND_PROVIDER || 'mock').toLowerCase();
-  if (!file) return { url: null };
+  if (!supabase) throw new Error('Supabase client not initialized');
 
-  if (provider === 'supabase') return _uploadSupabase(file);
-  if (provider === 'api') return _uploadApi(file);
-  return _mockUpload(file);
-}
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+  const filePath = `${fileName}`;
 
-async function _createSupabase(payload) {
-  // TODO: Replace with Supabase client implementation.
-  console.warn('[Supabase Backend] Not implemented. Payload queued:', payload);
-  return { success: false, error: 'Supabase adapter not implemented yet.' };
-}
+  const { data, error } = await supabase.storage
+    .from('property-images')
+    .upload(filePath, file);
 
-async function _createApi(payload) {
-  // TODO: Replace with HTTP client (fetch/axios) implementation.
-  console.warn('[API Backend] Not implemented. Payload queued:', payload);
-  return { success: false, error: 'API adapter not implemented yet.' };
-}
+  if (error) {
+    throw error;
+  }
 
-async function _mockCreate(payload) {
-  console.log('[Mock Backend] Creating listing:', payload);
-  return { success: true, id: 'mock-id-123', payload };
-}
+  // Get Public URL
+  const { data: { publicUrl } } = supabase.storage
+    .from('property-images')
+    .getPublicUrl(filePath);
 
-async function _uploadSupabase(file) {
-  console.warn('[Supabase Backend] Image upload not implemented. File queued:', file?.name);
-  return { url: null };
-}
-
-async function _uploadApi(file) {
-  console.warn('[API Backend] Image upload not implemented. File queued:', file?.name);
-  return { url: null };
-}
-
-async function _mockUpload(file) {
-  const url = typeof URL !== 'undefined' && file ? URL.createObjectURL(file) : null;
-  console.log('[Mock Backend] Uploading image stub:', file?.name, url);
-  return { url };
+  return { url: publicUrl };
 }

@@ -30,42 +30,20 @@ function bindEvents(auth) {
       setMessage('Signing in...', 'info');
       toggleFormDisabled(true);
 
-      // TEST ACCOUNT - Remove when Supabase is integrated
-      if (email === 'admin' && password === 'admin') {
-        setMessage('Login successful (Test Account). Session lasts 30 minutes.', 'success');
-        sessionStorage.setItem('adminAuthenticated', 'true');
-        sessionStorage.setItem('adminUserName', 'Test Admin');
+      try {
+        const { user, session } = await auth.signIn(email, password);
 
-        // Log the test login
-        const loginLog = {
-          timestamp: new Date().toISOString(),
-          email: 'admin@test.com',
-          ip: 'localhost',
-          userAgent: navigator.userAgent,
-          geolocation: geoData ? `${geoData.coords.latitude}, ${geoData.coords.longitude}` : 'Not provided',
-          status: 'success'
-        };
-        console.log('Test login:', loginLog);
-
-        // Redirect to dashboard after 1 second
-        setTimeout(() => {
+        if (user) {
+          setMessage('Login successful.', 'success');
+          // Store session verification in storage if needed for simple page protection
+          // Ideally useAuth listener handles this, but for simple redirection:
           window.location.href = './dashboard.html';
-        }, 1000);
-
-        toggleFormDisabled(false);
-        return;
-      }
-
-      const result = await auth.login(email, password, {
-        geolocation: geoData,
-        userAgent: navigator.userAgent
-      });
-
-      if (result?.success) {
-        setMessage('Login successful. Session lasts 30 minutes.', 'success');
-        await auth.refreshUser();
-      } else {
-        setMessage(result?.error || 'Login failed. Please check your info.', 'error');
+        } else {
+          setMessage('Login failed. Please check your credentials.', 'error');
+        }
+      } catch (error) {
+        console.error('Login Error:', error);
+        setMessage(error.message || 'Login failed.', 'error');
       }
 
       toggleFormDisabled(false);
