@@ -1,31 +1,23 @@
-import { supabase } from '../config/supabaseConfig.js';
+import { getSupabaseClient } from '../config/supabaseConfig.js';
 
 /**
  * Hook to manage authentication state
  */
 export function useAuth() {
-  // Current User
-  const user = supabase ? supabase.auth.user() : null; // v1 syntax, checking for v2 below
-
-  // For Supabase v2, getting user is async or requires session check
-  // This is a simplified synchronous hook wrapper. 
-  // In a real React app this would be a real hook. 
-  // For Vanilla JS, we expose methods.
+  const supabase = getSupabaseClient();
+  const mockUser = { id: 'mock-user', email: null };
 
   const getUser = async () => {
-    if (!supabase) return null;
+    if (!supabase) return mockUser;
     const { data: { user } } = await supabase.auth.getUser();
-    return user;
+    return user || mockUser;
   };
 
   const signIn = async (email, password) => {
-    if (!supabase) return;
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
+    if (!supabase) return mockUser;
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
-    return data;
+    return data?.user || mockUser;
   };
 
   const signOut = async () => {
@@ -35,9 +27,10 @@ export function useAuth() {
   };
 
   return {
-    user: user, // Note: this might be null initially
+    user: supabase && supabase.auth.user ? supabase.auth.user() : mockUser,
     getUser,
     signIn,
-    signOut
+    signOut,
+    isAuthenticated: Boolean(supabase && supabase.auth.user ? supabase.auth.user() : false)
   };
 }
