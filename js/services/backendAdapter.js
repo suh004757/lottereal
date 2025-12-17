@@ -1,4 +1,5 @@
-import { supabase } from '../config/supabaseConfig.js';
+import { APP_CONFIG } from '../config/appConfig.js';
+import { getSupabaseClient } from '../config/supabaseConfig.js';
 
 export const LISTING_PAYLOAD_SCHEMA = {
   title: '',
@@ -30,9 +31,29 @@ export const LISTING_PAYLOAD_SCHEMA = {
  * Creates a new property listing in Supabase
  */
 export async function createListing(payload) {
-  if (!supabase) throw new Error('Supabase client not initialized');
+  const provider = (APP_CONFIG.BACKEND_PROVIDER || 'mock').toLowerCase();
+  if (provider === 'supabase') return createListingSupabase(payload);
+  // TODO: add API provider if needed
+  return createListingMock(payload);
+}
 
-  // Flatten payload for SQL table
+/**
+ * Uploads an image file to Supabase Storage
+ */
+export async function uploadImage(file) {
+  const provider = (APP_CONFIG.BACKEND_PROVIDER || 'mock').toLowerCase();
+  if (provider === 'supabase') return uploadImageSupabase(file);
+  // TODO: add API provider if needed
+  return uploadImageMock(file);
+}
+
+async function createListingSupabase(payload) {
+  const supabase = getSupabaseClient();
+  if (!supabase) {
+    console.warn('Supabase client unavailable, falling back to mock createListing.');
+    return createListingMock(payload);
+  }
+
   const dbPayload = {
     title: payload.title,
     description: payload.description,
@@ -44,7 +65,7 @@ export async function createListing(payload) {
     latitude: payload.location?.latitude,
     longitude: payload.location?.longitude,
     property_type: payload.propertyType,
-    images: payload.images, // Supabase handles array text[]
+    images: payload.images,
     contact_name: payload.contact?.name,
     contact_phone: payload.contact?.phone,
     contact_email: payload.contact?.email,
@@ -60,15 +81,15 @@ export async function createListing(payload) {
     console.error('Supabase Error:', error);
     throw error;
   }
-
   return data;
 }
 
-/**
- * Uploads an image file to Supabase Storage
- */
-export async function uploadImage(file) {
-  if (!supabase) throw new Error('Supabase client not initialized');
+async function uploadImageSupabase(file) {
+  const supabase = getSupabaseClient();
+  if (!supabase) {
+    console.warn('Supabase client unavailable, falling back to mock upload.');
+    return uploadImageMock(file);
+  }
 
   const fileExt = file.name.split('.').pop();
   const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
@@ -78,14 +99,22 @@ export async function uploadImage(file) {
     .from('property-images')
     .upload(filePath, file);
 
-  if (error) {
-    throw error;
-  }
+  if (error) throw error;
 
-  // Get Public URL
   const { data: { publicUrl } } = supabase.storage
     .from('property-images')
     .getPublicUrl(filePath);
 
   return { url: publicUrl };
+}
+
+async function createListingMock(payload) {
+  console.log('[Mock Backend] createListing payload', payload);
+  return { success: true, id: `mock-${Date.now()}` };
+}
+
+async function uploadImageMock(file) {
+  const url = typeof URL !== 'undefined' && file ? URL.createObjectURL(file) : null;
+  console.log('[Mock Backend] uploadImage stub', file?.name, url);
+  return { url };
 }
