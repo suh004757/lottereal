@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -11,21 +12,24 @@
     <link rel="icon" href="img/core-img/favicon.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script>
-      (function redirectByLocale() {
-        try {
-          if (window.location.search.includes('lang=en')) return;
-          var lang = (navigator.language || navigator.userLanguage || '').toLowerCase();
-          var page = (window.location.pathname.split('/').pop() || '').toLowerCase();
-          if (lang.startsWith('ko') && page === 'contact_en.html') {
-            window.location.href = 'contact.html';
-          }
-        } catch (e) {}
-      })();
+        (function redirectByLocale() {
+            try {
+                if (window.location.search.includes('lang=en')) return;
+                var lang = (navigator.language || navigator.userLanguage || '').toLowerCase();
+                var page = (window.location.pathname.split('/').pop() || '').toLowerCase();
+                if (lang.startsWith('ko') && page === 'contact_en.html') {
+                    window.location.href = 'contact.html';
+                }
+            } catch (e) { }
+        })();
     </script>
 </head>
+
 <body>
     <header class="lr-header">
         <div class="lr-container">
@@ -74,17 +78,21 @@
                     <img src="img/bg-img/lotte_street_view.png" alt="Office location" />
                     <div class="lr-map-card__footer">
                         <span>1F, Lotte Real Estate</span>
-                        <a class="lr-link" href="https://goo.gl/maps/FVawYassWFUoJJBT7" target="_blank" rel="noreferrer">Open map →</a>
+                        <a class="lr-link" href="https://goo.gl/maps/FVawYassWFUoJJBT7" target="_blank"
+                            rel="noreferrer">Open map →</a>
                     </div>
                 </div>
                 <div>
                     <p class="lr-kicker">Contact</p>
                     <h2>Call or message us before you visit</h2>
-                    <p class="lr-lead">Phone, email, and KakaoTalk are all available. We can also reserve a time for you.</p>
+                    <p class="lr-lead">Phone, email, and KakaoTalk are all available. We can also reserve a time for
+                        you.</p>
                     <div class="lr-actions">
                         <a class="lr-btn lr-btn--primary" href="tel:050714025055">Call now</a>
-                        <a class="lr-btn lr-btn--ghost" href="https://goo.gl/maps/FVawYassWFUoJJBT7" target="_blank" rel="noreferrer">Open Google Maps</a>
-                        <a class="lr-btn lr-btn--ghost" href="https://map.naver.com/v5/entry/place/1887909890" target="_blank" rel="noreferrer">Open Naver Map</a>
+                        <a class="lr-btn lr-btn--ghost" href="https://goo.gl/maps/FVawYassWFUoJJBT7" target="_blank"
+                            rel="noreferrer">Open Google Maps</a>
+                        <a class="lr-btn lr-btn--ghost" href="https://map.naver.com/v5/entry/place/1887909890"
+                            target="_blank" rel="noreferrer">Open Naver Map</a>
                     </div>
                     <div class="lr-meta">
                         <span>Address: 1F, 27 Baekjegobun-ro 27-gil, Songpa-gu, Seoul</span>
@@ -105,13 +113,16 @@
             </div>
             <div class="lr-footer__links">
                 <a href="https://goo.gl/maps/FVawYassWFUoJJBT7" target="_blank" rel="noreferrer">Google Maps</a>
-        <a href="https://naver.me/xMnYYRpo" target="_blank" rel="noreferrer">Naver Map</a>
+                <a href="https://naver.me/xMnYYRpo" target="_blank" rel="noreferrer">Naver Map</a>
                 <a href="index.html">KOREAN</a>
             </div>
         </div>
-        <p class="lr-footer__copy">© <script>document.write(new Date().getFullYear());</script> Lotte Real Estate. All rights reserved.</p>
+        <p class="lr-footer__copy">©
+            <script>document.write(new Date().getFullYear());</script> Lotte Real Estate. All rights reserved.
+        </p>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/jquery/jquery-3.7.1.min.js"></script>
     <script src="js/popper.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
@@ -119,4 +130,5 @@
     <script src="js/active.js"></script>
     <script type="module" src="js/app.js"></script>
 </body>
+
 </html>

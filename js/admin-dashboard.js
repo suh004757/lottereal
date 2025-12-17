@@ -100,6 +100,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     checkAuth();
 
+    initInquiries();
+
     // Set user name if available
     const userName = sessionStorage.getItem('adminUserName');
     if (userName) {
@@ -135,6 +137,71 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+// ---- Inquiries (문의) 관리 ----
+const INQUIRY_STORAGE_KEY = 'lottereal_inquiries';
+
+function loadInquiries() {
+    try {
+        return JSON.parse(localStorage.getItem(INQUIRY_STORAGE_KEY) || '[]');
+    } catch (e) {
+        return [];
+    }
+}
+
+function saveInquiries(list) {
+    localStorage.setItem(INQUIRY_STORAGE_KEY, JSON.stringify(list));
+}
+
+function renderInquiries() {
+    const tbody = document.querySelector('[data-inquiry-table]');
+    const badge = document.querySelector('[data-inquiry-unread-count]');
+    const inquiries = loadInquiries().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+    if (badge) {
+        const unread = inquiries.filter((i) => i.status !== 'read').length;
+        badge.textContent = unread;
+    }
+
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    inquiries.forEach((inq, idx) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${idx + 1}</td>
+            <td>${inq.listingTitle || '-'}</td>
+            <td>${inq.name || '-'}</td>
+            <td>${inq.phone || '-'}</td>
+            <td>${inq.email || '-'}</td>
+            <td>${inq.message || '-'}</td>
+            <td>${inq.status === 'read' ? '읽음' : '안읽음'}</td>
+            <td>${inq.createdAt ? new Date(inq.createdAt).toLocaleString() : '-'}</td>
+            <td>
+                <button class="admin-btn admin-btn--ghost" data-mark-read="${inq.id}">${inq.status === 'read' ? '안읽음' : '읽음'} 처리</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    // 버튼 이벤트
+    tbody.querySelectorAll('[data-mark-read]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const id = btn.getAttribute('data-mark-read');
+            const list = loadInquiries();
+            const found = list.find((i) => i.id === id);
+            if (found) {
+                found.status = found.status === 'read' ? 'unread' : 'read';
+                saveInquiries(list);
+                renderInquiries();
+            }
+        });
+    });
+}
+
+function initInquiries() {
+    renderInquiries();
+}
 
 // Modal Handling
 const propertyModal = document.getElementById('propertyModal');
