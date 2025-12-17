@@ -13,7 +13,6 @@ init();
 
 function init() {
   const auth = useAuth();
-  auth.refreshUser();
   bindEvents(auth);
   updateSessionStatus(auth);
   setInterval(() => updateSessionStatus(auth), 1000);
@@ -32,7 +31,6 @@ function bindEvents(auth) {
 
       try {
         const { user, session } = await auth.signIn(email, password);
-
         if (user) {
           setMessage('Login successful.', 'success');
           // Store session verification in storage if needed for simple page protection
