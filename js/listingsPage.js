@@ -9,22 +9,34 @@ if (filterForm) {
   filterForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const formData = new FormData(filterForm);
-    const keyword = (formData.get('keyword') || '').toLowerCase();
-    const type = formData.get('type') || '';
-    loadListings(keyword, type);
+    const keyword = (formData.get('keyword') || '').trim();
+    const propertyType = formData.get('type') || '';
+    const city = formData.get('city') || '';
+    const district = formData.get('district') || '';
+    const minPrice = formData.get('minPrice') || '';
+    const maxPrice = formData.get('maxPrice') || '';
+    loadListings({ keyword, propertyType, city, district, minPrice, maxPrice });
   });
 }
 
-async function loadListings(keyword = '', type = '') {
+async function loadListings(filters = {}) {
   if (!listContainer) return;
-  listContainer.innerHTML = '<p class="lr-text">ë¶ˆëŸ¬ì˜¤ëŠ” ì¤‘...</p>';
+  listContainer.innerHTML = '<p class="lr-text">ºÒ·¯¿À´Â Áß...</p>';
   try {
-    const data = await listListingsPublic({ query: keyword, page: 1, pageSize: 50 });
-    const filtered = type ? data.filter((item) => (item.property_type || item.type || '') === type) : data;
-    renderListings(filtered);
+    const data = await listListingsPublic({
+      query: filters.keyword || '',
+      propertyType: filters.propertyType || '',
+      city: filters.city || '',
+      district: filters.district || '',
+      minPrice: filters.minPrice || undefined,
+      maxPrice: filters.maxPrice || undefined,
+      page: 1,
+      pageSize: 50
+    });
+    renderListings(data);
   } catch (err) {
-    console.error('ë¦¬ìŠ¤íŠ¸ ë¡œë“œ ì‹¤íŒ¨', err);
-    listContainer.innerHTML = '<p class="lr-text">ë§¤ë¬¼ ë¶ˆëŸ¬ì˜¤ê¸°ì— ì‹¤íŒ¨í–ˆìŠµë‹ˆë‹¤.</p>';
+    console.error('¸®½ºÆ® ·Îµå ½ÇÆĞ', err);
+    listContainer.innerHTML = '<p class="lr-text">¸ñ·ÏÀ» ºÒ·¯¿À´Â Áß ¿À·ù°¡ ¹ß»ıÇß½À´Ï´Ù.</p>';
   }
 }
 
@@ -33,7 +45,7 @@ function renderListings(data) {
   listContainer.innerHTML = '';
 
   if (!data || data.length === 0) {
-    listContainer.innerHTML = '<p style="text-align:center; width:100%; padding: 50px;">ë“±ë¡ëœ ë§¤ë¬¼ì´ ì—†ìŠµë‹ˆë‹¤.</p>';
+    listContainer.innerHTML = '<p style="text-align:center; width:100%; padding: 50px;">Á¶°Ç¿¡ ¸Â´Â ¸Å¹°ÀÌ ¾ø½À´Ï´Ù.</p>';
     return;
   }
 
@@ -41,7 +53,7 @@ function renderListings(data) {
     const card = document.createElement('article');
     card.className = 'lr-card lr-card--listing';
     const image = item.image || (item.images && item.images[0]) || '';
-    const badge = item.property_type || item.type || 'ë§¤ë¬¼';
+    const badge = item.property_type || item.type || '¸Å¹°';
     card.innerHTML = `
       <div class="lr-card__thumb" style="background-image:url('${image}');"></div>
       <div class="lr-card__body">
@@ -50,11 +62,11 @@ function renderListings(data) {
         <p class="lr-text">${item.description || item.summary || ''}</p>
         <div class="lr-card__meta">
           <span>${item.address || item.city || ''}</span>
-          <span>${item.price || ''}</span>
+          <span>${item.price ? item.price.toLocaleString() : ''}</span>
         </div>
         <div class="lr-card__actions">
-          <a class="lr-btn lr-btn--ghost lr-btn--block" href="listing-detail.html?id=${encodeURIComponent(item.id)}">ìƒì„¸ ë³´ê¸°</a>
-          <a class="lr-btn lr-btn--primary lr-btn--block" href="listing-detail.html?id=${encodeURIComponent(item.id)}#inquiry">ë¬¸ì˜í•˜ê¸°</a>
+          <a class="lr-btn lr-btn--ghost lr-btn--block" href="listing-detail.html?id=${encodeURIComponent(item.id)}">»ó¼¼ º¸±â</a>
+          <a class="lr-btn lr-btn--primary lr-btn--block" href="listing-detail.html?id=${encodeURIComponent(item.id)}#inquiry">¹®ÀÇÇÏ±â</a>
         </div>
       </div>
     `;

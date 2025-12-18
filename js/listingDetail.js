@@ -48,11 +48,11 @@ function bindForm(listing) {
     };
     try {
       await createInquiry(payload);
-      alert('문의가 접수되었습니다. 확인 후 연락드리겠습니다.');
+      alert('문의가 접수되었습니다. 빠르게 연락드리겠습니다.');
       formEl.reset();
     } catch (err) {
       console.error(err);
-      alert('문의 접수 중 문제가 발생했습니다.');
+      alert('문의 접수 중 오류가 발생했습니다.');
     }
   });
 }
