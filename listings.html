@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <title>ë§¤ë¬¼ ë¦¬ìŠ¤íŠ¸ | ë¡¯ë°ë¶€ë™ì‚°</title>
+  <title>¸Å¹° ¸®½ºÆ® | ·Ôµ¥ºÎµ¿»ê</title>
   <link rel="icon" href="img/core-img/favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,12 +13,12 @@
 <body>
   <header class="lr-header">
     <div class="lr-container">
-      <div class="lr-brand"><a href="index.html#hero">ë¡¯ë°ë¶€ë™ì‚°</a></div>
+      <div class="lr-brand"><a href="index.html#hero">·Ôµ¥ºÎµ¿»ê</a></div>
       <nav class="lr-nav">
-        <a href="index.html#hero">í™ˆ</a>
-        <a href="index.html#listings">ëŒ€í‘œë§¤ë¬¼</a>
-        <a href="listings.html">ë§¤ë¬¼ë¦¬ìŠ¤íŠ¸</a>
-        <a href="contact.html">ë¬¸ì˜/ë°©ë¬¸</a>
+        <a href="index.html#hero">È¨</a>
+        <a href="index.html#listings">ÃßÃµ¸Å¹°</a>
+        <a href="listings.html">¸Å¹°¸®½ºÆ®</a>
+        <a href="contact.html">¹®ÀÇ/¹æ¹®</a>
         <a href="EN.html">ENGLISH</a>
       </nav>
     </div>
@@ -28,20 +28,27 @@
     <section class="lr-hero lr-hero--compact">
       <div class="lr-container lr-hero__content">
         <div>
-          <p class="lr-kicker">ë§¤ë¬¼ ë¦¬ìŠ¤íŠ¸</p>
-          <h1>ì˜¬ë¼ì˜¨ ë§¤ë¬¼ í•œëˆˆì— ë³´ê¸°</h1>
-          <p class="lr-lead">ì „í™” ì£¼ì‹œë©´ ë” ë§Žì€ ìžì²´/ë„¤íŠ¸ì›Œí¬ ë§¤ë¬¼ë„ ë°”ë¡œ ë³´ë‚´ë“œë¦½ë‹ˆë‹¤.</p>
+          <p class="lr-kicker">¸Å¹° ¸®½ºÆ®</p>
+          <h1>¿øÇÏ´Â ¸Å¹°À» ºü¸£°Ô Ã£¾Æº¸¼¼¿ä</h1>
+          <p class="lr-lead">Áö¿ª, À¯Çü, ¿¹»êÀ» ¼±ÅÃÇØ ¿øÇÏ´Â ¸Å¹°À» ¹Ù·Î Ã£¾Æº¸¼¼¿ä.</p>
         </div>
         <form class="lr-hero__card" data-filter-form>
-          <p class="lr-kicker">ë¹ ë¥¸ ê²€ìƒ‰</p>
-          <input class="lr-input" name="keyword" type="text" placeholder="ì§€ì—­, íŠ¹ì§•, íƒœê·¸ë¡œ ê²€ìƒ‰" />
+          <p class="lr-kicker">ºü¸¥ °Ë»ö</p>
+          <input class="lr-input" name="keyword" type="text" placeholder="Áö¹ø, ÁöÄª, ¿ª¼¼±Ç °Ë»ö" />
           <select class="lr-input" name="type">
-            <option value="">ì „ì²´ ìœ í˜•</option>
-            <option value="residence">ì£¼ê±°</option>
-            <option value="office">ì‚¬ë¬´/ìƒê°€</option>
-            <option value="officetel">ì˜¤í”¼ìŠ¤í…”</option>
+            <option value="">ÀüÃ¼ À¯Çü</option>
+            <option value="¾ÆÆÄÆ®">¾ÆÆÄÆ®</option>
+            <option value="¿ÀÇÇ½ºÅÚ">¿ÀÇÇ½ºÅÚ</option>
+            <option value="»ç¹«½Ç">»ç¹«½Ç</option>
+            <option value="»ó°¡">»ó°¡/Á¡Æ÷</option>
           </select>
-          <button class="lr-btn lr-btn--primary" type="submit">ê²€ìƒ‰</button>
+          <input class="lr-input" name="city" type="text" placeholder="µµ½Ã (¿¹: ¼­¿ï)" />
+          <input class="lr-input" name="district" type="text" placeholder="±¸/±º (¿¹: ¼ÛÆÄ±¸)" />
+          <div class="lr-input-row">
+            <input class="lr-input" name="minPrice" type="number" placeholder="ÃÖ¼Ò°¡" />
+            <input class="lr-input" name="maxPrice" type="number" placeholder="ÃÖ´ë°¡" />
+          </div>
+          <button class="lr-btn lr-btn--primary" type="submit">°Ë»ö</button>
         </form>
       </div>
     </section>
@@ -56,9 +63,9 @@
   <footer class="lr-footer">
     <div class="lr-container lr-footer__content">
       <div>
-        <p class="lr-kicker">ë¡¯ë°ë¶€ë™ì‚°</p>
-        <p class="lr-text">ì„œìš¸ì‹œ ì†¡íŒŒêµ¬ ë°±ì œê³ ë¶„ë¡œ 27ê¸¸ 93-12 1ì¸µ</p>
-        <p class="lr-text">ëŒ€í‘œì „í™” 0507-1402-5055</p>
+        <p class="lr-kicker">·Ôµ¥ºÎµ¿»ê</p>
+        <p class="lr-text">¼­¿ï½Ã ¼ÛÆÄ±¸ ¹éÁ¦°íºÐ·Î27±æ 93-12 1Ãþ</p>
+        <p class="lr-text">¹®ÀÇÀüÈ­: 0507-1402-5055</p>
       </div>
       <div class="lr-footer__links">
         <a href="https://goo.gl/maps/FVawYassWFUoJJBT7" target="_blank" rel="noreferrer">Google Maps</a>
@@ -66,7 +73,7 @@
         <a href="EN.html">ENGLISH</a>
       </div>
     </div>
-    <p class="lr-footer__copy">Â© <script>document.write(new Date().getFullYear());</script> ë¡¯ë°ë¶€ë™ì‚°. All rights reserved.</p>
+    <p class="lr-footer__copy">¨Ï <script>document.write(new Date().getFullYear());</script> ·Ôµ¥ºÎµ¿»ê. All rights reserved.</p>
   </footer>
 
   <script src="js/jquery/jquery-3.7.1.min.js"></script>

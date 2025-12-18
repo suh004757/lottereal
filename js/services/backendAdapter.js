@@ -59,9 +59,20 @@ export async function createInquiry(payload) {
 /**
  * Public listings (search + pagination)
  */
-export async function listListingsPublic({ query = '', page = 1, pageSize = 12 } = {}) {
+export async function listListingsPublic({
+  query = '',
+  page = 1,
+  pageSize = 12,
+  propertyType = '',
+  city = '',
+  district = '',
+  minPrice,
+  maxPrice
+} = {}) {
   const provider = (APP_CONFIG.BACKEND_PROVIDER || 'mock').toLowerCase();
-  if (provider === 'supabase') return listListingsPublicSupabase({ query, page, pageSize });
+  if (provider === 'supabase') {
+    return listListingsPublicSupabase({ query, page, pageSize, propertyType, city, district, minPrice, maxPrice });
+  }
   return listListingsMock();
 }
 
@@ -291,7 +302,7 @@ async function createInquiryMock(payload) {
   return { success: true, id: `mock-inquiry-${Date.now()}` };
 }
 
-async function listListingsPublicSupabase({ query, page, pageSize }) {
+async function listListingsPublicSupabase({ query, page, pageSize, propertyType, city, district, minPrice, maxPrice }) {
   const supabase = getSupabaseClient();
   if (!supabase) return listListingsMock();
   const from = (page - 1) * pageSize;
@@ -301,6 +312,11 @@ async function listListingsPublicSupabase({ query, page, pageSize }) {
     const q = `%${query}%`;
     req = req.or(`title.ilike.${q},description.ilike.${q},address.ilike.${q},city.ilike.${q},district.ilike.${q}`);
   }
+  if (propertyType) req = req.eq('property_type', propertyType);
+  if (city) req = req.ilike('city', `%${city}%`);
+  if (district) req = req.ilike('district', `%${district}%`);
+  if (minPrice) req = req.gte('price', Number(minPrice));
+  if (maxPrice) req = req.lte('price', Number(maxPrice));
   const { data, error } = await req;
   if (error) {
     console.error('Supabase listListingsPublic error', error);
