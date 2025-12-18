@@ -865,3 +865,34 @@ textarea {
     gap: 6px;
     flex-wrap: wrap;
 }
+
+/* Status pill */
+.admin-status-pill {
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: rgba(16, 185, 129, 0.12);
+    color: #10b981;
+    font-weight: 600;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    white-space: nowrap;
+}
+
+/* Inquiry detail */
+.admin-inquiry-message {
+    padding: 12px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(226, 232, 240, 0.1);
+    border-radius: 8px;
+    min-height: 60px;
+    color: #e2e8f0;
+}
+
+.admin-inquiry--unread {
+    background: rgba(255, 212, 158, 0.1);
+}
+
+.admin-table-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}

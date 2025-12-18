@@ -17,6 +17,7 @@ const statsEls = {
   inquiries: document.querySelector('[data-stat-inquiries]'),
   unread: document.querySelector('[data-stat-unread]')
 };
+const serviceStatusEl = document.querySelector('[data-service-status]');
 const recentContainer = document.querySelector('[data-recent-activities]');
 const listingsTbody = document.querySelector('[data-admin-listings]');
 const inquiriesTbody = document.querySelector('[data-admin-inquiries]');
@@ -32,6 +33,22 @@ const transactionTypeSelect = document.querySelector('select[name="transactionTy
 const depositField = document.getElementById('depositField');
 const propertyImagesInput = document.getElementById('propertyImages');
 const imagePreviewContainer = document.getElementById('imagePreview');
+
+// Inquiry detail modal
+const inquiryModal = document.getElementById('inquiryModal');
+const closeInquiryModalBtn = document.getElementById('closeInquiryModal');
+const closeInquiryModalFooterBtn = document.getElementById('closeInquiryModalFooter');
+const inquiryOverlay = inquiryModal?.querySelector('.admin-modal__overlay');
+const inquiryFields = {
+  title: document.querySelector('[data-inquiry-title]'),
+  name: document.querySelector('[data-inquiry-name]'),
+  phone: document.querySelector('[data-inquiry-phone]'),
+  email: document.querySelector('[data-inquiry-email]'),
+  status: document.querySelector('[data-inquiry-status]'),
+  created: document.querySelector('[data-inquiry-created]'),
+  message: document.querySelector('[data-inquiry-message]')
+};
+
 let uploadedImages = [];
 let existingImages = [];
 let editingId = null;
@@ -40,6 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
   bindNav();
   bindModal();
   bindPropertyForm();
+  bindInquiryModal();
   loadStats();
   loadRecent();
   loadListingsAdmin();
@@ -63,6 +81,23 @@ function bindNav() {
   });
 }
 
+function setServiceStatus(ok, context) {
+  if (!serviceStatusEl) return;
+  const ts = new Date();
+  const kst = ts.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
+  if (ok) {
+    serviceStatusEl.textContent = `연결 정상 · 업데이트 ${kst}`;
+    serviceStatusEl.style.color = '#10b981';
+    serviceStatusEl.style.borderColor = 'rgba(16,185,129,0.3)';
+    serviceStatusEl.style.background = 'rgba(16,185,129,0.12)';
+  } else {
+    serviceStatusEl.textContent = `연결 오류 · ${context || ''}`;
+    serviceStatusEl.style.color = '#f97316';
+    serviceStatusEl.style.borderColor = 'rgba(249,115,22,0.3)';
+    serviceStatusEl.style.background = 'rgba(249,115,22,0.12)';
+  }
+}
+
 async function loadStats() {
   try {
     const stats = await getDashboardStats();
@@ -70,8 +105,10 @@ async function loadStats() {
     if (statsEls.new7d) statsEls.new7d.textContent = (stats.newListings7d || 0).toLocaleString();
     if (statsEls.inquiries) statsEls.inquiries.textContent = (stats.totalInquiries || 0).toLocaleString();
     if (statsEls.unread) statsEls.unread.textContent = (stats.unreadInquiries || 0).toLocaleString();
+    setServiceStatus(true);
   } catch (err) {
     console.error('Dashboard stats error', err);
+    setServiceStatus(false, '대시보드 데이터 로드 실패');
   }
 }
 
@@ -88,7 +125,7 @@ async function loadRecent() {
     data.forEach((a) => {
       const li = document.createElement('li');
       li.className = 'admin-activity';
-      li.textContent = `[${a.type || 'listing'}] ${a.title || ''} - ${new Date(a.created_at).toLocaleString()}`;
+      li.textContent = `[${a.type || 'listing'}] ${a.title || ''} - ${formatKst(a.created_at)}`;
       recentContainer.appendChild(li);
     });
   } catch (err) {
@@ -114,7 +151,7 @@ async function loadListingsAdmin() {
         <td>${item.title || ''}</td>
         <td>${item.property_type || ''}</td>
         <td>${item.address || ''}</td>
-        <td>${item.created_at ? new Date(item.created_at).toLocaleString() : ''}</td>
+        <td>${formatKst(item.created_at) || ''}</td>
         <td>
           <div class="admin-table-actions">
             <button class="admin-icon-btn" data-edit="${item.id}" title="수정">
@@ -186,7 +223,7 @@ async function loadInquiriesAdmin() {
         <td>${inq.phone || ''}</td>
         <td>${inq.message || ''}</td>
         <td>${renderStatusBadge(inq.status)}</td>
-        <td>${inq.created_at ? new Date(inq.created_at).toLocaleString() : ''}</td>
+        <td>${formatKst(inq.created_at) || ''}</td>
         <td>
           <div class="admin-table-actions">
             <button class="admin-btn admin-btn--ghost" data-inquiry="${inq.id}" data-status="${inq.status === 'read' ? 'unread' : 'read'}">${inq.status === 'read' ? '안읽음으로' : '읽음으로'}</button>
@@ -194,10 +231,16 @@ async function loadInquiriesAdmin() {
           </div>
         </td>
       `;
+      tr.addEventListener('click', (e) => {
+        // Avoid interfering with inner buttons
+        if (e.target.closest('button')) return;
+        openInquiryModal(inq);
+      });
       inquiriesTbody.appendChild(tr);
     });
     inquiriesTbody.querySelectorAll('[data-inquiry]').forEach((btn) => {
-      btn.addEventListener('click', async () => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
         const id = btn.getAttribute('data-inquiry');
         const nextStatus = btn.getAttribute('data-status');
         await updateInquiryStatus(id, nextStatus);
@@ -206,7 +249,8 @@ async function loadInquiriesAdmin() {
       });
     });
     inquiriesTbody.querySelectorAll('[data-share-inquiry]').forEach((btn) => {
-      btn.addEventListener('click', async () => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
         const id = btn.getAttribute('data-share-inquiry');
         const inq = data.find((x) => `${x.id}` === `${id}`);
         if (!inq) return;
@@ -216,7 +260,7 @@ async function loadInquiriesAdmin() {
           `Phone: ${inq.phone || '-'}`,
           `Email: ${inq.email || '-'}`,
           `Message: ${inq.message || '-'}`,
-          `Created: ${inq.created_at ? new Date(inq.created_at).toLocaleString() : '-'}`
+          `Created: ${formatKst(inq.created_at) || '-'}`
         ].join('\n');
         try {
           if (navigator?.clipboard?.writeText) {
@@ -258,6 +302,16 @@ function bindModal() {
   }
 }
 
+function bindInquiryModal() {
+  const closeFns = () => closeInquiryModal();
+  if (closeInquiryModalBtn) closeInquiryModalBtn.addEventListener('click', closeFns);
+  if (closeInquiryModalFooterBtn) closeInquiryModalFooterBtn.addEventListener('click', closeFns);
+  if (inquiryOverlay) inquiryOverlay.addEventListener('click', closeFns);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && inquiryModal?.classList.contains('active')) closeInquiryModal();
+  });
+}
+
 function openModal(item) {
   editingId = item?.id || null;
   if (editingId) {
@@ -282,6 +336,24 @@ function closeModal() {
   existingImages = [];
   editingId = null;
   renderImagePreviews();
+}
+
+function openInquiryModal(inq) {
+  if (!inquiryModal) return;
+  inquiryFields.title.textContent = inq.listing_title || '-';
+  inquiryFields.name.textContent = inq.name || '-';
+  inquiryFields.phone.textContent = inq.phone || '-';
+  inquiryFields.email.textContent = inq.email || '-';
+  inquiryFields.status.innerHTML = renderStatusBadge(inq.status);
+  inquiryFields.created.textContent = formatKst(inq.created_at) || '-';
+  inquiryFields.message.textContent = inq.message || '-';
+  inquiryModal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeInquiryModal() {
+  inquiryModal?.classList.remove('active');
+  document.body.style.overflow = '';
 }
 
 async function onImagesSelected(e) {
@@ -486,4 +558,13 @@ function formatFileSize(bytes) {
   const sizes = ['Bytes', 'KB', 'MB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+}
+
+function formatKst(ts) {
+  if (!ts) return '';
+  try {
+    return new Date(ts).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
+  } catch {
+    return '';
+  }
 }
