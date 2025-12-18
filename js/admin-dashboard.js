@@ -406,15 +406,24 @@ function renderImagePreviews() {
   if (!imagePreviewContainer) return;
   imagePreviewContainer.innerHTML = '';
   if (existingImages.length) {
-    existingImages.forEach((url) => {
+    existingImages.forEach((url, index) => {
       const item = document.createElement('div');
       item.className = 'admin-image-preview__item';
       const imgEl = document.createElement('img');
       imgEl.src = url;
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'admin-image-preview__remove';
+      removeBtn.innerHTML = '×';
+      removeBtn.type = 'button';
+      removeBtn.onclick = () => {
+        existingImages.splice(index, 1);
+        renderImagePreviews();
+      };
       const keepEl = document.createElement('div');
       keepEl.className = 'admin-image-preview__size';
       keepEl.textContent = '기존 이미지';
       item.appendChild(imgEl);
+      item.appendChild(removeBtn);
       item.appendChild(keepEl);
       imagePreviewContainer.appendChild(item);
     });
