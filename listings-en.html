@@ -1,0 +1,86 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Listings | Lotte Real Estate</title>
+  <link rel="icon" href="img/core-img/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="lr-header">
+    <div class="lr-container">
+      <div class="lr-brand"><a href="EN.html#hero">Lotte Real Estate</a></div>
+      <nav class="lr-nav">
+        <a href="EN.html#hero">Home</a>
+        <a href="EN.html#listings">Featured</a>
+        <a href="listings-en.html">Listings</a>
+        <a href="contact_EN.html">Contact</a>
+        <a href="index.html">KOREAN</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="lr-hero lr-hero--compact">
+      <div class="lr-container lr-hero__content">
+        <div>
+          <p class="lr-kicker">Listings</p>
+          <h1>Find your property quickly</h1>
+          <p class="lr-lead">Filter by area, type, and budget to see available options.</p>
+        </div>
+        <form class="lr-hero__card" data-filter-form>
+          <p class="lr-kicker">Quick search</p>
+          <input class="lr-input" name="keyword" type="text" placeholder="Address, landmark, station" />
+          <select class="lr-input" name="type">
+            <option value="">All types</option>
+            <option value="아파트">Apartment</option>
+            <option value="오피스텔">Officetel</option>
+            <option value="사무실">Office</option>
+            <option value="상가">Retail</option>
+          </select>
+          <input class="lr-input" name="city" type="text" placeholder="City (e.g., Seoul)" />
+          <input class="lr-input" name="district" type="text" placeholder="District (e.g., Songpa)" />
+          <div class="lr-input-row">
+            <input class="lr-input" name="minPrice" type="number" placeholder="Min price" />
+            <input class="lr-input" name="maxPrice" type="number" placeholder="Max price" />
+          </div>
+          <button class="lr-btn lr-btn--primary" type="submit">Search</button>
+        </form>
+      </div>
+    </section>
+
+    <section class="lr-section">
+      <div class="lr-container">
+        <div class="lr-grid" data-listings-grid></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="lr-footer">
+    <div class="lr-container lr-footer__content">
+      <div>
+        <p class="lr-kicker">Lotte Real Estate</p>
+        <p class="lr-text">1F, 93-12, Baekjegobun-ro 27-gil, Songpa-gu, Seoul</p>
+        <p class="lr-text">Tel: 0507-1402-5055</p>
+      </div>
+      <div class="lr-footer__links">
+        <a href="https://goo.gl/maps/FVawYassWFUoJJBT7" target="_blank" rel="noreferrer">Google Maps</a>
+        <a href="https://naver.me/xMnYYRpo" target="_blank" rel="noreferrer">Naver Map</a>
+        <a href="EN.html">Home</a>
+      </div>
+    </div>
+    <p class="lr-footer__copy">© <script>document.write(new Date().getFullYear());</script> Lotte Real Estate. All rights reserved.</p>
+  </footer>
+
+  <script src="js/jquery/jquery-3.7.1.min.js"></script>
+  <script src="js/popper.min.js"></script>
+  <script src="js/bootstrap.min.js"></script>
+  <script src="js/plugins.js"></script>
+  <script src="js/active.js"></script>
+  <script type="module" src="js/listingsPage.en.js"></script>
+</body>
+</html>
