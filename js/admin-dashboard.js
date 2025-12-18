@@ -1,4 +1,12 @@
-import { createListing, uploadImage } from './services/backendAdapter.js';
+import {
+  createListing,
+  uploadImage,
+  getDashboardStats,
+  getRecentActivities,
+  listListingsAdmin,
+  listInquiriesAdmin,
+  updateInquiryStatus
+} from './services/backendAdapter.js';
 import { getSupabaseClient } from './config/supabaseConfig.js';
 
 // Admin Dashboard JavaScript
@@ -6,38 +14,21 @@ import { getSupabaseClient } from './config/supabaseConfig.js';
 
 // Load analytics data for dashboard stats
 function updateDashboardStats() {
-    const analyticsKey = 'lottereal_analytics';
-    const stored = localStorage.getItem(analyticsKey);
+    getDashboardStats()
+        .then((stats) => {
+            const listingEl = document.querySelector('[data-stat-listings]');
+            const new7El = document.querySelector('[data-stat-new7d]');
+            const inquiryEl = document.querySelector('[data-stat-inquiries]');
+            const unreadEl = document.querySelector('[data-stat-unread]');
 
-    if (stored) {
-        const analytics = JSON.parse(stored);
-        const now = new Date();
-
-        const weeklyVisits = analytics.visits ? analytics.visits.filter(visit => {
-            const visitDate = new Date(visit.timestamp);
-            return (now - visitDate) / (1000 * 60 * 60 * 24) < 7;
-        }).length : 0;
-
-        const lastWeekVisits = analytics.visits ? analytics.visits.filter(visit => {
-            const visitDate = new Date(visit.timestamp);
-            const daysAgo = (now - visitDate) / (1000 * 60 * 60 * 24);
-            return daysAgo >= 7 && daysAgo < 14;
-        }).length : 0;
-
-        const growth = lastWeekVisits > 0
-            ? Math.round(((weeklyVisits - lastWeekVisits) / lastWeekVisits) * 1000) / 10
-            : 0;
-
-        const visitorValueEl = document.querySelector('.admin-stat-card:nth-child(3) .admin-stat-value');
-        const visitorChangeEl = document.querySelector('.admin-stat-card:nth-child(3) .admin-stat-change');
-
-        if (visitorValueEl) visitorValueEl.textContent = weeklyVisits.toLocaleString();
-        if (visitorChangeEl) {
-            const sign = growth >= 0 ? '+' : '';
-            visitorChangeEl.textContent = `${sign}${growth}%`;
-            visitorChangeEl.className = 'admin-stat-change' + (growth >= 0 ? ' positive' : '');
-        }
-    }
+            if (listingEl) listingEl.textContent = (stats.totalListings || 0).toLocaleString();
+            if (new7El) new7El.textContent = (stats.newListings7d || 0).toLocaleString();
+            if (inquiryEl) inquiryEl.textContent = (stats.totalInquiries || 0).toLocaleString();
+            if (unreadEl) unreadEl.textContent = (stats.unreadInquiries || 0).toLocaleString();
+        })
+        .catch((err) => {
+            console.error('Dashboard stats error', err);
+        });
 }
 
 // Session Management
@@ -134,6 +125,96 @@ function renderInquiries() {
 
 function initInquiries() {
     renderInquiries();
+}
+
+async function renderRecent() {
+    const container = document.querySelector('[data-recent-activities]');
+    if (!container) return;
+    container.innerHTML = '<li class="admin-activity">불러오는 중...</li>';
+    try {
+        const data = await getRecentActivities(20);
+        if (!data || data.length === 0) {
+            container.innerHTML = '<li class="admin-activity">최근 활동이 없습니다.</li>';
+            return;
+        }
+        container.innerHTML = '';
+        data.forEach((a) => {
+            const li = document.createElement('li');
+            li.className = 'admin-activity';
+            li.textContent = `[${a.type || 'listing'}] ${a.title || ''} - ${new Date(a.created_at).toLocaleString()}`;
+            container.appendChild(li);
+        });
+    } catch (err) {
+        console.error('최근 활동 로드 실패', err);
+        container.innerHTML = '<li class="admin-activity">최근 활동을 불러오지 못했습니다.</li>';
+    }
+}
+
+async function renderListingsAdminTable() {
+    const tbody = document.querySelector('[data-admin-listings]');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="5">불러오는 중...</td></tr>';
+    try {
+        const data = await listListingsAdmin({ page: 1, pageSize: 50 });
+        if (!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5">매물이 없습니다.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = '';
+        data.forEach((item, idx) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${idx + 1}</td>
+                <td>${item.title || ''}</td>
+                <td>${item.property_type || ''}</td>
+                <td>${item.address || ''}</td>
+                <td>${item.created_at ? new Date(item.created_at).toLocaleString() : ''}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (err) {
+        console.error('매물 관리 로드 실패', err);
+        tbody.innerHTML = '<tr><td colspan="5">매물 불러오기에 실패했습니다.</td></tr>';
+    }
+}
+
+async function renderInquiriesAdminTable() {
+    const tbody = document.querySelector('[data-admin-inquiries]');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="6">불러오는 중...</td></tr>';
+    try {
+        const data = await listInquiriesAdmin({ page: 1, pageSize: 50 });
+        if (!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6">문의가 없습니다.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = '';
+        data.forEach((inq, idx) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${idx + 1}</td>
+                <td>${inq.listing_title || ''}</td>
+                <td>${inq.name || ''}</td>
+                <td>${inq.phone || ''}</td>
+                <td>${inq.status || ''}</td>
+                <td>${inq.created_at ? new Date(inq.created_at).toLocaleString() : ''}</td>
+                <td><button class="admin-btn admin-btn--ghost" data-inquiry="${inq.id}" data-status="${inq.status === 'read' ? 'unread' : 'read'}">${inq.status === 'read' ? '안읽음으로' : '읽음으로'}</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+        tbody.querySelectorAll('[data-inquiry]').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+                const id = btn.getAttribute('data-inquiry');
+                const nextStatus = btn.getAttribute('data-status');
+                await updateInquiryStatus(id, nextStatus);
+                renderInquiriesAdminTable();
+                renderInquiries(); // refresh badge if reusing local
+            });
+        });
+    } catch (err) {
+        console.error('문의 관리 로드 실패', err);
+        tbody.innerHTML = '<tr><td colspan="6">문의 불러오기에 실패했습니다.</td></tr>';
+    }
 }
 
 // Modal Handling
