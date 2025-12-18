@@ -854,3 +854,14 @@ textarea {
     border-radius: 4px;
     text-align: center;
 }
+
+/* Inquiries highlighting */
+.admin-inquiry--unread {
+    background: rgba(255, 212, 158, 0.1);
+}
+
+.admin-table-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
