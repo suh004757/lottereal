@@ -1,0 +1,72 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Listing Details | Lotte Real Estate</title>
+  <link rel="icon" href="img/core-img/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="lr-header">
+    <div class="lr-container">
+      <div class="lr-brand"><a href="EN.html#hero">Lotte Real Estate</a></div>
+      <nav class="lr-nav">
+        <a href="EN.html#hero">Home</a>
+        <a href="EN.html#listings">Featured</a>
+        <a href="listings-en.html">Listings</a>
+        <a href="contact_EN.html">Contact</a>
+        <a href="index.html">KOREAN</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="lr-section">
+    <div class="lr-container lr-detail">
+      <div class="lr-detail__media">
+        <img data-detail-image alt="Listing image" />
+      </div>
+      <div class="lr-detail__body">
+        <p class="lr-kicker">Property</p>
+        <h1 data-detail-title>Loading...</h1>
+        <p class="lr-text" data-detail-info></p>
+        <p class="lr-text" data-detail-note></p>
+        <div class="lr-tags" data-detail-tags></div>
+        <ul class="lr-list" data-detail-features></ul>
+      </div>
+    </div>
+
+    <div class="lr-container lr-card" style="margin-top: 30px;">
+      <h2>Inquiry</h2>
+      <form data-inquiry-form class="lr-form" id="inquiry">
+        <input type="text" name="name" placeholder="Your name" required />
+        <input type="text" name="phone" placeholder="Phone" required />
+        <input type="email" name="email" placeholder="Email" />
+        <textarea name="message" rows="4" placeholder="Tell us what you need" required></textarea>
+        <button type="submit" class="lr-btn lr-btn--primary">Submit inquiry</button>
+      </form>
+    </div>
+  </main>
+
+  <footer class="lr-footer">
+    <div class="lr-container lr-footer__content">
+      <div>
+        <p class="lr-kicker">Lotte Real Estate</p>
+        <p class="lr-text">1F, 93-12, Baekjegobun-ro 27-gil, Songpa-gu, Seoul</p>
+        <p class="lr-text">Tel: 0507-1402-5055</p>
+      </div>
+      <div class="lr-footer__links">
+        <a href="https://goo.gl/maps/FVawYassWFUoJJBT7" target="_blank" rel="noreferrer">Google Maps</a>
+        <a href="https://naver.me/xMnYYRpo" target="_blank" rel="noreferrer">Naver Map</a>
+        <a href="EN.html">Home</a>
+      </div>
+    </div>
+    <p class="lr-footer__copy">© <script>document.write(new Date().getFullYear());</script> Lotte Real Estate. All rights reserved.</p>
+  </footer>
+
+  <script type="module" src="js/listingDetail.en.js"></script>
+</body>
+</html>
