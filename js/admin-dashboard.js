@@ -166,11 +166,11 @@ async function loadListingsAdmin() {
 
 async function loadInquiriesAdmin() {
   if (!inquiriesTbody) return;
-  inquiriesTbody.innerHTML = '<tr><td colspan="7">불러오는 중...</td></tr>';
+  inquiriesTbody.innerHTML = '<tr><td colspan="8">불러오는 중...</td></tr>';
   try {
     const data = await listInquiriesAdmin({ page: 1, pageSize: 50 });
     if (!data || data.length === 0) {
-      inquiriesTbody.innerHTML = '<tr><td colspan="7">문의가 없습니다.</td></tr>';
+      inquiriesTbody.innerHTML = '<tr><td colspan="8">문의가 없습니다.</td></tr>';
       return;
     }
     inquiriesTbody.innerHTML = '';
@@ -181,6 +181,7 @@ async function loadInquiriesAdmin() {
         <td>${inq.listing_title || ''}</td>
         <td>${inq.name || ''}</td>
         <td>${inq.phone || ''}</td>
+        <td>${inq.message || ''}</td>
         <td>${inq.status || ''}</td>
         <td>${inq.created_at ? new Date(inq.created_at).toLocaleString() : ''}</td>
         <td><button class="admin-btn admin-btn--ghost" data-inquiry="${inq.id}" data-status="${inq.status === 'read' ? 'unread' : 'read'}">${inq.status === 'read' ? '안읽음으로' : '읽음으로'}</button></td>
@@ -198,7 +199,7 @@ async function loadInquiriesAdmin() {
     });
   } catch (err) {
     console.error('문의 관리 로드 실패', err);
-    inquiriesTbody.innerHTML = '<tr><td colspan="7">문의 불러오기 실패했습니다.</td></tr>';
+    inquiriesTbody.innerHTML = '<tr><td colspan="8">문의 불러오기 실패했습니다.</td></tr>';
   }
 }
 
