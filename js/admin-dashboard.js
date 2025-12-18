@@ -1,9 +1,11 @@
+import { createListing, uploadImage } from './services/backendAdapter.js';
+import { getSupabaseClient } from './config/supabaseConfig.js';
+
 // Admin Dashboard JavaScript
 // Handles navigation, session management, and interactive features
 
 // Load analytics data for dashboard stats
 function updateDashboardStats() {
-    // Get analytics from localStorage (set by analytics.js on public pages)
     const analyticsKey = 'lottereal_analytics';
     const stored = localStorage.getItem(analyticsKey);
 
@@ -11,13 +13,11 @@ function updateDashboardStats() {
         const analytics = JSON.parse(stored);
         const now = new Date();
 
-        // Calculate weekly visitors
         const weeklyVisits = analytics.visits ? analytics.visits.filter(visit => {
             const visitDate = new Date(visit.timestamp);
             return (now - visitDate) / (1000 * 60 * 60 * 24) < 7;
         }).length : 0;
 
-        // Calculate growth
         const lastWeekVisits = analytics.visits ? analytics.visits.filter(visit => {
             const visitDate = new Date(visit.timestamp);
             const daysAgo = (now - visitDate) / (1000 * 60 * 60 * 24);
@@ -28,14 +28,10 @@ function updateDashboardStats() {
             ? Math.round(((weeklyVisits - lastWeekVisits) / lastWeekVisits) * 1000) / 10
             : 0;
 
-        // Update UI
         const visitorValueEl = document.querySelector('.admin-stat-card:nth-child(3) .admin-stat-value');
         const visitorChangeEl = document.querySelector('.admin-stat-card:nth-child(3) .admin-stat-change');
 
-        if (visitorValueEl) {
-            visitorValueEl.textContent = weeklyVisits.toLocaleString();
-        }
-
+        if (visitorValueEl) visitorValueEl.textContent = weeklyVisits.toLocaleString();
         if (visitorChangeEl) {
             const sign = growth >= 0 ? '+' : '';
             visitorChangeEl.textContent = `${sign}${growth}%`;
@@ -44,13 +40,8 @@ function updateDashboardStats() {
     }
 }
 
-// Call on page load
-document.addEventListener('DOMContentLoaded', () => {
-    updateDashboardStats();
-});
-
 // Session Management
-let sessionTimeout = 30 * 60; // 30 minutes in seconds
+let sessionTimeout = 30 * 60; // seconds
 let sessionTimer;
 
 function updateSessionTimer() {
@@ -60,16 +51,12 @@ function updateSessionTimer() {
 
     if (timerElement) {
         timerElement.textContent = `세션: ${minutes}:${seconds.toString().padStart(2, '0')}`;
-
-        // Warning when less than 5 minutes
         if (sessionTimeout < 300) {
             timerElement.style.background = 'rgba(239, 68, 68, 0.12)';
             timerElement.style.color = '#fecdd3';
         }
     }
-
     sessionTimeout--;
-
     if (sessionTimeout < 0) {
         clearInterval(sessionTimer);
         handleSessionExpired();
@@ -84,59 +71,6 @@ function handleSessionExpired() {
 function resetSessionTimer() {
     sessionTimeout = 30 * 60;
 }
-
-// Start session timer
-sessionTimer = setInterval(updateSessionTimer, 1000);
-
-// Reset timer on user activity
-document.addEventListener('mousemove', resetSessionTimer);
-document.addEventListener('keypress', resetSessionTimer);
-document.addEventListener('click', resetSessionTimer);
-
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
-    // Update dashboard stats
-    updateDashboardStats();
-
-    checkAuth();
-
-    initInquiries();
-
-    // Set user name if available
-    const userName = sessionStorage.getItem('adminUserName');
-    if (userName) {
-        const userNameElement = document.getElementById('userName');
-        if (userNameElement) {
-            userNameElement.textContent = userName;
-        }
-    }
-
-    // Navigation - moved here to ensure DOM is loaded
-    const navItems = document.querySelectorAll('.admin-nav__item');
-    const sections = document.querySelectorAll('.admin-section');
-
-    navItems.forEach(item => {
-        item.addEventListener('click', (e) => {
-            e.preventDefault();
-
-            // Remove active class from all items
-            navItems.forEach(nav => nav.classList.remove('active'));
-
-            // Add active class to clicked item
-            item.classList.add('active');
-
-            // Hide all sections
-            sections.forEach(section => section.classList.remove('active'));
-
-            // Show corresponding section
-            const sectionId = item.getAttribute('data-section') + '-section';
-            const targetSection = document.getElementById(sectionId);
-            if (targetSection) {
-                targetSection.classList.add('active');
-            }
-        });
-    });
-});
 
 // ---- Inquiries (문의) 관리 ----
 const INQUIRY_STORAGE_KEY = 'lottereal_inquiries';
@@ -184,7 +118,6 @@ function renderInquiries() {
         tbody.appendChild(tr);
     });
 
-    // 버튼 이벤트
     tbody.querySelectorAll('[data-mark-read]').forEach((btn) => {
         btn.addEventListener('click', () => {
             const id = btn.getAttribute('data-mark-read');
@@ -221,27 +154,18 @@ if (addPropertyBtn) {
     });
 }
 
-// Close modal function
 function closeModal() {
     propertyModal.classList.remove('active');
     document.body.style.overflow = '';
     propertyForm.reset();
+    uploadedImages = [];
+    renderImagePreviews();
 }
 
-// Close modal events
-if (closeModalBtn) {
-    closeModalBtn.addEventListener('click', closeModal);
-}
+if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
+if (cancelModalBtn) cancelModalBtn.addEventListener('click', closeModal);
+if (modalOverlay) modalOverlay.addEventListener('click', closeModal);
 
-if (cancelModalBtn) {
-    cancelModalBtn.addEventListener('click', closeModal);
-}
-
-if (modalOverlay) {
-    modalOverlay.addEventListener('click', closeModal);
-}
-
-// ESC key to close modal
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && propertyModal.classList.contains('active')) {
         closeModal();
@@ -251,7 +175,8 @@ document.addEventListener('keydown', (e) => {
 // Show/hide deposit field based on transaction type
 if (transactionTypeSelect) {
     transactionTypeSelect.addEventListener('change', (e) => {
-        if (e.target.value === '월세') {
+        const value = e.target.value || '';
+        if (value === '전세') {
             depositField.style.display = 'block';
         } else {
             depositField.style.display = 'none';
@@ -264,7 +189,6 @@ const propertyImagesInput = document.getElementById('propertyImages');
 const imagePreviewContainer = document.getElementById('imagePreview');
 let uploadedImages = [];
 
-// Resize image to max dimensions while maintaining aspect ratio
 async function resizeImage(file, maxWidth = 1920, maxHeight = 1080, quality = 0.85) {
     return new Promise((resolve) => {
         const reader = new FileReader();
@@ -275,7 +199,6 @@ async function resizeImage(file, maxWidth = 1920, maxHeight = 1080, quality = 0.
                 let width = img.width;
                 let height = img.height;
 
-                // Calculate new dimensions
                 if (width > maxWidth || height > maxHeight) {
                     const ratio = Math.min(maxWidth / width, maxHeight / height);
                     width = width * ratio;
@@ -289,10 +212,7 @@ async function resizeImage(file, maxWidth = 1920, maxHeight = 1080, quality = 0.
                 ctx.drawImage(img, 0, 0, width, height);
 
                 canvas.toBlob((blob) => {
-                    resolve(new File([blob], file.name, {
-                        type: 'image/jpeg',
-                        lastModified: Date.now()
-                    }));
+                    resolve(new File([blob], file.name, { type: 'image/jpeg', lastModified: Date.now() }));
                 }, 'image/jpeg', quality);
             };
             img.src = e.target.result;
@@ -301,7 +221,6 @@ async function resizeImage(file, maxWidth = 1920, maxHeight = 1080, quality = 0.
     });
 }
 
-// Format file size
 function formatFileSize(bytes) {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -310,7 +229,6 @@ function formatFileSize(bytes) {
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
 }
 
-// Handle image selection
 if (propertyImagesInput) {
     propertyImagesInput.addEventListener('change', async (e) => {
         const files = Array.from(e.target.files);
@@ -323,21 +241,18 @@ if (propertyImagesInput) {
         imagePreviewContainer.innerHTML = '<div style="color: var(--admin-muted); padding: 12px;">이미지 처리 중...</div>';
 
         for (const file of files) {
-            // Check file size (5MB limit)
             if (file.size > 5 * 1024 * 1024) {
-                alert(`${file.name}은(는) 5MB를 초과합니다.`);
+                alert(`${file.name}은(는) 5MB를 초과합니다`);
                 continue;
             }
 
-            // Resize image
             const resizedFile = await resizeImage(file);
 
-            // Create preview
             const reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = (ev) => {
                 uploadedImages.push({
                     file: resizedFile,
-                    preview: e.target.result,
+                    preview: ev.target.result,
                     originalSize: file.size,
                     resizedSize: resizedFile.size
                 });
@@ -348,8 +263,8 @@ if (propertyImagesInput) {
     });
 }
 
-// Render image previews
 function renderImagePreviews() {
+    if (!imagePreviewContainer) return;
     imagePreviewContainer.innerHTML = '';
 
     uploadedImages.forEach((img, index) => {
@@ -385,26 +300,78 @@ if (propertyForm) {
         e.preventDefault();
 
         const formData = new FormData(propertyForm);
-
-        // Remove the file input from formData (we'll handle images separately)
         formData.delete('images');
-
         const propertyData = Object.fromEntries(formData.entries());
 
-        console.log('Property data:', propertyData);
-        console.log('Images to upload:', uploadedImages.length);
+        try {
+            togglePropertyFormDisabled(true);
+            const supa = getSupabaseClient();
+            if (!supa) {
+                alert('Supabase 설정이 없습니다. .env를 확인하세요.');
+                togglePropertyFormDisabled(false);
+                return;
+            }
 
-        // TODO: Upload images to Supabase Storage
-        // const imageUrls = await uploadImagesToSupabase(uploadedImages);
-        // propertyData.images = imageUrls;
+            const imageUrls = await uploadImagesToSupabase(uploadedImages);
 
-        // TODO: Send property data to Supabase
-        alert(`매물이 등록되었습니다! (${uploadedImages.length}개 이미지 포함)`);
+            const payload = {
+                title: propertyData.title || propertyData.name || '관리자 등록 매물',
+                description: propertyData.description || '',
+                price: propertyData.price ? Number(propertyData.price) : null,
+                currency: 'KRW',
+                location: {
+                    address: propertyData.address || '',
+                    city: propertyData.city || 'Seoul',
+                    district: propertyData.district || 'Songpa'
+                },
+                propertyType: propertyData.propertyType || propertyData.transactionType || '',
+                images: imageUrls,
+                contact: {
+                    name: propertyData.contactName || '',
+                    phone: propertyData.contactPhone || '',
+                    email: propertyData.contactEmail || ''
+                },
+                metadata: {
+                    source: 'admin-dashboard',
+                    submittedAt: new Date().toISOString()
+                }
+            };
 
-        // Reset
-        uploadedImages = [];
-        closeModal();
+            await createListing(payload);
+            alert(`매물이 등록되었습니다! (${imageUrls.length}개의 이미지 포함)`);
+
+            uploadedImages = [];
+            renderImagePreviews();
+            closeModal();
+        } catch (err) {
+            console.error('매물 등록 실패:', err);
+            alert('매물 등록 중 오류가 발생했습니다. 콘솔을 확인하세요.');
+        } finally {
+            togglePropertyFormDisabled(false);
+        }
     });
 }
 
+// Initialization hooks
+document.addEventListener('DOMContentLoaded', () => {
+    updateDashboardStats();
+    checkAuth();
+    initInquiries();
+});
+
 console.log('Admin Dashboard initialized');
+
+async function uploadImagesToSupabase(images) {
+    if (!images || images.length === 0) return [];
+    const urls = [];
+    for (const img of images) {
+        const res = await uploadImage(img.file);
+        if (res?.url) urls.push(res.url);
+    }
+    return urls;
+}
+
+function togglePropertyFormDisabled(isDisabled) {
+    const submit = propertyForm?.querySelector('button[type="submit"]');
+    if (submit) submit.disabled = isDisabled;
+}
