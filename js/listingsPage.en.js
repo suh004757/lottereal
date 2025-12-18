@@ -13,9 +13,7 @@ if (filterForm) {
     const propertyType = formData.get('type') || '';
     const city = formData.get('city') || '';
     const district = formData.get('district') || '';
-    const minPrice = formData.get('minPrice') || '';
-    const maxPrice = formData.get('maxPrice') || '';
-    loadListings({ keyword, propertyType, city, district, minPrice, maxPrice });
+    loadListings({ keyword, propertyType, city, district });
   });
 }
 
@@ -28,8 +26,6 @@ async function loadListings(filters = {}) {
       propertyType: filters.propertyType || '',
       city: filters.city || '',
       district: filters.district || '',
-      minPrice: filters.minPrice || undefined,
-      maxPrice: filters.maxPrice || undefined,
       page: 1,
       pageSize: 50
     });
