@@ -1,4 +1,4 @@
-import { listListingsPublic } from './services/backendAdapter.js';
+ï»¿import { listListingsPublic } from './services/backendAdapter.js';
 
 const listContainer = document.querySelector('[data-listings-grid]');
 const filterForm = document.querySelector('[data-filter-form]');
@@ -21,7 +21,7 @@ if (filterForm) {
 
 async function loadListings(filters = {}) {
   if (!listContainer) return;
-  listContainer.innerHTML = '<p class="lr-text">ºÒ·¯¿À´Â Áß...</p>';
+  listContainer.innerHTML = '<p class="lr-text">ë¶ˆëŸ¬ì˜¤ëŠ” ì¤‘...</p>';
   try {
     const data = await listListingsPublic({
       query: filters.keyword || '',
@@ -35,8 +35,8 @@ async function loadListings(filters = {}) {
     });
     renderListings(data);
   } catch (err) {
-    console.error('¸®½ºÆ® ·Îµå ½ÇÆĞ', err);
-    listContainer.innerHTML = '<p class="lr-text">¸ñ·ÏÀ» ºÒ·¯¿À´Â Áß ¿À·ù°¡ ¹ß»ıÇß½À´Ï´Ù.</p>';
+    console.error('ë¦¬ìŠ¤íŠ¸ ë¡œë“œ ì‹¤íŒ¨', err);
+    listContainer.innerHTML = '<p class="lr-text">ëª©ë¡ì„ ë¶ˆëŸ¬ì˜¤ëŠ” ì¤‘ ì˜¤ë¥˜ê°€ ë°œìƒí–ˆìŠµë‹ˆë‹¤.</p>';
   }
 }
 
@@ -45,7 +45,7 @@ function renderListings(data) {
   listContainer.innerHTML = '';
 
   if (!data || data.length === 0) {
-    listContainer.innerHTML = '<p style="text-align:center; width:100%; padding: 50px;">Á¶°Ç¿¡ ¸Â´Â ¸Å¹°ÀÌ ¾ø½À´Ï´Ù.</p>';
+    listContainer.innerHTML = '<p style="text-align:center; width:100%; padding: 50px;">ì¡°ê±´ì— ë§ëŠ” ë§¤ë¬¼ì´ ì—†ìŠµë‹ˆë‹¤.</p>';
     return;
   }
 
@@ -53,7 +53,7 @@ function renderListings(data) {
     const card = document.createElement('article');
     card.className = 'lr-card lr-card--listing';
     const image = item.image || (item.images && item.images[0]) || '';
-    const badge = item.property_type || item.type || '¸Å¹°';
+    const badge = item.property_type || item.type || 'ë§¤ë¬¼';
     card.innerHTML = `
       <div class="lr-card__thumb" style="background-image:url('${image}');"></div>
       <div class="lr-card__body">
@@ -65,8 +65,8 @@ function renderListings(data) {
           <span>${item.price ? item.price.toLocaleString() : ''}</span>
         </div>
         <div class="lr-card__actions">
-          <a class="lr-btn lr-btn--ghost lr-btn--block" href="listing-detail.html?id=${encodeURIComponent(item.id)}">»ó¼¼ º¸±â</a>
-          <a class="lr-btn lr-btn--primary lr-btn--block" href="listing-detail.html?id=${encodeURIComponent(item.id)}#inquiry">¹®ÀÇÇÏ±â</a>
+          <a class="lr-btn lr-btn--ghost lr-btn--block" href="listing-detail.html?id=${encodeURIComponent(item.id)}">ìƒì„¸ ë³´ê¸°</a>
+          <a class="lr-btn lr-btn--primary lr-btn--block" href="listing-detail.html?id=${encodeURIComponent(item.id)}#inquiry">ë¬¸ì˜í•˜ê¸°</a>
         </div>
       </div>
     `;
