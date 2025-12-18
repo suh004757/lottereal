@@ -1,785 +1,259 @@
 <!DOCTYPE html>
 <html lang="ko">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>관리자 대시보드 | 롯데부동산</title>
-    <meta name="robots" content="noindex, nofollow">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap"
-        rel="stylesheet">
-    <link rel="icon" href="../img/core-img/favicon.ico">
-    <link rel="stylesheet" href="../style.css">
-    <link rel="stylesheet" href="../css/admin.css">
-    <link rel="stylesheet" href="../css/admin-dashboard.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>관리자 대시보드 | 롯데부동산</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="../img/core-img/favicon.ico">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <link rel="stylesheet" href="../css/admin-dashboard.css">
 </head>
-
 <body class="admin-dashboard-shell">
-    <!-- Sidebar Navigation -->
-    <aside class="admin-sidebar">
-        <div class="admin-sidebar__header">
-            <div class="admin-sidebar__logo">
-                <div class="admin-hero__pill">Admin</div>
-                <h2>롯데부동산</h2>
-            </div>
-            <div class="admin-user-info">
-                <div class="admin-user-avatar">관</div>
-                <div>
-                    <div class="admin-user-name" id="userName">관리자</div>
-                    <div class="admin-user-role">Administrator</div>
-                </div>
-            </div>
+  <aside class="admin-sidebar">
+    <div class="admin-sidebar__header">
+      <div class="admin-sidebar__logo">
+        <div class="admin-hero__pill">Admin</div>
+        <h2>롯데부동산</h2>
+      </div>
+      <div class="admin-user-info">
+        <div class="admin-user-avatar">관</div>
+        <div>
+          <div class="admin-user-name" id="userName">관리자</div>
+          <div class="admin-user-role">Administrator</div>
         </div>
-
-        <nav class="admin-nav">
-            <a href="#dashboard" class="admin-nav__item active" data-section="dashboard">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="14" width="7" height="7"></rect>
-                    <rect x="3" y="14" width="7" height="7"></rect>
-                </svg>
-                <span>대시보드</span>
-            </a>
-            <a href="#properties" class="admin-nav__item" data-section="properties">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                </svg>
-                <span>매물 관리</span>
-            </a>
-            <a href="#inquiries" class="admin-nav__item" data-section="inquiries">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                </svg>
-                <span>문의 관리</span>
-                <span class="admin-badge">3</span>
-            </a>
-            <a href="#logs" class="admin-nav__item" data-section="logs">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                    <polyline points="10 9 9 9 8 9"></polyline>
-                </svg>
-                <span>로그인 기록</span>
-            </a>
-            <a href="#settings" class="admin-nav__item" data-section="settings">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="3"></circle>
-                    <path
-                        d="M12 1v6m0 6v6m5.66-13.66l-4.24 4.24m0 6l-4.24 4.24M23 12h-6m-6 0H1m18.66 5.66l-4.24-4.24m0-6l-4.24-4.24">
-                    </path>
-                </svg>
-                <span>설정</span>
-            </a>
-        </nav>
-
-        <div class="admin-sidebar__footer">
-            <button type="button" id="logoutBtn" class="admin-logout-btn">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                    <polyline points="16 17 21 12 16 7"></polyline>
-                    <line x1="21" y1="12" x2="9" y2="12"></line>
-                </svg>
-                로그아웃
-            </button>
-            <div class="admin-session-timer" id="sessionTimer">세션: 30:00</div>
-        </div>
-    </aside>
-
-    <!-- Main Content Area -->
-    <main class="admin-main">
-        <!-- Dashboard Section -->
-        <section id="dashboard-section" class="admin-section active">
-            <div class="admin-section__header">
-                <div>
-                    <p class="admin-kicker">Overview</p>
-                    <h1>대시보드</h1>
-                    <p class="admin-sub">전체 매물 및 문의 현황을 한눈에 확인하세요.</p>
-                </div>
-                <div class="admin-session expiring" id="sessionStatus">세션 활성</div>
-            </div>
-
-            <!-- Stats Grid -->
-            <div class="admin-stats-grid">
-                <div class="admin-stat-card">
-                    <div class="admin-stat-icon" style="background: rgba(16, 185, 129, 0.12);">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
-                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                        </svg>
-                    </div>
-                    <div class="admin-stat-content">
-                        <div class="admin-stat-label">전체 매물</div>
-                        <div class="admin-stat-value">127</div>
-                        <div class="admin-stat-change positive">+12 이번 달</div>
-                    </div>
-                </div>
-
-                <div class="admin-stat-card">
-                    <div class="admin-stat-icon" style="background: rgba(37, 99, 235, 0.12);">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <polyline points="12 6 12 12 16 14"></polyline>
-                        </svg>
-                    </div>
-                    <div class="admin-stat-content">
-                        <div class="admin-stat-label">대기 중 문의</div>
-                        <div class="admin-stat-value">23</div>
-                        <div class="admin-stat-change">3건 미확인</div>
-                    </div>
-                </div>
-
-                <div class="admin-stat-card">
-                    <div class="admin-stat-icon" style="background: rgba(245, 158, 11, 0.12);">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="9" cy="7" r="4"></circle>
-                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                        </svg>
-                    </div>
-                    <div class="admin-stat-content">
-                        <div class="admin-stat-label">이번 주 방문자</div>
-                        <div class="admin-stat-value">1,847</div>
-                        <div class="admin-stat-change positive">+18.2%</div>
-                    </div>
-                </div>
-
-                <div class="admin-stat-card">
-                    <div class="admin-stat-icon" style="background: rgba(139, 92, 246, 0.12);">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2">
-                            <line x1="12" y1="1" x2="12" y2="23"></line>
-                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                        </svg>
-                    </div>
-                    <div class="admin-stat-content">
-                        <div class="admin-stat-label">평균 매물가</div>
-                        <div class="admin-stat-value">4.2억</div>
-                        <div class="admin-stat-change">전월 대비 유사</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recent Activity -->
-            <div class="admin-card" style="margin-top: 24px;">
-                <div class="admin-card__header">
-                    <div>
-                        <p class="admin-kicker">Recent Activity</p>
-                        <h2>최근 활동</h2>
-                    </div>
-                </div>
-                <div class="admin-activity-list">
-                    <div class="admin-activity-item">
-                        <div class="admin-activity-icon" style="background: rgba(16, 185, 129, 0.12); color: #10b981;">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <path d="M12 5v14m7-7H5"></path>
-                            </svg>
-                        </div>
-                        <div class="admin-activity-content">
-                            <div class="admin-activity-title">새 매물 등록: 강남구 역삼동 아파트</div>
-                            <div class="admin-activity-meta">2분 전 • 관리자</div>
-                        </div>
-                    </div>
-                    <div class="admin-activity-item">
-                        <div class="admin-activity-icon" style="background: rgba(37, 99, 235, 0.12); color: #2563eb;">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                            </svg>
-                        </div>
-                        <div class="admin-activity-content">
-                            <div class="admin-activity-title">새 문의: 서초구 반포동 오피스텔</div>
-                            <div class="admin-activity-meta">15분 전 • 김철수</div>
-                        </div>
-                    </div>
-                    <div class="admin-activity-item">
-                        <div class="admin-activity-icon" style="background: rgba(245, 158, 11, 0.12); color: #f59e0b;">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
-                        </div>
-                        <div class="admin-activity-content">
-                            <div class="admin-activity-title">매물 수정: 송파구 잠실동 빌라</div>
-                            <div class="admin-activity-meta">1시간 전 • 관리자</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Properties Section -->
-        <section id="properties-section" class="admin-section">
-            <div class="admin-section__header">
-                <div>
-                    <p class="admin-kicker">Property Management</p>
-                    <h1>매물 관리</h1>
-                    <p class="admin-sub">등록된 매물을 조회, 수정, 삭제할 수 있습니다.</p>
-                </div>
-                <button class="admin-primary" id="addPropertyBtn">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        style="margin-right: 8px;">
-                        <path d="M12 5v14m7-7H5"></path>
-                    </svg>
-                    매물 추가
-                </button>
-            </div>
-
-            <!-- Filters -->
-            <div class="admin-filters">
-                <input type="text" class="admin-search" placeholder="주소, 매물명으로 검색..." id="propertySearch">
-                <select class="admin-select" id="filterType">
-                    <option value="">전체 거래유형</option>
-                    <option value="매매">매매</option>
-                    <option value="전세">전세</option>
-                    <option value="월세">월세</option>
-                </select>
-                <select class="admin-select" id="filterRegion">
-                    <option value="">전체 지역</option>
-                    <option value="강남구">강남구</option>
-                    <option value="서초구">서초구</option>
-                    <option value="송파구">송파구</option>
-                    <option value="강동구">강동구</option>
-                </select>
-                <select class="admin-select" id="filterStatus">
-                    <option value="">전체 상태</option>
-                    <option value="active">활성</option>
-                    <option value="pending">대기</option>
-                    <option value="sold">거래완료</option>
-                </select>
-            </div>
-
-            <!-- Properties Table -->
-            <div class="admin-table-container">
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>매물명</th>
-                            <th>주소</th>
-                            <th>거래유형</th>
-                            <th>가격</th>
-                            <th>평수</th>
-                            <th>상태</th>
-                            <th>등록일</th>
-                            <th>작업</th>
-                        </tr>
-                    </thead>
-                    <tbody id="propertiesTableBody">
-                        <tr>
-                            <td>#1027</td>
-                            <td>역삼 프리미엄 아파트</td>
-                            <td>서울시 강남구 역삼동</td>
-                            <td><span class="admin-type-badge sale">매매</span></td>
-                            <td>12억 5천만원</td>
-                            <td>34평</td>
-                            <td><span class="admin-status-badge active">활성</span></td>
-                            <td>2025-12-10</td>
-                            <td>
-                                <div class="admin-table-actions">
-                                    <button class="admin-icon-btn" title="수정">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="2">
-                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                        </svg>
-                                    </button>
-                                    <button class="admin-icon-btn danger" title="삭제">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="2">
-                                            <polyline points="3 6 5 6 21 6"></polyline>
-                                            <path
-                                                d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
-                                            </path>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#1026</td>
-                            <td>반포 한강뷰 오피스텔</td>
-                            <td>서울시 서초구 반포동</td>
-                            <td><span class="admin-type-badge jeonse">전세</span></td>
-                            <td>3억 2천만원</td>
-                            <td>18평</td>
-                            <td><span class="admin-status-badge active">활성</span></td>
-                            <td>2025-12-09</td>
-                            <td>
-                                <div class="admin-table-actions">
-                                    <button class="admin-icon-btn" title="수정">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="2">
-                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                        </svg>
-                                    </button>
-                                    <button class="admin-icon-btn danger" title="삭제">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="2">
-                                            <polyline points="3 6 5 6 21 6"></polyline>
-                                            <path
-                                                d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
-                                            </path>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#1025</td>
-                            <td>잠실 신축 빌라</td>
-                            <td>서울시 송파구 잠실동</td>
-                            <td><span class="admin-type-badge monthly">월세</span></td>
-                            <td>500/80만원</td>
-                            <td>22평</td>
-                            <td><span class="admin-status-badge pending">대기</span></td>
-                            <td>2025-12-08</td>
-                            <td>
-                                <div class="admin-table-actions">
-                                    <button class="admin-icon-btn" title="수정">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="2">
-                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                        </svg>
-                                    </button>
-                                    <button class="admin-icon-btn danger" title="삭제">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="2">
-                                            <polyline points="3 6 5 6 21 6"></polyline>
-                                            <path
-                                                d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
-                                            </path>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination -->
-            <div class="admin-pagination">
-                <button class="admin-ghost">이전</button>
-                <div class="admin-page-numbers">
-                    <button class="admin-page-btn active">1</button>
-                    <button class="admin-page-btn">2</button>
-                    <button class="admin-page-btn">3</button>
-                    <span>...</span>
-                    <button class="admin-page-btn">12</button>
-                </div>
-                <button class="admin-ghost">다음</button>
-            </div>
-        </section>
-
-        <!-- Inquiries Section -->
-        <section id="inquiries-section" class="admin-section">
-            <div class="admin-section__header">
-                <div>
-                    <p class="admin-kicker">Customer Inquiries</p>
-                    <h1>문의 관리</h1>
-                    <p class="admin-sub">고객 문의를 확인하고 응답하세요.</p>
-                </div>
-            </div>
-
-            <div class="admin-inquiries-grid">
-                <div class="admin-inquiry-card unread">
-                    <div class="admin-inquiry-header">
-                        <div>
-                            <div class="admin-inquiry-name">김철수</div>
-                            <div class="admin-inquiry-contact">010-1234-5678 • kim@example.com</div>
-                        </div>
-                        <div class="admin-inquiry-time">10분 전</div>
-                    </div>
-                    <div class="admin-inquiry-property">매물: 역삼 프리미엄 아파트 (#1027)</div>
-                    <div class="admin-inquiry-message">
-                        안녕하세요. 해당 매물에 관심이 있어 문의드립니다. 방문 가능한 시간대를 알려주시면 감사하겠습니다.
-                    </div>
-                    <div class="admin-inquiry-actions">
-                        <button class="admin-primary">답변하기</button>
-                        <button class="admin-ghost">보관</button>
-                    </div>
-                </div>
-
-                <div class="admin-inquiry-card">
-                    <div class="admin-inquiry-header">
-                        <div>
-                            <div class="admin-inquiry-name">이영희</div>
-                            <div class="admin-inquiry-contact">010-9876-5432 • lee@example.com</div>
-                        </div>
-                        <div class="admin-inquiry-time">2시간 전</div>
-                    </div>
-                    <div class="admin-inquiry-property">매물: 반포 한강뷰 오피스텔 (#1026)</div>
-                    <div class="admin-inquiry-message">
-                        전세 계약 시 필요한 서류가 무엇인지 알려주세요.
-                    </div>
-                    <div class="admin-inquiry-actions">
-                        <button class="admin-primary">답변하기</button>
-                        <button class="admin-ghost">보관</button>
-                    </div>
-                </div>
-
-                <div class="admin-inquiry-card replied">
-                    <div class="admin-inquiry-header">
-                        <div>
-                            <div class="admin-inquiry-name">박민수</div>
-                            <div class="admin-inquiry-contact">010-5555-7777 • park@example.com</div>
-                        </div>
-                        <div class="admin-inquiry-time">1일 전</div>
-                    </div>
-                    <div class="admin-inquiry-property">매물: 잠실 신축 빌라 (#1025)</div>
-                    <div class="admin-inquiry-message">
-                        월세 보증금 협의 가능한가요?
-                    </div>
-                    <div class="admin-inquiry-reply">
-                        <strong>답변 완료:</strong> 네, 협의 가능합니다. 자세한 상담은 전화로 연락드리겠습니다.
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Logs Section -->
-        <section id="logs-section" class="admin-section">
-            <div class="admin-section__header">
-                <div>
-                    <p class="admin-kicker">Security Logs</p>
-                    <h1>로그인 기록</h1>
-                    <p class="admin-sub">관리자 로그인 기록 및 보안 로그를 확인하세요.</p>
-                </div>
-            </div>
-
-            <div class="admin-table-container">
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>시각</th>
-                            <th>사용자</th>
-                            <th>IP 주소</th>
-                            <th>브라우저</th>
-                            <th>위치</th>
-                            <th>상태</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>2025-12-15 23:30:15</td>
-                            <td>admin@lottereal.com</td>
-                            <td>192.168.1.100</td>
-                            <td>Chrome 120 / Windows 11</td>
-                            <td>서울, 대한민국</td>
-                            <td><span class="admin-status-badge active">성공</span></td>
-                        </tr>
-                        <tr>
-                            <td>2025-12-15 18:45:22</td>
-                            <td>admin@lottereal.com</td>
-                            <td>192.168.1.100</td>
-                            <td>Chrome 120 / Windows 11</td>
-                            <td>서울, 대한민국</td>
-                            <td><span class="admin-status-badge active">성공</span></td>
-                        </tr>
-                        <tr>
-                            <td>2025-12-15 14:20:08</td>
-                            <td>unknown@test.com</td>
-                            <td>203.45.67.89</td>
-                            <td>Firefox 121 / macOS</td>
-                            <td>부산, 대한민국</td>
-                            <td><span class="admin-status-badge danger">실패</span></td>
-                        </tr>
-                        <tr>
-                            <td>2025-12-14 09:15:33</td>
-                            <td>admin@lottereal.com</td>
-                            <td>192.168.1.100</td>
-                            <td>Chrome 120 / Windows 11</td>
-                            <td>서울, 대한민국</td>
-                            <td><span class="admin-status-badge active">성공</span></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- Settings Section -->
-        <section id="settings-section" class="admin-section">
-            <div class="admin-section__header">
-                <div>
-                    <p class="admin-kicker">Configuration</p>
-                    <h1>설정</h1>
-                    <p class="admin-sub">시스템 설정 및 보안 옵션을 관리하세요.</p>
-                </div>
-            </div>
-
-            <div class="admin-settings-grid">
-                <div class="admin-card">
-                    <div class="admin-card__header">
-                        <div>
-                            <h2>보안 설정</h2>
-                            <p class="admin-sub">세션 및 접근 제어 설정</p>
-                        </div>
-                    </div>
-                    <div class="admin-form">
-                        <label class="admin-field">
-                            <span>세션 타임아웃 (분)</span>
-                            <input type="number" value="30" min="5" max="120">
-                        </label>
-                        <label class="admin-field">
-                            <span>IP 화이트리스트</span>
-                            <textarea rows="3" placeholder="192.168.1.0/24&#10;10.0.0.0/8"></textarea>
-                        </label>
-                        <div class="admin-checkbox-field">
-                            <input type="checkbox" id="enableGeo" checked>
-                            <label for="enableGeo">위치 정보 수집 활성화</label>
-                        </div>
-                        <div class="admin-checkbox-field">
-                            <input type="checkbox" id="enableFailLog" checked>
-                            <label for="enableFailLog">실패한 로그인 시도 기록</label>
-                        </div>
-                        <button class="admin-primary">설정 저장</button>
-                    </div>
-                </div>
-
-                <div class="admin-card">
-                    <div class="admin-card__header">
-                        <div>
-                            <h2>알림 설정</h2>
-                            <p class="admin-sub">문의 및 시스템 알림 설정</p>
-                        </div>
-                    </div>
-                    <div class="admin-form">
-                        <div class="admin-checkbox-field">
-                            <input type="checkbox" id="notifyInquiry" checked>
-                            <label for="notifyInquiry">새 문의 알림</label>
-                        </div>
-                        <div class="admin-checkbox-field">
-                            <input type="checkbox" id="notifyProperty" checked>
-                            <label for="notifyProperty">매물 등록/수정 알림</label>
-                        </div>
-                        <div class="admin-checkbox-field">
-                            <input type="checkbox" id="notifySecurity">
-                            <label for="notifySecurity">보안 이벤트 알림</label>
-                        </div>
-                        <label class="admin-field">
-                            <span>알림 이메일</span>
-                            <input type="email" value="admin@lottereal.com">
-                        </label>
-                        <button class="admin-primary">설정 저장</button>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <!-- Property Modal -->
-    <div id="propertyModal" class="admin-modal">
-        <div class="admin-modal__overlay"></div>
-        <div class="admin-modal__content">
-            <div class="admin-modal__header">
-                <div>
-                    <p class="admin-kicker">Property Management</p>
-                    <h2 id="modalTitle">매물 추가</h2>
-                </div>
-                <button class="admin-modal__close" id="closeModal">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
-            </div>
-
-            <form id="propertyForm" class="admin-form">
-                <div class="admin-form-grid">
-                    <label class="admin-field">
-                        <span>매물명 *</span>
-                        <input type="text" name="propertyName" placeholder="예: 강남 프리미엄 아파트" required>
-                    </label>
-
-                    <label class="admin-field">
-                        <span>거래유형 *</span>
-                        <select name="transactionType" required>
-                            <option value="">선택하세요</option>
-                            <option value="매매">매매</option>
-                            <option value="전세">전세</option>
-                            <option value="월세">월세</option>
-                        </select>
-                    </label>
-                </div>
-
-                <label class="admin-field">
-                    <span>주소 *</span>
-                    <input type="text" name="address" placeholder="서울시 강남구 역삼동 123-45" required>
-                </label>
-
-                <div class="admin-form-grid admin-form-grid--3">
-                    <label class="admin-field">
-                        <span>지역 *</span>
-                        <select name="region" required>
-                            <option value="">선택하세요</option>
-                            <option value="강남구">강남구</option>
-                            <option value="서초구">서초구</option>
-                            <option value="송파구">송파구</option>
-                            <option value="강동구">강동구</option>
-                            <option value="기타">기타</option>
-                        </select>
-                    </label>
-
-                    <label class="admin-field">
-                        <span>평수 *</span>
-                        <input type="number" name="size" placeholder="34" min="1" required>
-                    </label>
-
-                    <label class="admin-field">
-                        <span>방/욕실</span>
-                        <input type="text" name="rooms" placeholder="3/2">
-                    </label>
-                </div>
-
-                <div class="admin-form-grid">
-                    <label class="admin-field">
-                        <span>가격 (만원) *</span>
-                        <input type="number" name="price" placeholder="125000" min="0" required>
-                    </label>
-
-                    <label class="admin-field" id="depositField" style="display: none;">
-                        <span>보증금 (만원)</span>
-                        <input type="number" name="deposit" placeholder="5000" min="0">
-                    </label>
-                </div>
-
-                <label class="admin-field">
-                    <span>상세 설명</span>
-                    <textarea name="description" rows="4" placeholder="매물에 대한 상세 설명을 입력하세요..."></textarea>
-                </label>
-
-                <div class="admin-form-grid admin-form-grid--3">
-                    <label class="admin-field">
-                        <span>층수</span>
-                        <input type="text" name="floor" placeholder="5/15">
-                    </label>
-
-                    <label class="admin-field">
-                        <span>건축년도</span>
-                        <input type="number" name="buildYear" placeholder="2020" min="1900" max="2025">
-                    </label>
-
-                    <label class="admin-field">
-                        <span>주차</span>
-                        <input type="text" name="parking" placeholder="1대">
-                    </label>
-                </div>
-
-                <label class="admin-field">
-                    <span>매물 이미지 (최대 10개, 각 5MB 이하)</span>
-                    <input type="file" name="images" id="propertyImages" accept="image/jpeg,image/png,image/webp"
-                        multiple>
-                    <div class="admin-image-preview" id="imagePreview"></div>
-                </label>
-
-                <div class="admin-checkbox-field">
-                    <input type="checkbox" name="featured" id="featuredProperty">
-                    <label for="featuredProperty">추천 매물로 표시</label>
-                </div>
-
-                <div class="admin-modal__actions">
-                    <button type="submit" class="admin-primary">저장</button>
-                    <button type="button" class="admin-ghost" id="cancelModal">취소</button>
-                </div>
-            </form>
-        </div>
+      </div>
     </div>
+    <nav class="admin-nav">
+      <a href="#dashboard" class="admin-nav__item active" data-section="dashboard">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        <span>대시보드</span>
+      </a>
+      <a href="#properties" class="admin-nav__item" data-section="properties">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        <span>매물 관리</span>
+      </a>
+      <a href="#inquiries" class="admin-nav__item" data-section="inquiries">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        <span>문의 관리</span>
+      </a>
+    </nav>
+    <div class="admin-sidebar__footer">
+      <button type="button" id="logoutBtn" class="admin-logout-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+        로그아웃
+      </button>
+    </div>
+  </aside>
 
+  <main class="admin-main">
+    <section id="dashboard-section" class="admin-section active">
+      <div class="admin-section__header">
+        <div>
+          <p class="admin-kicker">Overview</p>
+          <h1>대시보드</h1>
+          <p class="admin-sub">전체 매물/문의 현황을 실시간으로 확인하세요.</p>
+        </div>
+      </div>
 
-    <!-- Inline script for navigation (works in file:// protocol) -->
-    <script>
-        // Navigation functionality - works without server
-        document.addEventListener('DOMContentLoaded', () => {
-            const navItems = document.querySelectorAll('.admin-nav__item');
-            const sections = document.querySelectorAll('.admin-section');
+      <div class="admin-stats-grid">
+        <div class="admin-stat-card">
+          <div class="admin-stat-icon" style="background: rgba(16, 185, 129, 0.12);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+          </div>
+          <div class="admin-stat-content">
+            <div class="admin-stat-label">전체 매물</div>
+            <div class="admin-stat-value" data-stat-listings>0</div>
+            <div class="admin-stat-change positive">Supabase 연동</div>
+          </div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="admin-stat-icon" style="background: rgba(37, 99, 235, 0.12);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          </div>
+          <div class="admin-stat-content">
+            <div class="admin-stat-label">최근 7일 신규</div>
+            <div class="admin-stat-value" data-stat-new7d>0</div>
+            <div class="admin-stat-change">신규 매물</div>
+          </div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="admin-stat-icon" style="background: rgba(245, 158, 11, 0.12);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+          </div>
+          <div class="admin-stat-content">
+            <div class="admin-stat-label">전체 문의</div>
+            <div class="admin-stat-value" data-stat-inquiries>0</div>
+            <div class="admin-stat-change">누적 문의</div>
+          </div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="admin-stat-icon" style="background: rgba(139, 92, 246, 0.12);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+          </div>
+          <div class="admin-stat-content">
+            <div class="admin-stat-label">미확인 문의</div>
+            <div class="admin-stat-value" data-stat-unread>0</div>
+            <div class="admin-stat-change">읽지 않음</div>
+          </div>
+        </div>
+      </div>
 
-            navItems.forEach(item => {
-                item.addEventListener('click', (e) => {
-                    e.preventDefault();
+      <div class="admin-card" style="margin-top:24px;">
+        <div class="admin-card__header">
+          <div>
+            <p class="admin-kicker">Recent Activity</p>
+            <h2>최근 활동</h2>
+          </div>
+        </div>
+        <ul class="admin-activity-list" data-recent-activities>
+          <li class="admin-activity">불러오는 중...</li>
+        </ul>
+      </div>
+    </section>
 
-                    // Remove active class from all items
-                    navItems.forEach(nav => nav.classList.remove('active'));
+    <section id="properties-section" class="admin-section">
+      <div class="admin-section__header">
+        <div>
+          <p class="admin-kicker">Property Management</p>
+          <h1>매물 관리</h1>
+          <p class="admin-sub">등록된 매물을 Supabase에서 불러와 관리합니다.</p>
+        </div>
+        <button class="admin-primary" id="addPropertyBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;"><path d="M12 5v14m7-7H5"></path></svg>
+          매물 추가
+        </button>
+      </div>
+      <div class="admin-table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>매물명</th>
+              <th>유형</th>
+              <th>주소</th>
+              <th>등록일</th>
+            </tr>
+          </thead>
+          <tbody data-admin-listings>
+            <tr><td colspan="5">불러오는 중...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
-                    // Add active class to clicked item
-                    item.classList.add('active');
+    <section id="inquiries-section" class="admin-section">
+      <div class="admin-section__header">
+        <div>
+          <p class="admin-kicker">Inquiry Management</p>
+          <h1>문의 관리</h1>
+          <p class="admin-sub">고객 문의를 확인하고 상태를 업데이트하세요.</p>
+        </div>
+      </div>
+      <div class="admin-table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>매물명</th>
+              <th>이름</th>
+              <th>연락처</th>
+              <th>상태</th>
+              <th>등록일</th>
+              <th>처리</th>
+            </tr>
+          </thead>
+          <tbody data-admin-inquiries>
+            <tr><td colspan="7">불러오는 중...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
 
-                    // Hide all sections
-                    sections.forEach(section => section.classList.remove('active'));
+  <!-- Property Modal -->
+  <div id="propertyModal" class="admin-modal">
+    <div class="admin-modal__overlay"></div>
+    <div class="admin-modal__content">
+      <div class="admin-modal__header">
+        <div>
+          <p class="admin-kicker">Listing</p>
+          <h2 id="modalTitle">매물 추가</h2>
+          <p class="admin-sub">사진을 포함해 상세 정보를 입력하세요.</p>
+        </div>
+        <button class="admin-icon-btn" id="closeModal" aria-label="닫기">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <form id="propertyForm" class="admin-form">
+        <div class="admin-form__grid">
+          <div class="admin-form__field">
+            <label>매물명 *</label>
+            <input type="text" name="title" placeholder="예: 송파 시그니엘 레지던스" required>
+          </div>
+          <div class="admin-form__field">
+            <label>거래유형 *</label>
+            <select name="transactionType" required>
+              <option value="">선택</option>
+              <option value="매매">매매</option>
+              <option value="전세">전세</option>
+              <option value="월세">월세</option>
+            </select>
+          </div>
+          <div class="admin-form__field" id="depositField" style="display:none;">
+            <label>보증금</label>
+            <input type="number" name="deposit" placeholder="전세 보증금">
+          </div>
+          <div class="admin-form__field">
+            <label>가격(숫자)</label>
+            <input type="number" name="price" placeholder="숫자만 입력">
+          </div>
+          <div class="admin-form__field">
+            <label>주소</label>
+            <input type="text" name="address" placeholder="주소">
+          </div>
+          <div class="admin-form__field">
+            <label>도시</label>
+            <input type="text" name="city" placeholder="예: 서울">
+          </div>
+          <div class="admin-form__field">
+            <label>구/군</label>
+            <input type="text" name="district" placeholder="예: 송파구">
+          </div>
+          <div class="admin-form__field">
+            <label>연락처 이름</label>
+            <input type="text" name="contactName" placeholder="담당자 이름">
+          </div>
+          <div class="admin-form__field">
+            <label>연락처 전화</label>
+            <input type="text" name="contactPhone" placeholder="010-0000-0000">
+          </div>
+          <div class="admin-form__field">
+            <label>연락처 이메일</label>
+            <input type="email" name="contactEmail" placeholder="email@example.com">
+          </div>
+          <div class="admin-form__field admin-form__full">
+            <label>설명</label>
+            <textarea name="description" rows="4" placeholder="매물 상세 설명"></textarea>
+          </div>
+          <div class="admin-form__field admin-form__full">
+            <label>매물 이미지 (최대 10개, 각 5MB 이하)</label>
+            <input type="file" id="propertyImages" name="images" accept="image/*" multiple>
+            <div id="imagePreview" class="admin-image-preview"></div>
+          </div>
+        </div>
+        <div class="admin-modal__footer">
+          <button type="button" class="admin-btn admin-btn--ghost" id="cancelModal">취소</button>
+          <button type="submit" class="admin-primary">저장</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-                    // Show corresponding section
-                    const sectionId = item.getAttribute('data-section') + '-section';
-                    const targetSection = document.getElementById(sectionId);
-                    if (targetSection) {
-                        targetSection.classList.add('active');
-                    }
-                });
-            });
-
-            // Logout button
-            const logoutBtn = document.getElementById('logoutBtn');
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', () => {
-                    if (confirm('로그아웃 하시겠습니까?')) {
-                        sessionStorage.clear();
-                        localStorage.clear();
-                        window.location.href = './login.html';
-                    }
-                });
-            }
-
-            // Add property button
-            const addPropertyBtn = document.getElementById('addPropertyBtn');
-            const propertyModal = document.getElementById('propertyModal');
-            const closeModalBtn = document.getElementById('closeModal');
-            const cancelModalBtn = document.getElementById('cancelModal');
-
-            if (addPropertyBtn && propertyModal) {
-                addPropertyBtn.addEventListener('click', () => {
-                    propertyModal.classList.add('active');
-                    document.body.style.overflow = 'hidden';
-                });
-            }
-
-            if (closeModalBtn) {
-                closeModalBtn.addEventListener('click', () => {
-                    propertyModal.classList.remove('active');
-                    document.body.style.overflow = '';
-                });
-            }
-
-            if (cancelModalBtn) {
-                cancelModalBtn.addEventListener('click', () => {
-                    propertyModal.classList.remove('active');
-                    document.body.style.overflow = '';
-                });
-            }
-
-            // Close modal on overlay click
-            if (propertyModal) {
-                const overlay = propertyModal.querySelector('.admin-modal__overlay');
-                if (overlay) {
-                    overlay.addEventListener('click', () => {
-                        propertyModal.classList.remove('active');
-                        document.body.style.overflow = '';
-                    });
-                }
-            }
-
-            console.log('Dashboard navigation initialized (inline script)');
-        });
-    </script>
-
-    <script type="module" src="../js/admin-dashboard.js"></script>
+  <script type="module" src="../js/admin-dashboard.js"></script>
 </body>
-
 </html>
