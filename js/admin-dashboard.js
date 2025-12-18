@@ -176,15 +176,23 @@ async function loadInquiriesAdmin() {
     inquiriesTbody.innerHTML = '';
     data.forEach((inq, idx) => {
       const tr = document.createElement('tr');
+      if ((inq.status || '').toLowerCase() === 'unread') {
+        tr.classList.add('admin-inquiry--unread');
+      }
       tr.innerHTML = `
         <td>${idx + 1}</td>
         <td>${inq.listing_title || ''}</td>
         <td>${inq.name || ''}</td>
         <td>${inq.phone || ''}</td>
         <td>${inq.message || ''}</td>
-        <td>${inq.status || ''}</td>
+        <td>${renderStatusBadge(inq.status)}</td>
         <td>${inq.created_at ? new Date(inq.created_at).toLocaleString() : ''}</td>
-        <td><button class="admin-btn admin-btn--ghost" data-inquiry="${inq.id}" data-status="${inq.status === 'read' ? 'unread' : 'read'}">${inq.status === 'read' ? '안읽음으로' : '읽음으로'}</button></td>
+        <td>
+          <div class="admin-table-actions">
+            <button class="admin-btn admin-btn--ghost" data-inquiry="${inq.id}" data-status="${inq.status === 'read' ? 'unread' : 'read'}">${inq.status === 'read' ? '안읽음으로' : '읽음으로'}</button>
+            <button class="admin-btn admin-btn--ghost" data-share-inquiry="${inq.id}">공유</button>
+          </div>
+        </td>
       `;
       inquiriesTbody.appendChild(tr);
     });
@@ -195,6 +203,32 @@ async function loadInquiriesAdmin() {
         await updateInquiryStatus(id, nextStatus);
         loadInquiriesAdmin();
         loadRecent();
+      });
+    });
+    inquiriesTbody.querySelectorAll('[data-share-inquiry]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-share-inquiry');
+        const inq = data.find((x) => `${x.id}` === `${id}`);
+        if (!inq) return;
+        const text = [
+          `Listing: ${inq.listing_title || '-'}`,
+          `Name: ${inq.name || '-'}`,
+          `Phone: ${inq.phone || '-'}`,
+          `Email: ${inq.email || '-'}`,
+          `Message: ${inq.message || '-'}`,
+          `Created: ${inq.created_at ? new Date(inq.created_at).toLocaleString() : '-'}`
+        ].join('\n');
+        try {
+          if (navigator?.clipboard?.writeText) {
+            await navigator.clipboard.writeText(text);
+            alert('문의 내용을 클립보드에 복사했습니다.');
+          } else {
+            prompt('아래 내용을 복사하세요:', text);
+          }
+        } catch (err) {
+          console.error('클립보드 복사 실패', err);
+          prompt('아래 내용을 복사하세요:', text);
+        }
       });
     });
   } catch (err) {
@@ -392,6 +426,13 @@ async function uploadImagesToSupabase(images) {
 function togglePropertyFormDisabled(isDisabled) {
   const submit = propertyForm?.querySelector('button[type="submit"]');
   if (submit) submit.disabled = isDisabled;
+}
+
+function renderStatusBadge(status) {
+  const normalized = (status || '').toLowerCase();
+  const label = normalized === 'read' ? '읽음' : '미확인';
+  const cls = normalized === 'read' ? 'admin-status-badge' : 'admin-status-badge pending';
+  return `<span class="${cls}">${label}</span>`;
 }
 
 function fillForm(item) {
