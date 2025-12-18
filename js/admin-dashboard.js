@@ -9,6 +9,7 @@ import {
   listInquiriesAdmin,
   updateInquiryStatus
 } from './services/backendAdapter.js';
+import { useAuth } from './hooks/useAuth.js';
 
 // DOM hooks
 const statsEls = {
@@ -21,6 +22,7 @@ const serviceStatusEl = document.querySelector('[data-service-status]');
 const recentContainer = document.querySelector('[data-recent-activities]');
 const listingsTbody = document.querySelector('[data-admin-listings]');
 const inquiriesTbody = document.querySelector('[data-admin-inquiries]');
+const logoutBtn = document.getElementById('logoutBtn');
 
 // Property modal / form
 const propertyModal = document.getElementById('propertyModal');
@@ -52,12 +54,14 @@ const inquiryFields = {
 let uploadedImages = [];
 let existingImages = [];
 let editingId = null;
+const auth = useAuth();
 
 document.addEventListener('DOMContentLoaded', () => {
   bindNav();
   bindModal();
   bindPropertyForm();
   bindInquiryModal();
+  bindLogout();
   loadStats();
   loadRecent();
   loadListingsAdmin();
@@ -309,6 +313,19 @@ function bindInquiryModal() {
   if (inquiryOverlay) inquiryOverlay.addEventListener('click', closeFns);
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && inquiryModal?.classList.contains('active')) closeInquiryModal();
+  });
+}
+
+function bindLogout() {
+  if (!logoutBtn) return;
+  logoutBtn.addEventListener('click', async () => {
+    try {
+      await auth.signOut();
+    } catch (err) {
+      console.error('Logout error', err);
+    } finally {
+      window.location.href = './login.html';
+    }
   });
 }
 
