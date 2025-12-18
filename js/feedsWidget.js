@@ -1,6 +1,7 @@
-import { listExternalFeeds } from './services/backendAdapter.js';
+﻿import { listExternalFeeds } from './services/backendAdapter.js';
 
 const feedContainer = document.querySelector('[data-feed-list]');
+const updatedEl = document.querySelector('[data-feed-updated]');
 const isEnglish = document.documentElement.lang === 'en';
 
 initFeeds();
@@ -12,12 +13,15 @@ async function initFeeds() {
     const feeds = await listExternalFeeds({ limit: 8 });
     if (!feeds || feeds.length === 0) {
       setEmpty();
+      setUpdatedText(null);
       return;
     }
     renderFeeds(feeds);
+    setUpdatedText(getLatestTs(feeds));
   } catch (err) {
     console.error('Feed load failed', err);
     setError();
+    setUpdatedText(null);
   }
 }
 
@@ -33,7 +37,6 @@ function renderFeeds(feeds) {
         <p class="lr-text">${item.summary || ''}</p>
         <div class="lr-card__meta">
           <span>${formatDate(item.published_at)}</span>
-          <span>${formatDate(item.fetched_at, true)}</span>
         </div>
       </div>
     `;
@@ -62,13 +65,32 @@ function mapSource(source) {
   return map[source] || source || (isEnglish ? 'Update' : '업데이트');
 }
 
-function formatDate(ts, fetched = false) {
+function formatDate(ts) {
   if (!ts) return '';
   try {
     const locale = isEnglish ? 'en-US' : 'ko-KR';
     const opts = { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-    return `${new Date(ts).toLocaleString(locale, { ...opts, timeZone: 'Asia/Seoul' })}${fetched ? (isEnglish ? ' (fetched)' : ' (업데이트)') : ''}`;
+    return new Date(ts).toLocaleString(locale, { ...opts, timeZone: 'Asia/Seoul' });
   } catch {
     return '';
   }
+}
+
+function getLatestTs(feeds) {
+  let latest = null;
+  feeds.forEach((f) => {
+    const ts = f.fetched_at || f.published_at;
+    if (ts && (!latest || new Date(ts) > new Date(latest))) latest = ts;
+  });
+  return latest;
+}
+
+function setUpdatedText(ts) {
+  if (!updatedEl) return;
+  if (!ts) {
+    updatedEl.textContent = '';
+    return;
+  }
+  const label = isEnglish ? 'Updated: ' : '업데이트: ';
+  updatedEl.textContent = label + formatDate(ts) + ' KST';
 }
