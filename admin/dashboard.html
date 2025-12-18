@@ -137,10 +137,11 @@
               <th>유형</th>
               <th>주소</th>
               <th>등록일</th>
+              <th>작업</th>
             </tr>
           </thead>
           <tbody data-admin-listings>
-            <tr><td colspan="5">불러오는 중...</td></tr>
+            <tr><td colspan="6">불러오는 중...</td></tr>
           </tbody>
         </table>
       </div>
@@ -190,12 +191,12 @@
         </button>
       </div>
       <form id="propertyForm" class="admin-form">
-        <div class="admin-form__grid">
-          <div class="admin-form__field">
+        <div class="admin-form-grid">
+          <div>
             <label>매물명 *</label>
             <input type="text" name="title" placeholder="예: 송파 시그니엘 레지던스" required>
           </div>
-          <div class="admin-form__field">
+          <div>
             <label>거래유형 *</label>
             <select name="transactionType" required>
               <option value="">선택</option>
@@ -204,43 +205,43 @@
               <option value="월세">월세</option>
             </select>
           </div>
-          <div class="admin-form__field" id="depositField" style="display:none;">
+          <div id="depositField" style="display:none;">
             <label>보증금</label>
             <input type="number" name="deposit" placeholder="전세 보증금">
           </div>
-          <div class="admin-form__field">
+          <div>
             <label>가격(숫자)</label>
             <input type="number" name="price" placeholder="숫자만 입력">
           </div>
-          <div class="admin-form__field">
+          <div>
             <label>주소</label>
             <input type="text" name="address" placeholder="주소">
           </div>
-          <div class="admin-form__field">
+          <div>
             <label>도시</label>
             <input type="text" name="city" placeholder="예: 서울">
           </div>
-          <div class="admin-form__field">
+          <div>
             <label>구/군</label>
             <input type="text" name="district" placeholder="예: 송파구">
           </div>
-          <div class="admin-form__field">
+          <div>
             <label>연락처 이름</label>
             <input type="text" name="contactName" placeholder="담당자 이름">
           </div>
-          <div class="admin-form__field">
+          <div>
             <label>연락처 전화</label>
             <input type="text" name="contactPhone" placeholder="010-0000-0000">
           </div>
-          <div class="admin-form__field">
+          <div>
             <label>연락처 이메일</label>
             <input type="email" name="contactEmail" placeholder="email@example.com">
           </div>
-          <div class="admin-form__field admin-form__full">
+          <div style="grid-column:1/-1;">
             <label>설명</label>
             <textarea name="description" rows="4" placeholder="매물 상세 설명"></textarea>
           </div>
-          <div class="admin-form__field admin-form__full">
+          <div style="grid-column:1/-1;">
             <label>매물 이미지 (최대 10개, 각 5MB 이하)</label>
             <input type="file" id="propertyImages" name="images" accept="image/*" multiple>
             <div id="imagePreview" class="admin-image-preview"></div>

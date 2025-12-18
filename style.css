@@ -2374,9 +2374,12 @@ h1 {
 }
 
 .lr-card__thumb {
-  height: 180px;
+  aspect-ratio: 4 / 3;
+  height: auto;
   background-size: cover;
   background-position: center;
+  background-repeat: no-repeat;
+  border: 1px solid #e5e7eb;
 }
 
 .lr-card__body {

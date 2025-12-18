@@ -109,6 +109,24 @@ export async function listListingsAdmin({ page = 1, pageSize = 20, sort = 'creat
 }
 
 /**
+ * Admin: update listing
+ */
+export async function updateListing(id, patch) {
+  const provider = (APP_CONFIG.BACKEND_PROVIDER || 'mock').toLowerCase();
+  if (provider === 'supabase') return updateListingSupabase(id, patch);
+  return { id, ...patch };
+}
+
+/**
+ * Admin: delete listing
+ */
+export async function deleteListing(id) {
+  const provider = (APP_CONFIG.BACKEND_PROVIDER || 'mock').toLowerCase();
+  if (provider === 'supabase') return deleteListingSupabase(id);
+  return { id, deleted: true };
+}
+
+/**
  * Admin: list inquiries
  */
 export async function listInquiriesAdmin({ page = 1, pageSize = 20, status, query } = {}) {
@@ -357,6 +375,44 @@ async function listListingsAdminSupabase({ page, pageSize, sort, direction }) {
     return [];
   }
   return data || [];
+}
+
+async function updateListingSupabase(id, patch) {
+  const supabase = getSupabaseClient();
+  if (!supabase) return null;
+  const dbPatch = {
+    title: patch.title,
+    description: patch.description,
+    price: patch.price,
+    currency: patch.currency,
+    address: patch.location?.address || patch.address,
+    city: patch.location?.city || patch.city,
+    district: patch.location?.district || patch.district,
+    latitude: patch.location?.latitude,
+    longitude: patch.location?.longitude,
+    property_type: patch.propertyType || patch.property_type,
+    images: patch.images,
+    contact_name: patch.contact?.name || patch.contact_name,
+    contact_phone: patch.contact?.phone || patch.contact_phone,
+    contact_email: patch.contact?.email || patch.contact_email
+  };
+  const { data, error } = await supabase.from('property_listings').update(dbPatch).eq('id', id).select().single();
+  if (error) {
+    console.error('Supabase updateListing error', error);
+    throw error;
+  }
+  return data;
+}
+
+async function deleteListingSupabase(id) {
+  const supabase = getSupabaseClient();
+  if (!supabase) return null;
+  const { error } = await supabase.from('property_listings').delete().eq('id', id);
+  if (error) {
+    console.error('Supabase deleteListing error', error);
+    throw error;
+  }
+  return { id, deleted: true };
 }
 
 async function listInquiriesAdminSupabase({ page, pageSize, status, query }) {
