@@ -77,6 +77,15 @@ export async function listListingsPublic({
 }
 
 /**
+ * External feeds (news/policy cache)
+ */
+export async function listExternalFeeds({ source, limit = 10 } = {}) {
+  const provider = (APP_CONFIG.BACKEND_PROVIDER || 'mock').toLowerCase();
+  if (provider === 'supabase') return listExternalFeedsSupabase({ source, limit });
+  return [];
+}
+
+/**
  * Single listing detail
  */
 export async function getListingById(id) {
@@ -468,4 +477,21 @@ async function updateInquiryStatusSupabase(id, status) {
 
 function listListingsMock() {
   return [];
+}
+
+async function listExternalFeedsSupabase({ source, limit }) {
+  const supabase = getSupabaseClient();
+  if (!supabase) return [];
+  let req = supabase
+    .from('external_feeds')
+    .select('*')
+    .order('published_at', { ascending: false })
+    .limit(limit || 10);
+  if (source) req = req.eq('source', source);
+  const { data, error } = await req;
+  if (error) {
+    console.error('Supabase listExternalFeeds error', error);
+    return [];
+  }
+  return data || [];
 }
