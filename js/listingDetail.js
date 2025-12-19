@@ -11,19 +11,27 @@ const imageEl = document.querySelector('[data-detail-image]');
 const noteEl = document.querySelector('[data-detail-note]');
 const formEl = document.querySelector('[data-inquiry-form]');
 
+const phoneBtn = document.getElementById('phoneBtn');
+
 init();
 
 async function init() {
   const listing = id ? await getListingById(id) : null;
-  if (listing) renderDetail(listing);
+  if (listing) {
+    renderDetail(listing);
+    bindPhoneBtn(listing);
+  }
   if (formEl) bindForm(listing);
 }
 
 function renderDetail(listing) {
   if (titleEl) titleEl.textContent = listing.title || '';
+
+  const formattedPrice = formatPrice(listing.price, listing.metadata?.deposit, listing.property_type);
+
   const infoParts = [
     listing.address || listing.city || '',
-    listing.price || '',
+    formattedPrice,
     listing.property_type || ''
   ].filter(Boolean);
   if (infoEl) infoEl.textContent = infoParts.join(' · ');
@@ -31,6 +39,36 @@ function renderDetail(listing) {
   if (featuresEl) featuresEl.innerHTML = (listing.features || []).map((f) => `<li>${f}</li>`).join('');
   if (noteEl) noteEl.textContent = listing.contactNote || '';
   if (imageEl) imageEl.src = listing.image || (listing.images && listing.images[0]) || '';
+}
+
+function formatPrice(price, deposit, type) {
+  if (!price) return '';
+  const p = Number(price);
+  const d = Number(deposit || 0);
+  const typeStr = (type || '').trim();
+
+  // Monthly Rent (Wolse)
+  if (typeStr === '월세' || typeStr === 'Monthly Rent') {
+    if (d > 0) return `${d.toLocaleString()} / ${p.toLocaleString()} 만원`;
+    return `${p.toLocaleString()} 만원 (월세)`;
+  }
+
+  // Jeonse or Sale
+  return `${p.toLocaleString()} 만원`;
+}
+
+function bindPhoneBtn(listing) {
+  if (!phoneBtn) return;
+  phoneBtn.addEventListener('click', (e) => {
+    // If desktop (width > 768px), show alert instead of calling
+    if (window.innerWidth > 768) {
+      e.preventDefault();
+      const num = '0507-1402-5055';
+      // Or use listing specific contact if available: listing.contact?.phone
+      // But user mentioned "Representative number" so sticking to hardcoded for now or use the one in href.
+      alert(`전화 문의: ${num}\n(모바일에서는 바로 전화가 연결됩니다)`);
+    }
+  });
 }
 
 function bindForm(listing) {
@@ -42,7 +80,7 @@ function bindForm(listing) {
       listingTitle: listing?.title,
       name: formData.get('name') || '',
       phone: formData.get('phone') || '',
-      email: formData.get('email') || '',
+      email: formData.get('email') || '', // Optional now
       message: formData.get('message') || '',
       metadata: { source: 'public-detail' }
     };
