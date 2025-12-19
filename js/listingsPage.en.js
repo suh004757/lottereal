@@ -54,6 +54,11 @@ function renderListings(data) {
     card.className = 'lr-card lr-card--listing';
     const image = item.image || (item.images && item.images[0]) || '';
     const badge = item.property_type || item.type || 'Listing';
+
+    // Contact phone logic
+    const contactPhone = item.contact_phone || '0507-1402-5055';
+    const telLink = `tel:${contactPhone.replace(/[^0-9]/g, '')}`;
+
     card.innerHTML = `
       <div class="lr-card__thumb" style="background-image:url('${image}');"></div>
       <div class="lr-card__body">
@@ -66,10 +71,22 @@ function renderListings(data) {
         </div>
         <div class="lr-card__actions">
           <a class="lr-btn lr-btn--ghost lr-btn--block" href="listing-detail-en.html?id=${encodeURIComponent(item.id)}">View details</a>
-          <a class="lr-btn lr-btn--primary lr-btn--block" href="listing-detail-en.html?id=${encodeURIComponent(item.id)}#inquiry">Inquire</a>
+          <a class="lr-btn lr-btn--primary lr-btn--block contact-btn" href="${telLink}" data-phone="${contactPhone}">Inquire</a>
         </div>
       </div>
     `;
     listContainer.appendChild(card);
+  });
+}
+
+// Phone inquiry alert for desktop
+if (listContainer) {
+  listContainer.addEventListener('click', (e) => {
+    const btn = e.target.closest('.contact-btn');
+    if (btn && window.innerWidth > 768) {
+      e.preventDefault();
+      const phone = btn.getAttribute('data-phone');
+      alert(`Phone Inquiry: ${phone}\n(Direct call available on mobile)`);
+    }
   });
 }
