@@ -1,4 +1,6 @@
 Sitemap: https://lottes.co.kr/Sitemap.xml
+
 User-agent: *
 Allow: /
-
+Disallow: /admin/
+Disallow: /js/
