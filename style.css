@@ -2229,8 +2229,8 @@ body {
 }
 
 .lr-nav a:hover {
-  color: var(--lr-text);
-  background: rgba(79, 209, 197, 0.08);
+  color: var(--lr-primary);
+  background: rgba(245, 166, 35, 0.08);
 }
 
 .lr-nav-cta {
@@ -2299,7 +2299,8 @@ h1 {
 .lr-btn--primary {
   background: linear-gradient(135deg, var(--lr-primary), var(--lr-primary-strong));
   color: #0a0f1d;
-  box-shadow: 0 10px 30px rgba(79, 209, 197, 0.35);
+  box-shadow: var(--lr-gold-glow);
+  font-weight: 700;
 }
 
 .lr-btn--ghost {
@@ -2400,7 +2401,7 @@ h1 {
   align-items: center;
   padding: 6px 10px;
   border-radius: 999px;
-  background: rgba(79, 209, 197, 0.12);
+  background: rgba(245, 166, 35, 0.12);
   color: var(--lr-primary);
   font-weight: 600;
   font-size: 12px;
@@ -2432,7 +2433,7 @@ h1 {
   width: 42px;
   height: 42px;
   border-radius: 12px;
-  background: rgba(79, 209, 197, 0.12);
+  background: rgba(245, 166, 35, 0.12);
   color: var(--lr-primary);
   display: inline-flex;
   align-items: center;
@@ -2442,7 +2443,7 @@ h1 {
 }
 
 .lr-cta {
-  background: linear-gradient(135deg, rgba(79, 209, 197, 0.1), rgba(63, 93, 255, 0.08));
+  background: linear-gradient(135deg, var(--lr-navy), var(--lr-navy-dark));
   border: 1px solid var(--lr-border);
   border-radius: var(--lr-radius);
   padding: 32px;
@@ -2614,7 +2615,7 @@ h1 {
 .lr-tags span {
   padding: 6px 10px;
   border-radius: 10px;
-  background: rgba(79, 209, 197, 0.12);
+  background: rgba(245, 166, 35, 0.12);
   color: var(--lr-primary);
   font-size: 12px;
 }
