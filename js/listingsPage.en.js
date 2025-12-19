@@ -41,7 +41,11 @@ function renderListings(data) {
   listContainer.innerHTML = '';
 
   if (!data || data.length === 0) {
-    listContainer.innerHTML = '<p style="text-align:center; width:100%; padding: 50px;">No listings match your filters.</p>';
+    listContainer.innerHTML = `
+      <div style="text-align:center; width:100%; padding: 50px;" class="lr-text">
+        No listings match your filters.<br><br>
+        Some listings may be on Zigbang or Dabang. Share your requirements and we will find options for you.
+      </div>`;
     return;
   }
 
