@@ -41,7 +41,11 @@ function renderListings(data) {
   listContainer.innerHTML = '';
 
   if (!data || data.length === 0) {
-    listContainer.innerHTML = '<p style="text-align:center; width:100%; padding: 50px;">조건에 맞는 매물이 없습니다.</p>';
+    listContainer.innerHTML = `
+      <div style="text-align:center; width:100%; padding: 50px;" class="lr-text">
+        조건에 맞는 매물이 없습니다.<br><br>
+        직방·다방에 등록된 매물도 있습니다. 원하는 조건을 알려주시면 바로 찾아드릴게요.
+      </div>`;
     return;
   }
 
