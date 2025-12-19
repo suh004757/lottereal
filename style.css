@@ -2162,22 +2162,26 @@ img {
 
 /* === Modern layout overrides for renewed homepage === */
 :root {
-  --lr-bg: #0a0f1d;
-  --lr-surface: #0f172a;
-  --lr-panel: #101a30;
-  --lr-primary: #4fd1c5;
-  --lr-primary-strong: #3bb1a7;
-  --lr-text: #e2e8f0;
+  --lr-bg: #0f1419;
+  --lr-surface: #1a2332;
+  --lr-panel: #1e2a3f;
+  --lr-primary: #F5A623;
+  --lr-primary-strong: #D4941B;
+  --lr-primary-light: #FFF4E0;
+  --lr-navy: #1E3A5F;
+  --lr-navy-dark: #152840;
+  --lr-text: #e8edf4;
   --lr-muted: #94a3b8;
-  --lr-border: #1f2a44;
+  --lr-border: #2a3f5f;
   --lr-radius: 14px;
   --lr-radius-sm: 10px;
-  --lr-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  --lr-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  --lr-gold-glow: 0 10px 40px rgba(245, 166, 35, 0.25);
 }
 
 body {
   font-family: 'Noto Sans KR', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: radial-gradient(120% 120% at 20% 20%, rgba(79, 209, 197, 0.08), transparent 50%), #0a0f1d;
+  background: radial-gradient(120% 120% at 20% 20%, rgba(245, 166, 35, 0.06), transparent 50%), var(--lr-bg);
   color: var(--lr-text);
 }
 
@@ -2254,7 +2258,10 @@ body {
   margin-bottom: 8px;
 }
 
-h1, h2, h3, h4 {
+h1,
+h2,
+h3,
+h4 {
   color: var(--lr-text);
   margin: 0 0 12px;
 }
@@ -2499,7 +2506,7 @@ h1 {
   background: rgba(79, 209, 197, 0.06);
   display: block;
   text-align: center;
-  -webkit-tap-highlight-color: rgba(0,0,0,0);
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
   touch-action: manipulation;
 }
 
@@ -2511,18 +2518,22 @@ h1 {
 }
 
 @media (max-width: 980px) {
+
   .lr-hero__content,
   .lr-cta {
     grid-template-columns: 1fr;
   }
+
   h1 {
     font-size: 32px;
   }
+
   .lr-header .lr-container {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
   }
+
   .lr-nav {
     flex-wrap: wrap;
     gap: 10px;
@@ -2558,7 +2569,7 @@ h1 {
 .lr-card--listing .lr-tags span {
   padding: 4px 10px;
   border-radius: 10px;
-  background: rgba(255,255,255,0.05);
+  background: rgba(255, 255, 255, 0.05);
   color: var(--lr-muted);
   font-size: 12px;
 }
@@ -2651,9 +2662,11 @@ h1 {
   .lr-section {
     padding: 64px 0;
   }
+
   .lr-hero {
     padding-top: 96px;
   }
+
   .lr-cta {
     padding: 20px;
   }
@@ -2664,6 +2677,7 @@ h1 {
     flex-direction: column;
     align-items: stretch;
   }
+
   .lr-actions .lr-btn {
     width: 100%;
     text-align: center;
