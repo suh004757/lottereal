@@ -59,14 +59,20 @@ function formatPrice(price, deposit, type) {
 
 function bindPhoneBtn(listing) {
   if (!phoneBtn) return;
+
+  // Use listing's contact phone, fallback to general number
+  const contactPhone = listing.contact_phone || '0507-1402-5055';
+  const telLink = `tel:${contactPhone.replace(/[^0-9]/g, '')}`; // Remove non-numeric chars for tel: link
+
+  // Set the href dynamically
+  phoneBtn.href = telLink;
+  phoneBtn.setAttribute('data-phone', contactPhone);
+
   phoneBtn.addEventListener('click', (e) => {
     // If desktop (width > 768px), show alert instead of calling
     if (window.innerWidth > 768) {
       e.preventDefault();
-      const num = '0507-1402-5055';
-      // Or use listing specific contact if available: listing.contact?.phone
-      // But user mentioned "Representative number" so sticking to hardcoded for now or use the one in href.
-      alert(`전화 문의: ${num}\n(모바일에서는 바로 전화가 연결됩니다)`);
+      alert(`전화 문의: ${contactPhone}\n(모바일에서는 바로 전화가 연결됩니다)`);
     }
   });
 }
