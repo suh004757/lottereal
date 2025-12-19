@@ -297,7 +297,7 @@ function bindModal() {
   if (transactionTypeSelect && depositField) {
     transactionTypeSelect.addEventListener('change', (e) => {
       const value = e.target.value || '';
-      depositField.style.display = value === '전세' ? 'block' : 'none';
+      depositField.style.display = (value === '전세' || value === '월세') ? 'block' : 'none';
     });
   }
 
@@ -481,7 +481,8 @@ function bindPropertyForm() {
         },
         metadata: {
           source: 'admin-dashboard',
-          submittedAt: new Date().toISOString()
+          submittedAt: new Date().toISOString(),
+          deposit: propertyData.deposit ? Number(propertyData.deposit) : 0
         }
       };
 
@@ -538,6 +539,14 @@ function fillForm(item) {
   propertyForm.querySelector('[name="title"]').value = item.title || '';
   propertyForm.querySelector('[name="transactionType"]').value = item.property_type || '';
   propertyForm.querySelector('[name="price"]').value = item.price || '';
+  // Populate deposit if available in metadata
+  const depositVal = item.metadata?.deposit || '';
+  if (propertyForm.querySelector('[name="deposit"]')) {
+    propertyForm.querySelector('[name="deposit"]').value = depositVal;
+  }
+  // Trigger change to show/hide deposit field
+  const event = new Event('change');
+  propertyForm.querySelector('[name="transactionType"]').dispatchEvent(event);
   propertyForm.querySelector('[name="address"]').value = item.address || '';
   propertyForm.querySelector('[name="city"]').value = item.city || '';
   propertyForm.querySelector('[name="district"]').value = item.district || '';

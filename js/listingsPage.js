@@ -62,7 +62,7 @@ function renderListings(data) {
         <p class="lr-text">${item.description || item.summary || ''}</p>
         <div class="lr-card__meta">
           <span>${item.address || item.city || ''}</span>
-          <span>${item.price ? item.price.toLocaleString() : ''}</span>
+          <span>${formatPrice(item.price, item.metadata?.deposit, item.property_type)}</span>
         </div>
         <div class="lr-card__actions">
           <a class="lr-btn lr-btn--ghost lr-btn--block" href="listing-detail.html?id=${encodeURIComponent(item.id)}">상세 보기</a>
@@ -73,3 +73,20 @@ function renderListings(data) {
     listContainer.appendChild(card);
   });
 }
+
+function formatPrice(price, deposit, type) {
+  if (!price) return '';
+  const p = Number(price);
+  const d = Number(deposit || 0);
+  const typeStr = (type || '').trim();
+
+  // Monthly Rent (Wolse)
+  if (typeStr === '월세' || typeStr === 'Monthly Rent') {
+    if (d > 0) return `${d.toLocaleString()} / ${p.toLocaleString()} 만원`;
+    return `${p.toLocaleString()} 만원 (월세)`;
+  }
+
+  // Jeonse or Sale
+  return `${p.toLocaleString()} 만원`;
+}
+
