@@ -8,6 +8,7 @@ const infoEl = document.querySelector('[data-detail-info]');
 const tagsEl = document.querySelector('[data-detail-tags]');
 const featuresEl = document.querySelector('[data-detail-features]');
 const imageEl = document.querySelector('[data-detail-image]');
+const descEl = document.querySelector('[data-detail-desc]');
 const noteEl = document.querySelector('[data-detail-note]');
 const formEl = document.querySelector('[data-inquiry-form]');
 const phoneBtn = document.getElementById('phoneBtn');
@@ -38,7 +39,9 @@ function renderDetail(listing) {
   if (tagsEl) tagsEl.innerHTML = (listing.tags || []).map((t) => `<span>${t}</span>`).join('');
   if (featuresEl) featuresEl.innerHTML = (listing.features || []).map((f) => `<li>${f}</li>`).join('');
   if (noteEl) noteEl.textContent = listing.contactNote || '';
-  if (imageEl) imageEl.src = listing.image || (listing.images && item.images[0]) || '';
+  if (imageEl) imageEl.src = listing.image || (listing.images && listing.images[0]) || '';
+  if (descEl) descEl.innerHTML = (listing.description || '').replace(/\n/g, '<br>');
+  if (noteEl) noteEl.textContent = listing.contactNote || '';
 }
 
 function formatPrice(price, deposit, type) {

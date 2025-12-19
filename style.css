@@ -2723,6 +2723,15 @@ h1 {
   margin-top: 8px;
 }
 
+.lr-detail__description {
+  color: var(--lr-text-secondary);
+  font-size: 16px;
+  line-height: 1.8;
+  margin: 24px 0;
+  white-space: pre-wrap;
+}
+
+
 .lr-form {
   display: grid;
   gap: 12px;
