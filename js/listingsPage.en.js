@@ -67,7 +67,7 @@ function renderListings(data) {
         <p class="lr-text">${item.description || item.summary || ''}</p>
         <div class="lr-card__meta">
           <span>${item.address || item.city || ''}</span>
-          <span>${item.price ? item.price.toLocaleString() : ''}</span>
+          <span>${formatPrice(item.price, item.metadata?.deposit, item.property_type)}</span>
         </div>
         <div class="lr-card__actions">
           <a class="lr-btn lr-btn--ghost lr-btn--block" href="listing-detail-en.html?id=${encodeURIComponent(item.id)}">View details</a>
@@ -89,4 +89,21 @@ if (listContainer) {
       alert(`Phone Inquiry: ${phone}\n(Direct call available on mobile)`);
     }
   });
+}
+
+function formatPrice(price, deposit, type) {
+  if (!price) return '';
+  const monthlyKeywords = ['월세', 'monthly rent'];
+  const typeStr = (type || '').toString().trim().toLowerCase();
+  const isMonthly = monthlyKeywords.includes(typeStr);
+  const formatKRW = (value) => `₩${Number(value).toLocaleString()}`;
+  const rent = Number(price);
+  const depositValue = Number(deposit || 0);
+
+  if (isMonthly) {
+    if (depositValue > 0) return `${formatKRW(depositValue)} / ${formatKRW(rent)} (Monthly)`;
+    return `${formatKRW(rent)} (Monthly)`;
+  }
+
+  return formatKRW(rent);
 }
