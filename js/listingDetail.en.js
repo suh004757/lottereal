@@ -28,17 +28,15 @@ function renderDetail(listing) {
   if (titleEl) titleEl.textContent = listing.title || '';
 
   const formattedPrice = formatPrice(listing.price, listing.metadata?.deposit, listing.property_type);
-
   const infoParts = [
     listing.address || listing.city || '',
     formattedPrice,
     listing.property_type || ''
   ].filter(Boolean);
 
-  if (infoEl) infoEl.textContent = infoParts.join(' · ');
+  if (infoEl) infoEl.textContent = infoParts.join(' \u00b7 ');
   if (tagsEl) tagsEl.innerHTML = (listing.tags || []).map((t) => `<span>${t}</span>`).join('');
   if (featuresEl) featuresEl.innerHTML = (listing.features || []).map((f) => `<li>${f}</li>`).join('');
-  if (noteEl) noteEl.textContent = listing.contactNote || '';
   if (imageEl) imageEl.src = listing.image || (listing.images && listing.images[0]) || '';
   if (descEl) descEl.innerHTML = (listing.description || '').replace(/\n/g, '<br>');
   if (noteEl) noteEl.textContent = listing.contactNote || '';
@@ -46,33 +44,30 @@ function renderDetail(listing) {
 
 function formatPrice(price, deposit, type) {
   if (!price) return '';
-  const p = Number(price);
-  const d = Number(deposit || 0);
-  const typeStr = (type || '').trim();
+  const rent = Number(price);
+  const depositValue = Number(deposit || 0);
+  const formatKRW = (value) => `KRW ${Number(value).toLocaleString()}`;
+  const normalized = (type || '').toString().trim().toLowerCase();
+  const isMonthly = normalized === '월세' || normalized === 'monthly rent';
 
-  // Monthly Rent (Wolse)
-  if (typeStr === '월세' || typeStr === 'Monthly Rent') {
-    if (d > 0) return `${d.toLocaleString()} / ${p.toLocaleString()} 万원`;
-    return `${p.toLocaleString()} 万원 (Monthly)`;
+  if (isMonthly) {
+    if (depositValue > 0) return `${formatKRW(depositValue)} / ${formatKRW(rent)} (Monthly)`;
+    return `${formatKRW(rent)} (Monthly)`;
   }
 
-  // Jeonse or Sale
-  return `${p.toLocaleString()} 万원`;
+  return formatKRW(rent);
 }
 
 function bindPhoneBtn(listing) {
   if (!phoneBtn) return;
 
-  // Use listing's contact phone, fallback to general number
   const contactPhone = listing.contact_phone || '0507-1402-5055';
-  const telLink = `tel:${contactPhone.replace(/[^0-9]/g, '')}`; // Remove non-numeric chars for tel: link
+  const telLink = `tel:${contactPhone.replace(/[^0-9]/g, '')}`;
 
-  // Set the href dynamically
   phoneBtn.href = telLink;
   phoneBtn.setAttribute('data-phone', contactPhone);
 
   phoneBtn.addEventListener('click', (e) => {
-    // If desktop (width > 768px), show alert instead of calling
     if (window.innerWidth > 768) {
       e.preventDefault();
       alert(`Phone Inquiry: ${contactPhone}\n(Direct call available on mobile)`);
