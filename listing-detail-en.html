@@ -36,55 +36,87 @@
     </div>
   </header>
 
-  <main class="lr-section">
-    <div class="lr-container lr-detail">
-      <div class="lr-detail__media">
-        <img data-detail-image alt="Listing image" />
-      </div>
-      <div class="lr-detail__body">
-        <p class="lr-kicker">Property</p>
-        <h1 data-detail-title>Loading...</h1>
-        <p class="lr-text" data-detail-info></p>
-        <div class="lr-detail__description" data-detail-desc></div>
-        <p class="lr-text" data-detail-note></p>
-        <div class="lr-tags" data-detail-tags></div>
-        <ul class="lr-list" data-detail-features></ul>
-        <div class="lr-detail__cta" style="margin-top: 20px;">
-          <a class="lr-btn lr-btn--primary" href="#" id="phoneBtn" data-phone="">Inquire by Phone</a>
+  <main>
+    <section class="lr-section">
+      <div class="lr-container lr-detail">
+        <div class="lr-detail__media">
+          <img data-detail-image src="" alt="Listing image" />
+        </div>
+        <div class="lr-detail__body">
+          <p class="lr-kicker">Listing Details</p>
+          <h1 data-detail-title></h1>
+          <p class="lr-lead" data-detail-info></p>
+          <div class="lr-detail__description" data-detail-desc></div>
+          <div class="lr-note" data-detail-note></div>
+          <div class="lr-tags" data-detail-tags></div>
+          <h4>Highlights</h4>
+          <ul class="lr-feature-list" data-detail-features></ul>
+          <div class="lr-detail__cta">
+            <a class="lr-btn lr-btn--primary" href="#" id="phoneBtn" data-phone="">Inquire by Phone</a>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="lr-container lr-card" style="margin-top: 30px;">
-      <h2>Inquiry</h2>
-      <form data-inquiry-form class="lr-form" id="inquiry">
-        <input type="text" name="name" placeholder="Your name" required />
-        <input type="text" name="phone" placeholder="Phone" required />
-        <input type="email" name="email" placeholder="Email" />
-        <textarea name="message" rows="4" placeholder="Tell us what you need" required></textarea>
-        <button type="submit" class="lr-btn lr-btn--primary">Submit inquiry</button>
-      </form>
-    </div>
+    <section class="lr-section lr-section--muted" id="inquiry">
+      <div class="lr-container">
+        <div class="lr-section__head">
+          <div>
+            <p class="lr-kicker">Inquiry</p>
+            <h2>Request more details or schedule a tour</h2>
+            <p class="lr-lead">Leave your contact info and preferred requirements. We will respond quickly.</p>
+          </div>
+        </div>
+        <form class="lr-form" data-inquiry-form>
+          <div class="lr-form__grid">
+            <label>
+              Name
+              <input class="lr-input" name="name" type="text" required />
+            </label>
+            <label>
+              Phone
+              <input class="lr-input" name="phone" type="tel" required />
+            </label>
+            <label>
+              Email (optional)
+              <input class="lr-input" name="email" type="email" />
+            </label>
+          </div>
+          <label>
+            Request details
+            <textarea class="lr-input" name="message" rows="4"
+              placeholder="Move-in timing, budget, key conditions"></textarea>
+          </label>
+          <button class="lr-btn lr-btn--primary" type="submit">Submit inquiry</button>
+        </form>
+      </div>
+    </section>
   </main>
 
   <footer class="lr-footer">
     <div class="lr-container lr-footer__content">
       <div>
-        <p class="lr-kicker">Lotte Real Estate</p>
-        <p class="lr-text">1F, 93-12, Baekjegobun-ro 27-gil, Songpa-gu, Seoul</p>
-        <p class="lr-text">Tel: 0507-1402-5055</p>
+        <p class="lr-kicker">LOTTE REAL ESTATE</p>
+        <p class="lr-text">1F, 27 Baekjegobun-ro 27-gil, Songpa-gu, Seoul</p>
+        <p class="lr-text">Tel. 0507-1402-5055 | Biz Reg. No. 183-01-01408</p>
+        <p class="lr-text">Broker License No. 11710-2018-00141 | Rep. SUH BONG HYUN</p>
       </div>
       <div class="lr-footer__links">
         <a href="https://goo.gl/maps/FVawYassWFUoJJBT7" target="_blank" rel="noreferrer">Google Maps</a>
         <a href="https://naver.me/xMnYYRpo" target="_blank" rel="noreferrer">Naver Map</a>
-        <a href="EN.html">Home</a>
+        <a href="privacy_EN.html">Privacy Policy</a>
       </div>
     </div>
-    <p class="lr-footer__copy">©
+    <p class="lr-footer__copy">&copy;
       <script>document.write(new Date().getFullYear());</script> Lotte Real Estate. All rights reserved.
     </p>
   </footer>
 
+  <script src="js/jquery/jquery-3.7.1.min.js"></script>
+  <script src="js/popper.min.js"></script>
+  <script src="js/bootstrap.min.js"></script>
+  <script src="js/plugins.js"></script>
+  <script src="js/active.js"></script>
   <script type="module" src="js/listingDetail.en.js"></script>
 </body>
 
