@@ -121,127 +121,200 @@ class Hero3DScene {
     createCitySkyline() {
         this.skyline = new THREE.Group();
 
-        // Building configurations: [width, height, depth, x-position, z-position, color]
+        // Modern building configurations: [width, height, depth, x-position, z-position, color, type]
         const buildings = [
-            [0.4, 2.8, 0.4, -1.5, 0, 0x4A90E2],   // Tall blue building (left)
-            [0.5, 2.0, 0.5, -0.7, 0, 0x5C6BC0],   // Medium purple building
-            [0.35, 3.5, 0.35, 0.1, 0, 0x42A5F5],  // Tallest light blue (center)
-            [0.45, 2.5, 0.45, 0.8, 0, 0x7E57C2],  // Medium-tall purple
-            [0.38, 1.8, 0.38, 1.5, 0, 0x5E35B1],  // Short purple building (right)
-            [0.3, 2.2, 0.3, -1.0, -0.5, 0x3F51B5], // Back row building
-            [0.32, 1.6, 0.32, 0.4, -0.5, 0x5C6BC0], // Back row building
+            [0.4, 2.8, 0.4, -1.5, 0, 0x1E88E5, 'glass'],      // Tall glass tower (left)
+            [0.5, 2.0, 0.5, -0.7, 0, 0x5E35B1, 'metallic'],   // Medium metallic building
+            [0.35, 3.5, 0.35, 0.1, 0, 0x0D47A1, 'glass'],     // Tallest glass tower (center)
+            [0.45, 2.5, 0.45, 0.8, 0, 0x512DA8, 'metallic'],  // Medium-tall metallic
+            [0.38, 1.8, 0.38, 1.5, 0, 0x1976D2, 'glass'],     // Glass building (right)
+            [0.3, 2.2, 0.3, -1.0, -0.5, 0x283593, 'metallic'], // Back row metallic
+            [0.32, 1.6, 0.32, 0.4, -0.5, 0x1565C0, 'glass'],  // Back row glass
         ];
 
-        buildings.forEach(([width, height, depth, xPos, zPos, color]) => {
-            const building = this.createBuilding(width, height, depth, color);
+        buildings.forEach(([width, height, depth, xPos, zPos, color, type]) => {
+            const building = this.createModernBuilding(width, height, depth, color, type);
             building.position.set(xPos, 0, zPos);
             this.skyline.add(building);
         });
 
-        // Ground platform
-        const platformGeometry = new THREE.BoxGeometry(5, 0.1, 2);
+        // Modern platform with lighting
+        const platformGeometry = new THREE.BoxGeometry(5, 0.15, 2);
         const platformMaterial = new THREE.MeshStandardMaterial({
-            color: 0x2C3E50,
-            metalness: 0.3,
-            roughness: 0.7
+            color: 0x1A237E,
+            metalness: 0.7,
+            roughness: 0.3,
+            emissive: 0x0D47A1,
+            emissiveIntensity: 0.1
         });
         const platform = new THREE.Mesh(platformGeometry, platformMaterial);
-        platform.position.y = -0.05;
+        platform.position.y = -0.075;
         platform.receiveShadow = true;
         this.skyline.add(platform);
+
+        // Add edge lighting to platform
+        const edgeGeometry = new THREE.BoxGeometry(5.1, 0.02, 2.1);
+        const edgeMaterial = new THREE.MeshStandardMaterial({
+            color: 0x64B5F6,
+            emissive: 0x2196F3,
+            emissiveIntensity: 0.5
+        });
+        const edge = new THREE.Mesh(edgeGeometry, edgeMaterial);
+        edge.position.y = 0;
+        this.skyline.add(edge);
 
         this.scene.add(this.skyline);
     }
 
-    createBuilding(width, height, depth, color) {
+    createModernBuilding(width, height, depth, color, type) {
         const buildingGroup = new THREE.Group();
+
+        // Choose material based on type
+        let material;
+        if (type === 'glass') {
+            material = new THREE.MeshPhysicalMaterial({
+                color: color,
+                metalness: 0.1,
+                roughness: 0.05,
+                transparent: true,
+                opacity: 0.4,
+                transmission: 0.9,
+                thickness: 0.5,
+                envMapIntensity: 1.5,
+                clearcoat: 1.0,
+                clearcoatRoughness: 0.1
+            });
+        } else {
+            material = new THREE.MeshStandardMaterial({
+                color: color,
+                metalness: 0.8,
+                roughness: 0.2,
+                emissive: color,
+                emissiveIntensity: 0.1
+            });
+        }
 
         // Main building body
         const geometry = new THREE.BoxGeometry(width, height, depth);
-        const material = new THREE.MeshStandardMaterial({
-            color: color,
-            metalness: 0.4,
-            roughness: 0.3
-        });
         const building = new THREE.Mesh(geometry, material);
         building.position.y = height / 2;
         building.castShadow = true;
         building.receiveShadow = true;
         buildingGroup.add(building);
 
-        // Windows (grid pattern)
-        const windowGeometry = new THREE.BoxGeometry(width * 0.15, height * 0.06, 0.02);
-        const windowMaterial = new THREE.MeshStandardMaterial({
-            color: 0xFFFACD,
-            emissive: 0xFFFF88,
-            emissiveIntensity: 0.5
-        });
-
-        const windowsPerRow = Math.max(2, Math.floor(width / 0.15));
-        const windowsPerColumn = Math.max(3, Math.floor(height / 0.25));
-
-        for (let row = 0; row < windowsPerColumn; row++) {
-            for (let col = 0; col < windowsPerRow; col++) {
-                // Front face windows
-                const windowFront = new THREE.Mesh(windowGeometry, windowMaterial);
-                const xOffset = (col - (windowsPerRow - 1) / 2) * width / windowsPerRow * 0.8;
-                const yOffset = (row - (windowsPerColumn - 1) / 2) * height / windowsPerColumn * 0.9 + height / 2;
-
-                windowFront.position.set(xOffset, yOffset, depth / 2 + 0.01);
-                buildingGroup.add(windowFront);
-
-                // Back face windows
-                const windowBack = windowFront.clone();
-                windowBack.position.set(xOffset, yOffset, -depth / 2 - 0.01);
-                buildingGroup.add(windowBack);
-
-                // Side windows
-                if (col === 0 || col === windowsPerRow - 1) {
-                    const windowSide = new THREE.Mesh(
-                        new THREE.BoxGeometry(0.02, height * 0.06, depth * 0.15),
-                        windowMaterial
-                    );
-                    const sideX = col === 0 ? -width / 2 - 0.01 : width / 2 + 0.01;
-                    windowSide.position.set(sideX, yOffset, 0);
-                    buildingGroup.add(windowSide);
-                }
-            }
+        // Modern window strips (horizontal bands)
+        const stripCount = Math.floor(height / 0.3);
+        for (let i = 0; i < stripCount; i++) {
+            const stripGeometry = new THREE.BoxGeometry(width * 0.95, 0.02, depth * 0.95);
+            const stripMaterial = new THREE.MeshStandardMaterial({
+                color: 0x90CAF9,
+                emissive: 0x64B5F6,
+                emissiveIntensity: 0.6,
+                metalness: 0.9,
+                roughness: 0.1
+            });
+            const strip = new THREE.Mesh(stripGeometry, stripMaterial);
+            strip.position.y = (i / stripCount) * height + 0.1;
+            buildingGroup.add(strip);
         }
 
-        // Rooftop detail (antenna/spire on taller buildings)
-        if (height > 2.3) {
-            const antennaGeometry = new THREE.CylinderGeometry(0.015, 0.015, 0.5);
-            const antennaMaterial = new THREE.MeshStandardMaterial({
-                color: 0xFF6B6B,
-                emissive: 0xFF0000,
-                emissiveIntensity: 0.3
-            });
-            const antenna = new THREE.Mesh(antennaGeometry, antennaMaterial);
-            antenna.position.y = height + 0.25;
-            buildingGroup.add(antenna);
+        // Vertical accent lines
+        const accentPositions = [
+            [-width / 3, 0],
+            [width / 3, 0],
+            [0, -depth / 3],
+            [0, depth / 3]
+        ];
 
-            // Blinking light on top
-            const lightGeometry = new THREE.SphereGeometry(0.03, 8, 8);
+        accentPositions.forEach(([x, z]) => {
+            const accentGeometry = new THREE.BoxGeometry(
+                x !== 0 ? 0.015 : depth * 0.95,
+                height,
+                z !== 0 ? 0.015 : width * 0.95
+            );
+            const accentMaterial = new THREE.MeshStandardMaterial({
+                color: 0xE3F2FD,
+                emissive: 0x2196F3,
+                emissiveIntensity: 0.3,
+                metalness: 0.9,
+                roughness: 0.1
+            });
+            const accent = new THREE.Mesh(accentGeometry, accentMaterial);
+            accent.position.set(x, height / 2, z);
+            buildingGroup.add(accent);
+        });
+
+        // Rooftop features
+        if (height > 2.3) {
+            // Modern antenna structure
+            const antennaGroup = new THREE.Group();
+
+            // Main antenna pole
+            const poleGeometry = new THREE.CylinderGeometry(0.02, 0.02, 0.6);
+            const poleMaterial = new THREE.MeshStandardMaterial({
+                color: 0xCFD8DC,
+                metalness: 0.9,
+                roughness: 0.1
+            });
+            const pole = new THREE.Mesh(poleGeometry, poleMaterial);
+            pole.position.y = height + 0.3;
+            antennaGroup.add(pole);
+
+            // Antenna rings
+            for (let i = 0; i < 3; i++) {
+                const ringGeometry = new THREE.TorusGeometry(0.08 - i * 0.02, 0.008, 8, 16);
+                const ringMaterial = new THREE.MeshStandardMaterial({
+                    color: 0xFF5252,
+                    emissive: 0xFF1744,
+                    emissiveIntensity: 0.8,
+                    metalness: 0.8,
+                    roughness: 0.2
+                });
+                const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+                ring.position.y = height + 0.15 + i * 0.15;
+                ring.rotation.x = Math.PI / 2;
+                antennaGroup.add(ring);
+            }
+
+            // Top light
+            const lightGeometry = new THREE.SphereGeometry(0.04, 16, 16);
             const lightMaterial = new THREE.MeshStandardMaterial({
-                color: 0xFF0000,
-                emissive: 0xFF0000,
-                emissiveIntensity: 1.0
+                color: 0xFF1744,
+                emissive: 0xFF1744,
+                emissiveIntensity: 2.0,
+                metalness: 0.5,
+                roughness: 0.2
             });
             const light = new THREE.Mesh(lightGeometry, lightMaterial);
-            light.position.y = height + 0.5;
-            buildingGroup.add(light);
+            light.position.y = height + 0.6;
+            antennaGroup.add(light);
+
+            buildingGroup.add(antennaGroup);
         }
 
-        // Rooftop edge detail
-        const edgeGeometry = new THREE.BoxGeometry(width + 0.02, 0.05, depth + 0.02);
-        const edgeMaterial = new THREE.MeshStandardMaterial({
-            color: 0x34495E,
-            metalness: 0.6,
-            roughness: 0.4
+        // Modern rooftop edge with lighting
+        const roofEdgeGeometry = new THREE.BoxGeometry(width + 0.03, 0.08, depth + 0.03);
+        const roofEdgeMaterial = new THREE.MeshStandardMaterial({
+            color: 0x37474F,
+            metalness: 0.8,
+            roughness: 0.2,
+            emissive: 0x546E7A,
+            emissiveIntensity: 0.2
         });
-        const edge = new THREE.Mesh(edgeGeometry, edgeMaterial);
-        edge.position.y = height;
-        buildingGroup.add(edge);
+        const roofEdge = new THREE.Mesh(roofEdgeGeometry, roofEdgeMaterial);
+        roofEdge.position.y = height;
+        buildingGroup.add(roofEdge);
+
+        // Rooftop glow strip
+        const glowStripGeometry = new THREE.BoxGeometry(width + 0.04, 0.01, depth + 0.04);
+        const glowStripMaterial = new THREE.MeshStandardMaterial({
+            color: 0x00BCD4,
+            emissive: 0x00BCD4,
+            emissiveIntensity: 1.0
+        });
+        const glowStrip = new THREE.Mesh(glowStripGeometry, glowStripMaterial);
+        glowStrip.position.y = height + 0.04;
+        buildingGroup.add(glowStrip);
 
         return buildingGroup;
     }
