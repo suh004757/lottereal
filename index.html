@@ -23,6 +23,15 @@
     gtag('js', new Date());
     gtag('config', 'G-VPG00DG5V1');
   </script>
+  <!-- Import map for Three.js modules -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
 </head>
 
 <body>
@@ -43,6 +52,30 @@
 
   <main>
     <section class="lr-hero" id="hero">
+      <!-- Particle Background -->
+      <div class="lr-particles" aria-hidden="true">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+      </div>
+
       <div class="lr-container lr-hero__content">
         <div>
           <p class="lr-kicker">송파 · 강남 부동산</p>
@@ -214,6 +247,7 @@
   <script src="js/active.js"></script>
   <script type="module" src="js/app.js"></script>
   <script type="module" src="js/feedsWidget.js"></script>
+  <script type="module" src="js/hero-3d.js"></script>
 </body>
 
 </html>
