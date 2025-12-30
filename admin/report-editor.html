@@ -13,11 +13,8 @@
         rel="stylesheet">
     <link rel="stylesheet" href="../style.css">
     <link rel="stylesheet" href="../css/insights.css">
-
-    <!-- SimpleMDE Markdown Editor -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
     <script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
-
     <style>
         .admin-editor {
             max-width: 1400px;
@@ -58,7 +55,6 @@
             border: 2px solid #e5e7eb;
             border-radius: 0.5rem;
             font-size: 1rem;
-            transition: border-color 0.2s;
         }
 
         .form-input:focus {
@@ -68,8 +64,8 @@
 
         .form-textarea {
             min-height: 100px;
-            font-family: inherit;
             resize: vertical;
+            font-family: inherit;
         }
 
         .editor-actions {
@@ -89,7 +85,6 @@
             border-radius: 0.5rem;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s;
         }
 
         .btn-save:hover {
@@ -104,7 +99,6 @@
             border-radius: 0.5rem;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s;
         }
 
         .btn-preview:hover {
@@ -119,11 +113,25 @@
             border-radius: 0.5rem;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s;
         }
 
         .btn-cancel:hover {
             background: #4b5563;
+        }
+
+        .btn-add {
+            background: #8b5cf6;
+            color: #ffffff;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+
+        .btn-add:hover {
+            background: #7c3aed;
         }
 
         .evidence-editor {
@@ -136,16 +144,17 @@
         .evidence-item {
             background: #ffffff;
             padding: 1rem;
-            border-radius: 0.5rem;
             margin-bottom: 1rem;
+            border-radius: 0.5rem;
             border: 1px solid #e5e7eb;
         }
 
-        .evidence-item-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.75rem;
+        .evidence-item input {
+            width: 100%;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.375rem;
         }
 
         .btn-remove {
@@ -153,20 +162,9 @@
             color: #ffffff;
             padding: 0.25rem 0.75rem;
             border: none;
-            border-radius: 0.25rem;
-            font-size: 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
             cursor: pointer;
-        }
-
-        .btn-add {
-            background: #10b981;
-            color: #ffffff;
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 1rem;
         }
 
         .preview-modal {
@@ -204,252 +202,93 @@
             float: right;
             margin-bottom: 1rem;
         }
+
+        .admin-message {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .admin-message[data-status="info"] {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+
+        .admin-message[data-status="success"] {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+
+        .admin-message[data-status="error"] {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
     </style>
 </head>
 
 <body>
     <div class="admin-editor">
         <div class="editor-header">
-            <h1>🤖 AI 시장 트렌드 리포트 편집기</h1>
-            <p style="margin-top: 0.5rem; opacity: 0.8; margin-bottom: 0;">마크다운 형식으로 작성하세요. 미리보기로 확인 후 발행하세요.</p>
+            <h1>AI 시장 분석 리포트 편집</h1>
+            <p style="margin-top:0.5rem;opacity:0.8;margin-bottom:0;">Supabase에 저장되며 공개 페이지에서 표시됩니다.</p>
         </div>
-
         <div class="editor-body">
-            <!-- Basic Info -->
             <div class="form-group">
                 <label class="form-label" for="report-title">리포트 제목 *</label>
-                <input type="text" id="report-title" class="form-input" placeholder="예: 2025년 1월 서울 부동산 시장 트렌드 리포트"
-                    value="2025년 1월 서울 부동산 시장 트렌드 리포트">
+                <input type="text" id="report-title" class="form-input" placeholder="예: 2025년 1월 서울 부동산 시장 트렌드">
             </div>
-
             <div class="form-group">
                 <label class="form-label" for="report-slug">URL 슬러그 *</label>
-                <input type="text" id="report-slug" class="form-input" placeholder="예: 2025-01-market-report"
-                    value="2025-01-market-report">
-                <small style="color: #6b7280; font-size: 0.875rem;">URL: https://lottes.co.kr/report/{slug}</small>
+                <input type="text" id="report-slug" class="form-input" placeholder="예: 2025-01-market-report">
+                <small style="color:#6b7280;font-size:0.875rem;">URL 형식: https://lottes.co.kr/report/{slug}</small>
             </div>
-
             <div class="form-group">
-                <label class="form-label" for="report-summary">요약 (한 줄) *</label>
-                <textarea id="report-summary" class="form-input form-textarea"
-                    placeholder="리포트의 핵심 내용을 한 문장으로 요약하세요">서울 주요 지역의 실거래 데이터, 정책 변화, 시장 신호를 종합 분석한 참고 자료입니다.</textarea>
+                <label class="form-label" for="report-summary">요약 (한 줄 설명) *</label>
+                <textarea id="report-summary" class="form-input form-textarea" rows="3"
+                    placeholder="서울 주요 지역의 실거래 데이터, 정책 변화, 시장 신호를 종합 분석한 참고 자료입니다."></textarea>
             </div>
-
-            <!-- Markdown Editor -->
             <div class="form-group">
                 <label class="form-label" for="report-content">리포트 본문 (Markdown) *</label>
                 <textarea id="report-content"></textarea>
-                <small style="color: #6b7280; font-size: 0.875rem;">
-                    <strong>권장 구조:</strong> 1) 거시 환경, 2) 수요/공급, 3) 가격 동향, 4) 리스크 관찰, 5) 주목할 신호
-                </small>
+                <small style="color:#6b7280;font-size:0.875rem;"><strong>권장 구조:</strong> 거시 환경 → 수요 및 공급 → 가격 동향 → 리스크
+                    관찰 → 주목할 신호</small>
             </div>
-
-            <!-- Evidence Sources -->
             <div class="form-group">
-                <label class="form-label">데이터 출처 및 근거</label>
+                <label class="form-label">데이터 출처</label>
                 <div class="evidence-editor" id="evidence-container">
-                    <!-- Will be populated by JS -->
+                    <p style="color:#6b7280;margin:0;">출처를 추가하려면 아래 버튼을 클릭하세요.</p>
                 </div>
-                <button class="btn-add" onclick="addEvidenceSource()">+ 출처 추가</button>
+                <button type="button" class="btn-add" id="add-evidence-btn">+ 출처 추가</button>
             </div>
-
-            <!-- Status -->
             <div class="form-group">
                 <label class="form-label" for="report-status">발행 상태 *</label>
                 <select id="report-status" class="form-input">
-                    <option value="draft">임시 저장 (Draft)</option>
-                    <option value="published">발행 (Published)</option>
+                    <option value="draft">초안 작성 중 (Draft)</option>
+                    <option value="published">발행됨 (Published)</option>
                 </select>
             </div>
-
-            <!-- Actions -->
+            <div class="form-group">
+                <div id="editor-status" class="admin-message" role="status" aria-live="polite"></div>
+            </div>
             <div class="editor-actions">
-                <button class="btn-cancel" onclick="window.location.href='dashboard.html'">취소</button>
-                <button class="btn-preview" onclick="showPreview()">미리보기</button>
-                <button class="btn-save" onclick="saveReport()">저장 및 발행</button>
+                <button type="button" class="btn-cancel" id="btn-cancel">취소</button>
+                <button type="button" class="btn-preview" id="btn-preview">미리보기</button>
+                <button type="button" class="btn-save" id="btn-save">저장 및 발행</button>
             </div>
         </div>
     </div>
-
-    <!-- Preview Modal -->
     <div id="preview-modal" class="preview-modal">
         <div class="preview-content">
-            <button class="preview-close" onclick="closePreview()">✕ 닫기</button>
+            <button type="button" class="preview-close" id="preview-close">닫기</button>
             <div id="preview-body"></div>
         </div>
     </div>
-
     <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
-    <script>
-        // Initialize SimpleMDE
-        const simplemde = new SimpleMDE({
-            element: document.getElementById('report-content'),
-            spellChecker: false,
-            placeholder: '마크다운 형식으로 리포트를 작성하세요...\n\n## 1. 거시 환경 (Macro)\n\n### 금리 및 정책 동향\n\n...',
-            minHeight: '500px',
-            toolbar: [
-                'bold', 'italic', 'heading', '|',
-                'quote', 'unordered-list', 'ordered-list', '|',
-                'link', 'image', '|',
-                'preview', 'side-by-side', 'fullscreen', '|',
-                'guide'
-            ]
-        });
-
-        // Sample template
-        const SAMPLE_TEMPLATE = `## 1. 거시 환경 (Macro)
-
-### 금리 및 정책 동향
-
-최근 3개월간 한국은행 기준금리는 **동결**된 상태를 유지하고 있습니다...
-
-### 신용 및 대출 환경
-
-주택담보대출 금리는 평균 **연 X~Y%** 수준으로 관찰됩니다...
-
----
-
-## 2. 수요 및 공급 (Demand/Supply)
-
-### 거래량 동향
-
-서울 전체 아파트 거래량은 전월 대비 **약 X% 변화**한 것으로 집계되었습니다...
-
-### 공급 신호
-
-신규 분양 물량은...
-
----
-
-## 3. 가격 동향 (Price Action)
-
-### 핵심 지역 (Core)
-
-강남, 송파, 서초 등 핵심 지역의 매매가는...
-
-### 비핵심 지역 (Non-Core)
-
-비강남권의 매매가는...
-
----
-
-## 4. 리스크 관찰 (Risk Watchlist)
-
-### 단기 리스크
-
-1. **금리 변동**: ...
-2. **정책 변화**: ...
-
-### 중장기 리스크
-
-1. **인구 구조**: ...
-2. **공급 과잉**: ...
-
----
-
-## 5. 주목할 신호 (What to Watch Next)
-
-### 다음 달 관찰 포인트
-
-- 한국은행 금통위 결과
-- 신규 분양 청약 경쟁률
-- 전세 → 월세 전환율
-
----
-
-## 마무리
-
-본 리포트는 과거 데이터의 관찰 및 해석이며, 미래를 예측하거나 투자를 권유하지 않습니다.
-`;
-
-        // Initialize with sample template
-        simplemde.value(SAMPLE_TEMPLATE);
-
-        // Evidence sources management
-        let evidenceSources = [
-            {
-                name: '국토교통부 실거래가 공개시스템',
-                url: 'https://rt.molit.go.kr',
-                coverage: '서울 전역 아파트 실거래 데이터'
-            }
-        ];
-
-        function renderEvidenceSources() {
-            const container = document.getElementById('evidence-container');
-            container.innerHTML = evidenceSources.map((source, index) => `
-        <div class="evidence-item">
-          <div class="evidence-item-header">
-            <strong>출처 ${index + 1}</strong>
-            <button class="btn-remove" onclick="removeEvidenceSource(${index})">삭제</button>
-          </div>
-          <div class="form-group" style="margin-bottom: 0.5rem;">
-            <input type="text" class="form-input" placeholder="출처 이름" value="${source.name}" onchange="updateEvidenceSource(${index}, 'name', this.value)">
-          </div>
-          <div class="form-group" style="margin-bottom: 0.5rem;">
-            <input type="url" class="form-input" placeholder="URL" value="${source.url}" onchange="updateEvidenceSource(${index}, 'url', this.value)">
-          </div>
-          <div class="form-group" style="margin-bottom: 0;">
-            <input type="text" class="form-input" placeholder="데이터 범위 (예: 서울 전역 아파트 실거래 데이터)" value="${source.coverage}" onchange="updateEvidenceSource(${index}, 'coverage', this.value)">
-          </div>
-        </div>
-      `).join('');
-        }
-
-        function addEvidenceSource() {
-            evidenceSources.push({ name: '', url: '', coverage: '' });
-            renderEvidenceSources();
-        }
-
-        function removeEvidenceSource(index) {
-            evidenceSources.splice(index, 1);
-            renderEvidenceSources();
-        }
-
-        function updateEvidenceSource(index, field, value) {
-            evidenceSources[index][field] = value;
-        }
-
-        // Preview
-        function showPreview() {
-            const title = document.getElementById('report-title').value;
-            const content = simplemde.value();
-            const html = marked.parse(content);
-
-            const previewBody = document.getElementById('preview-body');
-            previewBody.innerHTML = `
-        <h1 style="font-size: 2.5rem; margin-bottom: 1rem; color: #111827;">${title}</h1>
-        <div class="lr-report-body">${html}</div>
-      `;
-
-            document.getElementById('preview-modal').style.display = 'flex';
-        }
-
-        function closePreview() {
-            document.getElementById('preview-modal').style.display = 'none';
-        }
-
-        // Save (Mock - will connect to Supabase later)
-        function saveReport() {
-            const report = {
-                title: document.getElementById('report-title').value,
-                slug: document.getElementById('report-slug').value,
-                summary: document.getElementById('report-summary').value,
-                content: simplemde.value(),
-                evidence: evidenceSources,
-                status: document.getElementById('report-status').value,
-                updated_at: new Date().toISOString()
-            };
-
-            console.log('Saving report:', report);
-            alert('✓ 리포트가 저장되었습니다!\n\n실제 저장은 Supabase 연동 후 가능합니다.');
-
-            // TODO: Connect to Supabase
-            // await supabase.from('market_reports').insert([report]);
-        }
-
-        // Initialize
-        renderEvidenceSources();
-    </script>
+    <script type="module" src="../js/reportEditor.js"></script>
 </body>
 
 </html>
