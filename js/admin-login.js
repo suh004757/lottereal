@@ -1,11 +1,12 @@
-/**
- * 관리자 로그인 페이지의 JavaScript 모듈
- * 인증, 세션 관리, 지리 위치 수집 기능을 담당합니다.
- */
+import { APP_CONFIG } from './config/appConfig.js';
+import {
+  signInAdmin,
+  signOutAdmin,
+  getSessionRemainingMs,
+  getCurrentSessionUser
+} from './services/authService.js';
 
-import { useAuth } from './hooks/useAuth.js';
-
-// DOM 요소 참조
+// DOM refs
 const form = document.getElementById('adminLoginForm');
 const logoutButton = document.getElementById('logoutButton');
 const messageEl = document.getElementById('loginMessage');
@@ -13,29 +14,42 @@ const geoButton = document.getElementById('geoButton');
 const geoStatus = document.getElementById('geoStatus');
 const sessionStatus = document.getElementById('sessionStatus');
 
-// 지리 위치 데이터 저장 변수
 let geoData = null;
+let authUnavailable = false;
 
-/**
- * 페이지 초기화 함수
- * 이벤트 바인딩, 세션 상태 업데이트, 주기적 세션 체크를 시작합니다.
- */
-function init() {
-  const auth = useAuth();
-  bindEvents(auth);
-  updateSessionStatus(auth);
-  setInterval(() => updateSessionStatus(auth), 1000);
+async function init() {
+  bindEvents();
+  updateSessionStatus();
+  setInterval(updateSessionStatus, 1000);
+
+  if (!APP_CONFIG.SUPABASE_URL || !APP_CONFIG.SUPABASE_KEY) {
+    authUnavailable = true;
+    setMessage('Supabase credentials are missing. Contact an administrator.', 'error');
+    toggleFormDisabled(true);
+    return;
+  }
+
+  try {
+    const existingUser = await getCurrentSessionUser();
+    if (existingUser) {
+      setMessage('Already signed in. Redirecting to dashboard...', 'success');
+      window.location.href = './dashboard.html';
+    }
+  } catch (error) {
+    console.error('[Admin] Failed to resolve current session:', error);
+    setMessage('Failed to verify the current session.', 'error');
+  }
 }
 
-/**
- * 이벤트 리스너를 바인딩하는 함수
- * @param {Object} auth - 인증 객체 (useAuth 훅)
- */
-function bindEvents(auth) {
-  // 로그인 폼 제출 이벤트
+function bindEvents() {
   if (form) {
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (authUnavailable) {
+        setMessage('Supabase authentication is disabled.', 'error');
+        return;
+      }
+
       const formData = new FormData(form);
       const email = formData.get('email');
       const password = formData.get('password');
@@ -44,37 +58,43 @@ function bindEvents(auth) {
       toggleFormDisabled(true);
 
       try {
-        const { user, session } = await auth.signIn(email, password);
-        if (user) {
-          setMessage('Login successful.', 'success');
-          // Store session verification in storage if needed for simple page protection
-          // Ideally useAuth listener handles this, but for simple redirection:
+        const result = await signInAdmin(email, password, {
+          geolocation: geoData,
+          userAgent: navigator?.userAgent || '',
+          ipAddressHint: null
+        });
+
+        if (result.success) {
+          setMessage('Login successful. Redirecting...', 'success');
           window.location.href = './dashboard.html';
         } else {
-          setMessage('Login failed. Please check your credentials.', 'error');
+          setMessage(result.error || 'Login failed. Check your credentials.', 'error');
         }
       } catch (error) {
-        console.error('Login Error:', error);
+        console.error('[Admin] Login error:', error);
         setMessage(error.message || 'Login failed.', 'error');
+      } finally {
+        toggleFormDisabled(false);
       }
-
-      toggleFormDisabled(false);
     });
   }
 
-  // 로그아웃 버튼 이벤트
   if (logoutButton) {
     logoutButton.addEventListener('click', async () => {
-      await auth.logout();
-      setMessage('Logged out.', 'info');
+      try {
+        await signOutAdmin();
+        setMessage('Logged out.', 'info');
+      } catch (error) {
+        console.error('[Admin] Logout error:', error);
+        setMessage('Logout failed. See console for details.', 'error');
+      }
     });
   }
 
-  // 지리 위치 버튼 이벤트
   if (geoButton) {
     geoButton.addEventListener('click', () => {
       if (!navigator.geolocation) {
-        geoStatus.textContent = 'Geolocation is not supported in this browser.';
+        geoStatus.textContent = 'Geolocation is not supported.';
         return;
       }
       geoStatus.textContent = 'Requesting location...';
@@ -93,34 +113,21 @@ function bindEvents(auth) {
   }
 }
 
-/**
- * 메시지를 표시하는 함수
- * @param {string} text - 표시할 메시지 텍스트
- * @param {string} status - 메시지 상태 ('info', 'success', 'error')
- */
 function setMessage(text, status = 'info') {
   if (!messageEl) return;
   messageEl.textContent = text || '';
   messageEl.dataset.status = status;
 }
 
-/**
- * 폼 요소의 비활성화 상태를 토글하는 함수
- * @param {boolean} isDisabled - 비활성화 여부
- */
 function toggleFormDisabled(isDisabled) {
   const submit = form?.querySelector('button[type="submit"]');
   if (submit) submit.disabled = isDisabled;
   if (geoButton) geoButton.disabled = isDisabled;
 }
 
-/**
- * 세션 상태를 업데이트하는 함수
- * @param {Object} auth - 인증 객체
- */
-function updateSessionStatus(auth) {
+function updateSessionStatus() {
   if (!sessionStatus) return;
-  const remaining = auth.getSessionRemainingMs ? auth.getSessionRemainingMs() : null;
+  const remaining = typeof getSessionRemainingMs === 'function' ? getSessionRemainingMs() : null;
   if (remaining === null) {
     sessionStatus.textContent = 'Session idle';
     sessionStatus.classList.remove('expiring');
@@ -143,5 +150,8 @@ function updateSessionStatus(auth) {
   }
 }
 
-// 초기화 실행
-init();
+init().catch((error) => {
+  console.error('[Admin] Login bootstrap error:', error);
+  setMessage('Failed to initialize login view.', 'error');
+  toggleFormDisabled(true);
+});

@@ -23,7 +23,7 @@ import {
   listInquiriesAdmin,
   updateInquiryStatus
 } from './services/backendAdapter.js';
-import { useAuth } from './hooks/useAuth.js';
+import { signOutAdmin, getCurrentSessionUser } from './services/authService.js';
 
 // ============================================
 // DOM 요소 참조
@@ -83,7 +83,7 @@ let existingImages = [];
 let editingId = null;
 
 /** @type {Object} 인증 객체 */
-const auth = useAuth();
+let currentAdmin = null;
 
 // ============================================
 // 초기화
@@ -94,16 +94,41 @@ const auth = useAuth();
  * 모든 이벤트 리스너를 바인딩하고 초기 데이터를 로드합니다.
  */
 document.addEventListener('DOMContentLoaded', () => {
-  bindNav();
-  bindModal();
-  bindPropertyForm();
-  bindInquiryModal();
-  bindLogout();
-  loadStats();
-  loadRecent();
-  loadListingsAdmin();
-  loadInquiriesAdmin();
+  initAdminDashboard();
 });
+
+async function initAdminDashboard() {
+  try {
+    currentAdmin = await getCurrentSessionUser();
+    if (!currentAdmin) {
+      redirectToLogin();
+      return;
+    }
+    setAdminIdentity(currentAdmin);
+    bindNav();
+    bindModal();
+    bindPropertyForm();
+    bindInquiryModal();
+    bindLogout();
+    loadStats();
+    loadRecent();
+    loadListingsAdmin();
+    loadInquiriesAdmin();
+  } catch (err) {
+    console.error('[Admin] Failed to initialize dashboard:', err);
+    redirectToLogin();
+  }
+}
+
+function redirectToLogin() {
+  window.location.href = './login.html';
+}
+
+function setAdminIdentity(user) {
+  const userNameEl = document.getElementById('userName');
+  if (!userNameEl) return;
+  userNameEl.textContent = user?.email || user?.user_metadata?.name || 'Admin';
+}
 
 // ============================================
 // 네비게이션 관련
@@ -433,7 +458,7 @@ function bindLogout() {
   if (!logoutBtn) return;
   logoutBtn.addEventListener('click', async () => {
     try {
-      await auth.signOut();
+      await signOutAdmin();
     } catch (err) {
       console.error('Logout error', err);
     } finally {
