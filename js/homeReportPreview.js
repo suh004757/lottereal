@@ -4,25 +4,6 @@ const section = document.querySelector('[data-report-section]');
 if (section) {
   const card = section.querySelector('[data-report-card]');
   const titleEl = section.querySelector('[data-report-title]');
-  const summaryEl = section.querySelector('[data-report-summary]');
-  const updatedEl = section.querySelector('[data-report-updated]');
-  const viewsEl = section.querySelector('[data-report-views]');
-  const statusEl = section.querySelector('[data-report-status]');
-  const reloadBtn = section.querySelector('[data-report-reload]');
-
-  const messages = {
-    loadingTitle: '?? ???? ???? ????.',
-    loadingSummary: '??? ??? ???.',
-    emptyTitle: '?? ??? ???? ????.',
-    emptySummary: '??? ????? ???? ???? ???? ?????.',
-    errorTitle: '???? ???? ?????.',
-    errorSummary: '???? ??? ??? ? ?? ??? ???.'
-  };
-
-  async function init() {
-    setLoading();
-    await loadReport();
-  }
 
   async function loadReport() {
     try {
@@ -39,16 +20,16 @@ if (section) {
   }
 
   function renderReport(report) {
-    if (statusEl) statusEl.textContent = '???';
-    if (titleEl) titleEl.textContent = report.title || '?? ???';
+    if (statusEl) statusEl.textContent = '최신';
+    if (titleEl) titleEl.textContent = report.title || '제목 없음';
     if (summaryEl) summaryEl.textContent = extractSummary(report);
     if (updatedEl) updatedEl.textContent = formatUpdated(report.updated_at);
-    if (viewsEl) viewsEl.textContent = `??? ${Number(report.view_count || 0).toLocaleString()}?`;
+    if (viewsEl) viewsEl.textContent = `조회수 ${Number(report.view_count || 0).toLocaleString()}회`;
     if (card) card.classList.remove('is-error');
   }
 
   function setLoading() {
-    if (statusEl) statusEl.textContent = '???? ?';
+    if (statusEl) statusEl.textContent = '로딩 중';
     if (titleEl) titleEl.textContent = messages.loadingTitle;
     if (summaryEl) summaryEl.textContent = messages.loadingSummary;
     if (updatedEl) updatedEl.textContent = '';
@@ -56,7 +37,7 @@ if (section) {
   }
 
   function setEmpty() {
-    if (statusEl) statusEl.textContent = '?? ?';
+    if (statusEl) statusEl.textContent = '공백 상태';
     if (titleEl) titleEl.textContent = messages.emptyTitle;
     if (summaryEl) summaryEl.textContent = messages.emptySummary;
     if (updatedEl) updatedEl.textContent = '';
@@ -64,7 +45,7 @@ if (section) {
   }
 
   function setError() {
-    if (statusEl) statusEl.textContent = '??';
+    if (statusEl) statusEl.textContent = '오류';
     if (titleEl) titleEl.textContent = messages.errorTitle;
     if (summaryEl) summaryEl.textContent = messages.errorSummary;
     if (updatedEl) updatedEl.textContent = '';
