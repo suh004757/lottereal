@@ -132,11 +132,79 @@ export async function getDashboardStats() {
   return {
     ok: true,
     data: {
-      ...buildDefaultDashboardStats(),
-      totalListings: mockListings.length
+      totalListings: mockListings.length,
+      newListings7d: 0,
+      totalInquiries: 0,
+      unreadInquiries: 0
     },
     error: null
   };
+}
+
+/**
+ * Get dashboard stats from Supabase
+ */
+async function getDashboardStatsSupabase() {
+  const supabase = getSupabaseClient();
+  if (!supabase) {
+    return {
+      ok: false,
+      data: { totalListings: 0, newListings7d: 0, totalInquiries: 0, unreadInquiries: 0 },
+      error: 'Supabase client unavailable'
+    };
+  }
+
+  try {
+    // Get total listings count
+    const { count: totalListings, error: listingsError } = await supabase
+      .from('property_listings')
+      .select('*', { count: 'exact', head: true });
+
+    if (listingsError) throw listingsError;
+
+    // Get new listings in last 7 days
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const { count: newListings7d, error: newListingsError } = await supabase
+      .from('property_listings')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', sevenDaysAgo.toISOString());
+
+    if (newListingsError) throw newListingsError;
+
+    // Get total inquiries count
+    const { count: totalInquiries, error: inquiriesError } = await supabase
+      .from('inquiries')
+      .select('*', { count: 'exact', head: true });
+
+    if (inquiriesError) throw inquiriesError;
+
+    // Get unread inquiries count
+    const { count: unreadInquiries, error: unreadError } = await supabase
+      .from('inquiries')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'unread');
+
+    if (unreadError) throw unreadError;
+
+    return {
+      ok: true,
+      data: {
+        totalListings: totalListings || 0,
+        newListings7d: newListings7d || 0,
+        totalInquiries: totalInquiries || 0,
+        unreadInquiries: unreadInquiries || 0
+      },
+      error: null
+    };
+  } catch (error) {
+    console.error('[Supabase] getDashboardStats error:', error);
+    return {
+      ok: false,
+      data: { totalListings: 0, newListings7d: 0, totalInquiries: 0, unreadInquiries: 0 },
+      error: error.message || 'Failed to load dashboard stats'
+    };
+  }
 }
 
 /**
