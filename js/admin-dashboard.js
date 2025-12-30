@@ -195,15 +195,20 @@ function setServiceStatus(ok, context) {
  */
 async function loadStats() {
   try {
-    const stats = await getDashboardStats();
-    if (statsEls.listings) statsEls.listings.textContent = (stats.totalListings || 0).toLocaleString();
-    if (statsEls.new7d) statsEls.new7d.textContent = (stats.newListings7d || 0).toLocaleString();
-    if (statsEls.inquiries) statsEls.inquiries.textContent = (stats.totalInquiries || 0).toLocaleString();
-    if (statsEls.unread) statsEls.unread.textContent = (stats.unreadInquiries || 0).toLocaleString();
-    setServiceStatus(true);
+    const response = await getDashboardStats();
+    const stats = response?.data || {};
+    if (statsEls.listings) statsEls.listings.textContent = Number(stats.totalListings || 0).toLocaleString();
+    if (statsEls.new7d) statsEls.new7d.textContent = Number(stats.newListings7d || 0).toLocaleString();
+    if (statsEls.inquiries) statsEls.inquiries.textContent = Number(stats.totalInquiries || 0).toLocaleString();
+    if (statsEls.unread) statsEls.unread.textContent = Number(stats.unreadInquiries || 0).toLocaleString();
+    if (response?.ok) {
+      setServiceStatus(true);
+    } else {
+      setServiceStatus(false, response?.error || '\uB370\uC774\uD130 \uC5F0\uACB0 \uC0C1\uD0DC\uB97C \uD655\uC778\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.');
+    }
   } catch (err) {
     console.error('Dashboard stats error', err);
-    setServiceStatus(false, '대시보드 데이터 로드 실패');
+    setServiceStatus(false, '\uB300\uC2DC\uBCF4\uB4DC \uB370\uC774\uD130 \uB85C\uB4DC \uC2E4\uD328');
   }
 }
 
@@ -249,15 +254,20 @@ async function loadRecent() {
  */
 async function loadListingsAdmin() {
   if (!listingsTbody) return;
-  listingsTbody.innerHTML = '<tr><td colspan="6">불러오는 중...</td></tr>';
+  listingsTbody.innerHTML = '<tr><td colspan="6">???? ?...</td></tr>';
   try {
-    const data = await listListingsAdmin({ page: 1, pageSize: 50 });
-    if (!data || data.length === 0) {
-      listingsTbody.innerHTML = '<tr><td colspan="6">매물이 없습니다.</td></tr>';
+    const response = await listListingsAdmin({ page: 1, pageSize: 50 });
+    const items = response?.data || [];
+    if (!response?.ok) {
+      listingsTbody.innerHTML = `<tr><td colspan="6">?? ???? ??: ${response?.error || '? ? ?? ??'}</td></tr>`;
+      return;
+    }
+    if (items.length === 0) {
+      listingsTbody.innerHTML = '<tr><td colspan="6">??? ????.</td></tr>';
       return;
     }
     listingsTbody.innerHTML = '';
-    data.forEach((item, idx) => {
+    items.forEach((item, idx) => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${idx + 1}</td>
@@ -267,13 +277,13 @@ async function loadListingsAdmin() {
         <td>${formatKst(item.created_at) || ''}</td>
         <td>
           <div class="admin-table-actions">
-            <button class="admin-icon-btn" data-edit="${item.id}" title="수정">
+            <button class="admin-icon-btn" data-edit="${item.id}" title="??">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
               </svg>
             </button>
-            <button class="admin-icon-btn danger" data-delete="${item.id}" title="삭제">
+            <button class="admin-icon-btn danger" data-delete="${item.id}" title="??">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="3 6 5 6 21 6"></polyline>
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -288,7 +298,7 @@ async function loadListingsAdmin() {
     listingsTbody.querySelectorAll('[data-edit]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-edit');
-        const item = data.find((d) => `${d.id}` === `${id}`);
+        const item = items.find((d) => `${d.id}` === `${id}`);
         if (item) openModal(item);
       });
     });
@@ -296,21 +306,21 @@ async function loadListingsAdmin() {
     listingsTbody.querySelectorAll('[data-delete]').forEach((btn) => {
       btn.addEventListener('click', async () => {
         const id = btn.getAttribute('data-delete');
-        if (!confirm('이 매물을 삭제할까요?')) return;
+        if (!confirm('? ??? ??????')) return;
         try {
           await deleteListing(id);
           loadStats();
           loadRecent();
           loadListingsAdmin();
         } catch (err) {
-          console.error('삭제 실패', err);
-          alert('삭제 중 오류가 발생했습니다.');
+          console.error('?? ??', err);
+          alert('?? ? ??? ??????.');
         }
       });
     });
   } catch (err) {
-    console.error('매물 관리 로드 실패', err);
-    listingsTbody.innerHTML = '<tr><td colspan="6">매물 불러오기 실패했습니다.</td></tr>';
+    console.error('?? ?? ?? ??', err);
+    listingsTbody.innerHTML = '<tr><td colspan="6">?? ???? ??????.</td></tr>';
   }
 }
 
