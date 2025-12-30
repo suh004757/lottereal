@@ -517,6 +517,23 @@ function closeModal() {
   clearPropertyFormMessage();
 }
 
+function setPropertyFormMessage(message = '', status = 'info') {
+  if (!propertyFormMessage) return;
+  if (!message) {
+    propertyFormMessage.textContent = '';
+    propertyFormMessage.dataset.status = '';
+    propertyFormMessage.hidden = true;
+    return;
+  }
+  propertyFormMessage.textContent = message;
+  propertyFormMessage.dataset.status = status;
+  propertyFormMessage.hidden = false;
+}
+
+function clearPropertyFormMessage() {
+  setPropertyFormMessage('');
+}
+
 /**
  * 문의 상세 모달을 엽니다.
  * @param {Object} inq - 문의 데이터 객체
@@ -877,4 +894,8 @@ function formatKst(ts) {
   } catch {
     return '';
   }
+}
+
+function wait(ms = 0) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
