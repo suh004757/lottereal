@@ -6,6 +6,7 @@
  * - 대시보드 통계 표시 (총 매물 수, 신규 매물, 문의 수)
  * - 매물 CRUD (생성, 조회, 수정, 삭제)
  * - 문의 관리 및 상태 변경
+ * - 리포트 관리 (목록, 수정, 삭제)
  * - 이미지 업로드 및 자동 리사이징 (최대 1920x1080, JPEG 85% 품질)
  * - 실시간 서비스 상태 모니터링
  *
@@ -23,6 +24,7 @@ import {
   listInquiriesAdmin,
   updateInquiryStatus
 } from './services/backendAdapter.js';
+import { listReports } from './services/reportAdapter.js';
 import { signOutAdmin, getCurrentSessionUser } from './services/authService.js';
 
 // ============================================
@@ -40,6 +42,8 @@ const serviceStatusEl = document.querySelector('[data-service-status]');
 const recentContainer = document.querySelector('[data-recent-activities]');
 const listingsTbody = document.querySelector('[data-admin-listings]');
 const inquiriesTbody = document.querySelector('[data-admin-inquiries]');
+const reportsTbody = document.querySelector('[data-admin-reports]');
+const addReportBtn = document.getElementById('addReportBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 
 // Property modal / form
@@ -115,6 +119,8 @@ async function initAdminDashboard() {
     loadRecent();
     loadListingsAdmin();
     loadInquiriesAdmin();
+    loadReportsAdmin();
+    bindReportButtons();
   } catch (err) {
     console.error('[Admin] Failed to initialize dashboard:', err);
     redirectToLogin();
@@ -905,6 +911,89 @@ function formatKst(ts) {
     return new Date(ts).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
   } catch {
     return '';
+  }
+}
+
+// ============================================
+// 리포트 관리
+// ============================================
+
+/**
+ * 관리자 리포트 리스트를 로드하고 테이블에 표시합니다.
+ * 수정/삭제 버튼 이벤트도 함께 바인딩합니다.
+ */
+async function loadReportsAdmin() {
+  if (!reportsTbody) return;
+  reportsTbody.innerHTML = '<tr><td colspan="7">불러오는 중...</td></tr>';
+  try {
+    const reports = await listReports({ limit: 50 });
+    if (!reports || reports.length === 0) {
+      reportsTbody.innerHTML = '<tr><td colspan="7">리포트가 없습니다.</td></tr>';
+      return;
+    }
+    reportsTbody.innerHTML = '';
+    reports.forEach((report, idx) => {
+      const tr = document.createElement('tr');
+      const statusBadge = report.status === 'published'
+        ? '<span class="admin-status-badge">발행됨</span>'
+        : '<span class="admin-status-badge pending">초안</span>';
+
+      tr.innerHTML = `
+        <td>${idx + 1}</td>
+        <td>${report.title || ''}</td>
+        <td><code style="font-size:0.875rem;">${report.slug || ''}</code></td>
+        <td>${statusBadge}</td>
+        <td>${Number(report.view_count || 0).toLocaleString()}</td>
+        <td>${formatKst(report.updated_at) || ''}</td>
+        <td>
+          <div class="admin-table-actions">
+            <button class="admin-icon-btn" data-edit-report="${report.id}" title="수정">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+            </button>
+            <button class="admin-icon-btn" data-view-report="${report.slug}" title="미리보기">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+          </div>
+        </td>
+      `;
+      reportsTbody.appendChild(tr);
+    });
+
+    // 수정 버튼
+    reportsTbody.querySelectorAll('[data-edit-report]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-edit-report');
+        window.location.href = `report-editor.html?id=${id}`;
+      });
+    });
+
+    // 미리보기 버튼
+    reportsTbody.querySelectorAll('[data-view-report]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const slug = btn.getAttribute('data-view-report');
+        window.open(`../report.html?slug=${slug}`, '_blank');
+      });
+    });
+  } catch (err) {
+    console.error('리포트 관리 로드 실패', err);
+    reportsTbody.innerHTML = '<tr><td colspan="7">리포트 불러오기 실패했습니다.</td></tr>';
+  }
+}
+
+/**
+ * 리포트 관련 버튼 이벤트 바인딩
+ */
+function bindReportButtons() {
+  if (addReportBtn) {
+    addReportBtn.addEventListener('click', () => {
+      window.location.href = 'report-editor.html';
+    });
   }
 }
 
