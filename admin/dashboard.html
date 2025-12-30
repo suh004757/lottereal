@@ -63,6 +63,16 @@
         </svg>
         <span>문의 관리</span>
       </a>
+      <a href="report-editor.html" class="admin-nav__item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        <span>시장 리포트</span>
+      </a>
     </nav>
     <div class="admin-sidebar__footer">
       <button type="button" id="logoutBtn" class="admin-logout-btn">
@@ -291,17 +301,17 @@
             <textarea name="description" rows="4" placeholder="매물 상세 설명"></textarea>
           </div>
           <div style="grid-column:1/-1;">
-          <label>매물 이미지 (최대 10개, 각 5MB 이하)</label>
-          <input type="file" id="propertyImages" name="images" accept="image/*" multiple>
-          <div id="imagePreview" class="admin-image-preview"></div>
+            <label>매물 이미지 (최대 10개, 각 5MB 이하)</label>
+            <input type="file" id="propertyImages" name="images" accept="image/*" multiple>
+            <div id="imagePreview" class="admin-image-preview"></div>
+          </div>
         </div>
-      </div>
-      <div id="propertyFormMessage" class="admin-message" aria-live="polite" hidden></div>
-      <div class="admin-modal__footer">
-        <button type="button" class="admin-btn admin-btn--ghost" id="cancelModal">취소</button>
-        <button type="submit" class="admin-primary">저장</button>
-      </div>
-    </form>
+        <div id="propertyFormMessage" class="admin-message" aria-live="polite" hidden></div>
+        <div class="admin-modal__footer">
+          <button type="button" class="admin-btn admin-btn--ghost" id="cancelModal">취소</button>
+          <button type="submit" class="admin-primary">저장</button>
+        </div>
+      </form>
     </div>
   </div>
 
