@@ -1,8 +1,15 @@
-﻿import { getListingById, createInquiry } from './services/backendAdapter.js';
+﻿/**
+ * ListingDetail.en.js - 리스팅 상세 페이지 (영어 버전)
+ * 특정 리스팅의 상세 정보를 표시하고 문의 폼을 처리합니다.
+ */
 
+import { getListingById, createInquiry } from './services/backendAdapter.js';
+
+// URL 파라미터에서 리스팅 ID 추출
 const params = new URLSearchParams(window.location.search);
 const id = params.get('id');
 
+// DOM 요소 참조
 const titleEl = document.querySelector('[data-detail-title]');
 const infoEl = document.querySelector('[data-detail-info]');
 const tagsEl = document.querySelector('[data-detail-tags]');
@@ -13,8 +20,14 @@ const noteEl = document.querySelector('[data-detail-note]');
 const formEl = document.querySelector('[data-inquiry-form]');
 const phoneBtn = document.getElementById('phoneBtn');
 
+/**
+ * 초기화 함수
+ */
 init();
 
+/**
+ * 페이지를 초기화합니다.
+ */
 async function init() {
   const listing = id ? await getListingById(id) : null;
   if (listing) {
@@ -24,6 +37,10 @@ async function init() {
   if (formEl) bindForm(listing);
 }
 
+/**
+ * 리스팅 상세 정보를 렌더링합니다.
+ * @param {Object} listing - 리스팅 데이터 객체
+ */
 function renderDetail(listing) {
   if (titleEl) titleEl.textContent = listing.title || '';
 
@@ -42,6 +59,13 @@ function renderDetail(listing) {
   if (noteEl) noteEl.textContent = listing.contactNote || '';
 }
 
+/**
+ * 가격을 포맷팅합니다.
+ * @param {number} price - 가격
+ * @param {number} deposit - 보증금 (월세의 경우)
+ * @param {string} type - 부동산 타입
+ * @returns {string} 포맷팅된 가격 문자열
+ */
 function formatPrice(price, deposit, type) {
   if (!price) return '';
   const rent = Number(price);
@@ -58,6 +82,10 @@ function formatPrice(price, deposit, type) {
   return formatKRW(rent);
 }
 
+/**
+ * 전화 버튼을 바인딩합니다.
+ * @param {Object} listing - 리스팅 데이터 객체
+ */
 function bindPhoneBtn(listing) {
   if (!phoneBtn) return;
 
@@ -75,6 +103,10 @@ function bindPhoneBtn(listing) {
   });
 }
 
+/**
+ * 문의 폼을 바인딩합니다.
+ * @param {Object} listing - 리스팅 데이터 객체
+ */
 function bindForm(listing) {
   formEl.addEventListener('submit', async (e) => {
     e.preventDefault();

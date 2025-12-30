@@ -1,6 +1,12 @@
+/**
+ * Backend Adapter - 백엔드 서비스 어댑터
+ * 다양한 백엔드 프로바이더(Supabase, API, Mock)를 지원하여 데이터 작업을 추상화합니다.
+ */
+
 import { APP_CONFIG } from '../config/appConfig.js';
 import { getSupabaseClient } from '../config/supabaseConfig.js';
 
+// 리스팅 페이로드 스키마 정의
 export const LISTING_PAYLOAD_SCHEMA = {
   title: '',
   description: '',
@@ -28,7 +34,9 @@ export const LISTING_PAYLOAD_SCHEMA = {
 };
 
 /**
- * Creates a new property listing in Supabase
+ * 새로운 부동산 리스팅을 생성합니다.
+ * @param {Object} payload - 리스팅 데이터
+ * @returns {Promise<Object>} 생성된 리스팅
  */
 export async function createListing(payload) {
   const provider = (APP_CONFIG.BACKEND_PROVIDER || 'mock').toLowerCase();
@@ -38,7 +46,9 @@ export async function createListing(payload) {
 }
 
 /**
- * Uploads an image file to Supabase Storage
+ * 이미지 파일을 스토리지에 업로드합니다.
+ * @param {File} file - 업로드할 파일
+ * @returns {Promise<string>} 업로드된 이미지 URL
  */
 export async function uploadImage(file) {
   const provider = (APP_CONFIG.BACKEND_PROVIDER || 'mock').toLowerCase();
@@ -48,7 +58,9 @@ export async function uploadImage(file) {
 }
 
 /**
- * Public inquiry submit
+ * 공개 문의를 제출합니다.
+ * @param {Object} payload - 문의 데이터
+ * @returns {Promise<Object>} 제출 결과
  */
 export async function createInquiry(payload) {
   const provider = (APP_CONFIG.BACKEND_PROVIDER || 'mock').toLowerCase();
@@ -57,7 +69,9 @@ export async function createInquiry(payload) {
 }
 
 /**
- * Public listings (search + pagination)
+ * 공개 리스팅을 검색 및 페이징합니다.
+ * @param {Object} options - 검색 옵션
+ * @returns {Promise<Array>} 리스팅 목록
  */
 export async function listListingsPublic({
   query = '',
@@ -77,7 +91,9 @@ export async function listListingsPublic({
 }
 
 /**
- * External feeds (news/policy cache)
+ * 외부 피드(뉴스/정책 캐시)를 가져옵니다.
+ * @param {Object} options - 피드 옵션
+ * @returns {Promise<Array>} 피드 목록
  */
 export async function listExternalFeeds({ source, limit = 10 } = {}) {
   const provider = (APP_CONFIG.BACKEND_PROVIDER || 'mock').toLowerCase();
@@ -86,7 +102,9 @@ export async function listExternalFeeds({ source, limit = 10 } = {}) {
 }
 
 /**
- * Single listing detail
+ * ID로 단일 리스팅을 가져옵니다.
+ * @param {string} id - 리스팅 ID
+ * @returns {Promise<Object|null>} 리스팅 객체 또는 null
  */
 export async function getListingById(id) {
   const provider = (APP_CONFIG.BACKEND_PROVIDER || 'mock').toLowerCase();
@@ -95,7 +113,8 @@ export async function getListingById(id) {
 }
 
 /**
- * Dashboard stats
+ * 대시보드 통계를 가져옵니다.
+ * @returns {Promise<Object>} 통계 데이터
  */
 export async function getDashboardStats() {
   const provider = (APP_CONFIG.BACKEND_PROVIDER || 'mock').toLowerCase();

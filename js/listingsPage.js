@@ -1,10 +1,20 @@
-﻿import { listListingsPublic } from './services/backendAdapter.js';
+﻿/**
+ * ListingsPage.js - 리스팅 목록 페이지
+ * 공개 리스팅을 필터링하여 그리드 형태로 표시합니다.
+ */
 
+import { listListingsPublic } from './services/backendAdapter.js';
+
+// DOM 요소 참조
 const listContainer = document.querySelector('[data-listings-grid]');
 const filterForm = document.querySelector('[data-filter-form]');
 
+/**
+ * 초기 리스팅 로드
+ */
 loadListings();
 
+// 필터 폼 이벤트 리스너
 if (filterForm) {
   filterForm.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -17,6 +27,10 @@ if (filterForm) {
   });
 }
 
+/**
+ * 리스팅을 로드합니다.
+ * @param {Object} filters - 필터 옵션
+ */
 async function loadListings(filters = {}) {
   if (!listContainer) return;
   listContainer.innerHTML = '<p class="lr-text">불러오는 중...</p>';
@@ -36,6 +50,10 @@ async function loadListings(filters = {}) {
   }
 }
 
+/**
+ * 리스팅 목록을 렌더링합니다.
+ * @param {Array} data - 리스팅 데이터 배열
+ */
 function renderListings(data) {
   if (!listContainer) return;
   listContainer.innerHTML = '';
@@ -55,7 +73,7 @@ function renderListings(data) {
     const image = item.image || (item.images && item.images[0]) || '';
     const badge = item.property_type || item.type || '매물';
 
-    // Contact phone logic
+    // 연락처 전화번호 로직
     const contactPhone = item.contact_phone || '0507-1402-5055';
     const telLink = `tel:${contactPhone.replace(/[^0-9]/g, '')}`;
 
@@ -79,7 +97,7 @@ function renderListings(data) {
   });
 }
 
-// Phone inquiry alert for desktop
+// 데스크톱 전화 문의 알림
 if (listContainer) {
   listContainer.addEventListener('click', (e) => {
     const btn = e.target.closest('.contact-btn');
@@ -91,19 +109,26 @@ if (listContainer) {
   });
 }
 
+/**
+ * 가격을 포맷팅합니다.
+ * @param {number} price - 가격
+ * @param {number} deposit - 보증금 (월세의 경우)
+ * @param {string} type - 부동산 타입
+ * @returns {string} 포맷팅된 가격 문자열
+ */
 function formatPrice(price, deposit, type) {
   if (!price) return '';
   const p = Number(price);
   const d = Number(deposit || 0);
   const typeStr = (type || '').trim();
 
-  // Monthly Rent (Wolse)
+  // 월세
   if (typeStr === '월세' || typeStr === 'Monthly Rent') {
     if (d > 0) return `${d.toLocaleString()} / ${p.toLocaleString()} 만원`;
     return `${p.toLocaleString()} 만원 (월세)`;
   }
 
-  // Jeonse or Sale
+  // 전세 또는 매매
   return `${p.toLocaleString()} 만원`;
 }
 

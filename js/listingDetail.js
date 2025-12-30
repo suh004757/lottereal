@@ -1,8 +1,15 @@
+/**
+ * ListingDetail.js - 리스팅 상세 페이지
+ * URL 파라미터에서 ID를 가져와 리스팅 상세 정보를 표시하고 문의 폼을 처리합니다.
+ */
+
 import { getListingById, createInquiry } from './services/backendAdapter.js';
 
+// URL 파라미터에서 리스팅 ID 가져오기
 const params = new URLSearchParams(window.location.search);
 const id = params.get('id');
 
+// DOM 요소 참조
 const titleEl = document.querySelector('[data-detail-title]');
 const infoEl = document.querySelector('[data-detail-info]');
 const tagsEl = document.querySelector('[data-detail-tags]');
@@ -11,11 +18,11 @@ const imageEl = document.querySelector('[data-detail-image]');
 const descEl = document.querySelector('[data-detail-desc]');
 const noteEl = document.querySelector('[data-detail-note]');
 const formEl = document.querySelector('[data-inquiry-form]');
-
 const phoneBtn = document.getElementById('phoneBtn');
 
-init();
-
+/**
+ * 페이지 초기화 함수
+ */
 async function init() {
   const listing = id ? await getListingById(id) : null;
   if (listing) {
@@ -25,6 +32,10 @@ async function init() {
   if (formEl) bindForm(listing);
 }
 
+/**
+ * 리스팅 상세 정보를 렌더링합니다.
+ * @param {Object} listing - 리스팅 데이터 객체
+ */
 function renderDetail(listing) {
   if (titleEl) titleEl.textContent = listing.title || '';
 
@@ -43,35 +54,46 @@ function renderDetail(listing) {
   if (imageEl) imageEl.src = listing.image || (listing.images && listing.images[0]) || '';
 }
 
+/**
+ * 가격을 포맷팅합니다.
+ * @param {number} price - 가격
+ * @param {number} deposit - 보증금 (월세의 경우)
+ * @param {string} type - 부동산 타입
+ * @returns {string} 포맷팅된 가격 문자열
+ */
 function formatPrice(price, deposit, type) {
   if (!price) return '';
   const p = Number(price);
   const d = Number(deposit || 0);
   const typeStr = (type || '').trim();
 
-  // Monthly Rent (Wolse)
+  // 월세
   if (typeStr === '월세' || typeStr === 'Monthly Rent') {
     if (d > 0) return `${d.toLocaleString()} / ${p.toLocaleString()} 만원`;
     return `${p.toLocaleString()} 만원 (월세)`;
   }
 
-  // Jeonse or Sale
+  // 전세 또는 매매
   return `${p.toLocaleString()} 만원`;
 }
 
+/**
+ * 전화 버튼을 바인딩합니다.
+ * @param {Object} listing - 리스팅 데이터 객체
+ */
 function bindPhoneBtn(listing) {
   if (!phoneBtn) return;
 
-  // Use listing's contact phone, fallback to general number
+  // 리스팅의 연락처 전화번호 사용, 없으면 기본 번호
   const contactPhone = listing.contact_phone || '0507-1402-5055';
-  const telLink = `tel:${contactPhone.replace(/[^0-9]/g, '')}`; // Remove non-numeric chars for tel: link
+  const telLink = `tel:${contactPhone.replace(/[^0-9]/g, '')}`; // tel: 링크용 숫자만 추출
 
-  // Set the href dynamically
+  // href 동적 설정
   phoneBtn.href = telLink;
   phoneBtn.setAttribute('data-phone', contactPhone);
 
   phoneBtn.addEventListener('click', (e) => {
-    // If desktop (width > 768px), show alert instead of calling
+    // 데스크톱에서는 전화 대신 알림 표시
     if (window.innerWidth > 768) {
       e.preventDefault();
       alert(`전화 문의: ${contactPhone}\n(모바일에서는 바로 전화가 연결됩니다)`);
@@ -79,6 +101,10 @@ function bindPhoneBtn(listing) {
   });
 }
 
+/**
+ * 문의 폼을 바인딩합니다.
+ * @param {Object} listing - 리스팅 데이터 객체
+ */
 function bindForm(listing) {
   formEl.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -88,7 +114,7 @@ function bindForm(listing) {
       listingTitle: listing?.title,
       name: formData.get('name') || '',
       phone: formData.get('phone') || '',
-      email: formData.get('email') || '', // Optional now
+      email: formData.get('email') || '', // 선택사항
       message: formData.get('message') || '',
       metadata: { source: 'public-detail' }
     };
@@ -102,3 +128,6 @@ function bindForm(listing) {
     }
   });
 }
+
+// 초기화 실행
+init();

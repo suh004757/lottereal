@@ -1,16 +1,21 @@
+/**
+ * Active.js - UI 활성화 스크립트
+ * jQuery를 사용하여 다양한 UI 컴포넌트를 활성화하고 이벤트를 처리합니다.
+ */
+
 (function ($) {
     'use strict';
 
     var $window = $(window);
 
-    // :: Preloader Active Code
+    // :: Preloader Active Code - 로딩 화면 제거
     $window.on('load', function () {
         $('#preloader').fadeOut('slow', function () {
             $(this).remove();
         });
     });
 
-    // :: Fullscreen Active Code
+    // :: Fullscreen Active Code - 전체 높이 요소 조정
     $window.on('resizeEnd', function () {
         $(".full_height").height($window.height());
     });
@@ -22,7 +27,7 @@
         }, 300);
     }).trigger("resize");
 
-    // :: Sticky Active Code
+    // :: Sticky Active Code - 스크롤 시 헤더 고정
     $window.on('scroll', function () {
         if ($window.scrollTop() > 0) {
             $('.header-area').addClass('sticky');
@@ -31,7 +36,7 @@
         }
     });
 
-    // :: Menu Active Code
+    // :: Menu Active Code - 메뉴 토글
     $('#menuIcon').on('click', function () {
         $('body').toggleClass('menu-open');
     });
@@ -39,10 +44,10 @@
         $('body').removeClass('menu-open');
     });
 
-    // :: Tooltip Active Code
+    // :: Tooltip Active Code - 툴팁 활성화
     $('[data-toggle="tooltip"]').tooltip()
 
-    // :: Nicescroll Active Code
+    // :: Nicescroll Active Code - 커스텀 스크롤바
     if ($.fn.niceScroll) {
         $("body, textarea").niceScroll({
             cursorcolor: "#151515",

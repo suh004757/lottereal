@@ -1,7 +1,14 @@
-// Three.js 3D City Skyline Scene for Hero Section
+/**
+ * Hero3D.js - 3D 히어로 씬
+ * Three.js를 사용하여 도시 스카이라인을 3D로 렌더링하는 히어로 섹션입니다.
+ */
+
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
+/**
+ * 히어로 섹션용 3D 도시 스카이라인 씬 클래스
+ */
 class Hero3DScene {
     constructor() {
         this.container = null;
@@ -15,27 +22,33 @@ class Hero3DScene {
         this.init();
     }
 
+    /**
+     * 씬을 초기화합니다.
+     */
     init() {
-        // Create container
+        // 컨테이너 생성
         this.createContainer();
 
-        // Setup Three.js
+        // Three.js 설정
         this.setupScene();
         this.setupCamera();
         this.setupRenderer();
         this.setupLights();
         this.setupControls();
 
-        // Create 3D skyline
+        // 3D 도시 스카이라인 생성
         this.createCitySkyline();
 
-        // Start animation
+        // 애니메이션 시작
         this.animate();
 
-        // Handle resize
+        // 리사이즈 핸들러
         window.addEventListener('resize', () => this.onWindowResize());
     }
 
+    /**
+     * 3D 캔버스 컨테이너를 생성합니다.
+     */
     createContainer() {
         const heroSection = document.querySelector('.lr-hero');
         if (!heroSection) return;
@@ -55,11 +68,17 @@ class Hero3DScene {
         heroSection.appendChild(this.container);
     }
 
+    /**
+     * Three.js 씬을 설정합니다.
+     */
     setupScene() {
         this.scene = new THREE.Scene();
-        this.scene.background = null; // Transparent background
+        this.scene.background = null; // 투명 배경
     }
 
+    /**
+     * 카메라를 설정합니다.
+     */
     setupCamera() {
         const aspect = this.container.clientWidth / this.container.clientHeight;
         this.camera = new THREE.PerspectiveCamera(50, aspect, 0.1, 1000);
@@ -67,6 +86,9 @@ class Hero3DScene {
         this.camera.lookAt(0, 1.5, 0);
     }
 
+    /**
+     * 렌더러를 설정합니다.
+     */
     setupRenderer() {
         this.renderer = new THREE.WebGLRenderer({
             antialias: true,
@@ -79,12 +101,15 @@ class Hero3DScene {
         this.container.appendChild(this.renderer.domElement);
     }
 
+    /**
+     * 조명 설정을 합니다.
+     */
     setupLights() {
-        // Ambient light
+        // 주변광
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
         this.scene.add(ambientLight);
 
-        // Main directional light (key light)
+        // 메인 방향광 (키 라이트)
         const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
         directionalLight.position.set(5, 10, 5);
         directionalLight.castShadow = true;
@@ -96,7 +121,7 @@ class Hero3DScene {
         directionalLight.shadow.mapSize.height = 1024;
         this.scene.add(directionalLight);
 
-        // Accent lights for modern feel
+        // 액센트 조명
         const accentLight1 = new THREE.PointLight(0x4A90E2, 0.6, 10);
         accentLight1.position.set(-3, 2, 2);
         this.scene.add(accentLight1);
@@ -106,6 +131,9 @@ class Hero3DScene {
         this.scene.add(accentLight2);
     }
 
+    /**
+     * 카메라 컨트롤을 설정합니다.
+     */
     setupControls() {
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
         this.controls.enableDamping = true;
@@ -118,18 +146,21 @@ class Hero3DScene {
         this.controls.enablePan = false;
     }
 
+    /**
+     * 도시 스카이라인을 생성합니다.
+     */
     createCitySkyline() {
         this.skyline = new THREE.Group();
 
-        // Modern building configurations: [width, height, depth, x-position, z-position, color, type]
+        // 현대적인 건물 설정: [너비, 높이, 깊이, x위치, z위치, 색상, 타입]
         const buildings = [
-            [0.4, 2.8, 0.4, -1.5, 0, 0x1E88E5, 'glass'],      // Tall glass tower (left)
-            [0.5, 2.0, 0.5, -0.7, 0, 0x5E35B1, 'metallic'],   // Medium metallic building
-            [0.35, 3.5, 0.35, 0.1, 0, 0x0D47A1, 'glass'],     // Tallest glass tower (center)
-            [0.45, 2.5, 0.45, 0.8, 0, 0x512DA8, 'metallic'],  // Medium-tall metallic
-            [0.38, 1.8, 0.38, 1.5, 0, 0x1976D2, 'glass'],     // Glass building (right)
-            [0.3, 2.2, 0.3, -1.0, -0.5, 0x283593, 'metallic'], // Back row metallic
-            [0.32, 1.6, 0.32, 0.4, -0.5, 0x1565C0, 'glass'],  // Back row glass
+            [0.4, 2.8, 0.4, -1.5, 0, 0x1E88E5, 'glass'],      // 왼쪽 유리 타워 (높음)
+            [0.5, 2.0, 0.5, -0.7, 0, 0x5E35B1, 'metallic'],   // 금속 건물 (중간)
+            [0.35, 3.5, 0.35, 0.1, 0, 0x0D47A1, 'glass'],     // 중앙 유리 타워 (가장 높음)
+            [0.45, 2.5, 0.45, 0.8, 0, 0x512DA8, 'metallic'],  // 금속 건물 (중간-높음)
+            [0.38, 1.8, 0.38, 1.5, 0, 0x1976D2, 'glass'],     // 오른쪽 유리 건물
+            [0.3, 2.2, 0.3, -1.0, -0.5, 0x283593, 'metallic'], // 뒷줄 금속 건물
+            [0.32, 1.6, 0.32, 0.4, -0.5, 0x1565C0, 'glass'],  // 뒷줄 유리 건물
         ];
 
         buildings.forEach(([width, height, depth, xPos, zPos, color, type]) => {
@@ -138,7 +169,7 @@ class Hero3DScene {
             this.skyline.add(building);
         });
 
-        // Modern platform with lighting
+        // 조명 플랫폼
         const platformGeometry = new THREE.BoxGeometry(5, 0.15, 2);
         const platformMaterial = new THREE.MeshStandardMaterial({
             color: 0x1A237E,
@@ -152,7 +183,7 @@ class Hero3DScene {
         platform.receiveShadow = true;
         this.skyline.add(platform);
 
-        // Add edge lighting to platform
+        // 플랫폼 가장자리 조명
         const edgeGeometry = new THREE.BoxGeometry(5.1, 0.02, 2.1);
         const edgeMaterial = new THREE.MeshStandardMaterial({
             color: 0x64B5F6,
@@ -166,10 +197,19 @@ class Hero3DScene {
         this.scene.add(this.skyline);
     }
 
+    /**
+     * 현대적인 건물을 생성합니다.
+     * @param {number} width - 건물 너비
+     * @param {number} height - 건물 높이
+     * @param {number} depth - 건물 깊이
+     * @param {number} color - 건물 색상
+     * @param {string} type - 건물 타입 ('glass' 또는 'metallic')
+     * @returns {THREE.Group} 건물 그룹 객체
+     */
     createModernBuilding(width, height, depth, color, type) {
         const buildingGroup = new THREE.Group();
 
-        // Choose material based on type
+        // 타입에 따른 재질 선택
         let material;
         if (type === 'glass') {
             material = new THREE.MeshPhysicalMaterial({
@@ -194,7 +234,7 @@ class Hero3DScene {
             });
         }
 
-        // Main building body
+        // 메인 건물 본체
         const geometry = new THREE.BoxGeometry(width, height, depth);
         const building = new THREE.Mesh(geometry, material);
         building.position.y = height / 2;
@@ -202,7 +242,7 @@ class Hero3DScene {
         building.receiveShadow = true;
         buildingGroup.add(building);
 
-        // Modern window strips (horizontal bands)
+        // 창문 스트립 (수평 띠)
         const stripCount = Math.floor(height / 0.3);
         for (let i = 0; i < stripCount; i++) {
             const stripGeometry = new THREE.BoxGeometry(width * 0.95, 0.02, depth * 0.95);
@@ -218,7 +258,7 @@ class Hero3DScene {
             buildingGroup.add(strip);
         }
 
-        // Vertical accent lines
+        // 수직 액센트 라인
         const accentPositions = [
             [-width / 3, 0],
             [width / 3, 0],
@@ -244,12 +284,12 @@ class Hero3DScene {
             buildingGroup.add(accent);
         });
 
-        // Rooftop features
+        // 옥상 기능 (높은 건물만)
         if (height > 2.3) {
-            // Modern antenna structure
+            // 안테나 구조
             const antennaGroup = new THREE.Group();
 
-            // Main antenna pole
+            // 메인 안테나 기둥
             const poleGeometry = new THREE.CylinderGeometry(0.02, 0.02, 0.6);
             const poleMaterial = new THREE.MeshStandardMaterial({
                 color: 0xCFD8DC,
@@ -260,7 +300,7 @@ class Hero3DScene {
             pole.position.y = height + 0.3;
             antennaGroup.add(pole);
 
-            // Antenna rings
+            // 안테나 링
             for (let i = 0; i < 3; i++) {
                 const ringGeometry = new THREE.TorusGeometry(0.08 - i * 0.02, 0.008, 8, 16);
                 const ringMaterial = new THREE.MeshStandardMaterial({
@@ -276,7 +316,7 @@ class Hero3DScene {
                 antennaGroup.add(ring);
             }
 
-            // Top light
+            // 상단 조명
             const lightGeometry = new THREE.SphereGeometry(0.04, 16, 16);
             const lightMaterial = new THREE.MeshStandardMaterial({
                 color: 0xFF1744,
@@ -292,7 +332,7 @@ class Hero3DScene {
             buildingGroup.add(antennaGroup);
         }
 
-        // Modern rooftop edge with lighting
+        // 옥상 가장자리 조명
         const roofEdgeGeometry = new THREE.BoxGeometry(width + 0.03, 0.08, depth + 0.03);
         const roofEdgeMaterial = new THREE.MeshStandardMaterial({
             color: 0x37474F,
@@ -305,7 +345,7 @@ class Hero3DScene {
         roofEdge.position.y = height;
         buildingGroup.add(roofEdge);
 
-        // Rooftop glow strip
+        // 옥상 글로우 스트립
         const glowStripGeometry = new THREE.BoxGeometry(width + 0.04, 0.01, depth + 0.04);
         const glowStripMaterial = new THREE.MeshStandardMaterial({
             color: 0x00BCD4,
@@ -319,6 +359,9 @@ class Hero3DScene {
         return buildingGroup;
     }
 
+    /**
+     * 애니메이션 루프를 실행합니다.
+     */
     animate() {
         this.animationId = requestAnimationFrame(() => this.animate());
 
@@ -326,6 +369,9 @@ class Hero3DScene {
         this.renderer.render(this.scene, this.camera);
     }
 
+    /**
+     * 창 크기 변경 시 호출됩니다.
+     */
     onWindowResize() {
         if (!this.container) return;
 
@@ -337,6 +383,9 @@ class Hero3DScene {
         this.renderer.setSize(width, height);
     }
 
+    /**
+     * 씬을 정리하고 제거합니다.
+     */
     destroy() {
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
@@ -350,7 +399,7 @@ class Hero3DScene {
     }
 }
 
-// Initialize when DOM is ready
+// DOM 준비 시 초기화
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         new Hero3DScene();
