@@ -5,6 +5,23 @@
 
 import { getLatestReport, getReportBySlug, incrementReportViews } from './services/reportAdapter.js';
 
+/**
+ * HTML escape utility to prevent XSS
+ * Escapes special HTML characters to prevent injection attacks
+ * 
+ * @param {string} unsafe - Unsafe string that may contain HTML
+ * @returns {string} Escaped safe string
+ */
+function escapeHtml(unsafe) {
+    if (!unsafe) return '';
+    return String(unsafe)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
 // Get report slug from URL (if any)
 const urlParams = new URLSearchParams(window.location.search);
 const reportSlug = urlParams.get('slug');
@@ -26,8 +43,10 @@ async function loadReport() {
             return;
         }
 
-        // Increment view count
-        incrementReportViews(currentReport.slug);
+        // Increment view count (fire-and-forget with error logging)
+        incrementReportViews(currentReport.slug).catch(err => {
+            console.warn('[Analytics] Failed to increment view count:', err);
+        });
 
         // Render report
         renderReport();
@@ -60,8 +79,10 @@ function renderReport() {
             headerIds: true
         });
 
-        const html = marked.parse(currentReport.report_md);
-        contentDiv.innerHTML = html;
+        const rawHtml = marked.parse(currentReport.report_md);
+        // ✅ Sanitize HTML to prevent XSS
+        const safeHtml = window.DOMPurify ? window.DOMPurify.sanitize(rawHtml) : rawHtml;
+        contentDiv.innerHTML = safeHtml;
     } catch (error) {
         console.error('Error rendering markdown:', error);
         contentDiv.innerHTML = '<p>리포트를 불러오는 데 실패했습니다.</p>';
@@ -91,12 +112,13 @@ function renderRevisions() {
 window.openEvidence = function () {
     const evidence = currentReport.evidence_json || [];
 
+    // ✅ Escape HTML to prevent XSS
     const sourcesHtml = evidence.map(source => `
     <div style="padding: 1rem; background: #f9fafb; border-radius: 0.5rem; margin-bottom: 1rem;">
-      <strong style="color: #111827;">${source.name}</strong><br>
-      <a href="${source.url}" target="_blank" style="color: #3b82f6; font-size: 0.875rem;">${source.url}</a><br>
-      <span style="color: #6b7280; font-size: 0.875rem;">수집일: ${source.fetchedAt}</span><br>
-      <span style="color: #6b7280; font-size: 0.875rem;">범위: ${source.coverage}</span>
+      <strong style="color: #111827;">${escapeHtml(source.name)}</strong><br>
+      <a href="${escapeHtml(source.url)}" target="_blank" rel="noopener noreferrer" style="color: #3b82f6; font-size: 0.875rem;">${escapeHtml(source.url)}</a><br>
+      <span style="color: #6b7280; font-size: 0.875rem;">수집일: ${escapeHtml(source.fetchedAt)}</span><br>
+      <span style="color: #6b7280; font-size: 0.875rem;">범위: ${escapeHtml(source.coverage)}</span>
     </div>
   `).join('');
 

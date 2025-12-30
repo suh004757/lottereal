@@ -1,6 +1,44 @@
+/**
+ * ============================================
+ * Market Report Editor
+ * ============================================
+ * 
+ * File Path: js/reportEditor.js
+ * HTML Page: admin/report-editor.html
+ * 
+ * Main Features:
+ * 1. Initialize SimpleMDE markdown editor
+ * 2. Load existing reports from Supabase (hydration)
+ * 3. Save/update reports (INSERT/UPDATE)
+ * 4. Markdown preview (XSS protection with DOMPurify)
+ * 5. Evidence source management
+ * 6. Slug uniqueness validation
+ * 
+ * Security Features (Applied 2025-12-30):
+ * - HTML sanitization using DOMPurify
+ * - Slug validation (lowercase letters + numbers + hyphens only)
+ * - Input length limits (title 200 chars, summary 500 chars, content 50,000 chars)
+ * - Slug uniqueness check (when creating new reports)
+ * 
+ * Data Flow:
+ * 1. Check URL parameters (?id= or ?slug=)
+ * 2. Load data from Supabase if exists (hydrateExistingReport)
+ * 3. Form input → buildReportPayload() → validation
+ * 4. Supabase INSERT or UPDATE
+ * 5. Add id to URL on success (persistQueryParams)
+ */
+
 import { getSupabaseClient } from './config/supabaseConfig.js';
 
-const SAMPLE_TEMPLATE = `## 1. 거시 환경 (Macro)
+// ============================================
+// Constants
+// ============================================
+
+/**
+ * Sample markdown template
+ * Default structure shown when user first opens the editor
+ */
+const SAMPLE_TEMPLATE = `## 1. Macro Environment
 
 ### 금리와 정책 동향
 - 최근 3개월간 기준금리는 동결 기조를 유지했습니다.
@@ -56,8 +94,12 @@ const SAMPLE_TEMPLATE = `## 1. 거시 환경 (Macro)
 ---
 
 ## 면책
-본 리포트는 과거 데이터를 기반으로 한 참고용 분석이며, 투자 권유가 아닙니다.`;
+This report is a reference analysis based on historical data and is not investment advice.`;
 
+/**
+ * Default evidence source template
+ * Default sources automatically added when creating new reports
+ */
 const DEFAULT_EVIDENCE = [
   {
     name: '국토교통부 실거래가 공개시스템',
@@ -66,11 +108,39 @@ const DEFAULT_EVIDENCE = [
   }
 ];
 
+// ============================================
+// Global State Variables
+// ============================================
+
+/**
+ * SimpleMDE editor instance
+ * Initialized in initializeEditor()
+ */
 let simplemde;
+
+/**
+ * Evidence sources array
+ * Can be added/removed by user
+ */
 let evidenceSources = cloneEvidence(DEFAULT_EVIDENCE);
+
+/**
+ * Currently editing report object
+ * null: New report mode
+ * object: Edit existing report mode (includes id)
+ */
 let editingReport = null;
+
+/**
+ * Supabase client instance
+ * Initialized via getSupabaseClient()
+ */
 let supabaseClient = null;
 
+/**
+ * DOM element references object
+ * Pre-cache frequently used DOM elements for performance
+ */
 const refs = {
   titleInput: null,
   slugInput: null,
@@ -85,9 +155,34 @@ const refs = {
   statusEl: null
 };
 
-document.addEventListener('DOMContentLoaded', initEditorPage);
+// ============================================
+// Initialization
+// ============================================
 
-function initEditorPage() {
+/**
+ * Initialize editor when DOM is loaded
+ * { once: true }: Execute event listener only once (prevent memory leak)
+ */
+document.addEventListener('DOMContentLoaded', () => initEditorPage(), { once: true });
+
+/**
+ * Editor page initialization function
+ * 
+ * Execution order:
+ * 1. Store DOM element references
+ * 2. Initialize Supabase client
+ * 3. Check Supabase connection (early exit if unavailable)
+ * 4. Initialize SimpleMDE editor
+ * 5. Bind events
+ * 6. Render evidence sources UI
+ * 7. Load existing report (if URL parameters exist)
+ * 
+ * Security improvements (2025-12-30):
+ * - Changed to async/await to wait for hydrateExistingReport() completion
+ * - Check Supabase connection first to prevent unnecessary initialization
+ */
+async function initEditorPage() {
+  // 1. Store DOM element references
   refs.titleInput = document.getElementById('report-title');
   refs.slugInput = document.getElementById('report-slug');
   refs.summaryInput = document.getElementById('report-summary');
@@ -100,18 +195,33 @@ function initEditorPage() {
   refs.previewBody = document.getElementById('preview-body');
   refs.statusEl = document.getElementById('editor-status');
 
+  // 2. Initialize Supabase client
   supabaseClient = getSupabaseClient();
-  initializeEditor();
-  bindEvents();
-  renderEvidenceSources();
-  hydrateExistingReport();
 
+  // 3. Check Supabase connection (early exit)
   if (!supabaseClient) {
     setStatus('Supabase 설정이 필요합니다. appConfig를 확인하세요.', 'error');
     refs.saveBtn?.setAttribute('disabled', 'true');
+    return; // Stop here if no connection
   }
+
+  // 4-6. Initialize editor and UI
+  initializeEditor();
+  bindEvents();
+  renderEvidenceSources();
+
+  // 7. Load existing report (wait for async completion)
+  await hydrateExistingReport();
 }
 
+/**
+ * SimpleMDE 마크다운 에디터 초기화
+ * 
+ * 설정:
+ * - spellChecker: false (맞춤법 검사 비활성화)
+ * - minHeight: 500px (최소 높이)
+ * - toolbar: 볼드, 이탤릭, 헤딩, 인용, 리스트, 링크, 이미지, 미리보기 등
+ */
 function initializeEditor() {
   if (!window.SimpleMDE) {
     setStatus('에디터 라이브러리가 로드되지 않았습니다.', 'error');
@@ -206,8 +316,13 @@ function showPreview() {
   if (!refs.previewModal || !refs.previewBody) return;
   const title = refs.titleInput?.value || '무제 리포트';
   const content = simplemde ? simplemde.value() : '';
-  const html = window.marked ? window.marked.parse(content) : content;
-  refs.previewBody.innerHTML = `<h1 style="font-size:2.5rem;margin-bottom:1rem;color:#111827;">${title}</h1><div class="lr-report-body">${html}</div>`;
+  const rawHtml = window.marked ? window.marked.parse(content) : content;
+
+  // ✅ Sanitize HTML to prevent XSS
+  const safeTitle = window.DOMPurify ? window.DOMPurify.sanitize(title) : title;
+  const safeHtml = window.DOMPurify ? window.DOMPurify.sanitize(rawHtml) : rawHtml;
+
+  refs.previewBody.innerHTML = `<h1 style="font-size:2.5rem;margin-bottom:1rem;color:#111827;">${safeTitle}</h1><div class="lr-report-body">${safeHtml}</div>`;
   refs.previewModal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
 }
@@ -264,10 +379,20 @@ function buildReportPayload() {
   const summary = (refs.summaryInput?.value || '').trim();
   const content = simplemde ? simplemde.value().trim() : '';
   const status = refs.statusSelect?.value || 'draft';
+
+  // ✅ Enhanced validation
   if (!title) throw new Error('리포트 제목을 입력하세요.');
+  if (title.length > 200) throw new Error('제목은 200자 이내로 입력하세요.');
+
   if (!slug) throw new Error('유효한 슬러그를 입력하세요.');
+  if (slug.length > 100) throw new Error('슬러그는 100자 이내로 입력하세요.');
+  if (!/^[a-z0-9-]+$/.test(slug)) throw new Error('슬러그는 영문 소문자, 숫자, 하이픈(-)만 사용 가능합니다.');
+
   if (!summary) throw new Error('요약을 입력하세요.');
+  if (summary.length > 500) throw new Error('요약은 500자 이내로 입력하세요.');
+
   if (!content) throw new Error('본문 내용을 작성하세요.');
+  if (content.length > 50000) throw new Error('본문은 50,000자 이내로 입력하세요.');
 
   const cleanedEvidence = evidenceSources
     .map((source) => ({
@@ -300,6 +425,20 @@ async function saveReport() {
   try {
     const payload = buildReportPayload();
     setSavingState(true);
+
+    // ✅ Check slug uniqueness for new reports
+    if (!editingReport?.id) {
+      const { data: existing } = await supabaseClient
+        .from('market_reports')
+        .select('id')
+        .eq('slug', payload.slug)
+        .single();
+
+      if (existing) {
+        throw new Error(`슬러그 "${payload.slug}"는 이미 사용 중입니다. 다른 슬러그를 입력하세요.`);
+      }
+    }
+
     setStatus(editingReport ? '리포트를 업데이트하는 중입니다...' : '새 리포트를 저장하는 중입니다...', 'info');
     let response;
     if (editingReport?.id) {
