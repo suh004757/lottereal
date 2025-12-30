@@ -254,16 +254,16 @@ async function loadRecent() {
  */
 async function loadListingsAdmin() {
   if (!listingsTbody) return;
-  listingsTbody.innerHTML = '<tr><td colspan="6">???? ?...</td></tr>';
+  listingsTbody.innerHTML = '<tr><td colspan="6">\uBD88\uB7EC\uC624\uB294 \uC911...</td></tr>';
   try {
     const response = await listListingsAdmin({ page: 1, pageSize: 50 });
     const items = response?.data || [];
     if (!response?.ok) {
-      listingsTbody.innerHTML = `<tr><td colspan="6">?? ???? ??: ${response?.error || '? ? ?? ??'}</td></tr>`;
+      listingsTbody.innerHTML = `<tr><td colspan="6">\uB9E4\uBB3C \uBD88\uB7EC\uC624\uAE30 \uC2E4\uD328: ${response?.error || '\uC54C \uC218 \uC5C6\uB294 \uC624\uB958'}</td></tr>`;
       return;
     }
     if (items.length === 0) {
-      listingsTbody.innerHTML = '<tr><td colspan="6">??? ????.</td></tr>';
+      listingsTbody.innerHTML = '<tr><td colspan="6">\uB9E4\uBB3C\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.</td></tr>';
       return;
     }
     listingsTbody.innerHTML = '';
@@ -277,13 +277,13 @@ async function loadListingsAdmin() {
         <td>${formatKst(item.created_at) || ''}</td>
         <td>
           <div class="admin-table-actions">
-            <button class="admin-icon-btn" data-edit="${item.id}" title="??">
+            <button class="admin-icon-btn" data-edit="${item.id}" title="\uC218\uC815">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
               </svg>
             </button>
-            <button class="admin-icon-btn danger" data-delete="${item.id}" title="??">
+            <button class="admin-icon-btn danger" data-delete="${item.id}" title="\uC0AD\uC81C">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="3 6 5 6 21 6"></polyline>
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -306,25 +306,23 @@ async function loadListingsAdmin() {
     listingsTbody.querySelectorAll('[data-delete]').forEach((btn) => {
       btn.addEventListener('click', async () => {
         const id = btn.getAttribute('data-delete');
-        if (!confirm('? ??? ??????')) return;
+        if (!confirm('\uC774 \uB9E4\uBB3C\uC744 \uC0AD\uC81C\uD560\uAE4C\uC694?')) return;
         try {
           await deleteListing(id);
           loadStats();
           loadRecent();
           loadListingsAdmin();
         } catch (err) {
-          console.error('?? ??', err);
-          alert('?? ? ??? ??????.');
+          console.error('\uC0AD\uC81C \uC2E4\uD328', err);
+          alert('\uC0AD\uC81C \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4.');
         }
       });
     });
   } catch (err) {
-    console.error('?? ?? ?? ??', err);
-    listingsTbody.innerHTML = '<tr><td colspan="6">?? ???? ??????.</td></tr>';
+    console.error('\uB9E4\uBB3C \uAD00\uB9AC \uB85C\uB4DC \uC2E4\uD328', err);
+    listingsTbody.innerHTML = '<tr><td colspan="6">\uB9E4\uBB3C \uBD88\uB7EC\uC624\uAE30 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4.</td></tr>';
   }
-}
-
-// ============================================
+}// ============================================
 // 문의 관리
 // ============================================
 
@@ -337,15 +335,20 @@ async function loadListingsAdmin() {
  */
 async function loadInquiriesAdmin() {
   if (!inquiriesTbody) return;
-  inquiriesTbody.innerHTML = '<tr><td colspan="8">불러오는 중...</td></tr>';
+  inquiriesTbody.innerHTML = '<tr><td colspan="8">\uBD88\uB7EC\uC624\uB294 \uC911...</td></tr>';
   try {
-    const data = await listInquiriesAdmin({ page: 1, pageSize: 50 });
-    if (!data || data.length === 0) {
-      inquiriesTbody.innerHTML = '<tr><td colspan="8">문의가 없습니다.</td></tr>';
+    const response = await listInquiriesAdmin({ page: 1, pageSize: 50 });
+    const inquiries = response?.data || [];
+    if (!response?.ok) {
+      inquiriesTbody.innerHTML = `<tr><td colspan="8">\uBB38\uC758 \uBD88\uB7EC\uC624\uAE30 \uC2E4\uD328: ${response?.error || '\uC54C \uC218 \uC5C6\uB294 \uC624\uB958'}</td></tr>`;
+      return;
+    }
+    if (inquiries.length === 0) {
+      inquiriesTbody.innerHTML = '<tr><td colspan="8">\uBB38\uC758\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.</td></tr>';
       return;
     }
     inquiriesTbody.innerHTML = '';
-    data.forEach((inq, idx) => {
+    inquiries.forEach((inq, idx) => {
       const tr = document.createElement('tr');
       if ((inq.status || '').toLowerCase() === 'unread') {
         tr.classList.add('admin-inquiry--unread');
@@ -360,13 +363,12 @@ async function loadInquiriesAdmin() {
         <td>${formatKst(inq.created_at) || ''}</td>
         <td>
           <div class="admin-table-actions">
-            <button class="admin-btn admin-btn--ghost" data-inquiry="${inq.id}" data-status="${inq.status === 'read' ? 'unread' : 'read'}">${inq.status === 'read' ? '안읽음으로' : '읽음으로'}</button>
-            <button class="admin-btn admin-btn--ghost" data-share-inquiry="${inq.id}">공유</button>
+            <button class="admin-btn admin-btn--ghost" data-inquiry="${inq.id}" data-status="${inq.status === 'read' ? 'unread' : 'read'}">${inq.status === 'read' ? '\uC548\uC77D\uC74C\uC73C\uB85C' : '\uC77D\uC74C\uC73C\uB85C'}</button>
+            <button class="admin-btn admin-btn--ghost" data-share-inquiry="${inq.id}">\uACF5\uC720</button>
           </div>
         </td>
       `;
       tr.addEventListener('click', (e) => {
-        // Avoid interfering with inner buttons
         if (e.target.closest('button')) return;
         openInquiryModal(inq);
       });
@@ -386,7 +388,7 @@ async function loadInquiriesAdmin() {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
         const id = btn.getAttribute('data-share-inquiry');
-        const inq = data.find((x) => `${x.id}` === `${id}`);
+        const inq = inquiries.find((x) => `${x.id}` === `${id}`);
         if (!inq) return;
         const text = [
           `Listing: ${inq.listing_title || '-'}`,
@@ -399,22 +401,21 @@ async function loadInquiriesAdmin() {
         try {
           if (navigator?.clipboard?.writeText) {
             await navigator.clipboard.writeText(text);
-            alert('문의 내용을 클립보드에 복사했습니다.');
+            alert('\uBB38\uC758 \uB0B4\uC6A9\uC744 \uD074\uB9BD\uBCF4\uB4DC\uC5D0 \uBCF5\uC0AC\uD588\uC2B5\uB2C8\uB2E4.');
           } else {
-            prompt('아래 내용을 복사하세요:', text);
+            prompt('\uC544\uB798 \uB0B4\uC6A9\uC744 \uBCF5\uC0AC\uD558\uC138\uC694:', text);
           }
         } catch (err) {
-          console.error('클립보드 복사 실패', err);
-          prompt('아래 내용을 복사하세요:', text);
+          console.error('\uD074\uB9BD\uBCF4\uB4DC \uBCF5\uC0AC \uC2E4\uD328', err);
+          prompt('\uC544\uB798 \uB0B4\uC6A9\uC744 \uBCF5\uC0AC\uD558\uC138\uC694:', text);
         }
       });
     });
   } catch (err) {
-    console.error('문의 관리 로드 실패', err);
-    inquiriesTbody.innerHTML = '<tr><td colspan="8">문의 불러오기 실패했습니다.</td></tr>';
+    console.error('\uBB38\uC758 \uAD00\uB9AC \uB85C\uB4DC \uC2E4\uD328', err);
+    inquiriesTbody.innerHTML = '<tr><td colspan="8">\uBB38\uC758 \uBD88\uB7EC\uC624\uAE30 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4.</td></tr>';
   }
 }
-
 // ============================================
 // 매물 모달 관련
 // ============================================

@@ -128,11 +128,12 @@ export async function getListingById(id) {
 export async function getDashboardStats() {
   const provider = (APP_CONFIG.BACKEND_PROVIDER || 'mock').toLowerCase();
   if (provider === 'supabase') return getDashboardStatsSupabase();
+  const mockListings = listListingsMock();
   return {
     ok: true,
     data: {
       ...buildDefaultDashboardStats(),
-      totalListings: listListingsMock().length
+      totalListings: mockListings.length
     },
     error: null
   };
@@ -155,7 +156,8 @@ export async function getRecentActivities(limit = 20) {
 export async function listListingsAdmin({ page = 1, pageSize = 20, sort = 'created_at', direction = 'desc' } = {}) {
   const provider = (APP_CONFIG.BACKEND_PROVIDER || 'mock').toLowerCase();
   if (provider === 'supabase') return listListingsAdminSupabase({ page, pageSize, sort, direction });
-  return { ok: true, data: listListingsMock(), meta: { page, pageSize, total: listListingsMock().length }, error: null };
+  const mockData = listListingsMock();
+  return { ok: true, data: mockData, meta: { page, pageSize, total: mockData.length }, error: null };
 }
 
 /**
