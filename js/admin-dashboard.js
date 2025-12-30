@@ -522,11 +522,13 @@ function setPropertyFormMessage(message = '', status = 'info') {
   if (!message) {
     propertyFormMessage.textContent = '';
     propertyFormMessage.dataset.status = '';
+    propertyFormMessage.style.display = 'none';
     propertyFormMessage.hidden = true;
     return;
   }
   propertyFormMessage.textContent = message;
   propertyFormMessage.dataset.status = status;
+  propertyFormMessage.style.display = 'block';
   propertyFormMessage.hidden = false;
 }
 
@@ -773,6 +775,16 @@ async function uploadImagesToSupabase(images) {
 function togglePropertyFormDisabled(isDisabled) {
   const submit = propertyForm?.querySelector('button[type="submit"]');
   if (submit) submit.disabled = isDisabled;
+  if (propertyImagesInput) propertyImagesInput.disabled = isDisabled;
+  const inputs = propertyForm?.querySelectorAll('input, select, textarea');
+  inputs?.forEach((input) => {
+    input.disabled = isDisabled;
+  });
+  if (isDisabled) {
+    propertyForm?.classList.add('is-disabled');
+  } else {
+    propertyForm?.classList.remove('is-disabled');
+  }
 }
 
 /**
