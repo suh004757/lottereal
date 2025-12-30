@@ -53,6 +53,7 @@ const transactionTypeSelect = document.querySelector('select[name="transactionTy
 const depositField = document.getElementById('depositField');
 const propertyImagesInput = document.getElementById('propertyImages');
 const imagePreviewContainer = document.getElementById('imagePreview');
+const propertyFormMessage = document.getElementById('propertyFormMessage');
 
 // Inquiry detail modal
 const inquiryModal = document.getElementById('inquiryModal');
@@ -487,6 +488,7 @@ function bindLogout() {
  */
 function openModal(item) {
   editingId = item?.id || null;
+  clearPropertyFormMessage();
   if (editingId) {
     document.getElementById('modalTitle').textContent = '매물 수정';
     fillForm(item);
@@ -512,6 +514,7 @@ function closeModal() {
   existingImages = [];
   editingId = null;
   renderImagePreviews();
+  clearPropertyFormMessage();
 }
 
 /**
@@ -561,15 +564,17 @@ function closeInquiryModal() {
 async function onImagesSelected(e) {
   const files = Array.from(e.target.files || []);
   if (files.length + uploadedImages.length > 10) {
-    alert('최대 10개의 이미지만 업로드할 수 있습니다.');
+    setPropertyFormMessage('최대 10개의 이미지만 업로드할 수 있습니다.', 'error');
     return;
   }
+  if (!files.length) return;
   if (imagePreviewContainer) {
     imagePreviewContainer.innerHTML = '<div style="color: var(--admin-muted); padding: 12px;">이미지 처리 중...</div>';
   }
+  setPropertyFormMessage('이미지를 처리하고 있습니다...', 'info');
   for (const file of files) {
     if (file.size > 5 * 1024 * 1024) {
-      alert(`${file.name} (이)가 5MB를 초과합니다.`);
+      setPropertyFormMessage(`${file.name} (이)가 5MB 용량 제한을 초과했습니다.`, 'error');
       continue;
     }
     const resizedFile = await resizeImage(file);
@@ -585,6 +590,7 @@ async function onImagesSelected(e) {
     };
     reader.readAsDataURL(resizedFile);
   }
+  setPropertyFormMessage('이미지가 준비되었습니다.', 'success');
 }
 
 /**
@@ -658,8 +664,10 @@ function bindPropertyForm() {
     const propertyData = Object.fromEntries(formData.entries());
 
     try {
+      setPropertyFormMessage('이미지 업로드를 시작합니다...', 'info');
       togglePropertyFormDisabled(true);
       const imageUrls = await uploadImagesToSupabase(uploadedImages);
+      setPropertyFormMessage(editingId ? '매물 정보를 업데이트하는 중...' : '새 매물을 등록하는 중...', 'info');
       const payload = {
         title: propertyData.title || propertyData.name || '관리자 등록 매물',
         description: propertyData.description || '',
@@ -684,26 +692,30 @@ function bindPropertyForm() {
         }
       };
 
+      let successMessage = '';
       if (editingId) {
         payload.images = [...(existingImages || []), ...imageUrls];
         await updateListing(editingId, payload);
-        alert('매물이 수정되었습니다.');
+        successMessage = '매물이 수정되었습니다.';
       } else {
         payload.images = imageUrls;
         await createListing(payload);
-        alert(`매물이 등록되었습니다. (이미지 ${imageUrls.length}개 포함)`);
+        successMessage = `매물이 등록되었습니다. (이미지 ${imageUrls.length}개 포함)`;
       }
+      setPropertyFormMessage(successMessage, 'success');
       uploadedImages = [];
       existingImages = [];
       editingId = null;
       renderImagePreviews();
+      await wait(1000);
       closeModal();
       loadStats();
       loadRecent();
       loadListingsAdmin();
     } catch (err) {
       console.error('매물 저장 실패:', err);
-      alert('매물 저장 중 오류가 발생했습니다.');
+      const fallback = err?.message || '매물 저장 중 오류가 발생했습니다.';
+      setPropertyFormMessage(fallback, 'error');
     } finally {
       togglePropertyFormDisabled(false);
     }
@@ -721,9 +733,16 @@ function bindPropertyForm() {
 async function uploadImagesToSupabase(images) {
   if (!images || images.length === 0) return [];
   const urls = [];
-  for (const img of images) {
-    const res = await uploadImage(img.file);
-    if (res?.url) urls.push(res.url);
+  for (let idx = 0; idx < images.length; idx++) {
+    const img = images[idx];
+    try {
+      const res = await uploadImage(img.file);
+      if (!res?.url) throw new Error('이미지 URL 생성에 실패했습니다.');
+      urls.push(res.url);
+    } catch (err) {
+      console.error('이미지 업로드 실패', err);
+      throw new Error(`이미지 업로드 실패 (${idx + 1}/${images.length}): ${err?.message || '알 수 없는 오류'}`);
+    }
   }
   return urls;
 }
