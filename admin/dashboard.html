@@ -291,16 +291,17 @@
             <textarea name="description" rows="4" placeholder="매물 상세 설명"></textarea>
           </div>
           <div style="grid-column:1/-1;">
-            <label>매물 이미지 (최대 10개, 각 5MB 이하)</label>
-            <input type="file" id="propertyImages" name="images" accept="image/*" multiple>
-            <div id="imagePreview" class="admin-image-preview"></div>
-          </div>
+          <label>매물 이미지 (최대 10개, 각 5MB 이하)</label>
+          <input type="file" id="propertyImages" name="images" accept="image/*" multiple>
+          <div id="imagePreview" class="admin-image-preview"></div>
         </div>
-        <div class="admin-modal__footer">
-          <button type="button" class="admin-btn admin-btn--ghost" id="cancelModal">취소</button>
-          <button type="submit" class="admin-primary">저장</button>
-        </div>
-      </form>
+      </div>
+      <div id="propertyFormMessage" class="admin-message" aria-live="polite" hidden></div>
+      <div class="admin-modal__footer">
+        <button type="button" class="admin-btn admin-btn--ghost" id="cancelModal">취소</button>
+        <button type="submit" class="admin-primary">저장</button>
+      </div>
+    </form>
     </div>
   </div>
 
