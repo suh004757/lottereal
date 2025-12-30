@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="ko">
 
+<!-- HTML 문서 시작: 관리자 로그인 페이지 -->
 <head>
-  <!-- Google tag (gtag.js) -->
+  <!-- Google Analytics 태그 -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-VPG00DG5V1"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -10,21 +11,28 @@
     gtag('js', new Date());
     gtag('config', 'G-VPG00DG5V1');
   </script>
+
+  <!-- 메타 태그 및 기본 설정 -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>관리자 로그인 | 롯데부동산</title>
   <meta name="robots" content="noindex, nofollow">
+
+  <!-- 폰트 및 아이콘 로드 -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap"
     rel="stylesheet">
   <link rel="icon" href="../img/core-img/favicon.ico">
+
+  <!-- 스타일시트 로드 -->
   <link rel="stylesheet" href="../style.css">
   <link rel="stylesheet" href="../css/admin.css">
 </head>
 
 <body class="admin-shell">
+  <!-- 히어로 섹션: 페이지 소개 및 기능 설명 -->
   <div class="admin-hero">
     <div class="admin-hero__pill">Admin</div>
     <h1>롯데부동산<br>관리자 로그인</h1>
@@ -36,6 +44,7 @@
     </div>
   </div>
 
+  <!-- 메인 패널: 로그인 폼 -->
   <main class="admin-panel">
     <section class="admin-card">
       <div class="admin-card__header">
@@ -46,6 +55,8 @@
         </div>
         <div class="admin-session" id="sessionStatus">세션 대기 중</div>
       </div>
+
+      <!-- 로그인 폼 -->
       <form id="adminLoginForm" class="admin-form">
         <label class="admin-field">
           <span>이메일</span>
@@ -65,12 +76,15 @@
         </div>
         <div id="loginMessage" class="admin-message" role="alert" aria-live="polite"></div>
       </form>
+
+      <!-- 푸터 노트 -->
       <div class="admin-footnote">
         <p>문의: 보안 담당자에게 연락하시고, 로그인 오류 시 메시지를 캡처해 주세요.</p>
       </div>
     </section>
   </main>
 
+  <!-- JavaScript 모듈 로드 -->
   <script type="module" src="../js/admin-login.js"></script>
 </body>
 

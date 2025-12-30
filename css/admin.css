@@ -1,3 +1,6 @@
+/* 관리자 로그인 페이지 스타일시트 */
+
+/* CSS 변수 정의: 색상, 폰트, 반경 등 */
 :root {
   --admin-bg: #0f172a;
   --admin-card: #0b1220;
@@ -12,10 +15,12 @@
   --admin-font: 'Inter', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
+/* 전역 스타일 */
 * {
   box-sizing: border-box;
 }
 
+/* 바디 스타일: 그리드 레이아웃과 배경 */
 body.admin-shell {
   margin: 0;
   min-height: 100vh;
@@ -28,6 +33,7 @@ body.admin-shell {
   font-family: var(--admin-font);
 }
 
+/* 히어로 섹션 스타일 */
 .admin-hero {
   padding: 72px 64px;
   display: flex;
@@ -61,6 +67,7 @@ body.admin-shell {
   font-size: 16px;
 }
 
+/* 체크리스트 스타일 */
 .admin-checklist {
   display: grid;
   gap: 8px;
@@ -76,6 +83,7 @@ body.admin-shell {
   border: 1px solid var(--admin-border);
 }
 
+/* 메인 패널 스타일 */
 .admin-panel {
   padding: 48px 48px 48px 0;
   display: flex;
@@ -83,6 +91,7 @@ body.admin-shell {
   justify-content: flex-start;
 }
 
+/* 카드 스타일 */
 .admin-card {
   width: min(520px, 90%);
   background: linear-gradient(145deg, var(--admin-card), var(--admin-surface));
@@ -93,6 +102,7 @@ body.admin-shell {
   backdrop-filter: blur(8px);
 }
 
+/* 카드 헤더 스타일 */
 .admin-card__header {
   display: flex;
   justify-content: space-between;
@@ -123,6 +133,7 @@ body.admin-shell {
   font-size: 14px;
 }
 
+/* 세션 상태 표시 스타일 */
 .admin-session {
   padding: 10px 14px;
   border-radius: 12px;
@@ -139,12 +150,14 @@ body.admin-shell {
   border-color: rgba(239, 68, 68, 0.35);
 }
 
+/* 폼 스타일 */
 .admin-form {
   display: grid;
   gap: 14px;
   margin: 0;
 }
 
+/* 폼 필드 스타일 */
 .admin-field {
   display: grid;
   gap: 6px;
@@ -174,6 +187,7 @@ body.admin-shell {
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
 }
 
+/* 인라인 요소 스타일 */
 .admin-inline {
   display: flex;
   align-items: center;
@@ -181,6 +195,7 @@ body.admin-shell {
   justify-content: space-between;
 }
 
+/* 액션 버튼 스타일 */
 .admin-actions {
   display: flex;
   gap: 12px;
@@ -188,6 +203,7 @@ body.admin-shell {
   align-items: center;
 }
 
+/* 기본 버튼 스타일 */
 .admin-primary {
   flex: 1;
   min-width: 180px;
@@ -207,6 +223,7 @@ body.admin-shell {
   transform: translateY(-1px);
 }
 
+/* 보조 버튼 스타일 */
 .admin-ghost,
 .admin-text {
   padding: 12px 14px;
@@ -225,11 +242,13 @@ body.admin-shell {
   color: #e0f2fe;
 }
 
+/* 메타 텍스트 스타일 */
 .admin-meta {
   font-size: 13px;
   color: var(--admin-muted);
 }
 
+/* 메시지 표시 스타일 */
 .admin-message {
   min-height: 24px;
   padding: 10px 12px;
@@ -249,6 +268,7 @@ body.admin-shell {
   color: #fecdd3;
 }
 
+/* 푸터 노트 스타일 */
 .admin-footnote {
   margin-top: 12px;
   color: var(--admin-muted);
@@ -256,6 +276,7 @@ body.admin-shell {
   text-align: right;
 }
 
+/* 반응형 디자인: 태블릿 이하 */
 @media (max-width: 1024px) {
   body.admin-shell {
     grid-template-columns: 1fr;

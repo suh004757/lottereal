@@ -1,5 +1,11 @@
+/**
+ * 관리자 로그인 페이지의 JavaScript 모듈
+ * 인증, 세션 관리, 지리 위치 수집 기능을 담당합니다.
+ */
+
 import { useAuth } from './hooks/useAuth.js';
 
+// DOM 요소 참조
 const form = document.getElementById('adminLoginForm');
 const logoutButton = document.getElementById('logoutButton');
 const messageEl = document.getElementById('loginMessage');
@@ -7,10 +13,13 @@ const geoButton = document.getElementById('geoButton');
 const geoStatus = document.getElementById('geoStatus');
 const sessionStatus = document.getElementById('sessionStatus');
 
+// 지리 위치 데이터 저장 변수
 let geoData = null;
 
-init();
-
+/**
+ * 페이지 초기화 함수
+ * 이벤트 바인딩, 세션 상태 업데이트, 주기적 세션 체크를 시작합니다.
+ */
 function init() {
   const auth = useAuth();
   bindEvents(auth);
@@ -18,7 +27,12 @@ function init() {
   setInterval(() => updateSessionStatus(auth), 1000);
 }
 
+/**
+ * 이벤트 리스너를 바인딩하는 함수
+ * @param {Object} auth - 인증 객체 (useAuth 훅)
+ */
 function bindEvents(auth) {
+  // 로그인 폼 제출 이벤트
   if (form) {
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -48,6 +62,7 @@ function bindEvents(auth) {
     });
   }
 
+  // 로그아웃 버튼 이벤트
   if (logoutButton) {
     logoutButton.addEventListener('click', async () => {
       await auth.logout();
@@ -55,6 +70,7 @@ function bindEvents(auth) {
     });
   }
 
+  // 지리 위치 버튼 이벤트
   if (geoButton) {
     geoButton.addEventListener('click', () => {
       if (!navigator.geolocation) {
@@ -77,18 +93,31 @@ function bindEvents(auth) {
   }
 }
 
+/**
+ * 메시지를 표시하는 함수
+ * @param {string} text - 표시할 메시지 텍스트
+ * @param {string} status - 메시지 상태 ('info', 'success', 'error')
+ */
 function setMessage(text, status = 'info') {
   if (!messageEl) return;
   messageEl.textContent = text || '';
   messageEl.dataset.status = status;
 }
 
+/**
+ * 폼 요소의 비활성화 상태를 토글하는 함수
+ * @param {boolean} isDisabled - 비활성화 여부
+ */
 function toggleFormDisabled(isDisabled) {
   const submit = form?.querySelector('button[type="submit"]');
   if (submit) submit.disabled = isDisabled;
   if (geoButton) geoButton.disabled = isDisabled;
 }
 
+/**
+ * 세션 상태를 업데이트하는 함수
+ * @param {Object} auth - 인증 객체
+ */
 function updateSessionStatus(auth) {
   if (!sessionStatus) return;
   const remaining = auth.getSessionRemainingMs ? auth.getSessionRemainingMs() : null;
@@ -113,3 +142,6 @@ function updateSessionStatus(auth) {
     sessionStatus.classList.remove('expiring');
   }
 }
+
+// 초기화 실행
+init();
