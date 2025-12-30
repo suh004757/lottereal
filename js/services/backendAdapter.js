@@ -33,6 +33,15 @@ export const LISTING_PAYLOAD_SCHEMA = {
   }
 };
 
+function buildDefaultDashboardStats() {
+  return {
+    totalListings: 0,
+    newListings7d: 0,
+    totalInquiries: 0,
+    unreadInquiries: 0
+  };
+}
+
 /**
  * 새로운 부동산 리스팅을 생성합니다.
  * @param {Object} payload - 리스팅 데이터
@@ -120,10 +129,12 @@ export async function getDashboardStats() {
   const provider = (APP_CONFIG.BACKEND_PROVIDER || 'mock').toLowerCase();
   if (provider === 'supabase') return getDashboardStatsSupabase();
   return {
-    totalListings: listListingsMock().length,
-    newListings7d: 0,
-    totalInquiries: 0,
-    unreadInquiries: 0
+    ok: true,
+    data: {
+      ...buildDefaultDashboardStats(),
+      totalListings: listListingsMock().length
+    },
+    error: null
   };
 }
 
@@ -144,7 +155,7 @@ export async function getRecentActivities(limit = 20) {
 export async function listListingsAdmin({ page = 1, pageSize = 20, sort = 'created_at', direction = 'desc' } = {}) {
   const provider = (APP_CONFIG.BACKEND_PROVIDER || 'mock').toLowerCase();
   if (provider === 'supabase') return listListingsAdminSupabase({ page, pageSize, sort, direction });
-  return listListingsMock();
+  return { ok: true, data: listListingsMock(), meta: { page, pageSize, total: listListingsMock().length }, error: null };
 }
 
 /**
@@ -171,7 +182,7 @@ export async function deleteListing(id) {
 export async function listInquiriesAdmin({ page = 1, pageSize = 20, status, query } = {}) {
   const provider = (APP_CONFIG.BACKEND_PROVIDER || 'mock').toLowerCase();
   if (provider === 'supabase') return listInquiriesAdminSupabase({ page, pageSize, status, query });
-  return [];
+  return { ok: true, data: [], meta: { page, pageSize, total: 0 }, error: null };
 }
 
 /**
@@ -366,27 +377,39 @@ async function getListingByIdSupabase(id) {
 
 async function getDashboardStatsSupabase() {
   const supabase = getSupabaseClient();
-  if (!supabase) return { totalListings: 0, newListings7d: 0, totalInquiries: 0, unreadInquiries: 0 };
+  if (!supabase) {
+    return { ok: false, data: buildDefaultDashboardStats(), error: 'Supabase client unavailable' };
+  }
 
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  try {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const queries = [
+      supabase.from('property_listings').select('*', { count: 'exact', head: true }),
+      supabase
+        .from('property_listings')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', sevenDaysAgo),
+      supabase.from('inquiries').select('*', { count: 'exact', head: true }),
+      supabase.from('inquiries').select('*', { count: 'exact', head: true }).eq('status', 'unread')
+    ];
+    const results = await Promise.all(queries);
+    const errors = results.map((r) => r.error).filter(Boolean);
+    if (errors.length) {
+      errors.forEach((err) => console.error('Supabase getDashboardStats error', err));
+      return { ok: false, data: buildDefaultDashboardStats(), error: errors[0]?.message || 'Failed to load dashboard stats' };
+    }
 
-  const { count: totalListings } = await supabase.from('property_listings').select('*', { count: 'exact', head: true });
-  const { count: newListings7d } = await supabase
-    .from('property_listings')
-    .select('*', { count: 'exact', head: true })
-    .gte('created_at', sevenDaysAgo);
-  const { count: totalInquiries } = await supabase.from('inquiries').select('*', { count: 'exact', head: true });
-  const { count: unreadInquiries } = await supabase
-    .from('inquiries')
-    .select('*', { count: 'exact', head: true })
-    .eq('status', 'unread');
-
-  return {
-    totalListings: totalListings || 0,
-    newListings7d: newListings7d || 0,
-    totalInquiries: totalInquiries || 0,
-    unreadInquiries: unreadInquiries || 0
-  };
+    const stats = {
+      totalListings: results[0].count || 0,
+      newListings7d: results[1].count || 0,
+      totalInquiries: results[2].count || 0,
+      unreadInquiries: results[3].count || 0
+    };
+    return { ok: true, data: stats, error: null };
+  } catch (err) {
+    console.error('Supabase getDashboardStats exception', err);
+    return { ok: false, data: buildDefaultDashboardStats(), error: err.message || 'Unexpected dashboard stats error' };
+  }
 }
 
 async function getRecentActivitiesSupabase(limit = 20) {
@@ -406,19 +429,24 @@ async function getRecentActivitiesSupabase(limit = 20) {
 
 async function listListingsAdminSupabase({ page, pageSize, sort, direction }) {
   const supabase = getSupabaseClient();
-  if (!supabase) return [];
+  if (!supabase) return { ok: false, data: [], meta: { page, pageSize, total: 0 }, error: 'Supabase client unavailable' };
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
-  const { data, error } = await supabase
-    .from('property_listings')
-    .select('*')
-    .order(sort, { ascending: direction === 'asc' })
-    .range(from, to);
-  if (error) {
-    console.error('Supabase listListingsAdmin error', error);
-    return [];
+  try {
+    const { data, error, count } = await supabase
+      .from('property_listings')
+      .select('*', { count: 'exact' })
+      .order(sort, { ascending: direction === 'asc' })
+      .range(from, to);
+    if (error) {
+      console.error('Supabase listListingsAdmin error', error);
+      return { ok: false, data: [], meta: { page, pageSize, total: 0 }, error: error.message || 'Failed to load listings' };
+    }
+    return { ok: true, data: data || [], meta: { page, pageSize, total: typeof count === 'number' ? count : data?.length || 0 }, error: null };
+  } catch (err) {
+    console.error('Supabase listListingsAdmin exception', err);
+    return { ok: false, data: [], meta: { page, pageSize, total: 0 }, error: err.message || 'Unexpected listings error' };
   }
-  return data || [];
 }
 
 async function updateListingSupabase(id, patch) {
@@ -461,21 +489,26 @@ async function deleteListingSupabase(id) {
 
 async function listInquiriesAdminSupabase({ page, pageSize, status, query }) {
   const supabase = getSupabaseClient();
-  if (!supabase) return [];
+  if (!supabase) return { ok: false, data: [], meta: { page, pageSize, total: 0 }, error: 'Supabase client unavailable' };
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
-  let req = supabase.from('inquiries').select('*').order('created_at', { ascending: false }).range(from, to);
-  if (status) req = req.eq('status', status);
-  if (query) {
-    const q = `%${query}%`;
-    req = req.or(`name.ilike.${q},email.ilike.${q},phone.ilike.${q},message.ilike.${q},listing_title.ilike.${q}`);
+  try {
+    let req = supabase.from('inquiries').select('*', { count: 'exact' }).order('created_at', { ascending: false }).range(from, to);
+    if (status) req = req.eq('status', status);
+    if (query) {
+      const q = `%${query}%`;
+      req = req.or(`name.ilike.${q},email.ilike.${q},phone.ilike.${q},message.ilike.${q},listing_title.ilike.${q}`);
+    }
+    const { data, error, count } = await req;
+    if (error) {
+      console.error('Supabase listInquiriesAdmin error', error);
+      return { ok: false, data: [], meta: { page, pageSize, total: 0 }, error: error.message || 'Failed to load inquiries' };
+    }
+    return { ok: true, data: data || [], meta: { page, pageSize, total: typeof count === 'number' ? count : data?.length || 0 }, error: null };
+  } catch (err) {
+    console.error('Supabase listInquiriesAdmin exception', err);
+    return { ok: false, data: [], meta: { page, pageSize, total: 0 }, error: err.message || 'Unexpected inquiries error' };
   }
-  const { data, error } = await req;
-  if (error) {
-    console.error('Supabase listInquiriesAdmin error', error);
-    return [];
-  }
-  return data || [];
 }
 
 async function updateInquiryStatusSupabase(id, status) {
@@ -514,5 +547,6 @@ async function listExternalFeedsSupabase({ source, limit }) {
   }
   return data || [];
 }
- 
+
+ 
  

@@ -5,58 +5,75 @@
 
 import { getSupabaseClient } from '../config/supabaseConfig.js';
 
+const DEFAULT_AUTH = {
+  client: null,
+  async getUser() {
+    return null;
+  },
+  async getSession() {
+    return null;
+  },
+  async signIn() {
+    throw new Error('Authentication is not available.');
+  },
+  async signOut() {},
+  async isAuthenticated() {
+    return false;
+  },
+  user: null
+};
+
+const AUTH_ERROR = new Error('Supabase authentication is not configured. Please set SUPABASE_URL and SUPABASE_KEY.');
+
 /**
- * 인증 상태를 관리하는 커스텀 훅
- * @returns {Object} 인증 관련 메서드와 상태
+ * Lightweight auth helper used across the app.
+ * @param {Object} options
+ * @param {boolean} [options.requireAuth=false] - Throw if Supabase is unavailable
  */
-export function useAuth() {
-  // Supabase 클라이언트 가져오기
+export function useAuth(options = {}) {
+  const { requireAuth = false } = options;
   const supabase = getSupabaseClient();
 
-  // 모의 사용자 객체 (Supabase가 없을 때 사용)
-  const mockUser = { id: 'mock-user', email: null };
+  if (!supabase) {
+    if (requireAuth) throw AUTH_ERROR;
+    return DEFAULT_AUTH;
+  }
 
-  /**
-   * 현재 사용자 정보를 가져옵니다.
-   * @returns {Promise<Object>} 사용자 객체
-   */
   const getUser = async () => {
-    if (!supabase) return mockUser;
-    const { data: { user } } = await supabase.auth.getUser();
-    return user || mockUser;
+    const { data, error } = await supabase.auth.getUser();
+    if (error) throw error;
+    return data?.user || null;
   };
 
-  /**
-   * 이메일과 비밀번호로 로그인합니다.
-   * @param {string} email - 사용자 이메일
-   * @param {string} password - 사용자 비밀번호
-   * @returns {Promise<Object>} 로그인 결과 (사용자 및 세션 정보)
-   * @throws {Error} 로그인 실패 시 에러
-   */
+  const getSession = async () => {
+    const { data, error } = await supabase.auth.getSession();
+    if (error) throw error;
+    return data?.session || null;
+  };
+
   const signIn = async (email, password) => {
-    if (!supabase) return mockUser;
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
-    return data || { user: mockUser, session: null };
+    return data;
   };
 
-  /**
-   * 로그아웃합니다.
-   * @returns {Promise<void>}
-   * @throws {Error} 로그아웃 실패 시 에러
-   */
   const signOut = async () => {
-    if (!supabase) return;
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   };
 
-  // 반환 객체: 현재 사용자, 메서드들, 인증 상태
+  const isAuthenticated = async () => {
+    const session = await getSession();
+    return Boolean(session);
+  };
+
   return {
-    user: supabase && supabase.auth.user ? supabase.auth.user() : mockUser,
+    client: supabase,
     getUser,
+    getSession,
     signIn,
     signOut,
-    isAuthenticated: Boolean(supabase && supabase.auth.user ? supabase.auth.user() : false)
+    isAuthenticated,
+    user: null
   };
 }
