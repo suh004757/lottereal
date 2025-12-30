@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>2025 서울 부동산 시장 트렌드 리포트 | 롯데부동산</title>
+    <meta name="description" content="AI 기반 데이터 분석으로 작성된 서울 부동산 시장 트렌드 리포트. 정보 제공 목적의 참고 자료입니다.">
+    <meta name="keywords" content="서울 부동산 시장 분석, 부동산 트렌드, 시장 리포트, AI 분석">
+    <link rel="canonical" href="https://lottes.co.kr/report.html">
+    <link rel="icon" href="img/core-img/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/insights.css">
+
+    <!-- Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VPG00DG5V1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-VPG00DG5V1');
+    </script>
+</head>
+
+<body>
+    <header class="lr-header">
+        <div class="lr-container">
+            <div class="lr-brand"><a href="index.html">롯데부동산</a></div>
+            <nav class="lr-nav">
+                <a href="index.html#hero">홈</a>
+                <a href="report.html" class="active">시장 리포트</a>
+                <a href="index.html#listings">추천매물</a>
+                <a href="listings.html">매물리스트</a>
+                <a href="index.html#services">진행</a>
+                <a href="index.html#contact">문의</a>
+                <a href="EN.html">ENGLISH</a>
+                <a href="contact.html" class="lr-nav-cta">찾아오는 길</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- Report Header -->
+        <section class="lr-report-header">
+            <div class="lr-container">
+                <div class="lr-report-meta">
+                    <span class="lr-badge lr-badge--info">정보 제공 목적</span>
+                    <span class="lr-badge lr-badge--data">데이터 기반</span>
+                    <span class="lr-badge lr-badge--ai">AI 분석 지원</span>
+                </div>
+                <h1 id="report-title">2025년 1월 서울 부동산 시장 트렌드 리포트</h1>
+                <p class="lr-report-subtitle" id="report-summary">
+                    서울 주요 지역의 실거래 데이터, 정책 변화, 시장 신호를 종합 분석한 참고 자료입니다.
+                </p>
+                <div class="lr-report-info">
+                    <div class="lr-report-info-item">
+                        <span class="lr-label">최종 업데이트</span>
+                        <span class="lr-value" id="report-updated">2025년 1월 15일</span>
+                    </div>
+                    <div class="lr-report-info-item">
+                        <span class="lr-label">분석 기간</span>
+                        <span class="lr-value">2024년 10월 ~ 12월</span>
+                    </div>
+                    <div class="lr-report-info-item">
+                        <span class="lr-label">데이터 출처</span>
+                        <span class="lr-value">국토교통부, 서울시, 한국부동산원</span>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="lr-report-actions">
+                    <button class="lr-btn lr-btn--primary" onclick="openEvidence()">
+                        📋 데이터 근거 및 출처
+                    </button>
+                    <button class="lr-btn lr-btn--ghost" onclick="copySummary()">
+                        🔗 요약 복사하기
+                    </button>
+                    <a class="lr-btn lr-btn--ghost" href="#revision-history">
+                        📜 수정 이력
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Disclaimer -->
+        <section class="lr-section" style="padding-top: 2rem;">
+            <div class="lr-container">
+                <div class="lr-disclaimer">
+                    <strong>⚠️ 중요 안내</strong><br>
+                    본 리포트는 공개된 부동산 관련 데이터를 AI 도구로 분석·정리한 <strong>정보 제공 목적</strong>의 참고 자료입니다.
+                    투자 권유, 매매 추천, 수익 보장, 특정 시점의 매수/매도 제안과는 무관하며,
+                    실제 거래 결정 시 반드시 전문가 상담 및 현장 확인이 필요합니다.
+                </div>
+            </div>
+        </section>
+
+        <!-- Report Body -->
+        <section class="lr-section">
+            <div class="lr-container">
+                <article class="lr-report-body" id="report-content">
+                    <!-- Content will be rendered here via JavaScript -->
+                    <div class="lr-loading">리포트를 불러오는 중...</div>
+                </article>
+            </div>
+        </section>
+
+        <!-- Footer Disclaimer -->
+        <section class="lr-section lr-section--muted">
+            <div class="lr-container">
+                <div class="lr-disclaimer" style="font-size: 0.875rem; opacity: 0.9;">
+                    <strong>면책 조항 (재고지)</strong><br>
+                    본 리포트의 모든 내용은 과거 데이터의 관찰 및 해석이며, 미래 시장 동향을 예측하거나 보장하지 않습니다.
+                    부동산 거래는 개인의 재무 상황, 투자 목적, 리스크 감수 능력에 따라 신중하게 결정되어야 하며,
+                    본 리포트는 그러한 의사결정의 유일한 근거로 사용되어서는 안 됩니다.
+                </div>
+            </div>
+        </section>
+
+        <!-- Revision History -->
+        <section class="lr-section" id="revision-history">
+            <div class="lr-container">
+                <div class="lr-section__head">
+                    <div>
+                        <p class="lr-kicker">수정 이력</p>
+                        <h2>리포트 업데이트 히스토리</h2>
+                    </div>
+                </div>
+                <div class="lr-revision-list" id="revision-list">
+                    <!-- Will be populated by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="lr-section">
+            <div class="lr-container lr-cta">
+                <div>
+                    <p class="lr-kicker">전문 상담</p>
+                    <h2>시장 정보와 실제 매물 상담이 필요하신가요?</h2>
+                    <p class="lr-lead">40년 지역 경험을 바탕으로 조건에 맞는 매물을 빠르게 찾아드립니다.</p>
+                    <div class="lr-actions">
+                        <a class="lr-btn lr-btn--primary" href="tel:050714025055">전화 문의</a>
+                        <a class="lr-btn lr-btn--ghost" href="listings.html">매물 보기</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="lr-footer">
+        <div class="lr-container lr-footer__content">
+            <div>
+                <p class="lr-kicker">롯데부동산</p>
+                <p class="lr-text">서울시 송파구 백제고분로27길 93-12 1층</p>
+                <p class="lr-text">문의전화: 0507-1402-5055 | 사업자등록번호 183-01-01408</p>
+                <p class="lr-text">중개사무소등록번호 11710-2018-00141</p>
+            </div>
+            <div class="lr-footer__links">
+                <a href="https://goo.gl/maps/FVawYassWFUoJJBT7" target="_blank" rel="noreferrer">Google Maps</a>
+                <a href="https://naver.me/xMnYYRpo" target="_blank" rel="noreferrer">Naver Map</a>
+                <a href="privacy.html">개인정보처리방침</a>
+                <a href="EN.html">ENGLISH</a>
+            </div>
+        </div>
+        <p class="lr-footer__copy">©
+            <script>document.write(new Date().getFullYear());</script> 롯데부동산. All rights reserved.
+        </p>
+        <p class="lr-footer__disclaimer"
+            style="font-size: 0.75rem; color: rgba(255,255,255,0.5); text-align: center; margin-top: 0.5rem;">
+            본 사이트의 시장 리포트는 정보 제공 목적이며 투자 권유가 아닙니다.
+        </p>
+    </footer>
+
+    <!-- Evidence Modal -->
+    <div id="evidence-modal" class="lr-modal" style="display: none;">
+        <div class="lr-modal__content">
+            <div class="lr-modal__header">
+                <h3>데이터 근거 및 출처</h3>
+                <button class="lr-modal__close" onclick="closeEvidence()">&times;</button>
+            </div>
+            <div class="lr-modal__body" id="evidence-content">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Copy Notification -->
+    <div id="copy-notification" class="lr-notification" style="display: none;">
+        ✓ 요약이 클립보드에 복사되었습니다
+    </div>
+
+    <script src="js/jquery/jquery-3.7.1.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/plugins.js"></script>
+    <script src="js/active.js"></script>
+    <script type="module" src="js/reportPage.js"></script>
+</body>
+
+</html>
