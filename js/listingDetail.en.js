@@ -14,7 +14,7 @@ const titleEl = document.querySelector('[data-detail-title]');
 const infoEl = document.querySelector('[data-detail-info]');
 const tagsEl = document.querySelector('[data-detail-tags]');
 const featuresEl = document.querySelector('[data-detail-features]');
-const imageEl = document.querySelector('[data-detail-image]');
+
 const descEl = document.querySelector('[data-detail-desc]');
 const noteEl = document.querySelector('[data-detail-note]');
 const formEl = document.querySelector('[data-inquiry-form]');
@@ -54,9 +54,55 @@ function renderDetail(listing) {
   if (infoEl) infoEl.textContent = infoParts.join(' \u00b7 ');
   if (tagsEl) tagsEl.innerHTML = (listing.tags || []).map((t) => `<span>${t}</span>`).join('');
   if (featuresEl) featuresEl.innerHTML = (listing.features || []).map((f) => `<li>${f}</li>`).join('');
-  if (imageEl) imageEl.src = listing.image || (listing.images && listing.images[0]) || '';
+
+  // Render image gallery
+  renderImageGallery(listing);
   if (descEl) descEl.innerHTML = (listing.description || '').replace(/\n/g, '<br>');
   if (noteEl) noteEl.textContent = listing.contactNote || '';
+}
+
+/**
+ * Renders the image gallery.
+ * @param {Object} listing - Listing data object
+ */
+function renderImageGallery(listing) {
+  const mainImageEl = document.querySelector('[data-detail-main-image]');
+  const thumbnailsEl = document.querySelector('[data-detail-thumbnails]');
+
+  if (!mainImageEl || !thumbnailsEl) return;
+
+  // Get all images (support both 'images' array and single 'image' field)
+  let images = [];
+  if (listing.images && Array.isArray(listing.images) && listing.images.length > 0) {
+    images = listing.images;
+  } else if (listing.image) {
+    images = [listing.image];
+  }
+
+  // Set the first image as the main image
+  if (images.length > 0) {
+    mainImageEl.src = images[0];
+  }
+
+  // Create thumbnails
+  thumbnailsEl.innerHTML = images.map((img, index) => `
+    <div class="lr-detail__thumbnail ${index === 0 ? 'lr-detail__thumbnail--active' : ''}" data-image-index="${index}">
+      <img src="${img}" alt="Property image ${index + 1}">
+    </div>
+  `).join('');
+
+  // Add click handlers to thumbnails
+  const thumbnails = thumbnailsEl.querySelectorAll('.lr-detail__thumbnail');
+  thumbnails.forEach((thumbnail, index) => {
+    thumbnail.addEventListener('click', () => {
+      // Update main image
+      mainImageEl.src = images[index];
+
+      // Update active state
+      thumbnails.forEach(t => t.classList.remove('lr-detail__thumbnail--active'));
+      thumbnail.classList.add('lr-detail__thumbnail--active');
+    });
+  });
 }
 
 /**
