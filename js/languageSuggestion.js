@@ -72,10 +72,11 @@
     }
 
     /**
-     * Create and show the language suggestion banner
-     */
-    function showBanner(browserLang, pageLang) {
-        const config = LANG_MAP[browserLang];
+   * Create and show the language suggestion banner
+   * @param {string} pageLang - Current page language
+   */
+    function showBanner(pageLang) {
+        const config = LANG_MAP[pageLang];
         if (!config) return;
 
         // Create banner HTML
@@ -155,7 +156,7 @@
             // Check if there's a target page available
             const targetPage = getTargetPage();
             if (targetPage) {
-                showBanner(browserLang, pageLang);
+                showBanner(pageLang);
             }
         }
     }
