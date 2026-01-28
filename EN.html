@@ -37,18 +37,7 @@
         gtag('js', new Date());
         gtag('config', 'G-VPG00DG5V1');
     </script>
-    <script>
-        (function redirectByLocale() {
-            try {
-                if (window.location.search.includes('lang=en')) return;
-                var lang = (navigator.language || navigator.userLanguage || '').toLowerCase();
-                var page = (window.location.pathname.split('/').pop() || '').toLowerCase();
-                if (lang.startsWith('ko') && page === 'en.html') {
-                    window.location.href = 'index.html';
-                }
-            } catch (e) { }
-        })();
-    </script>
+
 </head>
 
 <body>
@@ -98,6 +87,38 @@
             </div>
         </section>
 
+        <section class="lr-section" id="market-report" data-report-section>
+            <div class="lr-container">
+                <div class="lr-section__head">
+                    <div>
+                        <p class="lr-kicker">Market Report</p>
+                        <h2>Seoul Real Estate Trends</h2>
+                        <p class="lr-lead">AI-analyzed latest market trends at a glance.</p>
+                    </div>
+                    <a class="lr-link" href="report.html" data-report-link>View Full Report</a>
+                </div>
+                <article class="lr-card lr-card--feature" data-report-card>
+                    <div class="lr-card__body">
+                        <p class="lr-badge" data-report-status>Loading</p>
+                        <h3 data-report-title>Loading latest report...</h3>
+                        <p class="lr-text" data-report-summary>Please wait a moment.</p>
+                        <div class="lr-card__meta">
+                            <span data-report-updated></span>
+                            <span data-report-views></span>
+                        </div>
+                        <div class="lr-actions">
+                            <a class="lr-btn lr-btn--primary" href="report.html">View Details</a>
+                            <button class="lr-btn lr-btn--ghost" type="button" data-report-reload>Reload</button>
+                        </div>
+                    </div>
+                </article>
+                <div class="lr-disclaimer" style="margin-top:1.5rem;">
+                    <strong>Important Notice</strong><br>
+                    Reports are reference materials based on public data and not investment advice.
+                </div>
+            </div>
+        </section>
+
         <section class="lr-section" id="listings">
             <div class="lr-container">
                 <div class="lr-section__head">
@@ -115,7 +136,8 @@
                         <div class="lr-card__body">
                             <p class="lr-badge">Apartments</p>
                             <h3>Jamsil &middot; Songpa core district</h3>
-                            <p class="lr-text">River view, top schools, and subway access - hand-selected for your checklist.</p>
+                            <p class="lr-text">River view, top schools, and subway access - hand-selected for your
+                                checklist.</p>
                             <div class="lr-card__meta"><span>Jeonse/Sale</span><span>Tailored advisory</span></div>
                         </div>
                     </article>
@@ -124,7 +146,8 @@
                         <div class="lr-card__body">
                             <p class="lr-badge">Office &middot; Retail</p>
                             <h3>Best locations for business</h3>
-                            <p class="lr-text">We shortlist spaces with visibility, transit, and foot traffic for corporate or
+                            <p class="lr-text">We shortlist spaces with visibility, transit, and foot traffic for
+                                corporate or
                                 investor clients.</p>
                             <div class="lr-card__meta"><span>Lease/Sale</span><span>Corporate ready</span></div>
                         </div>
@@ -134,7 +157,8 @@
                         <div class="lr-card__body">
                             <p class="lr-badge">Officetel &middot; Residences</p>
                             <h3>Live and work seamlessly</h3>
-                            <p class="lr-text">Options for 1-3 person households, expats, and remote professionals with curated
+                            <p class="lr-text">Options for 1-3 person households, expats, and remote professionals with
+                                curated
                                 amenities.</p>
                             <div class="lr-card__meta"><span>Monthly/Jeonse</span><span>Value &amp; premium</span></div>
                         </div>
@@ -149,7 +173,8 @@
                     <div>
                         <p class="lr-kicker">Process</p>
                         <h2>Fast execution from request to move-in</h2>
-                        <p class="lr-lead">Consultation -> Tailored proposals -> On-site tours -> Negotiation/contract -> Move-in &
+                        <p class="lr-lead">Consultation -> Tailored proposals -> On-site tours -> Negotiation/contract
+                            -> Move-in &
                             aftercare</p>
                     </div>
                 </div>
@@ -183,7 +208,8 @@
                 <div>
                     <p class="lr-kicker">Contact</p>
                     <h2>Tell us what you need and we will find it fast</h2>
-                    <p class="lr-lead">Call us or leave a request and we will reply with a tailored recommendation list.</p>
+                    <p class="lr-lead">Call us or leave a request and we will reply with a tailored recommendation list.
+                    </p>
                     <div class="lr-actions">
                         <a class="lr-btn lr-btn--primary" href="tel:050714025055">Call Now</a>
                         <a class="lr-btn lr-btn--ghost" href="https://goo.gl/maps/FVawYassWFUoJJBT7" target="_blank"
@@ -248,7 +274,8 @@
     <script src="js/active.js"></script>
     <script type="module" src="js/app.js"></script>
     <script type="module" src="js/feedsWidget.js"></script>
+    <script type="module" src="js/homeReportPreview.js"></script>
+    <script src="js/languageSuggestion.js"></script>
 </body>
 
 </html>
-
