@@ -2558,6 +2558,14 @@ h1 {
   margin: 0;
 }
 
+.lr-card__body .lr-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .lr-card__meta {
   display: flex;
   gap: 10px;
