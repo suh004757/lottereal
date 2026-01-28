@@ -24,18 +24,7 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <script>
-        (function redirectByLocale() {
-            try {
-                if (window.location.search.includes('lang=en')) return;
-                var lang = (navigator.language || navigator.userLanguage || '').toLowerCase();
-                var page = (window.location.pathname.split('/').pop() || '').toLowerCase();
-                if (lang.startsWith('ko') && page === 'contact_en.html') {
-                    window.location.href = 'contact.html';
-                }
-            } catch (e) { }
-        })();
-    </script>
+
 </head>
 
 <body>
@@ -138,6 +127,7 @@
     <script src="js/plugins.js"></script>
     <script src="js/active.js"></script>
     <script type="module" src="js/app.js"></script>
+    <script src="js/languageSuggestion.js"></script>
 </body>
 
 </html>
