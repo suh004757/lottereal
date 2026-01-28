@@ -2533,6 +2533,12 @@ h1 {
   gap: 8px;
 }
 
+.lr-card__body h3 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .lr-badge {
   display: inline-flex;
   align-items: center;
