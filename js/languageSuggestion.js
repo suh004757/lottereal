@@ -1,7 +1,9 @@
 /**
- * Language Suggestion Module
+ * Language Suggestion Module v1.1
  * Shows a non-intrusive banner suggesting language switch based on browser locale
  * Stores user preference in sessionStorage to avoid repeated prompts
+ * 
+ * v1.1 - Fixed: Now shows correct language suggestion based on page language
  */
 
 (function () {

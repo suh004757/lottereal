@@ -35,7 +35,7 @@ async function loadListings(filters = {}) {
   if (!listContainer) return;
   listContainer.innerHTML = '<p class="lr-text">불러오는 중...</p>';
   try {
-    const data = await listListingsPublic({
+    let data = await listListingsPublic({
       query: filters.keyword || '',
       propertyType: filters.propertyType || '',
       city: filters.city || '',
@@ -43,6 +43,12 @@ async function loadListings(filters = {}) {
       page: 1,
       pageSize: 50
     });
+
+    // Translate properties if on English page
+    if (window.LR_translate) {
+      data = window.LR_translate.properties(data);
+    }
+
     renderListings(data);
   } catch (err) {
     console.error('리스트 로드 실패', err);
