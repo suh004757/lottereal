@@ -113,32 +113,139 @@
           <a class="lr-link" href="report.html" data-report-link>전체 리포트 보기</a>
         </div>
         <article class="lr-card lr-card--feature" data-report-card>
-          <!-- ... content ... -->
+          <div class="lr-card__body">
+            <p class="lr-badge" data-report-status>로딩 중</p>
+            <h3 data-report-title>최신 리포트를 불러오는 중...</h3>
+            <p class="lr-text" data-report-summary>잠시만 기다려 주세요.</p>
+            <div class="lr-card__meta">
+              <span data-report-updated></span>
+              <span data-report-views></span>
+            </div>
+            <div class="lr-actions">
+              <a class="lr-btn lr-btn--primary" href="report.html">상세보기</a>
+              <button class="lr-btn lr-btn--ghost" type="button" data-report-reload>새로고침</button>
+            </div>
+          </div>
         </article>
+        <div class="lr-disclaimer" style="margin-top:1.5rem;">
+          <strong>중요 고지</strong><br>
+          리포트는 공개 데이터 기반 참고자료이며 투자 조언이 아닙니다.
+        </div>
       </div>
     </section>
 
     <section class="lr-section" id="listings">
       <div class="lr-container">
-        <!-- ... content ... -->
+        <div class="lr-section__head">
+          <div>
+            <p class="lr-kicker">추천 매물</p>
+            <h2>지금 바로 만날 수 있는 매물들</h2>
+            <p class="lr-lead">아파트, 사무실, 상가, 오피스텔을 조건에 맞게 추천해드립니다.</p>
+          </div>
+          <a class="lr-link" href="listings.html">전체 매물 보기</a>
+        </div>
+        <div class="lr-grid">
+          <article class="lr-card">
+            <div class="lr-card__thumb" style="background-image:url('img/bg-img/slide4.jpg');"></div>
+            <div class="lr-card__body">
+              <p class="lr-badge">아파트</p>
+              <h3>잠실 · 송파 중심지</h3>
+              <p class="lr-text">한강뷰, 교육환경, 지하철 접근성 - 모든 조건을 갖춘 엄선된 매물입니다.</p>
+              <div class="lr-card__meta"><span>전월세/매매</span><span>맞춤 컨설팅</span></div>
+            </div>
+          </article>
+          <article class="lr-card">
+            <div class="lr-card__thumb" style="background-image:url('img/bg-img/slide1.jpg');"></div>
+            <div class="lr-card__body">
+              <p class="lr-badge">사무실 · 상가</p>
+              <h3>비즈니스 최적 입지</h3>
+              <p class="lr-text">가시성, 교통, 유동인구 좋은 공간을 기업 및 투자자용으로 엄선합니다.</p>
+              <div class="lr-card__meta"><span>임대/매매</span><span>기업 맞춤</span></div>
+            </div>
+          </article>
+          <article class="lr-card">
+            <div class="lr-card__thumb" style="background-image:url('img/bg-img/slide2.jpg');"></div>
+            <div class="lr-card__body">
+              <p class="lr-badge">오피스텔 · 고급주거</p>
+              <h3>일과 주거의 완벽한 조화</h3>
+              <p class="lr-text">1~3인 가구, 외국인, 원격근무자를 위한 편의시설 갖춘 매물입니다.</p>
+              <div class="lr-card__meta"><span>월세/전월세</span><span>가성비 · 프리미엄</span></div>
+            </div>
+          </article>
+        </div>
       </div>
     </section>
 
     <section class="lr-section lr-section--muted" id="services">
       <div class="lr-container">
-        <!-- ... content ... -->
+        <div class="lr-section__head">
+          <div>
+            <p class="lr-kicker">진행 과정</p>
+            <h2>상담부터 입주까지 빠르게 진행합니다</h2>
+            <p class="lr-lead">상담 → 맞춤 제안 → 현장 방문 → 협상/계약 → 입주 및 사후 관리</p>
+          </div>
+        </div>
+        <div class="lr-grid lr-grid--cols4">
+          <div class="lr-tile">
+            <div class="lr-tile__icon">01</div>
+            <h4>상담 접수</h4>
+            <p>예산, 지역, 목적, 규모, 시기를 상세히 확인합니다.</p>
+          </div>
+          <div class="lr-tile">
+            <div class="lr-tile__icon">02</div>
+            <h4>맞춤 제안</h4>
+            <p>조건에 맞는 매물을 선별하여 사진, 도면, 설명과 함께 제시합니다.</p>
+          </div>
+          <div class="lr-tile">
+            <div class="lr-tile__icon">03</div>
+            <h4>현장 방문 · 협상</h4>
+            <p>방문 일정을 잡고 조건 협상, 계약서를 검토합니다.</p>
+          </div>
+          <div class="lr-tile">
+            <div class="lr-tile__icon">04</div>
+            <h4>입주 · 사후관리</h4>
+            <p>입주부터 관리, 임대 운영까지 계속 지원합니다.</p>
+          </div>
+        </div>
       </div>
     </section>
 
     <section class="lr-section" id="contact">
       <div class="lr-container lr-cta">
-        <!-- ... content ... -->
+        <div>
+          <p class="lr-kicker">문의</p>
+          <h2>원하시는 조건을 알려주시면 빠르게 찾아드립니다</h2>
+          <p class="lr-lead">전화하시거나 요청사항을 남겨주시면 맞춤 추천 리스트로 회신해드립니다.</p>
+          <div class="lr-actions">
+            <a class="lr-btn lr-btn--primary" href="tel:050714025055">지금 전화</a>
+            <a class="lr-btn lr-btn--ghost" href="https://goo.gl/maps/FVawYassWFUoJJBT7" target="_blank" rel="noreferrer">Google Maps</a>
+            <a class="lr-btn lr-btn--ghost" href="https://naver.me/xMnYYRpo" target="_blank" rel="noreferrer">Naver Map</a>
+          </div>
+          <div class="lr-meta">
+            <span>주소: 서울시 송파구 백제고분로27길 93-12 1층</span>
+            <span>주차: 인근 무료 주차장 (만차 시 직원 안내)</span>
+          </div>
+        </div>
+        <div class="lr-map-card">
+          <img src="img/bg-img/lotte_street_view.png" alt="사무소 전경" />
+          <div class="lr-map-card__footer">
+            <span>방문 상담 환영합니다</span>
+            <a class="lr-link" href="contact.html">길 찾기</a>
+          </div>
+        </div>
       </div>
     </section>
 
     <section class="lr-section lr-section--muted">
       <div class="lr-container">
-        <!-- ... content ... -->
+        <div class="lr-section__head">
+          <div>
+            <p class="lr-kicker">주간 뉴스</p>
+            <h2>부동산 뉴스 · 정책</h2>
+          </div>
+          <span class="lr-updated" data-feed-updated></span>
+        </div>
+        <div class="lr-grid" data-feed-list></div>
       </div>
     </section>
   </main>
