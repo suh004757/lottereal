@@ -2298,25 +2298,7 @@ body {
   z-index: 2;
 }
 
-.lr-hero__content>div:first-child h1 {
-  animation: heroFadeInUp 0.8s ease-out forwards;
-  opacity: 0;
-}
-
-.lr-hero__content>div:first-child .lr-kicker {
-  animation: heroFadeInUp 0.6s ease-out forwards;
-  opacity: 0;
-}
-
-.lr-hero__content>div:first-child .lr-lead {
-  animation: heroFadeInUp 1s ease-out 0.2s forwards;
-  opacity: 0;
-}
-
-.lr-hero__content>div:first-child .lr-actions {
-  animation: heroFadeInUp 1.2s ease-out 0.4s forwards;
-  opacity: 0;
-}
+/* Animations removed for instant visibility */
 
 .lr-kicker {
   color: var(--lr-primary);
