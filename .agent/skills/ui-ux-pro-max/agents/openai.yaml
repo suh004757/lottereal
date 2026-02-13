@@ -1,0 +1,4 @@
+interface:
+  display_name: "UI/UX Pro Max"
+  short_description: "Premium UI/UX redesign and interaction polish"
+  default_prompt: "Use $ui-ux-pro-max to redesign this UI with premium polish."
