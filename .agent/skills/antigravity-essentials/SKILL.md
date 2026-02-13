@@ -1,27 +1,24 @@
 ---
 name: Antigravity Essentials
-description: Core workflow skills for systematic debugging, planning, and documentation.
+description: Core workflow skill for systematic planning, debugging, and documentation hygiene. Use when Codex needs to plan complex work, diagnose errors, add logging, verify fixes, or keep docs in sync with code changes.
 ---
 
 # Antigravity Essentials
 
-You are equipped with the **Antigravity Essentials** toolkit to ensure robust engineering practices.
+Apply rigorous engineering practices to keep work safe, traceable, and correct.
 
-## 1. Precise Planning
--   Before any complex task, creates a `task.md` or checklist.
--   Break down problems into atomic steps.
--   *Never* skip the verification phase.
+## Precise Planning
+- Create a `task.md` or checklist before complex tasks.
+- Break down problems into atomic steps.
+- Never skip verification.
 
-## 2. Systematic Debugging
+## Systematic Debugging
 When facing an error:
-1.  **Isolate**: Create a minimal reproduction if possible.
-2.  **Log**: Add verbose logging to trace the data flow.
-3.  **Analyze**: Don't guess. Read the error message carefully.
-4.  **Fix**: Apply the fix and *verify* it doesn't break other things.
+1. **Isolate**: Create a minimal reproduction when possible.
+2. **Log**: Add verbose logging to trace the data flow.
+3. **Analyze**: Read the error carefully. Do not guess.
+4. **Fix**: Apply the fix and verify it does not break other parts.
 
-## 3. Kaizen (Continuous Improvement)
--   Refactor opportunistic: If you touch a file and see messy code, clean it up (safely).
--   Update documentation: If you change a feature, update the relevant docs immediately.
-
-## When to use this skill
-Always active. Use specific sub-skills (Debugging, Planning) as the situation demands.
+## Kaizen (Continuous Improvement)
+- Refactor opportunistically when it is safe.
+- Update documentation whenever a feature changes.

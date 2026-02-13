@@ -1,0 +1,4 @@
+interface:
+  display_name: "Antigravity Essentials"
+  short_description: "Planning, debugging, and verification workflow"
+  default_prompt: "Use $antigravity-essentials to plan, debug, and verify this work."
