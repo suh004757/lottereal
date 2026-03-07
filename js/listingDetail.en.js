@@ -4,6 +4,7 @@
  */
 
 import { getListingById, createInquiry } from './services/backendAdapter.js';
+import { buildAbsoluteUrl, renderJsonLd, updateSeoMeta } from './utils/seo.js';
 
 // URL 파라미터에서 리스팅 ID 추출
 const params = new URLSearchParams(window.location.search);
@@ -59,6 +60,7 @@ function renderDetail(listing) {
   renderImageGallery(listing);
   if (descEl) descEl.innerHTML = (listing.description || '').replace(/\n/g, '<br>');
   if (noteEl) noteEl.textContent = listing.contactNote || '';
+  applySeo(listing, formattedPrice);
 }
 
 /**
@@ -82,6 +84,7 @@ function renderImageGallery(listing) {
   // Set the first image as the main image
   if (images.length > 0) {
     mainImageEl.src = images[0];
+    mainImageEl.alt = listing.title || 'Property image';
   }
 
   // Create thumbnails
@@ -102,6 +105,57 @@ function renderImageGallery(listing) {
       thumbnails.forEach(t => t.classList.remove('lr-detail__thumbnail--active'));
       thumbnail.classList.add('lr-detail__thumbnail--active');
     });
+  });
+}
+
+function applySeo(listing, formattedPrice) {
+  const title = listing.title
+    ? `${listing.title} | Lotte Real Estate`
+    : 'Listing Details | Lotte Real Estate';
+  const location = [listing.district, listing.city, listing.address].filter(Boolean).join(', ');
+  const description = [
+    listing.title,
+    location,
+    formattedPrice,
+    listing.description || listing.property_type || 'Real estate listing details in Songpa and Gangnam'
+  ].filter(Boolean).join(' | ').slice(0, 160);
+  const canonical = buildAbsoluteUrl(`listing-detail-en.html?id=${encodeURIComponent(listing.id || '')}`);
+  const image = listing.images?.[0] || listing.image || buildAbsoluteUrl('img/bg-img/lotte_street_view.png');
+
+  updateSeoMeta({
+    title,
+    description,
+    canonical,
+    ogImage: image,
+    type: 'article',
+    locale: 'en_US',
+    siteName: 'Lotte Real Estate'
+  });
+
+  renderJsonLd({
+    id: 'listing-en-breadcrumb',
+    data: {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: buildAbsoluteUrl('/EN.html') },
+        { '@type': 'ListItem', position: 2, name: 'Listings', item: buildAbsoluteUrl('/listings-en.html') },
+        { '@type': 'ListItem', position: 3, name: listing.title || 'Listing Details', item: canonical }
+      ]
+    }
+  });
+
+  renderJsonLd({
+    id: 'listing-en-webpage',
+    data: {
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      name: listing.title || 'Listing Details',
+      description,
+      url: canonical,
+      inLanguage: 'en',
+      primaryImageOfPage: image
+    }
   });
 }
 
