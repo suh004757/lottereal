@@ -24,6 +24,8 @@ import {
   listInquiriesAdmin,
   updateInquiryStatus
 } from './services/backendAdapter.js';
+import { getSupabaseClient } from './config/supabaseConfig.js';
+import { initializeReportEditor } from './reportEditorCore.js';
 import { listReports } from './services/reportAdapter.js';
 import { signOutAdmin, getCurrentSessionUser } from './services/authService.js';
 
@@ -44,7 +46,25 @@ const listingsTbody = document.querySelector('[data-admin-listings]');
 const inquiriesTbody = document.querySelector('[data-admin-inquiries]');
 const reportsTbody = document.querySelector('[data-admin-reports]');
 const addReportBtn = document.getElementById('addReportBtn');
+const resetReportEditorBtn = document.getElementById('resetReportEditorBtn');
 const logoutBtn = document.getElementById('logoutBtn');
+const reportEditorTitle = document.getElementById('dashboardReportEditorTitle');
+const reportEditorRefs = {
+  titleInput: document.getElementById('dashboard-report-title'),
+  slugInput: document.getElementById('dashboard-report-slug'),
+  summaryInput: document.getElementById('dashboard-report-summary'),
+  contentInput: document.getElementById('dashboard-report-content'),
+  statusSelect: document.getElementById('dashboard-report-status-select'),
+  evidenceContainer: document.getElementById('dashboard-evidence-container'),
+  addEvidenceBtn: document.getElementById('dashboard-add-evidence-btn'),
+  saveBtn: document.getElementById('dashboard-save-report-btn'),
+  previewBtn: document.getElementById('dashboard-preview-report-btn'),
+  cancelBtn: document.getElementById('resetReportEditorBtn'),
+  previewModal: document.getElementById('dashboard-preview-modal'),
+  previewBody: document.getElementById('dashboard-preview-body'),
+  previewCloseBtn: document.getElementById('dashboard-preview-close'),
+  statusEl: document.getElementById('dashboard-report-status')
+};
 
 // Property modal / form
 const propertyModal = document.getElementById('propertyModal');
@@ -89,6 +109,7 @@ let editingId = null;
 
 /** @type {Object} 인증 객체 */
 let currentAdmin = null;
+let reportEditorController = null;
 
 // ============================================
 // 초기화
@@ -119,6 +140,7 @@ async function initAdminDashboard() {
     loadRecent();
     loadListingsAdmin();
     loadInquiriesAdmin();
+    initReportEditor();
     loadReportsAdmin();
     bindReportButtons();
   } catch (err) {
@@ -914,6 +936,37 @@ function formatKst(ts) {
   }
 }
 
+function initReportEditor() {
+  if (!reportEditorRefs.titleInput || reportEditorController) return;
+  const supabaseClient = getSupabaseClient();
+  reportEditorController = initializeReportEditor({
+    refs: reportEditorRefs,
+    supabaseClient,
+    onSaved: async (report) => {
+      updateReportEditorTitle(report);
+      await loadReportsAdmin();
+      loadRecent();
+    },
+    onCancel: () => {
+      resetInlineReportEditor();
+    }
+  });
+  updateReportEditorTitle();
+  resetReportEditorBtn?.addEventListener('click', () => {
+    resetInlineReportEditor();
+  });
+}
+
+function resetInlineReportEditor() {
+  reportEditorController?.resetEditor();
+  updateReportEditorTitle();
+}
+
+function updateReportEditorTitle(report = null) {
+  if (!reportEditorTitle) return;
+  reportEditorTitle.textContent = report?.id ? '리포트 수정' : '리포트 작성';
+}
+
 // ============================================
 // 리포트 관리
 // ============================================
@@ -993,6 +1046,83 @@ function bindReportButtons() {
   if (addReportBtn) {
     addReportBtn.addEventListener('click', () => {
       window.location.href = 'report-editor.html';
+    });
+  }
+}
+
+function updateReportEditorTitle(report = null) {
+  if (!reportEditorTitle) return;
+  reportEditorTitle.textContent = report?.id ? '리포트 수정' : '리포트 작성';
+}
+
+async function loadReportsAdmin() {
+  if (!reportsTbody) return;
+  reportsTbody.innerHTML = '<tr><td colspan="7">불러오는 중...</td></tr>';
+  try {
+    const reports = await listReports({ limit: 50 });
+    if (!reports || reports.length === 0) {
+      reportsTbody.innerHTML = '<tr><td colspan="7">리포트가 없습니다.</td></tr>';
+      return;
+    }
+
+    reportsTbody.innerHTML = '';
+    reports.forEach((report, idx) => {
+      const tr = document.createElement('tr');
+      const statusBadge = report.status === 'published'
+        ? '<span class="admin-status-badge">발행됨</span>'
+        : '<span class="admin-status-badge pending">초안</span>';
+
+      tr.innerHTML = `
+        <td>${idx + 1}</td>
+        <td>${report.title || ''}</td>
+        <td><code style="font-size:0.875rem;">${report.slug || ''}</code></td>
+        <td>${statusBadge}</td>
+        <td>${Number(report.view_count || 0).toLocaleString()}</td>
+        <td>${formatKst(report.updated_at) || ''}</td>
+        <td>
+          <div class="admin-table-actions">
+            <button class="admin-icon-btn" data-edit-report="${report.id}" title="수정">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+            </button>
+            <button class="admin-icon-btn" data-view-report="${report.slug}" title="미리보기">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+          </div>
+        </td>
+      `;
+      reportsTbody.appendChild(tr);
+    });
+
+    reportsTbody.querySelectorAll('[data-edit-report]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-edit-report');
+        const report = await reportEditorController?.hydrateReport({ id });
+        updateReportEditorTitle(report);
+      });
+    });
+
+    reportsTbody.querySelectorAll('[data-view-report]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const slug = btn.getAttribute('data-view-report');
+        window.open(`../report.html?slug=${slug}`, '_blank');
+      });
+    });
+  } catch (err) {
+    console.error('리포트 관리 로드 실패', err);
+    reportsTbody.innerHTML = '<tr><td colspan="7">리포트 불러오기 실패했습니다.</td></tr>';
+  }
+}
+
+function bindReportButtons() {
+  if (addReportBtn) {
+    addReportBtn.addEventListener('click', () => {
+      resetInlineReportEditor();
     });
   }
 }

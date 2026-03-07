@@ -912,3 +912,208 @@ textarea {
     border-color: rgba(79, 209, 197, 0.6);
     color: #4fd1c5;
 }
+
+.admin-reports-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(360px, 0.9fr);
+    gap: 24px;
+    align-items: start;
+}
+
+.admin-report-editor-card {
+    padding: 24px;
+}
+
+.admin-report-editor-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.admin-report-editor-card__header h2 {
+    margin: 8px 0 4px;
+    font-size: 28px;
+}
+
+.admin-report-editor-form .form-group {
+    margin-bottom: 18px;
+}
+
+.admin-report-editor-form .form-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--admin-text);
+}
+
+.admin-report-editor-form .form-input {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--admin-border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--admin-text);
+}
+
+.admin-report-editor-form .form-input:focus {
+    outline: none;
+    border-color: rgba(37, 99, 235, 0.6);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.admin-report-editor-form .form-textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.admin-report-editor-form .editor-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-top: 20px;
+    border-top: 1px solid var(--admin-border);
+}
+
+.admin-message {
+    padding: 12px 14px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    display: none;
+}
+
+.admin-message[data-status="info"] {
+    background: rgba(59, 130, 246, 0.12);
+    color: #bfdbfe;
+    border: 1px solid rgba(59, 130, 246, 0.28);
+}
+
+.admin-message[data-status="success"] {
+    background: rgba(16, 185, 129, 0.12);
+    color: #a7f3d0;
+    border: 1px solid rgba(16, 185, 129, 0.28);
+}
+
+.admin-message[data-status="error"] {
+    background: rgba(239, 68, 68, 0.12);
+    color: #fecdd3;
+    border: 1px solid rgba(239, 68, 68, 0.28);
+}
+
+.evidence-editor {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--admin-border);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.evidence-item {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--admin-border);
+    border-radius: 12px;
+    padding: 14px;
+}
+
+.evidence-item + .evidence-item {
+    margin-top: 12px;
+}
+
+.evidence-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.btn-add,
+.btn-remove,
+.btn-preview,
+.btn-save {
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.btn-add {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: rgba(59, 130, 246, 0.16);
+    color: #bfdbfe;
+}
+
+.btn-remove {
+    padding: 6px 10px;
+    background: rgba(239, 68, 68, 0.18);
+    color: #fecdd3;
+}
+
+.btn-preview {
+    padding: 12px 18px;
+    background: rgba(59, 130, 246, 0.16);
+    color: #dbeafe;
+}
+
+.btn-save {
+    padding: 12px 18px;
+    background: linear-gradient(135deg, var(--admin-accent), var(--admin-accent-2));
+    color: #0b1220;
+}
+
+.preview-modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(0, 0, 0, 0.72);
+    z-index: 2500;
+}
+
+.preview-content {
+    width: min(960px, 100%);
+    max-height: 90vh;
+    overflow: auto;
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 28px;
+}
+
+.preview-close {
+    margin-left: auto;
+    display: block;
+    margin-bottom: 16px;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 10px;
+    background: #111827;
+    color: #ffffff;
+    cursor: pointer;
+}
+
+.CodeMirror,
+.editor-toolbar {
+    border-color: rgba(148, 163, 184, 0.25) !important;
+}
+
+.CodeMirror,
+.editor-preview {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--admin-text);
+}
+
+.editor-toolbar {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.editor-toolbar a {
+    color: var(--admin-text) !important;
+}
+
+@media (max-width: 1024px) {
+    .admin-reports-layout {
+        grid-template-columns: 1fr;
+    }
+}
