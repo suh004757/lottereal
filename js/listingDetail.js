@@ -4,6 +4,7 @@
  */
 
 import { getListingById, createInquiry } from './services/backendAdapter.js';
+import { buildAbsoluteUrl, renderJsonLd, updateSeoMeta } from './utils/seo.js';
 
 // URL 파라미터에서 리스팅 ID 가져오기
 const params = new URLSearchParams(window.location.search);
@@ -54,6 +55,7 @@ function renderDetail(listing) {
 
   // Render image gallery
   renderImageGallery(listing);
+  applySeo(listing, formattedPrice);
 }
 
 /**
@@ -77,6 +79,7 @@ function renderImageGallery(listing) {
   // Set the first image as the main image
   if (images.length > 0) {
     mainImageEl.src = images[0];
+    mainImageEl.alt = listing.title || 'Listing image';
   }
 
   // Create thumbnails
@@ -97,6 +100,57 @@ function renderImageGallery(listing) {
       thumbnails.forEach(t => t.classList.remove('lr-detail__thumbnail--active'));
       thumbnail.classList.add('lr-detail__thumbnail--active');
     });
+  });
+}
+
+function applySeo(listing, formattedPrice) {
+  const title = listing.title
+    ? `${listing.title} | 롯데부동산`
+    : '매물 상세 | 롯데부동산';
+  const location = [listing.district, listing.city, listing.address].filter(Boolean).join(' ');
+  const description = [
+    listing.title,
+    location,
+    formattedPrice,
+    listing.description || listing.property_type || '송파·강남 부동산 상세 정보'
+  ].filter(Boolean).join(' | ').slice(0, 160);
+  const canonical = buildAbsoluteUrl(`listing-detail.html?id=${encodeURIComponent(listing.id || '')}`);
+  const image = listing.images?.[0] || listing.image || buildAbsoluteUrl('img/bg-img/lotte_street_view.png');
+
+  updateSeoMeta({
+    title,
+    description,
+    canonical,
+    ogImage: image,
+    type: 'article',
+    locale: 'ko_KR',
+    siteName: '롯데부동산'
+  });
+
+  renderJsonLd({
+    id: 'listing-breadcrumb',
+    data: {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: buildAbsoluteUrl('/') },
+        { '@type': 'ListItem', position: 2, name: 'Listings', item: buildAbsoluteUrl('/listings.html') },
+        { '@type': 'ListItem', position: 3, name: listing.title || 'Listing Detail', item: canonical }
+      ]
+    }
+  });
+
+  renderJsonLd({
+    id: 'listing-webpage',
+    data: {
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      name: listing.title || '매물 상세',
+      description,
+      url: canonical,
+      inLanguage: 'ko-KR',
+      primaryImageOfPage: image
+    }
   });
 }
 

@@ -1,4 +1,5 @@
 import { getLatestReport, getReportBySlug, incrementReportViews, listPublishedReports } from './services/reportAdapter.js';
+import { buildAbsoluteUrl, renderJsonLd, updateSeoMeta } from './utils/seo.js';
 
 const urlParams = new URLSearchParams(window.location.search);
 const reportSlug = urlParams.get('slug');
@@ -46,6 +47,7 @@ function renderMetadata() {
   document.getElementById('report-title').textContent = currentReport.title || '';
   document.getElementById('report-summary').textContent = currentReport.summary || '';
   document.getElementById('report-updated').textContent = formatDate(currentReport.updated_at);
+  applySeo();
 }
 
 function renderReport() {
@@ -177,4 +179,75 @@ function escapeHtml(value = '') {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+function applySeo() {
+  const canonical = buildAbsoluteUrl(`report.html?slug=${encodeURIComponent(currentReport.slug || '')}`);
+  const title = currentReport.title
+    ? `${currentReport.title} | Lotte Real Estate`
+    : 'Market Report | Lotte Real Estate';
+  const description = currentReport.summary
+    || 'Data-based real estate market report from Lotte Real Estate.';
+  const image = buildAbsoluteUrl('img/bg-img/lotte_street_view.png');
+  const publishedTime = currentReport.created_at || currentReport.updated_at;
+  const modifiedTime = currentReport.updated_at || currentReport.created_at;
+
+  updateSeoMeta({
+    title,
+    description,
+    canonical,
+    ogImage: image,
+    type: 'article',
+    locale: 'ko_KR',
+    siteName: 'Lotte Real Estate'
+  });
+
+  renderJsonLd({
+    id: 'report-breadcrumb',
+    data: {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: 'Home',
+          item: buildAbsoluteUrl('/')
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: 'Market Report',
+          item: canonical
+        }
+      ]
+    }
+  });
+
+  renderJsonLd({
+    id: 'report-article',
+    data: {
+      '@context': 'https://schema.org',
+      '@type': 'Article',
+      headline: currentReport.title || 'Market Report',
+      description,
+      inLanguage: 'ko-KR',
+      datePublished: publishedTime,
+      dateModified: modifiedTime,
+      mainEntityOfPage: canonical,
+      image: [image],
+      author: {
+        '@type': 'Organization',
+        name: 'Lotte Real Estate'
+      },
+      publisher: {
+        '@type': 'Organization',
+        name: 'Lotte Real Estate',
+        logo: {
+          '@type': 'ImageObject',
+          url: image
+        }
+      }
+    }
+  });
 }
