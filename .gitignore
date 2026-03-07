@@ -1,3 +1,4 @@
 .DS_Store
 node_modules/
 SETUP_MARKET_REPORT.md
+supabase/migrations/004_market_reports_admin_policies.sql

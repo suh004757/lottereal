@@ -1,114 +1,194 @@
-﻿import { getLatestReport } from './services/reportAdapter.js';
+import { listPublishedReports } from './services/reportAdapter.js';
 
 const section = document.querySelector('[data-report-section]');
 
-if (!section) {
-  console.info('[HomeReport] Report section not found on this page.');
-} else {
-  const card = section.querySelector('[data-report-card]');
-  const titleEl = section.querySelector('[data-report-title]');
-  const summaryEl = section.querySelector('[data-report-summary]');
-  const updatedEl = section.querySelector('[data-report-updated]');
-  const viewsEl = section.querySelector('[data-report-views]');
-  const statusEl = section.querySelector('[data-report-status]');
+if (section) {
+  const featuredContainer = section.querySelector('[data-report-featured]');
+  const secondaryContainer = section.querySelector('[data-report-secondary-list]');
   const reloadBtn = section.querySelector('[data-report-reload]');
   const viewLink = section.querySelector('[data-report-link]');
+  const isEnglish = window.location.pathname.toLowerCase().endsWith('en.html');
 
-  const messages = {
-    loadingTitle: '최신 리포트를 불러오는 중입니다.',
-    loadingSummary: '잠시만 기다려 주세요.',
-    emptyTitle: '발행된 리포트가 아직 없습니다.',
-    emptySummary: '관리자 페이지에서 리포트를 발행하면 자동으로 노출됩니다.',
-    errorTitle: '리포트를 불러오지 못했습니다.',
-    errorSummary: '네트워크 상태를 확인한 후 다시 시도해 주세요.'
-  };
+  const copy = isEnglish
+    ? {
+        loading: 'Loading latest reports...',
+        emptyTitle: 'No published reports yet.',
+        emptySummary: 'Published reports will appear here automatically.',
+        errorTitle: 'Failed to load reports.',
+        errorSummary: 'Please try again later.',
+        published: 'Published',
+        views: 'views',
+        cta: 'View Details'
+      }
+    : {
+        loading: '최신 리포트를 불러오는 중입니다.',
+        emptyTitle: '발행된 리포트가 아직 없습니다.',
+        emptySummary: '리포트를 발행하면 이 영역에 자동 노출됩니다.',
+        errorTitle: '리포트를 불러오지 못했습니다.',
+        errorSummary: '잠시 후 다시 시도해 주세요.',
+        published: '발행됨',
+        views: '조회',
+        cta: '상세보기'
+      };
 
   init();
 
   async function init() {
-    setLoading();
-    await loadReport();
+    renderLoading();
+    await loadReports();
+    reloadBtn?.addEventListener('click', async () => {
+      renderLoading();
+      await loadReports();
+    });
+    if (viewLink) {
+      viewLink.href = 'report.html';
+    }
   }
 
-  async function loadReport() {
+  async function loadReports() {
     try {
-      const report = await getLatestReport();
-      if (!report) {
-        setEmpty();
+      const reports = await listPublishedReports({ limit: 3 });
+      if (!reports.length) {
+        renderEmpty();
         return;
       }
-      renderReport(report);
+      renderReports(reports);
     } catch (error) {
-      console.error('[HomeReport] Failed to load latest report', error);
-      setError();
+      console.error('[HomeReport] Failed to load reports', error);
+      renderError();
     }
   }
 
-  function renderReport(report) {
-    if (statusEl) statusEl.textContent = '발행됨';
-    if (titleEl) titleEl.textContent = report.title || '시장 리포트';
-    if (summaryEl) summaryEl.textContent = extractSummary(report);
-    if (updatedEl) updatedEl.textContent = formatUpdated(report.updated_at);
-    if (viewsEl) viewsEl.textContent = `조회수 ${Number(report.view_count || 0).toLocaleString()}회`;
-    if (card) card.classList.remove('is-error');
-    if (viewLink) {
-      const slug = report.slug ? `?slug=${report.slug}` : '';
-      viewLink.href = `report.html${slug}`;
+  function renderLoading() {
+    if (featuredContainer) {
+      featuredContainer.innerHTML = renderSkeleton(copy.loading);
+    }
+    if (secondaryContainer) {
+      secondaryContainer.innerHTML = '';
     }
   }
 
-  function setLoading() {
-    if (statusEl) statusEl.textContent = '로딩 중';
-    if (titleEl) titleEl.textContent = messages.loadingTitle;
-    if (summaryEl) summaryEl.textContent = messages.loadingSummary;
-    if (updatedEl) updatedEl.textContent = '';
-    if (viewsEl) viewsEl.textContent = '';
+  function renderEmpty() {
+    if (featuredContainer) {
+      featuredContainer.innerHTML = renderStateCard(copy.emptyTitle, copy.emptySummary);
+    }
+    if (secondaryContainer) {
+      secondaryContainer.innerHTML = '';
+    }
   }
 
-  function setEmpty() {
-    if (statusEl) statusEl.textContent = '대기 중';
-    if (titleEl) titleEl.textContent = messages.emptyTitle;
-    if (summaryEl) summaryEl.textContent = messages.emptySummary;
-    if (updatedEl) updatedEl.textContent = '';
-    if (viewsEl) viewsEl.textContent = '';
+  function renderError() {
+    if (featuredContainer) {
+      featuredContainer.innerHTML = renderStateCard(copy.errorTitle, copy.errorSummary, true);
+    }
+    if (secondaryContainer) {
+      secondaryContainer.innerHTML = '';
+    }
   }
 
-  function setError() {
-    if (statusEl) statusEl.textContent = '오류';
-    if (titleEl) titleEl.textContent = messages.errorTitle;
-    if (summaryEl) summaryEl.textContent = messages.errorSummary;
-    if (updatedEl) updatedEl.textContent = '';
-    if (viewsEl) viewsEl.textContent = '';
-    if (card) card.classList.add('is-error');
+  function renderReports(reports) {
+    const [featured, ...secondary] = reports;
+    if (featuredContainer) {
+      featuredContainer.innerHTML = renderFeatureCard(featured);
+    }
+    if (secondaryContainer) {
+      secondaryContainer.innerHTML = secondary.map(renderSecondaryCard).join('');
+    }
+  }
+
+  function renderFeatureCard(report) {
+    return `
+      <article class="lr-card lr-card--feature">
+        <div class="lr-card__body">
+          <p class="lr-badge">${copy.published}</p>
+          <h3>${escapeHtml(report.title || 'Report')}</h3>
+          <p class="lr-text">${escapeHtml(extractSummary(report))}</p>
+          <div class="lr-card__meta">
+            <span>${formatUpdated(report.updated_at)}</span>
+            <span>${formatViews(report.view_count)}</span>
+          </div>
+          <div class="lr-actions">
+            <a class="lr-btn lr-btn--primary" href="${getReportHref(report.slug)}">${copy.cta}</a>
+          </div>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderSecondaryCard(report) {
+    return `
+      <article class="lr-card lr-report-card--secondary">
+        <div class="lr-card__body">
+          <p class="lr-badge">${copy.published}</p>
+          <h3>${escapeHtml(report.title || 'Report')}</h3>
+          <p class="lr-text">${escapeHtml(extractSummary(report))}</p>
+          <div class="lr-card__meta">
+            <span>${formatUpdated(report.updated_at)}</span>
+            <span>${formatViews(report.view_count)}</span>
+          </div>
+          <a class="lr-link" href="${getReportHref(report.slug)}">${copy.cta}</a>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderStateCard(title, summary, isError = false) {
+    return `
+      <article class="lr-card lr-card--feature${isError ? ' is-error' : ''}">
+        <div class="lr-card__body">
+          <p class="lr-badge">${isError ? 'Error' : copy.published}</p>
+          <h3>${escapeHtml(title)}</h3>
+          <p class="lr-text">${escapeHtml(summary)}</p>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderSkeleton(title) {
+    return `
+      <article class="lr-card lr-card--feature">
+        <div class="lr-card__body">
+          <p class="lr-badge">${copy.published}</p>
+          <h3>${escapeHtml(title)}</h3>
+          <p class="lr-text">&nbsp;</p>
+        </div>
+      </article>
+    `;
   }
 
   function extractSummary(report) {
     if (report.summary) return report.summary;
     if (!report.report_md) return '';
-    const chunks = report.report_md
+    return report.report_md
       .split(/\n\n+/)
       .map((block) => block.replace(/[#>*-]/g, '').trim())
-      .filter(Boolean);
-    return chunks[0] || '';
+      .filter(Boolean)[0] || '';
   }
 
   function formatUpdated(ts) {
     if (!ts) return '';
-    try {
-      return new Date(ts).toLocaleDateString('ko-KR', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-    } catch {
-      return '';
-    }
+    return new Date(ts).toLocaleDateString(isEnglish ? 'en-US' : 'ko-KR', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   }
 
-  if (reloadBtn) {
-    reloadBtn.addEventListener('click', () => {
-      setLoading();
-      loadReport();
-    });
+  function formatViews(value) {
+    const count = Number(value || 0).toLocaleString();
+    return isEnglish ? `${count} ${copy.views}` : `${copy.views} ${count}회`;
+  }
+
+  function getReportHref(slug) {
+    return slug ? `report.html?slug=${slug}` : 'report.html';
+  }
+
+  function escapeHtml(value = '') {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
   }
 }

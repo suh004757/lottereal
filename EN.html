@@ -97,21 +97,13 @@
                     </div>
                     <a class="lr-link" href="report.html" data-report-link>View Full Report</a>
                 </div>
-                <article class="lr-card lr-card--feature" data-report-card>
-                    <div class="lr-card__body">
-                        <p class="lr-badge" data-report-status>Loading</p>
-                        <h3 data-report-title>Loading latest report...</h3>
-                        <p class="lr-text" data-report-summary>Please wait a moment.</p>
-                        <div class="lr-card__meta">
-                            <span data-report-updated></span>
-                            <span data-report-views></span>
-                        </div>
-                        <div class="lr-actions">
-                            <a class="lr-btn lr-btn--primary" href="report.html">View Details</a>
-                            <button class="lr-btn lr-btn--ghost" type="button" data-report-reload>Reload</button>
-                        </div>
-                    </div>
-                </article>
+                <div class="lr-report-showcase" data-report-list>
+                    <div class="lr-report-showcase__feature" data-report-featured></div>
+                    <div class="lr-report-showcase__secondary" data-report-secondary-list></div>
+                </div>
+                <div class="lr-actions" style="margin-top:1.25rem;">
+                    <button class="lr-btn lr-btn--ghost" type="button" data-report-reload>Reload</button>
+                </div>
                 <div class="lr-disclaimer" style="margin-top:1.5rem;">
                     <strong>Important Notice</strong><br>
                     Reports are reference materials based on public data and not investment advice.

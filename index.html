@@ -112,21 +112,13 @@
           </div>
           <a class="lr-link" href="report.html" data-report-link>전체 리포트 보기</a>
         </div>
-        <article class="lr-card lr-card--feature" data-report-card>
-          <div class="lr-card__body">
-            <p class="lr-badge" data-report-status>로딩 중</p>
-            <h3 data-report-title>최신 리포트를 불러오는 중...</h3>
-            <p class="lr-text" data-report-summary>잠시만 기다려 주세요.</p>
-            <div class="lr-card__meta">
-              <span data-report-updated></span>
-              <span data-report-views></span>
-            </div>
-            <div class="lr-actions">
-              <a class="lr-btn lr-btn--primary" href="report.html">상세보기</a>
-              <button class="lr-btn lr-btn--ghost" type="button" data-report-reload>새로고침</button>
-            </div>
-          </div>
-        </article>
+        <div class="lr-report-showcase" data-report-list>
+          <div class="lr-report-showcase__feature" data-report-featured></div>
+          <div class="lr-report-showcase__secondary" data-report-secondary-list></div>
+        </div>
+        <div class="lr-actions" style="margin-top:1.25rem;">
+          <button class="lr-btn lr-btn--ghost" type="button" data-report-reload>새로고침</button>
+        </div>
         <div class="lr-disclaimer" style="margin-top:1.5rem;">
           <strong>중요 고지</strong><br>
           리포트는 공개 데이터 기반 참고자료이며 투자 조언이 아닙니다.
