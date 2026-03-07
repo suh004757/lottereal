@@ -127,7 +127,9 @@ if (section) {
             <span>${formatUpdated(report.updated_at)}</span>
             <span>${formatViews(report.view_count)}</span>
           </div>
-          <a class="lr-link" href="${getReportHref(report.slug)}">${copy.cta}</a>
+          <div class="lr-actions">
+            <a class="lr-btn lr-btn--primary" href="${getReportHref(report.slug)}">${copy.cta}</a>
+          </div>
         </div>
       </article>
     `;
