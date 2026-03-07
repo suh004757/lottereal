@@ -7,7 +7,8 @@ if (section) {
   const secondaryContainer = section.querySelector('[data-report-secondary-list]');
   const reloadBtn = section.querySelector('[data-report-reload]');
   const viewLink = section.querySelector('[data-report-link]');
-  const isEnglish = window.location.pathname.toLowerCase().endsWith('en.html');
+  const path = window.location.pathname.toLowerCase();
+  const isEnglish = path.endsWith('en.html') || path.endsWith('/en.html');
 
   const copy = isEnglish
     ? {
