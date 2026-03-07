@@ -104,7 +104,9 @@ async function renderArchive() {
         <span>${formatDate(report.updated_at)}</span>
         <span>조회수 ${Number(report.view_count || 0).toLocaleString()}회</span>
       </div>
-      <a class="lr-link" href="report.html?slug=${encodeURIComponent(report.slug)}">상세보기</a>
+      <div class="lr-actions">
+        <a class="lr-btn lr-btn--primary" href="report.html?slug=${encodeURIComponent(report.slug)}">상세보기</a>
+      </div>
     </article>
   `).join('');
 }
