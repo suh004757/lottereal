@@ -5,33 +5,108 @@
       xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
             http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
 
+  <!-- 홈 -->
+  <url>
+    <loc>https://lottes.co.kr/</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.00</priority>
+  </url>
 
+  <!-- 영문 홈 -->
+  <url>
+    <loc>https://lottes.co.kr/EN.html</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.90</priority>
+  </url>
 
-<url>
-  <loc>https://lottes.co.kr/</loc>
-  <lastmod>2021-03-14T01:25:21+00:00</lastmod>
-  <priority>1.00</priority>
-</url>
-<url>
-  <loc>https://lottes.co.kr/index.html</loc>
-  <lastmod>2021-03-14T01:25:21+00:00</lastmod>
-  <priority>0.80</priority>
-</url>
-<url>
-  <loc>https://lottes.co.kr/contact.html</loc>
-  <lastmod>2021-03-14T01:25:21+00:00</lastmod>
-  <priority>0.80</priority>
-</url>
-<url>
-  <loc>https://lottes.co.kr/EN.html</loc>
-  <lastmod>2021-03-14T01:25:21+00:00</lastmod>
-  <priority>0.80</priority>
-</url>
-<url>
-  <loc>https://lottes.co.kr/contact_EN.html</loc>
-  <lastmod>2021-03-14T01:25:21+00:00</lastmod>
-  <priority>0.64</priority>
-</url>
+  <!-- 매물 리스트 KR -->
+  <url>
+    <loc>https://lottes.co.kr/listings.html</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+  </url>
 
+  <!-- 매물 리스트 EN -->
+  <url>
+    <loc>https://lottes.co.kr/listings-en.html</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.80</priority>
+  </url>
+
+  <!-- 시장 리포트 -->
+  <url>
+    <loc>https://lottes.co.kr/report.html</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- 인사이트 -->
+  <url>
+    <loc>https://lottes.co.kr/insights.html</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+
+  <!-- 인사이트 상세 -->
+  <url>
+    <loc>https://lottes.co.kr/insight-detail.html</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.65</priority>
+  </url>
+
+  <!-- 매물 상세 KR -->
+  <url>
+    <loc>https://lottes.co.kr/listing-detail.html</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.70</priority>
+  </url>
+
+  <!-- 매물 상세 EN -->
+  <url>
+    <loc>https://lottes.co.kr/listing-detail-en.html</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.65</priority>
+  </url>
+
+  <!-- 문의/찾아오는 길 KR -->
+  <url>
+    <loc>https://lottes.co.kr/contact.html</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.80</priority>
+  </url>
+
+  <!-- 문의/찾아오는 길 EN -->
+  <url>
+    <loc>https://lottes.co.kr/contact_EN.html</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.70</priority>
+  </url>
+
+  <!-- 개인정보처리방침 KR -->
+  <url>
+    <loc>https://lottes.co.kr/privacy.html</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.30</priority>
+  </url>
+
+  <!-- 개인정보처리방침 EN -->
+  <url>
+    <loc>https://lottes.co.kr/privacy_EN.html</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.30</priority>
+  </url>
 
 </urlset>
