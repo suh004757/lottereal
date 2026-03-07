@@ -1,20 +1,38 @@
 /* [ -- Master Stylesheet -- ] */
-/* ----------------------------------------------------------
+/* ---------------------------------------------------------- */
 
 .lr-report-showcase {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.9fr);
-  gap: 1.5rem;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.85fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.lr-report-showcase__feature,
+.lr-report-showcase__secondary {
+  min-width: 0;
 }
 
 .lr-report-showcase__secondary {
   display: grid;
-  gap: 1rem;
+  gap: 16px;
+}
+
+.lr-report-showcase .lr-card--feature {
+  min-height: 100%;
+}
+
+.lr-report-card--secondary {
+  height: 100%;
 }
 
 .lr-report-card--secondary .lr-card__body {
   display: grid;
-  gap: 0.75rem;
+  gap: 10px;
+}
+
+.lr-report-card--secondary .lr-card__body h3 {
+  white-space: normal;
 }
 
 @media (max-width: 900px) {
@@ -23,8 +41,6 @@
   }
 }
 
-
----------------------------------------------------------- */
 /* Variables */
 /* mixin */
 /* :: Import Fonts */
