@@ -55,8 +55,7 @@ function renderReport() {
   try {
     marked.setOptions({
       breaks: true,
-      gfm: true,
-      headerIds: true
+      gfm: true
     });
     const rawHtml = marked.parse(currentReport.report_md || '');
     const safeHtml = window.DOMPurify ? window.DOMPurify.sanitize(rawHtml) : rawHtml;
