@@ -2483,6 +2483,33 @@ h1 {
   padding: 120px 0;
 }
 
+.lr-home-intro {
+  padding: 32px 0 20px;
+  position: relative;
+  z-index: 3;
+}
+
+.lr-home-intro__card {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(225, 185, 120, 0.22);
+  border-radius: 24px;
+  padding: 28px 32px;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+}
+
+.lr-home-intro__card h2 {
+  font-size: 30px;
+  margin-bottom: 12px;
+}
+
+.lr-home-intro__card .lr-lead {
+  margin-bottom: 10px;
+}
+
+.lr-home-intro__card .lr-text {
+  line-height: 1.75;
+}
+
 .lr-section--muted {
   background: var(--lr-panel);
   border-top: 1px solid rgba(0, 0, 0, 0.03);
@@ -3003,6 +3030,19 @@ h1 {
 @media (max-width: 640px) {
   .lr-section {
     padding: 64px 0;
+  }
+
+  .lr-home-intro {
+    padding: 20px 0 8px;
+  }
+
+  .lr-home-intro__card {
+    padding: 22px 20px;
+    border-radius: 20px;
+  }
+
+  .lr-home-intro__card h2 {
+    font-size: 24px;
   }
 
   .lr-hero {
