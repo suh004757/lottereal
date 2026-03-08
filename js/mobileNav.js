@@ -25,7 +25,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     nav.querySelectorAll('a').forEach((link) => {
       link.addEventListener('click', () => {
-        closeNav(button, nav);
+        // 클래스·aria 즉시 제거해서 시각적으로 닫고,
+        // inert는 애니메이션 후 설정해서 앵커 내비게이션을 막지 않음
+        nav.classList.remove('is-open');
+        button.setAttribute('aria-expanded', 'false');
+        nav.setAttribute('aria-hidden', 'true');
+        setTimeout(() => nav.setAttribute('inert', ''), 400);
       });
     });
 
