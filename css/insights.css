@@ -882,6 +882,29 @@
         padding: 1.2rem;
     }
 
+    .lr-report-archive__item h3,
+    .lr-report-hub__report-card h3,
+    .lr-report-neighbor h3,
+    .lr-report-hub-link h3,
+    .lr-report-hub__faq-item h3 {
+        font-size: 1rem;
+        line-height: 1.45;
+    }
+
+    .lr-report-archive__item p,
+    .lr-report-hub__report-card p,
+    .lr-report-neighbor p,
+    .lr-report-hub-link p,
+    .lr-report-hub__faq-item p {
+        line-height: 1.55;
+    }
+
+    .lr-report-archive__item .lr-card__meta,
+    .lr-report-hub__report-card .lr-card__meta {
+        gap: 6px;
+        font-size: 12px;
+    }
+
     .lr-notification {
         right: 1rem;
         left: 1rem;
@@ -917,11 +940,16 @@
 
 .lr-report-archive__item h3 {
     margin: 0.75rem 0;
+    line-height: 1.4;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
 }
 
 .lr-report-archive__item p {
     margin: 0 0 0.85rem;
     color: #4b5563;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
 }
 
 .lr-report-archive__empty {
@@ -961,6 +989,9 @@
 .lr-report-hub-link h3 {
     margin-bottom: 0.75rem;
     color: #0f172a;
+    line-height: 1.4;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
 }
 
 .lr-report-hub__content-block p,
@@ -969,6 +1000,8 @@
 .lr-report-hub-link p {
     color: #475569;
     margin-bottom: 0.85rem;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
 }
 
 .lr-report-hub__focus-list {
