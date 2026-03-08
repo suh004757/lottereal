@@ -422,18 +422,39 @@
   .lr-report-hubs {
     grid-template-columns: 1fr !important;
     gap: 14px !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
   }
 
   .lr-report-hub-card {
+    width: 100% !important;
     min-width: 0 !important;
+    padding: 0 !important;
     border-radius: 16px !important;
-    overflow: hidden !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
   }
 
   .lr-report-hub-card__body {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100% !important;
     padding: 20px !important;
     min-width: 0;
     gap: 12px !important;
+    box-sizing: border-box !important;
+  }
+
+  .lr-report-hub-card__body > * {
+    min-width: 0;
+  }
+
+  .lr-report-hub-card__body .lr-badge {
+    width: fit-content;
+    max-width: 100%;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
   }
 
   .lr-report-hub-card__body h3 {
@@ -462,11 +483,13 @@
   }
 
   .lr-report-hub-card__body .lr-actions {
+    display: block !important;
     width: 100%;
-    margin-top: 4px;
+    margin: 4px 0 0 !important;
   }
 
   .lr-report-hub-card__body .lr-btn {
+    display: flex !important;
     width: 100% !important;
     max-width: 100% !important;
     min-height: 44px !important;
@@ -474,6 +497,8 @@
     white-space: normal !important;
     line-height: 1.35;
     text-align: center;
+    align-self: stretch !important;
+    overflow: visible !important;
   }
 
   /* ── PROCESS TILES — 2 col grid ─────────────────── */
