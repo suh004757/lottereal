@@ -67,6 +67,14 @@
   line-height: 1.35;
 }
 
+.lr-report-showcase .lr-card__body p,
+.lr-report-showcase .lr-card__meta,
+.lr-report-hub-card__body p,
+.lr-report-hub-card__body .lr-card__meta {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
 .lr-report-card--secondary .lr-actions {
   margin-top: auto;
 }
@@ -148,10 +156,27 @@
 
   .lr-report-showcase__feature .lr-card__body h3 {
     font-size: 1.45rem;
+    line-height: 1.3;
   }
 
   .lr-report-card--secondary .lr-card__body {
     padding: 18px;
+  }
+
+  .lr-report-card--secondary .lr-card__body h3,
+  .lr-report-hub-card__body h3 {
+    font-size: 1.05rem;
+    line-height: 1.4;
+  }
+
+  .lr-report-showcase .lr-card__body p,
+  .lr-report-hub-card__body p {
+    line-height: 1.55;
+  }
+
+  .lr-report-showcase .lr-card__meta {
+    gap: 6px;
+    font-size: 12px;
   }
 }
 
