@@ -425,11 +425,55 @@
   }
 
   .lr-report-hub-card {
+    min-width: 0 !important;
     border-radius: 16px !important;
+    overflow: hidden !important;
   }
 
   .lr-report-hub-card__body {
     padding: 20px !important;
+    min-width: 0;
+    gap: 12px !important;
+  }
+
+  .lr-report-hub-card__body h3 {
+    font-size: 1.05rem !important;
+    line-height: 1.45 !important;
+    display: block !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    -webkit-line-clamp: unset !important;
+    line-clamp: unset !important;
+    -webkit-box-orient: unset !important;
+    word-break: keep-all;
+  }
+
+  .lr-report-hub-card__body .lr-text {
+    display: block !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    -webkit-line-clamp: unset !important;
+    line-clamp: unset !important;
+    -webkit-box-orient: unset !important;
+    font-size: 13px !important;
+    line-height: 1.65 !important;
+    word-break: keep-all;
+  }
+
+  .lr-report-hub-card__body .lr-actions {
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  .lr-report-hub-card__body .lr-btn {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 44px !important;
+    box-sizing: border-box !important;
+    white-space: normal !important;
+    line-height: 1.35;
+    text-align: center;
   }
 
   /* ── PROCESS TILES — 2 col grid ─────────────────── */
@@ -619,6 +663,8 @@
     border-radius: 10px !important;
     font-size: 15px !important;
     font-weight: 600;
+    box-sizing: border-box !important;
+    max-width: 100% !important;
   }
 
   .lr-actions {
