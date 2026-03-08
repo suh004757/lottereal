@@ -37,7 +37,7 @@ async function loadReport() {
       return;
     }
 
-    publishedReports = await listPublishedReports({ limit: 20 });
+    publishedReports = await listPublishedReports({ limit: 50 });
 
     renderMetadata();
     renderReport();
