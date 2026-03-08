@@ -229,15 +229,19 @@
   .lr-hero .lr-btn--primary {
     background: #0f1b2d !important;
     color: #fff !important;
+    border: 1.5px solid #0f1b2d !important;
     box-shadow: 0 6px 24px rgba(15, 27, 45, 0.22) !important;
-    border: none !important;
+    padding: 0 24px !important;
+    box-sizing: border-box;
   }
 
   .lr-hero .lr-btn--ghost {
-    background: rgba(15, 27, 45, 0.04) !important;
-    border: 1.5px solid rgba(15, 27, 45, 0.14) !important;
+    background: #fff !important;
+    border: 1.5px solid rgba(15, 27, 45, 0.2) !important;
     color: #0f1b2d !important;
     box-shadow: none !important;
+    padding: 0 24px !important;
+    box-sizing: border-box;
   }
 
   .lr-hero .lr-meta {
@@ -384,8 +388,16 @@
     gap: 16px !important;
   }
 
+  /* 세컨더리 카드 숨김: 모바일에서 피처드 카드 하나만 집중 노출 */
+  .lr-report-showcase__secondary {
+    display: none !important;
+  }
+
   .lr-report-showcase__feature .lr-card__body h3 {
     font-size: 1.15rem !important;
+    -webkit-line-clamp: unset !important;
+    overflow: visible !important;
+    display: block !important;
   }
 
   .lr-report-hubs {
