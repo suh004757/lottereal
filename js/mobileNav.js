@@ -8,13 +8,18 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!navPairs.length) return;
 
   navPairs.forEach(({ header, button, nav }) => {
-    button.setAttribute('aria-expanded', 'false');
+    // Initial closed state
+    setNavClosed(button, nav);
 
     button.addEventListener('click', (event) => {
       event.preventDefault();
       event.stopPropagation();
       const isOpen = nav.classList.toggle('is-open');
-      button.setAttribute('aria-expanded', String(isOpen));
+      if (isOpen) {
+        setNavOpen(button, nav);
+      } else {
+        setNavClosed(button, nav);
+      }
       closeOthers(nav);
     });
 
@@ -37,6 +42,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  function setNavOpen(button, nav) {
+    nav.classList.add('is-open');
+    button.setAttribute('aria-expanded', 'true');
+    nav.removeAttribute('aria-hidden');
+    nav.removeAttribute('inert');
+  }
+
+  function setNavClosed(button, nav) {
+    nav.classList.remove('is-open');
+    button.setAttribute('aria-expanded', 'false');
+    nav.setAttribute('aria-hidden', 'true');
+    nav.setAttribute('inert', '');
+  }
+
   function closeOthers(activeNav) {
     navPairs.forEach(({ button, nav }) => {
       if (nav !== activeNav) {
@@ -44,9 +63,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-});
 
-function closeNav(button, nav) {
-  nav.classList.remove('is-open');
-  button.setAttribute('aria-expanded', 'false');
-}
+  function closeNav(button, nav) {
+    setNavClosed(button, nav);
+  }
+});
