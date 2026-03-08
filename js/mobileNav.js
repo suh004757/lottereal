@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+  const mobileQuery = window.matchMedia('(max-width: 768px)');
   const navPairs = Array.from(document.querySelectorAll('.lr-header')).map((header) => ({
     header,
     button: header.querySelector('.lr-hamburger'),
@@ -7,58 +8,102 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (!navPairs.length) return;
 
-  navPairs.forEach(({ header, button, nav }) => {
-    // Initial closed state
-    setNavClosed(button, nav);
+  navPairs.forEach(({ header, button, nav }, index) => {
+    const navId = nav.id || `lr-mobile-nav-${index + 1}`;
+    nav.id = navId;
+    button.setAttribute('aria-controls', navId);
+    button.setAttribute('aria-haspopup', 'true');
+
+    syncNavForViewport(button, nav, mobileQuery.matches);
 
     button.addEventListener('click', (event) => {
+      if (!mobileQuery.matches) return;
+
       event.preventDefault();
       event.stopPropagation();
-      const isOpen = nav.classList.toggle('is-open');
-      if (isOpen) {
-        setNavOpen(button, nav);
-      } else {
-        setNavClosed(button, nav);
-      }
+
+      const isOpen = !nav.classList.contains('is-open');
+      setNavState(button, nav, isOpen);
       closeOthers(nav);
     });
 
     nav.querySelectorAll('a').forEach((link) => {
       link.addEventListener('click', () => {
-        // 클래스·aria 즉시 제거해서 시각적으로 닫고,
-        // inert는 애니메이션 후 설정해서 앵커 내비게이션을 막지 않음
-        nav.classList.remove('is-open');
-        button.setAttribute('aria-expanded', 'false');
-        nav.setAttribute('aria-hidden', 'true');
-        setTimeout(() => nav.setAttribute('inert', ''), 400);
+        if (!mobileQuery.matches) return;
+        closeNav(button, nav);
       });
     });
 
     document.addEventListener('click', (event) => {
+      if (!mobileQuery.matches) return;
       if (!header.contains(event.target)) {
         closeNav(button, nav);
       }
     });
 
     document.addEventListener('keydown', (event) => {
+      if (!mobileQuery.matches) return;
       if (event.key === 'Escape') {
         closeNav(button, nav);
+        button.focus();
       }
     });
   });
 
-  function setNavOpen(button, nav) {
-    nav.classList.add('is-open');
-    button.setAttribute('aria-expanded', 'true');
-    nav.removeAttribute('aria-hidden');
-    nav.removeAttribute('inert');
+  const syncAllNavs = (isMobile) => {
+    navPairs.forEach(({ button, nav }) => {
+      syncNavForViewport(button, nav, isMobile);
+    });
+    syncBodyState();
+  };
+
+  if (typeof mobileQuery.addEventListener === 'function') {
+    mobileQuery.addEventListener('change', (event) => {
+      syncAllNavs(event.matches);
+    });
+  } else if (typeof mobileQuery.addListener === 'function') {
+    mobileQuery.addListener((event) => {
+      syncAllNavs(event.matches);
+    });
   }
 
-  function setNavClosed(button, nav) {
+  function syncBodyState() {
+    const hasOpenNav = navPairs.some(({ nav }) => nav.classList.contains('is-open'));
+    document.body.classList.toggle('lr-nav-open', hasOpenNav && mobileQuery.matches);
+  }
+
+  function setNavState(button, nav, isOpen) {
+    nav.classList.toggle('is-open', isOpen);
+    button.setAttribute('aria-expanded', String(isOpen));
+    nav.setAttribute('aria-hidden', String(!isOpen));
+
+    if ('inert' in nav) {
+      nav.inert = !isOpen;
+    }
+
+    if (isOpen) {
+      nav.removeAttribute('inert');
+    } else {
+      nav.setAttribute('inert', '');
+    }
+
+    syncBodyState();
+  }
+
+  function syncNavForViewport(button, nav, isMobile) {
+    if (isMobile) {
+      setNavState(button, nav, false);
+      return;
+    }
+
     nav.classList.remove('is-open');
     button.setAttribute('aria-expanded', 'false');
-    nav.setAttribute('aria-hidden', 'true');
-    nav.setAttribute('inert', '');
+    nav.removeAttribute('aria-hidden');
+    nav.removeAttribute('inert');
+
+    if ('inert' in nav) {
+      nav.inert = false;
+    }
   }
 
   function closeOthers(activeNav) {
@@ -70,6 +115,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function closeNav(button, nav) {
-    setNavClosed(button, nav);
+    setNavState(button, nav, false);
   }
 });
