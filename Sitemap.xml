@@ -40,9 +40,33 @@
   <!-- 시장 리포트 -->
   <url>
     <loc>https://lottes.co.kr/report.html</loc>
-    <lastmod>2026-03-07</lastmod>
+    <lastmod>2026-03-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
+  </url>
+
+  <!-- 송파 리포트 허브 -->
+  <url>
+    <loc>https://lottes.co.kr/songpa-market-report.html</loc>
+    <lastmod>2026-03-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+  </url>
+
+  <!-- 잠실 리포트 허브 -->
+  <url>
+    <loc>https://lottes.co.kr/jamsil-market-report.html</loc>
+    <lastmod>2026-03-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+  </url>
+
+  <!-- 강남 오피스 리포트 허브 -->
+  <url>
+    <loc>https://lottes.co.kr/gangnam-office-report.html</loc>
+    <lastmod>2026-03-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
   </url>
 
   <!-- 인사이트 -->

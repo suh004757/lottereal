@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function initializeLanding() {
-  const reports = await listPublishedReports({ limit: 20 });
+  const reports = await listPublishedReports({ limit: 50 });
   const relatedReports = getRelatedReports(reports, config);
   const featuredReport = relatedReports[0] || await getLatestReport();
 
