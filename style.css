@@ -339,8 +339,6 @@ a:focus {
   transition-duration: 500ms;
   text-decoration: none;
   outline: none;
-  font-size: 12px;
-  font-weight: 400;
 }
 
 #preloader {
@@ -3913,3 +3911,122 @@ h1 {
 }
 
    
+
+/* ========================================
+   Mobile UX Improvements
+   ======================================== */
+
+/* Footer: stack on mobile */
+@media (max-width: 768px) {
+  .lr-footer__content {
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .lr-footer__links {
+    max-width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  /* Hero card: hide on small screens to save space */
+  .lr-hero__card {
+    display: none;
+  }
+
+  /* Section head: stack on mobile */
+  .lr-section__head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  /* Home intro card mobile */
+  .lr-home-intro__card {
+    padding: 20px 16px;
+  }
+
+  .lr-home-intro__card h2 {
+    font-size: 22px;
+    line-height: 1.35;
+  }
+
+  .lr-home-intro__card .lr-lead {
+    font-size: 16px;
+  }
+
+  /* Section padding consistency */
+  .lr-section {
+    padding: 48px 0;
+  }
+
+  .lr-section--report-hubs {
+    padding-top: 40px;
+  }
+}
+
+/* Hamburger icon: ☰ → ✕ animation via aria-expanded */
+@media (max-width: 768px) {
+  .lr-hamburger {
+    font-size: 0 !important;
+    position: relative;
+  }
+
+  .lr-hamburger::after {
+    content: '☰';
+    font-size: 1.5rem;
+    transition: content 0.2s ease;
+    display: block;
+    line-height: 1;
+  }
+
+  .lr-hamburger[aria-expanded="true"]::after {
+    content: '✕';
+  }
+
+  /* Mobile nav: smooth slide-down animation */
+  .lr-hamburger + .lr-nav {
+    display: flex !important;
+    flex-direction: column;
+    align-items: stretch;
+    position: absolute;
+    top: 56px;
+    left: 0;
+    right: 0;
+    background: #fff;
+    padding: 0 1rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    z-index: 100;
+    gap: 0;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.32s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, padding 0.32s ease;
+  }
+
+  .lr-hamburger + .lr-nav.is-open {
+    max-height: 480px;
+    opacity: 1;
+    padding: 0.75rem 1rem 1rem;
+  }
+
+  .lr-nav a {
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  }
+
+  .lr-nav a:last-child {
+    border-bottom: none;
+  }
+
+  .lr-nav-cta {
+    margin-left: 0;
+    margin-top: 8px;
+    text-align: center;
+    justify-content: center;
+  }
+}
