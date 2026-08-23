@@ -7,21 +7,24 @@
 const env = typeof import.meta !== 'undefined' && import.meta.env
   ? import.meta.env
   : (typeof process !== 'undefined' ? process.env : {});
+const runtimeConfig = typeof window !== 'undefined' && window.LOTTEREAL_CONFIG
+  ? window.LOTTEREAL_CONFIG
+  : {};
 
 // 애플리케이션 설정 객체
 export const APP_CONFIG = {
   // 백엔드 프로바이더 ('supabase', 'api', 'mock')
-  BACKEND_PROVIDER: (env?.VITE_BACKEND_PROVIDER || env?.BACKEND_PROVIDER || 'supabase').toLowerCase(),
+  BACKEND_PROVIDER: (runtimeConfig.BACKEND_PROVIDER || env?.VITE_BACKEND_PROVIDER || env?.BACKEND_PROVIDER || 'supabase').toLowerCase(),
   // API 기본 URL
-  API_BASE_URL: env?.VITE_API_URL || env?.API_BASE_URL || '',
+  API_BASE_URL: runtimeConfig.API_BASE_URL || env?.VITE_API_URL || env?.API_BASE_URL || '',
   // Supabase URL
-  SUPABASE_URL: env?.VITE_SUPABASE_URL || env?.SUPABASE_URL || 'https://itcztvceelfvppjwhmvl.supabase.co',
+  SUPABASE_URL: runtimeConfig.SUPABASE_URL || env?.VITE_SUPABASE_URL || env?.SUPABASE_URL || 'https://itcztvceelfvppjwhmvl.supabase.co',
   // Supabase 공개 키
-  SUPABASE_KEY: env?.VITE_SUPABASE_KEY || env?.SUPABASE_KEY || 'sb_publishable_N7z_92ke5pevs3U2TdhJLg_u1GtY7Ek',
+  SUPABASE_KEY: runtimeConfig.SUPABASE_KEY || env?.VITE_SUPABASE_KEY || env?.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml0Y3p0dmNlZWxmdnBwandobXZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3NTcwNzUsImV4cCI6MjA4MTMzMzA3NX0.CcsX1586tEaEr8eJGjNABPSphFd9xaJW85JZaaSx4jk',
   // 관리자 세션 타임아웃 (분)
-  ADMIN_SESSION_TIMEOUT_MINUTES: Number(env?.VITE_ADMIN_SESSION_TIMEOUT || env?.ADMIN_SESSION_TIMEOUT || 30),
+  ADMIN_SESSION_TIMEOUT_MINUTES: Number(runtimeConfig.ADMIN_SESSION_TIMEOUT || env?.VITE_ADMIN_SESSION_TIMEOUT || env?.ADMIN_SESSION_TIMEOUT || 30),
   // 관리자 IP 화이트리스트
-  ADMIN_IP_WHITELIST: parseList(env?.VITE_ADMIN_IP_WHITELIST || env?.ADMIN_IP_WHITELIST || '')
+  ADMIN_IP_WHITELIST: parseList(runtimeConfig.ADMIN_IP_WHITELIST || env?.VITE_ADMIN_IP_WHITELIST || env?.ADMIN_IP_WHITELIST || '')
 };
 
 /**

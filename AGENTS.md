@@ -1,0 +1,26 @@
+# 롯데부동산 운영 규칙
+
+## 목적
+- 이 저장소는 `롯데부동산` 사이트 개발·유지보수 및 국내 부동산 시장 인사이트 발행을 위한 프로젝트다.
+- 투자봇에서 배운 thesis-first / evidence-first 방식을 국내 부동산에 적용하되, 주식 IOS Kill Condition과 혼동하지 않는다.
+
+## 운영 원칙
+1. 공개·공신력 source 우선: 국토교통부, 한국부동산원, 한국은행, 서울열린데이터광장, 금융위/금감원, 지자체/법원/등기·공시 자료를 우선한다.
+2. 가격/거래량/전세/금리/정책/공급을 분리해서 보고, 단일 기사나 커뮤니티 글만으로 결론 내리지 않는다.
+3. 모든 글은 정보 제공 목적이며 매수·매도 권유, 수익 보장, 특정 매물 투자 권유로 쓰지 않는다.
+4. 사실, 추정, 해석을 분리하고, 데이터 기준일과 출처 URL을 `evidence_json`에 남긴다.
+5. Supabase `secret`/service급 key는 서버-side 자동화에서만 사용한다. 브라우저에는 public publishable/anon key만 둔다.
+6. Legal Bot 자문은 법령/계약/중개/개인정보/광고규정처럼 법적 판단이 필요한 경우에만 요청한다. Legal Bot credential/API/MCP는 legalbot profile에만 유지하며 이 repo/default profile로 복사하지 않는다.
+7. 관리자/문의/개인정보 관련 변경은 최소권한·비밀값 비노출·public deployment leakage 점검 후 진행한다.
+
+## 매일 발행 글 형식
+- 제목: 날짜 + 핵심 관찰 1개
+- 본문: 700~1200자 권장
+- 필수 섹션: 오늘의 관찰, Thesis Tree 영향, 확인할 데이터, 면책 고지
+- 필수 evidence: 최소 2개 이상. 가능하면 공식/공공 source 1개 이상.
+
+## 유지보수 체크
+- `python3 scripts/maintenance_check.py` 실행
+- JS 변경 시 `node --check`로 문법 확인
+- Supabase table reachability 확인
+- `.env`, `.env.local`, token/key 원문은 출력·커밋 금지
