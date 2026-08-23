@@ -220,6 +220,13 @@ function bindForm(listing) {
     };
     try {
       await createInquiry(payload);
+      if (typeof window.gtag === 'function') {
+        window.gtag('event', 'contact_submit', {
+          page_path: window.location.pathname,
+          listing_id: payload.listingId || '',
+          listing_title: payload.listingTitle || ''
+        });
+      }
       alert('문의가 접수되었습니다. 빠르게 연락드리겠습니다.');
       formEl.reset();
     } catch (err) {
