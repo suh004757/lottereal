@@ -219,7 +219,7 @@ function renderReportCards(container, reports, emptyMessage) {
 
 function getReportLabel(report) {
   const type = String(report?.metadata?.content_type || '').toLowerCase();
-  if (type.includes('legal')) return '법령 업데이트';
+  if (type.includes('legal')) return '계약 체크리스트';
   if (type.includes('policy')) return '정책 업데이트';
   return '시장 리포트';
 }
@@ -271,8 +271,8 @@ window.openEvidence = function openEvidence() {
   if (!content || !modal) return;
 
   content.innerHTML = `
-    <h4 style="margin-bottom: 1.5rem; color: #111827;">데이터 출처</h4>
-    <div>${sourcesHtml || '<p style="color: #6b7280;">출처 정보가 없습니다.</p>'}</div>
+    <h4 style="margin-bottom: 1.5rem; color: #111827;">자료 출처</h4>
+    <div>${sourcesHtml || '<p style="color: #6b7280;">자료 출처가 없습니다.</p>'}</div>
   `;
 
   modal.style.display = 'flex';
