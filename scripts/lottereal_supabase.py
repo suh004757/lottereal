@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Supabase helper for 롯데부동산 market reports.
+"""Supabase helper for 롯데부동산 site content.
 
 Reads secrets from /opt/data/.env by default. Does not print secret values.
 """
@@ -11,6 +11,7 @@ import os
 import sys
 from pathlib import Path
 from urllib.error import HTTPError
+from urllib.parse import quote
 from urllib.request import Request, urlopen
 
 ENV_PATH = Path(os.environ.get("LOTTEREAL_ENV", "/opt/data/.env"))
@@ -80,6 +81,32 @@ def upsert_report(report: dict, env: dict[str, str]):
     return status, data
 
 
+
+def upsert_feed(feed: dict, env: dict[str, str]):
+    required = ["source", "title", "url"]
+    missing = [key for key in required if not feed.get(key)]
+    if missing:
+        raise ValueError(f"missing required feed fields: {', '.join(missing)}")
+    payload = {
+        "source": feed["source"],
+        "title": feed["title"],
+        "url": feed["url"],
+        "summary": feed.get("summary", ""),
+        "published_at": feed.get("published_at"),
+        "fetched_at": feed.get("fetched_at"),
+    }
+    query_url = quote(feed["url"], safe="")
+    status, existing = supabase_request(
+        "GET",
+        "external_feeds",
+        env,
+        query=f"?select=id&url=eq.{query_url}&limit=1",
+    )
+    if existing:
+        feed_id = quote(existing[0]["id"], safe="")
+        return supabase_request("PATCH", "external_feeds", env, payload, query=f"?id=eq.{feed_id}")
+    return supabase_request("POST", "external_feeds", env, payload)
+
 def health(env: dict[str, str]) -> dict[str, dict]:
     out: dict[str, dict] = {}
     for table in ["market_reports", "property_listings", "inquiries", "external_feeds"]:
@@ -96,6 +123,8 @@ def main() -> int:
     sub = parser.add_subparsers(dest="cmd", required=True)
     upsert = sub.add_parser("upsert-report")
     upsert.add_argument("json_path", type=Path)
+    feed_upsert = sub.add_parser("upsert-feed")
+    feed_upsert.add_argument("json_path", type=Path)
     sub.add_parser("health")
     args = parser.parse_args()
     env = load_env()
@@ -107,6 +136,12 @@ def main() -> int:
         status, data = upsert_report(report, env)
         rows = len(data or []) if isinstance(data, list) else int(bool(data))
         print(json.dumps({"ok": True, "status": status, "rows": rows, "slug": report.get("slug")}, ensure_ascii=False))
+        return 0
+    if args.cmd == "upsert-feed":
+        feed = json.loads(args.json_path.read_text(encoding="utf-8"))
+        status, data = upsert_feed(feed, env)
+        rows = len(data or []) if isinstance(data, list) else int(bool(data))
+        print(json.dumps({"ok": True, "status": status, "rows": rows, "url": feed.get("url")}, ensure_ascii=False))
         return 0
     return 2
 
