@@ -75,6 +75,7 @@
       <button class="lr-hamburger" aria-label="메뉴" aria-expanded="false">☰</button>
       <nav class="lr-nav">
         <a href="#hero">홈</a>
+        <a href="#market-report">시장·정책</a>
         <a href="#listings">추천매물</a>
         <a href="listings.html">매물리스트</a>
         <a href="#services">진행</a>
@@ -113,27 +114,34 @@
 
       <div class="lr-container lr-hero__content">
         <div>
-          <p class="lr-kicker">송파 · 강남 부동산</p>
-          <h1>원하는 매물, 조건에 맞게 바로 제안합니다</h1>
-          <p class="lr-lead">40년 지역 경험과 네트워크로 아파트·상가·사무실을 빠르게 연결해드립니다.</p>
-          <div class="lr-actions">
-            <a class="lr-btn lr-btn--primary" href="tel:050714025055">지금 상담하기</a>
-            <a class="lr-btn lr-btn--ghost" href="listings.html">매물 보기</a>
+          <p class="lr-kicker">Songpa · Gangnam Local Brokerage</p>
+          <h1>조건을 말하면, 현장에서 맞는 매물만 추려드립니다</h1>
+          <p class="lr-lead">송파·잠실·강남 생활권을 오래 본 중개사가 주거·상가·사무실 조건을 정리하고, 방문 전 비교하기 쉬운 후보군으로 제안합니다.</p>
+          <div class="lr-actions lr-hero-actions">
+            <a class="lr-btn lr-btn--primary" href="tel:050714025055">전화로 바로 상담</a>
+            <a class="lr-btn lr-btn--ghost" href="listings.html">매물 둘러보기</a>
+            <a class="lr-btn lr-btn--text" href="#market-report">시장 리포트 확인</a>
+          </div>
+          <div class="lr-proof-strip" aria-label="롯데부동산 주요 강점">
+            <span><strong>40년+</strong> 지역 경험</span>
+            <span><strong>송파·잠실</strong> 생활권 집중</span>
+            <span><strong>주거·상업</strong> 동시 상담</span>
           </div>
           <div class="lr-meta">
             <span>대표번호 0507-1402-5055</span>
+            <span>방문 상담: 서울 송파구 백제고분로27길 93-12 1층</span>
           </div>
         </div>
-        <div class="lr-hero__card">
-          <p class="lr-kicker">주요 매물 종류</p>
+        <aside class="lr-hero__card lr-brief-card" aria-label="상담 전 확인할 내용">
+          <p class="lr-kicker">방문 전 정리해드리는 것</p>
+          <h2>매물 후보를 보기 쉽게 압축합니다</h2>
           <ul>
-            <li>잠실·석촌 아파트</li>
-            <li>사무실 · 상가</li>
-            <li>오피스텔 · 고급 주거</li>
-            <li>법인/외국인 임대 컨설팅</li>
-            <li>건물 관리 · 임대 운영</li>
+            <li><strong>지역</strong><span>잠실·삼전·석촌·강남권 동선</span></li>
+            <li><strong>목적</strong><span>실거주, 사무실, 상가, 법인 임대</span></li>
+            <li><strong>비교</strong><span>가격·관리비·권리관계 체크포인트</span></li>
+            <li><strong>계약</strong><span>중개 절차와 필요 서류 안내</span></li>
           </ul>
-        </div>
+        </aside>
       </div>
     </section>
 
@@ -148,13 +156,31 @@
       </div>
     </section>
 
+    <section class="lr-section lr-stats-snapshot" id="official-stats">
+      <div class="lr-container">
+        <div class="lr-stats-card">
+          <div class="lr-stats-card__intro">
+            <p class="lr-kicker">공식 지표 요약</p>
+            <h2>한국부동산원 발표 기준 최신 아파트 시장 흐름</h2>
+            <p class="lr-lead">2026년 8월 17일 주간 발표 기준입니다. 상담 때 체감 분위기만 보지 않고, 공신력 있는 발표 자료도 함께 확인합니다.</p>
+          </div>
+          <div class="lr-stats-grid" aria-label="한국부동산원 주간 아파트 매매가격지수">
+            <div class="lr-stat-pill"><span>서울</span><strong>101.51</strong><small>매매가격지수</small></div>
+            <div class="lr-stat-pill"><span>강남구</span><strong>100.28</strong><small>동남권 세부</small></div>
+            <div class="lr-stat-pill"><span>송파구</span><strong>101.19</strong><small>롯데부동산 핵심권역</small></div>
+          </div>
+          <p class="lr-source-note">출처: 한국부동산원 부동산통계정보, 기준일 2026-08-17. 아래 숫자는 지역 흐름을 보는 참고 지표이며, 개별 단지·매물 가격과는 다를 수 있습니다.</p>
+        </div>
+      </div>
+    </section>
+
     <section class="lr-section" id="market-report" data-report-section>
       <div class="lr-container">
         <div class="lr-section__head">
           <div>
-            <p class="lr-kicker">시장 리포트</p>
-            <h2>서울 부동산 트렌드 미리보기</h2>
-            <p class="lr-lead">AI가 분석한 최신 시장 동향을 한눈에 확인하세요.</p>
+            <p class="lr-kicker">시장 · 법령 업데이트</p>
+            <h2>거래 전에 알아야 할 시장 흐름과 제도 변화</h2>
+            <p class="lr-lead">가격·거래량 리포트에 더해 임대차·세금·대출처럼 고객 준비에 도움이 되는 정책 변화를 쉬운 언어로 정리합니다.</p>
           </div>
           <a class="lr-link" href="report.html" data-report-link>전체 리포트 보기</a>
         </div>
@@ -167,7 +193,7 @@
         </div>
         <div class="lr-disclaimer" style="margin-top:1.5rem;">
           <strong>중요 고지</strong><br>
-          리포트는 공개 데이터 기반 참고자료이며 투자 조언이 아닙니다.
+          시장·정책 글은 공신력 있는 공개 자료를 쉽게 풀어쓴 참고자료입니다. 실제 계약 전에는 매물별 조건과 서류를 다시 확인해야 합니다.
         </div>
       </div>
     </section>
@@ -213,6 +239,34 @@
               </div>
             </div>
           </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="lr-section lr-legal-updates" id="legal-updates">
+      <div class="lr-container">
+        <div class="lr-section__head lr-section__head--stacked">
+          <div>
+            <p class="lr-kicker">Policy Watch</p>
+            <h2>임대차·세금·대출 정책을 계약 체크리스트로 정리</h2>
+            <p class="lr-lead">별도 상단 메뉴로 튀어나오지 않게 시장 리포트 흐름 안에 묶고, 고객에게 도움이 되는 확인 포인트 중심으로만 발행합니다.</p>
+          </div>
+        </div>
+        <div class="lr-legal-layout">
+          <article class="lr-legal-feature">
+            <div class="lr-legal-feature__label">계약 체크 · 주택임대차보호법</div>
+            <h3>전입신고·주택 인도 후 대항력, 계약 전 체크포인트로 쉽게 보기</h3>
+            <p>주택임대차보호법의 기본 내용을 바탕으로, 임차인이 계약 후 챙기면 좋은 절차를 고객용 체크리스트로 정리했습니다. 롯데부동산의 상담 품질을 보여주는 방향으로, 실제 준비에 도움이 되는 표현만 남겼습니다.</p>
+            <div class="lr-actions">
+              <a class="lr-btn lr-btn--primary" href="report.html?slug=2026-08-23-lease-opposability-checklist">계약 체크리스트 보기</a>
+              <a class="lr-btn lr-btn--ghost" href="privacy.html">개인정보 처리방침</a>
+            </div>
+          </article>
+          <div class="lr-legal-checklist" aria-label="법령 업데이트 운영 기준">
+            <div><strong>01</strong><span>시장 리포트 안에 자연스럽게 노출</span></div>
+            <div><strong>02</strong><span>고객에게 도움 되는 준비물·절차 중심</span></div>
+            <div><strong>03</strong><span>실무 준비에 도움 되는 표현만 사용</span></div>
+          </div>
         </div>
       </div>
     </section>

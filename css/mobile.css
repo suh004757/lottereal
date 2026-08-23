@@ -821,3 +821,100 @@
     margin-right: 20px;
   }
 }
+
+
+/* === LotteReal Premium UX Refresh mobile additions — 2026-08-23 === */
+@media (max-width: 768px) {
+  .lr-hamburger + .lr-nav.is-open {
+    max-height: 680px;
+  }
+
+  .lr-proof-strip {
+    display: grid;
+    gap: 8px;
+    margin: 22px 0 10px;
+  }
+
+  .lr-proof-strip span {
+    display: flex;
+    justify-content: space-between;
+    padding: 11px 14px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid rgba(201, 146, 42, 0.18);
+    color: #334155;
+    font-size: 13px;
+  }
+
+  .lr-proof-strip strong {
+    color: var(--lr-mobile-accent);
+  }
+
+  .lr-btn--text {
+    width: 100% !important;
+    color: var(--lr-mobile-ink) !important;
+    background: transparent !important;
+    border: 1px dashed rgba(15, 27, 45, 0.2) !important;
+  }
+
+  .lr-brief-card h2 {
+    font-size: 22px !important;
+    color: var(--lr-mobile-ink) !important;
+  }
+
+  .lr-brief-card ul li {
+    display: grid !important;
+    grid-template-columns: 54px 1fr;
+    gap: 10px;
+    align-items: start;
+  }
+
+  .lr-brief-card ul li span {
+    color: #4b5563;
+    line-height: 1.55;
+  }
+
+  .lr-stats-snapshot {
+    padding: 42px 0 18px !important;
+  }
+
+  .lr-stats-card,
+  .lr-legal-feature,
+  .lr-legal-checklist {
+    padding: 22px !important;
+    border-radius: 22px !important;
+  }
+
+  .lr-stats-card,
+  .lr-stats-grid,
+  .lr-legal-layout {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .lr-stat-pill {
+    min-height: 112px;
+    padding: 16px;
+  }
+
+  .lr-legal-updates {
+    background: #101827 !important;
+  }
+
+  .lr-legal-updates h2,
+  .lr-legal-updates h3,
+  .lr-legal-updates .lr-lead {
+    color: #fff !important;
+  }
+
+  .lr-legal-feature p,
+  .lr-legal-checklist span {
+    color: rgba(255, 255, 255, 0.78) !important;
+  }
+
+  .lr-legal-checklist div {
+    grid-template-columns: 1fr !important;
+    align-items: start;
+  }
+}
