@@ -133,4 +133,12 @@
     <priority>0.30</priority>
   </url>
 
+  <!-- English Seoul property guide -->
+  <url>
+    <loc>https://lottes.co.kr/seoul-property-guide.html</loc>
+    <lastmod>2026-08-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.78</priority>
+  </url>
+
 </urlset>

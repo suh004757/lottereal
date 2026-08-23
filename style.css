@@ -4322,3 +4322,19 @@ h1 {
     border-radius: 18px;
   }
 }
+
+.lr-guide-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.lr-guide-grid .lr-card__body {
+  min-height: 100%;
+}
+
+@media (max-width: 900px) {
+  .lr-guide-grid {
+    grid-template-columns: 1fr;
+  }
+}
