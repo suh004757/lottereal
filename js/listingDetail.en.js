@@ -222,6 +222,14 @@ function bindForm(listing) {
     };
     try {
       await createInquiry(payload);
+      if (typeof window.gtag === 'function') {
+        window.gtag('event', 'contact_submit', {
+          page_path: window.location.pathname,
+          listing_id: payload.listingId || '',
+          listing_title: payload.listingTitle || '',
+          language: 'en'
+        });
+      }
       alert('Your inquiry has been submitted. We will contact you shortly.');
       formEl.reset();
     } catch (err) {
