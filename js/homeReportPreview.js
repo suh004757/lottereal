@@ -18,7 +18,7 @@ if (section) {
         errorTitle: 'Failed to load reports.',
         errorSummary: 'Please try again later.',
         published: 'Published',
-        legal: 'Legal Update',
+        legal: 'Checklist',
         market: 'Market Report',
         views: 'views',
         cta: 'View Details'
@@ -30,7 +30,7 @@ if (section) {
         errorTitle: '리포트를 불러오지 못했습니다.',
         errorSummary: '잠시 후 다시 시도해 주세요.',
         published: '발행됨',
-        legal: '법령 업데이트',
+        legal: '계약 체크리스트',
         market: '시장 리포트',
         views: '조회',
         cta: '상세보기'

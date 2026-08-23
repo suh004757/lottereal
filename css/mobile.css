@@ -918,3 +918,11 @@
     align-items: start;
   }
 }
+
+
+/* Mobile action bar supersedes the old single floating phone pill. */
+@media (max-width: 768px) {
+  .lr-fab {
+    display: none !important;
+  }
+}

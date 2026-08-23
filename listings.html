@@ -47,8 +47,9 @@
       <button class="lr-hamburger" aria-label="메뉴" aria-expanded="false">☰</button>
       <nav class="lr-nav">
         <a href="index.html#hero">홈</a>
+        <a href="index.html#market-report">시장·정책</a>
         <a href="index.html#listings">추천매물</a>
-        <a href="listings.html">매물리스트</a>
+        <a href="listings.html" aria-current="page">매물리스트</a>
         <a href="contact.html">문의/방문</a>
         <a href="EN.html">ENGLISH</a>
       </nav>
@@ -60,22 +61,42 @@
       <div class="lr-container lr-hero__content">
         <div>
           <p class="lr-kicker">매물 리스트</p>
-          <h1>원하는 매물을 빠르게 찾아보세요</h1>
-          <p class="lr-lead">지역, 유형을 선택해 원하는 매물을 바로 찾아보세요.</p>
+          <h1>가격·위치·입주일을 한눈에 비교하세요</h1>
+          <p class="lr-lead">사진보다 먼저 확인해야 할 보증금, 월세, 위치, 평형, 입주 가능 여부를 보기 쉽게 정리했습니다. 원하는 조건이 없으면 바로 전화로 찾아드립니다.</p>
+          <div class="lr-actions lr-hero-actions">
+            <a class="lr-btn lr-btn--primary" href="tel:050714025055">전화로 조건 말하기</a>
+            <a class="lr-btn lr-btn--ghost" href="contact.html">방문 상담 안내</a>
+          </div>
         </div>
         <form class="lr-hero__card" data-filter-form>
           <p class="lr-kicker">빠른 검색</p>
-          <input class="lr-input" name="keyword" type="text" placeholder="지번, 지칭, 역세권 검색" />
-          <select class="lr-input" name="type">
+          <label class="lr-field-label" for="listing-keyword">지역·역·매물명</label>
+          <input id="listing-keyword" class="lr-input" name="keyword" type="text" placeholder="예: 삼전동, 석촌고분역, 쓰리룸" />
+          <label class="lr-field-label" for="listing-type">매물 유형</label>
+          <select id="listing-type" class="lr-input" name="type">
             <option value="">전체 유형</option>
             <option value="아파트">아파트</option>
             <option value="오피스텔">오피스텔</option>
             <option value="사무실">사무실</option>
             <option value="상가">상가/점포</option>
           </select>
-          <input class="lr-input" name="city" type="text" placeholder="도시 (예: 서울)" />
-          <input class="lr-input" name="district" type="text" placeholder="구/군 (예: 송파구)" />
-          <button class="lr-btn lr-btn--primary" type="submit">검색</button>
+          <div class="lr-filter-row">
+            <div>
+              <label class="lr-field-label" for="listing-city">도시</label>
+              <input id="listing-city" class="lr-input" name="city" type="text" placeholder="서울" value="서울" />
+            </div>
+            <div>
+              <label class="lr-field-label" for="listing-district">구/군</label>
+              <input id="listing-district" class="lr-input" name="district" type="text" placeholder="송파구" value="송파구" />
+            </div>
+          </div>
+          <button class="lr-btn lr-btn--primary lr-btn--block" type="submit">조건에 맞게 보기</button>
+          <div class="lr-quick-filters" aria-label="빠른 조건 선택">
+            <button type="button" data-quick-keyword="삼전동">삼전동</button>
+            <button type="button" data-quick-keyword="석촌동">석촌동</button>
+            <button type="button" data-quick-keyword="석촌고분역">석촌고분역</button>
+            <button type="button" data-quick-type="월세">월세</button>
+          </div>
         </form>
       </div>
     </section>
@@ -84,9 +105,9 @@
       <div class="lr-container">
         <div class="lr-section__head">
           <div>
-            <p class="lr-kicker">Search Guide</p>
-            <h2>송파구 매물 리스트를 빠르게 좁히는 방법</h2>
-            <p class="lr-lead">잠실 아파트 전세, 삼전동 오피스텔, 석촌동 상가, 송파 사무실 임대처럼 찾는 지역과 유형을 함께 입력하면 실사용 목적에 맞는 매물을 더 빠르게 확인할 수 있습니다.</p>
+            <p class="lr-kicker">보기 쉬운 매물 비교</p>
+            <h2>먼저 가격·위치·입주 가능 여부를 확인하세요</h2>
+            <p class="lr-lead">매물 카드에서 핵심 조건을 먼저 보여드립니다. 더 자세한 사진, 동·호수, 방문 가능 시간은 전화 상담으로 빠르게 안내해드립니다.</p>
           </div>
         </div>
       </div>
@@ -117,11 +138,12 @@
     </p>
   </footer>
 
-    <!-- Floating phone button (mobile only) -->
-  <a class="lr-fab" href="tel:050714025055" aria-label="전화 상담">
-    <span class="lr-fab__icon">📞</span>
-    <span>지금 전화</span>
-  </a>
+  <!-- Mobile quick action bar -->
+  <div class="lr-mobile-actionbar" aria-label="빠른 상담 메뉴">
+    <a href="tel:050714025055"><span>📞</span><strong>전화상담</strong></a>
+    <a href="index.html#listings"><span>🏠</span><strong>추천매물</strong></a>
+    <a href="contact.html"><span>📍</span><strong>오시는 길</strong></a>
+  </div>
 
   <script src="js/jquery/jquery-3.7.1.min.js"></script>
   <script src="js/popper.min.js"></script>
