@@ -12,9 +12,11 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
+from datetime import date, timedelta
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 from urllib.parse import quote
 
 try:
@@ -161,13 +163,27 @@ def gsc_sites(_: argparse.Namespace) -> dict[str, Any]:
     return {'ok': True, 'sites': data.get('siteEntry', [])}
 
 
+def gsc_date(value: str) -> str:
+    """Convert GA-style relative dates to the YYYY-MM-DD format GSC requires."""
+    today = date.today()
+    if value == 'today':
+        return today.isoformat()
+    if value == 'yesterday':
+        return (today - timedelta(days=1)).isoformat()
+    match = re.fullmatch(r'(\d+)daysAgo', value)
+    if match:
+        return (today - timedelta(days=int(match.group(1)))).isoformat()
+    return value
+
+
 def gsc_query(args: argparse.Namespace) -> dict[str, Any]:
+    load_env_files()
     site_url = args.site_url or os.environ.get('LOTTEREAL_GSC_SITE_URL')
     if not site_url:
         return {'ok': False, 'error': 'missing_site_url', 'message': 'Pass --site-url or set LOTTEREAL_GSC_SITE_URL'}
     body = {
-        'startDate': args.start_date,
-        'endDate': args.end_date,
+        'startDate': gsc_date(args.start_date),
+        'endDate': gsc_date(args.end_date),
         'dimensions': args.dimensions.split(','),
         'rowLimit': args.limit,
         'startRow': 0,
