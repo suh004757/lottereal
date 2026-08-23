@@ -3666,14 +3666,19 @@ h1 {
 }
 
 .lr-hero h1 {
-  max-width: 700px;
+  max-width: 760px;
   font-family: 'Noto Sans KR', 'Playfair Display', serif;
-  font-size: clamp(2.35rem, 4.15vw, 4.45rem);
+  font-size: clamp(2.55rem, 3.85vw, 4.2rem);
   font-weight: 600;
   line-height: 1.14;
-  letter-spacing: -0.042em;
+  letter-spacing: -0.038em;
   color: #111827;
   text-wrap: balance;
+}
+
+.lr-hero-title span {
+  display: block;
+  white-space: nowrap;
 }
 
 .lr-hero .lr-lead {

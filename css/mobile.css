@@ -223,6 +223,11 @@
     margin-bottom: 18px;
   }
 
+  .lr-hero-title span {
+    display: inline;
+    white-space: normal;
+  }
+
   .lr-hero .lr-lead {
     font-size: 15px;
     line-height: 1.75;
