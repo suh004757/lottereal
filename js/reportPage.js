@@ -203,7 +203,7 @@ function renderReportCards(container, reports, emptyMessage) {
 
   container.innerHTML = reports.map((report) => `
     <article class="lr-report-archive__item">
-      <p class="lr-badge">Published</p>
+      <p class="lr-badge">${getReportLabel(report)}</p>
       <h3>${escapeHtml(report.title || '')}</h3>
       <p>${escapeHtml(report.summary || '')}</p>
       <div class="lr-card__meta">
@@ -215,6 +215,13 @@ function renderReportCards(container, reports, emptyMessage) {
       </div>
     </article>
   `).join('');
+}
+
+function getReportLabel(report) {
+  const type = String(report?.metadata?.content_type || '').toLowerCase();
+  if (type.includes('legal')) return '법령 업데이트';
+  if (type.includes('policy')) return '정책 업데이트';
+  return '시장 리포트';
 }
 
 function scoreRelatedReport(candidate, reference) {
