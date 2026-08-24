@@ -210,6 +210,17 @@ function getRelatedReports(reports, landingConfig) {
 
 function scoreReport(report, landingConfig) {
   let score = 0;
+  const requiredContentTypes = landingConfig.reportMatch?.requiredContentTypes || [];
+  const reportType = String(report.metadata?.content_type || '').toLowerCase();
+
+  if (requiredContentTypes.length && !requiredContentTypes.includes(reportType)) {
+    return 0;
+  }
+
+  if (requiredContentTypes.includes(reportType)) {
+    score += 20;
+  }
+
   const haystack = [
     report.title,
     report.summary,
