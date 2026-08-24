@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 from pathlib import Path
 from urllib.error import HTTPError
@@ -57,11 +58,66 @@ def supabase_request(method: str, table: str, env: dict[str, str], payload=None,
         raise RuntimeError(f"Supabase {method} {table} failed: HTTP {exc.code} {detail}") from exc
 
 
+REQUIRED_REPORT_SECTIONS = (
+    "## 먼저 볼 내용",
+    "## 확인된 흐름",
+    "## 상담 전에 확인할 점",
+    "## 자료와 한계",
+)
+
+AI_STYLE_PHRASES = (
+    "Executive Summary",
+    "결론 및 전략적 시사점",
+    "포지션별 행동 지침",
+    "시나리오 매트릭스",
+    "Let me know",
+    "I hope this helps",
+)
+
+EMOJI_PATTERN = re.compile("[✅⚠️📌📊🏠💡🚀🔍📋📉📈]")
+
+
+def validate_report_copy(report: dict) -> list[str]:
+    """Return public-copy problems that should block a report upsert."""
+    errors: list[str] = []
+    title = str(report.get("title") or "").strip()
+    summary = str(report.get("summary") or "").strip()
+    report_md = str(report.get("report_md") or "")
+    evidence = report.get("evidence_json") or []
+
+    if not title:
+        errors.append("title is required")
+    if not 30 <= len(summary) <= 240:
+        errors.append("summary must be 30-240 characters")
+    for section in REQUIRED_REPORT_SECTIONS:
+        if section not in report_md:
+            errors.append(f"required section missing: {section}")
+    if not isinstance(evidence, list) or len(evidence) < 2:
+        errors.append("at least two sources are required")
+    for source in evidence if isinstance(evidence, list) else []:
+        if not isinstance(source, dict) or not source.get("name") or not source.get("url"):
+            errors.append("each source requires name and url")
+            break
+
+    combined = "\n".join((title, summary, report_md))
+    for phrase in AI_STYLE_PHRASES:
+        if phrase.lower() in combined.lower():
+            errors.append(f"AI-style phrase is not allowed: {phrase}")
+    if "—" in combined:
+        errors.append("em dash is not allowed in public report copy")
+    if EMOJI_PATTERN.search(combined):
+        errors.append("emoji is not allowed in public report copy")
+    return errors
+
+
 def upsert_report(report: dict, env: dict[str, str]):
     required = ["slug", "title", "summary", "report_md"]
     missing = [key for key in required if not report.get(key)]
     if missing:
         raise ValueError(f"missing required report fields: {', '.join(missing)}")
+    copy_errors = validate_report_copy(report)
+    if copy_errors:
+        raise ValueError("report copy validation failed: " + "; ".join(copy_errors))
     payload = {
         "slug": report["slug"],
         "title": report["title"],
