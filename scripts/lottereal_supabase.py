@@ -65,6 +65,13 @@ REQUIRED_REPORT_SECTIONS = (
     "## 자료와 한계",
 )
 
+REQUIRED_DISPUTE_SECTIONS = (
+    "## 법에서 확인할 부분",
+    "## 임대인·임차인이 각각 준비할 증거",
+    "## 대응 순서",
+    "## 결론이 달라지는 예외",
+)
+
 AI_STYLE_PHRASES = (
     "Executive Summary",
     "결론 및 전략적 시사점",
@@ -98,6 +105,25 @@ def validate_report_copy(report: dict) -> list[str]:
         if not isinstance(source, dict) or not source.get("name") or not source.get("url"):
             errors.append("each source requires name and url")
             break
+
+    content_type = str((report.get("metadata") or {}).get("content_type") or "")
+    if content_type == "dispute_case":
+        for section in REQUIRED_DISPUTE_SECTIONS:
+            if section not in report_md:
+                errors.append(f"dispute section missing: {section}")
+        if "법률 자문이 아닙니다" not in report_md:
+            errors.append("dispute case requires a general-information legal disclaimer")
+        official_legal_sources = [
+            source for source in evidence
+            if isinstance(source, dict)
+            and any(domain in str(source.get("url") or "") for domain in ("law.go.kr", "easylaw.go.kr"))
+        ]
+        if not official_legal_sources:
+            errors.append("dispute case requires an official legal source")
+        for source in evidence if isinstance(evidence, list) else []:
+            if not isinstance(source, dict) or not source.get("checkedAt"):
+                errors.append("each dispute source requires checkedAt")
+                break
 
     combined = "\n".join((title, summary, report_md))
     for phrase in AI_STYLE_PHRASES:

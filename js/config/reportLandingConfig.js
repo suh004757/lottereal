@@ -1,4 +1,50 @@
 export const REPORT_LANDING_CONFIG = {
+  disputeCases: {
+    key: 'dispute-cases',
+    path: 'disputes.html',
+    title: '부동산 계약·분쟁 사례 | 곰팡이·누수·보증금 | 롯데부동산',
+    description: '전월세 곰팡이, 누수, 보증금 반환, 계약금과 원상복구처럼 자주 생기는 부동산 분쟁을 법령·판례·공식 조정사례로 쉽게 설명합니다.',
+    heroKicker: '계약 · 분쟁 사례',
+    heroTitle: '계약 전에 읽어두면 좋은 부동산 분쟁 사례',
+    heroBody: '곰팡이·누수·보증금·계약금처럼 실제로 자주 묻는 상황을 골라, 책임이 갈리는 기준과 미리 남겨야 할 자료를 쉬운 말로 정리합니다.',
+    introSections: [
+      {
+        heading: '누가 무조건 책임진다고 먼저 단정하지 않습니다',
+        content: '곰팡이와 누수도 원인, 수선 난이도, 통지 시점, 계약 내용에 따라 결론이 달라집니다. 실제 판례와 공식 조정사례에서 확인되는 판단 기준을 먼저 설명합니다.'
+      },
+      {
+        heading: '분쟁이 커지기 전에 준비할 것을 알려드립니다',
+        content: '사진과 영상, 문자 통지, 수리 견적, 등기와 계약서처럼 사실관계를 확인하는 데 필요한 자료를 상황별로 안내합니다.'
+      }
+    ],
+    focusPoints: [
+      '곰팡이·결로·누수의 원인과 수선 책임',
+      '보증금 반환과 계약 종료 절차',
+      '가계약금·특약·원상복구 분쟁',
+      '사진·문자·견적 등 미리 남길 자료'
+    ],
+    faq: [
+      {
+        question: '사례와 똑같으면 결과도 같나요?',
+        answer: '아닙니다. 같은 곰팡이 문제라도 구조상 하자인지, 환기와 사용 문제인지, 언제 알렸는지에 따라 판단이 달라집니다.'
+      },
+      {
+        question: '이 글이 법률상담을 대신하나요?',
+        answer: '아닙니다. 공개 법령과 사례를 쉽게 정리한 참고자료이며, 금전 청구나 계약 해지는 개별 서류를 확인한 뒤 전문가와 판단해야 합니다.'
+      },
+      {
+        question: '분쟁이 생기면 무엇부터 준비해야 하나요?',
+        answer: '문제 부위의 날짜별 사진과 영상, 임대인 또는 임차인에게 알린 문자, 수리업체의 원인 의견과 견적, 계약서를 먼저 모아두는 편이 좋습니다.'
+      }
+    ],
+    reportMatch: {
+      requiredContentTypes: ['dispute_case'],
+      keywords: ['분쟁', '곰팡이', '누수', '보증금', '계약', '원상복구'],
+      metadataRegion: []
+    },
+    insightSlugs: [],
+    ctaHref: 'contact.html'
+  },
   songpaMarket: {
     key: 'songpa-market-report',
     path: 'songpa-market-report.html',
@@ -169,7 +215,17 @@ function scoreLandingMatch(config, haystack, report) {
   let score = 0;
   const keywords = config.reportMatch?.keywords || [];
   const regions = config.reportMatch?.metadataRegion || [];
+  const requiredContentTypes = config.reportMatch?.requiredContentTypes || [];
+  const reportType = String(report.metadata?.content_type || '').toLowerCase();
   const reportRegion = String(report.metadata?.region || '').toLowerCase();
+
+  if (requiredContentTypes.length && !requiredContentTypes.includes(reportType)) {
+    return 0;
+  }
+
+  if (requiredContentTypes.includes(reportType)) {
+    score += 20;
+  }
 
   keywords.forEach((keyword) => {
     if (haystack.includes(String(keyword).toLowerCase())) {
