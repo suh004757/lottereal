@@ -9,6 +9,8 @@ class AnalyticsCoverageTest(unittest.TestCase):
         missing = []
         for path in sorted(REPO.glob('*.html')):
             text = path.read_text(encoding='utf-8', errors='ignore')
+            if path.name.startswith('naver') and text.startswith('naver-site-verification:'):
+                continue
             required = (
                 'googletagmanager.com/gtag/js',
                 'js/analyticsEvents.js',
