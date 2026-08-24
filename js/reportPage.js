@@ -60,11 +60,14 @@ function renderMetadata() {
   const titleNode = document.getElementById('report-title');
   const summaryNode = document.getElementById('report-summary');
   const updatedNode = document.getElementById('report-updated');
+  const sourceNode = document.getElementById('report-source-summary');
 
   if (titleNode) titleNode.textContent = currentReport.title || '';
   if (summaryNode) summaryNode.textContent = currentReport.summary || '';
   if (updatedNode) updatedNode.textContent = formatDate(currentReport.updated_at);
+  if (sourceNode) sourceNode.textContent = summarizeSources(currentReport);
 
+  renderContextualDisclaimers();
   applySeo();
 }
 
@@ -219,9 +222,36 @@ function renderReportCards(container, reports, emptyMessage) {
 
 function getReportLabel(report) {
   const type = String(report?.metadata?.content_type || '').toLowerCase();
+  if (type === 'dispute_case') return '계약·분쟁 사례';
   if (type.includes('legal')) return '계약 체크리스트';
   if (type.includes('policy')) return '정책 업데이트';
   return '시장 리포트';
+}
+
+function summarizeSources(report) {
+  const type = String(report?.metadata?.content_type || '').toLowerCase();
+  if (type === 'dispute_case') return '법령·판례·공식 조정자료';
+
+  const names = (report?.evidence_json || [])
+    .map((source) => String(source?.name || '').trim())
+    .filter(Boolean)
+    .slice(0, 3);
+  return names.length ? names.join(', ') : '공개 자료';
+}
+
+function renderContextualDisclaimers() {
+  const type = String(currentReport?.metadata?.content_type || '').toLowerCase();
+  if (type !== 'dispute_case') return;
+
+  const primary = document.getElementById('report-disclaimer-primary');
+  const footer = document.getElementById('report-disclaimer-footer');
+
+  if (primary) {
+    primary.innerHTML = '<strong>중요 안내</strong><br>이 글은 공개 법령·판례·조정사례를 쉽게 정리한 일반 정보입니다. 같은 문제라도 계약 내용, 발생 원인, 통지 시점과 증거에 따라 결론이 달라질 수 있으며 개별 사건에 대한 법률 자문이 아닙니다.';
+  }
+  if (footer) {
+    footer.innerHTML = '<strong>법률정보 이용 안내</strong><br>월세 지급 중단, 계약 해지, 손해배상 청구를 자동으로 권하지 않습니다. 중요한 금전·계약 판단 전에는 관련 서류를 갖춰 법률 전문가 또는 주택임대차분쟁조정위원회에 확인하세요.';
+  }
 }
 
 function scoreRelatedReport(candidate, reference) {
