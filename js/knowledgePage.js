@@ -2,7 +2,8 @@ import { listPublishedKnowledgeReports } from './services/reportAdapter.js';
 import {
   buildKnowledgeIndex,
   getOntologySuggestions,
-  searchKnowledge
+  searchKnowledge,
+  selectCommunityPulse
 } from './knowledgeSearch.mjs';
 
 const state = {
@@ -15,6 +16,7 @@ const input = document.getElementById('knowledge-search-input');
 const statusNode = document.getElementById('knowledge-search-status');
 const resultsNode = document.getElementById('knowledge-search-results');
 const suggestionNode = document.getElementById('knowledge-suggestion-list');
+const pulseNode = document.getElementById('knowledge-community-pulse');
 
 document.addEventListener('DOMContentLoaded', initializeKnowledgePage);
 
@@ -26,6 +28,7 @@ async function initializeKnowledgePage() {
   try {
     const reports = await listPublishedKnowledgeReports({ batchSize: 200 });
     state.index = buildKnowledgeIndex(reports);
+    renderCommunityPulse(selectCommunityPulse(state.index));
     state.loading = false;
     setBusy(false);
     setStatus(`현재 공개 자료 ${state.index.documents.length.toLocaleString()}건에서 찾아볼 수 있습니다.`);
@@ -34,6 +37,7 @@ async function initializeKnowledgePage() {
     state.loading = false;
     setBusy(false);
     setStatus('자료를 불러오지 못했습니다. 잠시 뒤 다시 시도해 주세요.', true);
+    renderCommunityPulse([]);
     renderLoadError();
   }
 }
@@ -60,6 +64,35 @@ function bindEvents() {
       result_position: Number(link.dataset.resultPosition || 0)
     });
   });
+
+  pulseNode?.addEventListener('click', (event) => {
+    const link = event.target.closest('a[data-community-pulse]');
+    if (!link) return;
+    sendAnalytics('knowledge_pulse_click', {
+      result_position: Number(link.dataset.resultPosition || 0),
+      result_type: link.dataset.resultType || 'report'
+    });
+  });
+}
+
+function renderCommunityPulse(items) {
+  if (!pulseNode) return;
+  pulseNode.setAttribute('aria-busy', 'false');
+  if (!items.length) {
+    pulseNode.innerHTML = '<p class="lr-community-pulse__empty">최근 관심 흐름을 집계하고 있습니다. 자료 검색은 바로 이용할 수 있습니다.</p>';
+    return;
+  }
+  pulseNode.innerHTML = items.map((item, index) => `
+    <article class="lr-community-pulse__card">
+      <div class="lr-community-pulse__rank" aria-hidden="true">${String(index + 1).padStart(2, '0')}</div>
+      <div>
+        <p>${item.contentType === 'dispute_case' ? '계약·분쟁' : '시장·정책'}</p>
+        <h3>${escapeHtml(item.title)}</h3>
+        <span>${formatDate(item.createdAt)}</span>
+      </div>
+      <a href="report.html?slug=${encodeURIComponent(item.slug)}" data-community-pulse data-result-type="report" data-result-position="${index + 1}">함께 확인하기</a>
+    </article>
+  `).join('');
 }
 
 function runSearch(rawQuery) {

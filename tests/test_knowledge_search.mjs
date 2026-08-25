@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {
   buildKnowledgeIndex,
   searchKnowledge,
-  getOntologySuggestions
+  getOntologySuggestions,
+  selectCommunityPulse
 } from '../js/knowledgeSearch.mjs';
 
 const reports = [
@@ -71,4 +72,38 @@ test('suggestions expose plain Korean example questions', () => {
   const suggestions = getOntologySuggestions();
   assert.ok(suggestions.includes('곰팡이가 생기면 집주인이 고쳐야 하나요?'));
   assert.ok(suggestions.includes('금리와 대출이 집값에 어떤 영향을 주나요?'));
+});
+
+
+test('community pulse shows recent viewed questions instead of stale or zero-view content', () => {
+  const pulseReports = [
+    { ...reports[0], slug: 'recent-three', view_count: 3, created_at: '2026-08-24T00:00:00Z' },
+    { ...reports[1], slug: 'recent-nine', view_count: 9, created_at: '2026-08-23T00:00:00Z' },
+    { ...reports[0], slug: 'recent-zero', view_count: 0, created_at: '2026-08-25T00:00:00Z' },
+    { ...reports[1], slug: 'stale-hundred', view_count: 100, created_at: '2025-12-01T00:00:00Z' }
+  ];
+  const index = buildKnowledgeIndex(pulseReports);
+  const pulse = selectCommunityPulse(index, { now: '2026-08-26T00:00:00Z', maxAgeDays: 120, limit: 3 });
+
+  assert.deepEqual(pulse.map((item) => item.slug), ['recent-nine', 'recent-three']);
+});
+
+
+test('community pulse default window requires two finite whole views and valid publication dates', () => {
+  const pulseReports = [
+    { ...reports[0], slug: 'tie-older', view_count: 2.9, created_at: '2026-08-20T00:00:00Z' },
+    { ...reports[1], slug: 'tie-newer', view_count: 2, created_at: '2026-08-21T00:00:00Z' },
+    { ...reports[0], slug: 'one-view', view_count: 1, created_at: '2026-08-25T00:00:00Z' },
+    { ...reports[0], slug: 'boundary', view_count: 2, created_at: '2026-06-27T00:00:00Z' },
+    { ...reports[0], slug: 'outside', view_count: 99, created_at: '2026-06-26T23:59:59Z' },
+    { ...reports[0], slug: 'future', view_count: 99, created_at: '2026-08-27T00:00:00Z' },
+    { ...reports[0], slug: 'bad-date', view_count: 99, created_at: 'not-a-date' },
+    { ...reports[0], slug: 'infinite', view_count: Infinity, created_at: '2026-08-24T00:00:00Z' }
+  ];
+  const index = buildKnowledgeIndex(pulseReports);
+  const pulse = selectCommunityPulse(index, { now: '2026-08-26T00:00:00Z', limit: 6 });
+
+  assert.deepEqual(pulse.map((item) => item.slug), ['tie-newer', 'tie-older', 'boundary']);
+  assert.equal(index.documents.find((item) => item.slug === 'tie-older').viewCount, 2);
+  assert.equal(index.documents.find((item) => item.slug === 'infinite').viewCount, 0);
 });
