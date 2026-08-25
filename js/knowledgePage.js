@@ -24,7 +24,7 @@ async function initializeKnowledgePage() {
   setBusy(true);
 
   try {
-    const reports = await listPublishedKnowledgeReports({ limit: 1000 });
+    const reports = await listPublishedKnowledgeReports({ batchSize: 200 });
     state.index = buildKnowledgeIndex(reports);
     state.loading = false;
     setBusy(false);
