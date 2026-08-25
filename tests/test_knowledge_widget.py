@@ -46,6 +46,26 @@ class KnowledgeWidgetTest(unittest.TestCase):
         self.assertNotIn('query_text', text)
         self.assertNotIn('raw_query', text)
 
+    def test_widget_offers_guided_inquiry_using_the_existing_secure_pipeline(self):
+        widget = (REPO / 'js/knowledgeWidget.js').read_text(encoding='utf-8')
+        chat = (REPO / 'js/inquiryChat.js').read_text(encoding='utf-8')
+        self.assertIn("from './inquiryChat.js'", widget)
+        self.assertIn('data-widget-mode="knowledge"', widget)
+        self.assertIn('data-widget-mode="inquiry"', widget)
+        self.assertIn('data-inquiry-chat', widget)
+        self.assertIn("from './inquiryMvp.js'", chat)
+        self.assertIn("import('./services/backendAdapter.js')", chat)
+        self.assertIn('buildInquiryPayload', chat)
+        self.assertIn('privacyConsent', chat)
+        self.assertIn("event.submitter?.classList.contains('is-secondary')", chat)
+        self.assertIn('!result?.success', chat)
+        self.assertIn('result.persisted !== true', chat)
+        self.assertNotIn("state.status = error?.message", chat)
+        self.assertLess(chat.index('await createInquiry(payload)'), chat.index("window.gtag('event'"))
+        analytics_call = chat[chat.index("window.gtag('event'"):]
+        self.assertNotIn('payload.phone', analytics_call)
+        self.assertNotIn('payload.message', analytics_call)
+
     def test_widget_styles_support_desktop_drawer_and_mobile_bottom_sheet(self):
         text = (REPO / 'css/knowledge-widget.css').read_text(encoding='utf-8')
         for marker in (

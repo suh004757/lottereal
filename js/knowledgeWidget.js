@@ -1,8 +1,9 @@
 import { listPublishedKnowledgeReports } from './services/reportAdapter.js';
 import { buildKnowledgeIndex, getOntologySuggestions, searchKnowledge } from './knowledgeSearch.mjs';
+import { mountInquiryChat } from './inquiryChat.js';
 
 const WIDGET_STYLESHEET = 'css/knowledge-widget.css';
-const state = { index: null, loading: false, lastFocused: null };
+const state = { index: null, loading: false, lastFocused: null, currentMode: 'knowledge' };
 
 initializeWidget();
 
@@ -16,18 +17,22 @@ function initializeWidget() {
   root.className = 'lr-knowledge-widget';
   root.innerHTML = `
     <button class="lr-knowledge-widget__launcher" type="button" aria-haspopup="dialog" aria-expanded="false">
-      <span aria-hidden="true">⌕</span><strong>자료 찾아보기</strong>
+      <span aria-hidden="true">✦</span><strong>자료 · 문의</strong>
     </button>
     <div class="lr-knowledge-widget__backdrop" hidden></div>
     <section class="lr-knowledge-widget__panel" role="dialog" aria-modal="true" aria-labelledby="lr-knowledge-widget-title" hidden>
       <header>
         <div>
-          <p>롯데부동산 자료검색</p>
-          <h2 id="lr-knowledge-widget-title">궁금한 내용을 찾아보세요</h2>
+          <p>롯데부동산 안내 데스크</p>
+          <h2 id="lr-knowledge-widget-title">자료를 찾거나 문의를 남겨보세요</h2>
         </div>
-        <button class="lr-knowledge-widget__close" type="button" aria-label="자료 찾기 닫기">×</button>
+        <button class="lr-knowledge-widget__close" type="button" aria-label="자료·문의 창 닫기">×</button>
       </header>
-      <div class="lr-knowledge-widget__body">
+      <nav class="lr-knowledge-widget__modes" role="tablist" aria-label="자료 찾기와 문의 접수">
+        <button type="button" role="tab" data-widget-mode="knowledge" aria-selected="true">자료 찾기</button>
+        <button type="button" role="tab" data-widget-mode="inquiry" aria-selected="false">문의 접수</button>
+      </nav>
+      <div class="lr-knowledge-widget__body" data-widget-view="knowledge">
         <form class="lr-knowledge-widget__form" role="search">
           <label for="lr-knowledge-widget-input">질문 입력</label>
           <div>
@@ -40,9 +45,13 @@ function initializeWidget() {
         <p class="lr-knowledge-widget__status" role="status">버튼을 누르면 공개 자료를 불러옵니다.</p>
         <div class="lr-knowledge-widget__results" aria-live="polite"></div>
       </div>
+      <div class="lr-knowledge-widget__body" data-widget-view="inquiry" hidden>
+        <div data-inquiry-chat></div>
+      </div>
       <footer>
         <a href="knowledge.html">전체 자료검색 페이지 열기</a>
-        <span>공개 자료 기반 · 질문 원문 저장 안 함</span>
+        <a href="contact.html#inquiry-options">전체 문의 양식</a>
+        <span>자료 질문은 저장 안 함 · 문의만 안전하게 접수</span>
       </footer>
     </section>
   `;
@@ -57,11 +66,16 @@ function initializeWidget() {
   const status = root.querySelector('.lr-knowledge-widget__status');
   const results = root.querySelector('.lr-knowledge-widget__results');
   const suggestions = root.querySelector('.lr-knowledge-widget__suggestions');
+  const modeButtons = [...root.querySelectorAll('[role="tab"][data-widget-mode]')];
+  const modeViews = [...root.querySelectorAll('[data-widget-view]')];
+  const inquiryChat = root.querySelector('[data-inquiry-chat]');
 
   renderSuggestions(suggestions, input, runSearch);
-  launcher.addEventListener('click', openPanel);
+  mountInquiryChat(inquiryChat);
+  launcher.addEventListener('click', () => openPanel('knowledge'));
   closeButton.addEventListener('click', closePanel);
   backdrop.addEventListener('click', closePanel);
+  modeButtons.forEach((button) => button.addEventListener('click', () => switchMode(button.dataset.widgetMode)));
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     runSearch(input.value);
@@ -83,8 +97,8 @@ function initializeWidget() {
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && !panel.hidden) closePanel();
     if (event.key === 'Tab' && !panel.hidden) {
-      const focusableElements = [...panel.querySelectorAll('a[href], button:not([disabled]), input:not([disabled])')]
-        .filter((element) => !element.hidden);
+      const focusableElements = [...panel.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled])')]
+        .filter((element) => !element.hidden && !element.closest('[hidden]'));
       const first = focusableElements[0];
       const last = focusableElements[focusableElements.length - 1];
       if (event.shiftKey && document.activeElement === first) {
@@ -97,17 +111,39 @@ function initializeWidget() {
     }
   });
   attachMobileAction(openPanel);
+  window.addEventListener('lottereal:open-inquiry', (event) => {
+    inquiryChat.dispatchEvent(new CustomEvent('inquiry-chat-context', { detail: event.detail || {} }));
+    openPanel('inquiry');
+  });
 
-  async function openPanel() {
+  async function openPanel(mode = 'knowledge') {
     state.lastFocused = document.activeElement;
     panel.hidden = false;
     backdrop.hidden = false;
     requestAnimationFrame(() => root.classList.add('is-open'));
     launcher.setAttribute('aria-expanded', 'true');
     document.body.classList.add('knowledge-widget-open');
-    sendAnalytics('knowledge_widget_open', { source_path: window.location.pathname });
-    if (!state.index && !state.loading) await loadIndex(status, results);
-    input.focus();
+    switchMode(mode);
+    sendAnalytics('knowledge_widget_open', { source_path: window.location.pathname, widget_mode: state.currentMode });
+    if (state.currentMode === 'knowledge' && !state.index && !state.loading) await loadIndex(status, results);
+    if (state.currentMode === 'knowledge') input.focus();
+  }
+
+  function switchMode(mode) {
+    state.currentMode = mode === 'inquiry' ? 'inquiry' : 'knowledge';
+    modeButtons.forEach((button) => {
+      const selected = button.dataset.widgetMode === state.currentMode;
+      button.setAttribute('aria-selected', String(selected));
+      button.tabIndex = selected ? 0 : -1;
+    });
+    modeViews.forEach((view) => {
+      view.hidden = view.dataset.widgetView !== state.currentMode;
+    });
+    if (state.currentMode === 'knowledge' && !state.index && !state.loading) loadIndex(status, results);
+    const target = state.currentMode === 'knowledge'
+      ? input
+      : inquiryChat.querySelector('button, input, textarea');
+    window.setTimeout(() => target?.focus(), 0);
   }
 
   function closePanel() {
@@ -208,11 +244,22 @@ function attachMobileAction(openPanel) {
   const actionbar = document.querySelector('.lr-mobile-actionbar');
   if (!actionbar) return;
   actionbar.classList.add('lr-mobile-actionbar--with-knowledge');
+
+  const inquiryLink = actionbar.querySelector('a[href*="contact.html#inquiry-options"]');
+  if (inquiryLink) {
+    inquiryLink.setAttribute('aria-haspopup', 'dialog');
+    inquiryLink.addEventListener('click', (event) => {
+      event.preventDefault();
+      openPanel('inquiry');
+    });
+    return;
+  }
+
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'lr-mobile-actionbar__knowledge';
-  button.innerHTML = '<span aria-hidden="true">⌕</span><strong>자료찾기</strong>';
-  button.addEventListener('click', openPanel);
+  button.innerHTML = '<span aria-hidden="true">✦</span><strong>자료·문의</strong>';
+  button.addEventListener('click', () => openPanel('knowledge'));
   actionbar.appendChild(button);
 }
 

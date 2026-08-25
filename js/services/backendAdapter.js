@@ -322,7 +322,7 @@ async function uploadImageMock(file) {
 
 async function createInquirySupabase(payload) {
   const supabase = getSupabaseClient();
-  if (!supabase) return createInquiryMock(payload);
+  if (!supabase) throw new Error('Inquiry storage is unavailable');
   const { error } = await supabase
     .from('inquiries')
     .insert([{
@@ -336,12 +336,12 @@ async function createInquirySupabase(payload) {
       metadata: payload.metadata || null
     }]);
   if (error) throw error;
-  return { success: true };
+  return { success: true, persisted: true };
 }
 
 async function createInquiryMock(payload) {
   console.log('[Mock Backend] createInquiry payload', payload);
-  return { success: true, id: `mock-inquiry-${Date.now()}` };
+  return { success: true, persisted: false, id: `mock-inquiry-${Date.now()}` };
 }
 
 async function listListingsPublicSupabase({ query, page, pageSize, propertyType, city, district, minPrice, maxPrice }) {
