@@ -323,7 +323,7 @@ async function uploadImageMock(file) {
 async function createInquirySupabase(payload) {
   const supabase = getSupabaseClient();
   if (!supabase) return createInquiryMock(payload);
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('inquiries')
     .insert([{
       listing_id: payload.listingId || null,
@@ -334,10 +334,9 @@ async function createInquirySupabase(payload) {
       message: payload.message || '',
       status: payload.status || 'unread',
       metadata: payload.metadata || null
-    }])
-    .select();
+    }]);
   if (error) throw error;
-  return data;
+  return { success: true };
 }
 
 async function createInquiryMock(payload) {
