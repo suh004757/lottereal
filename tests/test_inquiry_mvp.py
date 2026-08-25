@@ -5,6 +5,20 @@ REPO = Path(__file__).resolve().parents[1]
 
 
 class InquiryMvpPageTest(unittest.TestCase):
+    def test_database_migration_rejects_null_and_unconsented_inquiries(self):
+        migration = (REPO / 'supabase/migrations/006_validate_inquiry_rows.sql').read_text(encoding='utf-8')
+        self.assertIn('phone is not null', migration.lower())
+        self.assertIn("metadata @> '{\"privacy_consent\": true}'::jsonb", migration)
+        self.assertIn("metadata->>'inquiry_type'", migration)
+        self.assertIn("metadata->>'source_channel'", migration)
+        self.assertIn("metadata->>'callback_time'", migration)
+        self.assertIn("cmd in ('ALL', 'INSERT')", migration)
+        self.assertIn('create policy inquiries_public_insert', migration)
+        self.assertIn('with check (', migration)
+        self.assertIn("metadata->>'source' = 'public-inquiry-mvp'", migration)
+        self.assertIn("phone ~ '^[0-9]{9,11}$'", migration)
+        self.assertIn('octet_length(metadata::text) <= 4000', migration)
+
     def test_home_inquiry_links_open_the_real_form_instead_of_scrolling(self):
         html = (REPO / 'index.html').read_text(encoding='utf-8')
         self.assertNotIn('<a href="#contact">문의</a>', html)
@@ -47,6 +61,8 @@ class InquiryMvpPageTest(unittest.TestCase):
         script = (REPO / 'js/contactInquiry.js').read_text(encoding='utf-8')
         self.assertIn("createInquiry(payload)", script)
         self.assertIn('buildInquiryPayload', script)
+        self.assertIn('inquiryValuesFromFormData', script)
+        self.assertIn('buildInquiryPayload(inquiryValuesFromFormData(data))', script)
         self.assertIn('buildInquiryAnalyticsEvent', script)
         self.assertIn('result.persisted !== true', script)
         self.assertIn("form.elements.sourceChannel.addEventListener('change', syncListingReference)", script)
