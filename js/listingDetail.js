@@ -1,9 +1,9 @@
 /**
  * ListingDetail.js - 리스팅 상세 페이지
- * URL 파라미터에서 ID를 가져와 리스팅 상세 정보를 표시하고 문의 폼을 처리합니다.
+ * URL 파라미터에서 ID를 가져와 리스팅 상세 정보를 표시하고 통합 문의 채팅을 엽니다.
  */
 
-import { getListingById, createInquiry } from './services/backendAdapter.js';
+import { getListingById } from './services/backendAdapter.js';
 import { buildAbsoluteUrl, renderJsonLd, updateSeoMeta } from './utils/seo.js';
 
 // URL 파라미터에서 리스팅 ID 가져오기
@@ -18,7 +18,6 @@ const featuresEl = document.querySelector('[data-detail-features]');
 
 const descEl = document.querySelector('[data-detail-desc]');
 const noteEl = document.querySelector('[data-detail-note]');
-const formEl = document.querySelector('[data-inquiry-form]');
 const phoneBtn = document.getElementById('phoneBtn');
 
 /**
@@ -29,8 +28,8 @@ async function init() {
   if (listing) {
     renderDetail(listing);
     bindPhoneBtn(listing);
+    bindInquiryButtons(listing);
   }
-  if (formEl) bindForm(listing);
 }
 
 /**
@@ -201,38 +200,17 @@ function bindPhoneBtn(listing) {
   });
 }
 
-/**
- * 문의 폼을 바인딩합니다.
- * @param {Object} listing - 리스팅 데이터 객체
- */
-function bindForm(listing) {
-  formEl.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const formData = new FormData(formEl);
-    const payload = {
-      listingId: listing?.id,
-      listingTitle: listing?.title,
-      name: formData.get('name') || '',
-      phone: formData.get('phone') || '',
-      email: formData.get('email') || '', // 선택사항
-      message: formData.get('message') || '',
-      metadata: { source: 'public-detail' }
-    };
-    try {
-      await createInquiry(payload);
-      if (typeof window.gtag === 'function') {
-        window.gtag('event', 'contact_submit', {
-          page_path: window.location.pathname,
-          listing_id: payload.listingId || '',
-          listing_title: payload.listingTitle || ''
-        });
-      }
-      alert('문의가 접수되었습니다. 빠르게 연락드리겠습니다.');
-      formEl.reset();
-    } catch (err) {
-      console.error(err);
-      alert('문의 접수 중 오류가 발생했습니다.');
-    }
+function bindInquiryButtons(listing) {
+  document.querySelectorAll('[data-listing-chat-open]').forEach((button) => {
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
+      window.dispatchEvent(new CustomEvent('lottereal:open-inquiry', {
+        detail: {
+          listingId: listing.id,
+          listingTitle: listing.title || '롯데부동산 매물'
+        }
+      }));
+    });
   });
 }
 

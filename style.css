@@ -3122,6 +3122,29 @@ h1 {
   margin-top: 16px;
 }
 
+.lr-listing-inquiry-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 24px;
+  border: 1px solid var(--lr-border);
+  border-radius: var(--lr-radius);
+  background: var(--lr-surface);
+  box-shadow: var(--lr-shadow-soft);
+}
+
+.lr-listing-inquiry-entry span {
+  color: var(--lr-primary);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .05em;
+}
+
+.lr-listing-inquiry-entry h3 { margin: 6px 0; color: var(--lr-text); }
+.lr-listing-inquiry-entry p { margin: 0; color: var(--lr-text-secondary); }
+.lr-listing-inquiry-entry .lr-btn { flex: 0 0 auto; }
+
 .lr-tags {
   display: flex;
   flex-wrap: wrap;
@@ -3186,6 +3209,9 @@ h1 {
 }
 
 @media (max-width: 640px) {
+  .lr-listing-inquiry-entry { align-items: stretch; flex-direction: column; gap: 18px; padding: 20px; }
+  .lr-listing-inquiry-entry .lr-btn { width: 100%; }
+
   .lr-section {
     padding: 64px 0;
   }

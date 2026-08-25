@@ -74,7 +74,8 @@ async function submitInquiry(event) {
   showStatus('문의 내용을 안전하게 접수하고 있습니다.', 'pending');
 
   try {
-    await createInquiry(payload);
+    const result = await createInquiry(payload);
+    if (!result?.success || result.persisted !== true) throw new Error('INQUIRY_NOT_PERSISTED');
     const analytics = buildInquiryAnalyticsEvent(payload);
     if (typeof window.gtag === 'function') {
       window.gtag('event', analytics.name, analytics.params);

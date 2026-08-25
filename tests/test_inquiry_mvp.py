@@ -36,12 +36,15 @@ class InquiryMvpPageTest(unittest.TestCase):
         self.assertIn(".from('inquiries')", inquiry_insert)
         self.assertIn('.insert([', inquiry_insert)
         self.assertNotIn('.select()', inquiry_insert)
+        self.assertNotIn('createInquiryMock', inquiry_insert)
+        self.assertIn('throw new Error', inquiry_insert)
 
     def test_contact_controller_saves_first_then_emits_non_pii_event(self):
         script = (REPO / 'js/contactInquiry.js').read_text(encoding='utf-8')
         self.assertIn("createInquiry(payload)", script)
         self.assertIn('buildInquiryPayload', script)
         self.assertIn('buildInquiryAnalyticsEvent', script)
+        self.assertIn('result.persisted !== true', script)
         self.assertIn("form.elements.sourceChannel.addEventListener('change', syncListingReference)", script)
         self.assertLess(script.index('await createInquiry(payload)'), script.index("window.gtag('event'"))
         analytics_call = script[script.index("window.gtag('event'"):]
@@ -61,6 +64,26 @@ class InquiryMvpPageTest(unittest.TestCase):
         css = (REPO / 'style.css').read_text(encoding='utf-8')
         self.assertIn('<a href="contact.html#inquiry-options"><span>💬</span><strong>문의하기</strong></a>', html)
         self.assertIn('grid-template-columns: repeat(4, 1fr);', css)
+
+    def test_listing_detail_uses_guided_chat_with_automatic_listing_context(self):
+        html = (REPO / 'listing-detail.html').read_text(encoding='utf-8')
+        detail = (REPO / 'js/listingDetail.js').read_text(encoding='utf-8')
+        widget = (REPO / 'js/knowledgeWidget.js').read_text(encoding='utf-8')
+        chat = (REPO / 'js/inquiryChat.js').read_text(encoding='utf-8')
+        self.assertNotIn('data-inquiry-form', html)
+        self.assertGreaterEqual(html.count('data-listing-chat-open'), 2)
+        self.assertNotIn('createInquiry', detail)
+        self.assertIn("lottereal:open-inquiry", detail)
+        self.assertIn('listingId: listing.id', detail)
+        self.assertIn('listingTitle: listing.title', detail)
+        self.assertIn("addEventListener('lottereal:open-inquiry'", widget)
+        self.assertIn("openPanel('inquiry')", widget)
+        self.assertIn("addEventListener('inquiry-chat-context'", chat)
+        self.assertIn('payload.listingId = state.listingContext.listingId', chat)
+        self.assertIn('payload.listingTitle = state.listingContext.listingTitle', chat)
+        analytics_call = chat[chat.index("window.gtag('event'"):]
+        self.assertNotIn('listingId', analytics_call)
+        self.assertNotIn('listingTitle', analytics_call)
 
     def test_mobile_actions_keep_phone_and_offer_inquiry_without_covering_search(self):
         html = (REPO / 'contact.html').read_text(encoding='utf-8')
