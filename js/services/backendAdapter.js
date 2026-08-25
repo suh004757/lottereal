@@ -340,7 +340,6 @@ async function createInquirySupabase(payload) {
 }
 
 async function createInquiryMock(payload) {
-  console.log('[Mock Backend] createInquiry payload', payload);
   return { success: true, persisted: false, id: `mock-inquiry-${Date.now()}` };
 }
 

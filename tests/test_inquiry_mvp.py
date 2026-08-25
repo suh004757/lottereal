@@ -39,6 +39,10 @@ class InquiryMvpPageTest(unittest.TestCase):
         self.assertNotIn('createInquiryMock', inquiry_insert)
         self.assertIn('throw new Error', inquiry_insert)
 
+        mock_start = adapter.index('async function createInquiryMock')
+        mock_end = adapter.index('async function listListingsPublicSupabase', mock_start)
+        self.assertNotIn("console.log('[Mock Backend] createInquiry payload', payload)", adapter[mock_start:mock_end])
+
     def test_contact_controller_saves_first_then_emits_non_pii_event(self):
         script = (REPO / 'js/contactInquiry.js').read_text(encoding='utf-8')
         self.assertIn("createInquiry(payload)", script)

@@ -35,10 +35,24 @@ const LABELS = Object.freeze({
   }
 });
 
+const FIELD_LABELS = Object.freeze({
+  externalListingRef: '매물번호',
+  name: '이름',
+  phone: '연락처'
+});
+
 export function nextInquiryChatStep(currentStep, values = {}) {
   if (currentStep === 'sourceChannel' && values.inquiryType !== 'listing') return 'name';
   const index = STEP_ORDER.indexOf(currentStep);
   return STEP_ORDER[index + 1] || 'review';
+}
+
+export function submittedChatValue(rawValue, skipped = false) {
+  return skipped ? '' : String(rawValue || '').trim();
+}
+
+export function isPersistedInquiryResult(result) {
+  return result?.success === true && result.persisted === true;
 }
 
 export function mountInquiryChat(container) {
@@ -126,7 +140,7 @@ export function mountInquiryChat(container) {
 
     const field = form.dataset.field;
     const skipped = event.submitter?.classList.contains('is-secondary') === true;
-    const value = skipped ? '' : String(data.get(field) || '').trim();
+    const value = submittedChatValue(data.get(field), skipped);
     if (field === 'phone' && !/^\d{9,11}$/.test(value.replace(/\D/g, ''))) {
       state.status = '연락처를 확인해 주세요.';
       render();
@@ -173,7 +187,7 @@ export function mountInquiryChat(container) {
       }
       const { createInquiry } = await import('./services/backendAdapter.js');
       const result = await createInquiry(payload);
-      if (!result?.success || result.persisted !== true) throw new Error('INQUIRY_NOT_PERSISTED');
+      if (!isPersistedInquiryResult(result)) throw new Error('INQUIRY_NOT_PERSISTED');
       const analytics = buildInquiryAnalyticsEvent(payload);
       if (typeof window.gtag === 'function') {
         window.gtag('event', analytics.name, analytics.params);
@@ -192,7 +206,7 @@ export function mountInquiryChat(container) {
 
   function render() {
     container.innerHTML = `
-      <div class="lr-inquiry-chat" aria-live="polite">
+      <div class="lr-inquiry-chat">
         <div class="lr-inquiry-chat__intro">
           <span aria-hidden="true">L</span>
           <div><strong>문의 접수 도우미</strong><p>몇 가지만 알려주시면 담당자가 확인 후 전화드립니다.</p></div>
@@ -216,7 +230,7 @@ function renderHistory(history) {
 function renderPrompt(state) {
   const status = state.status ? `<p class="lr-inquiry-chat__status" role="${state.status.includes('접수하고') ? 'status' : 'alert'}">${escapeHtml(state.status)}</p>` : '';
   return `
-    <section class="lr-inquiry-chat__prompt">
+    <section class="lr-inquiry-chat__prompt" aria-live="polite">
       <p class="lr-inquiry-chat__bot">${escapeHtml(questionFor(state.step))}</p>
       ${renderControls(state)}
       ${status}
@@ -248,7 +262,7 @@ function renderChoices(field, choices) {
 function renderTextForm(field, type, placeholder, allowSkip, inputMode = '') {
   return `
     <form data-chat-form data-field="${field}" class="lr-inquiry-chat__form">
-      <input name="${field}" type="${type}" maxlength="80" ${inputMode ? `inputmode="${inputMode}"` : ''} placeholder="${escapeHtml(placeholder)}" ${allowSkip ? '' : 'required'} autocomplete="${field === 'name' ? 'name' : field === 'phone' ? 'tel' : 'off'}">
+      <input name="${field}" type="${type}" maxlength="80" aria-label="${escapeHtml(FIELD_LABELS[field])}" ${inputMode ? `inputmode="${inputMode}"` : ''} placeholder="${escapeHtml(placeholder)}" ${allowSkip ? '' : 'required'} autocomplete="${field === 'name' ? 'name' : field === 'phone' ? 'tel' : 'off'}">
       <div><button type="submit">다음</button>${allowSkip ? `<button type="submit" class="is-secondary" name="${field}" value="">건너뛰기</button>` : ''}</div>
     </form>
   `;
@@ -257,7 +271,7 @@ function renderTextForm(field, type, placeholder, allowSkip, inputMode = '') {
 function renderMessageForm() {
   return `
     <form data-chat-form data-field="message" class="lr-inquiry-chat__form">
-      <textarea name="message" maxlength="1000" rows="3" placeholder="예산, 지역, 입주일 등 필요한 내용만 적어주세요."></textarea>
+      <textarea name="message" maxlength="1000" rows="3" aria-label="추가 문의 내용" placeholder="예산, 지역, 입주일 등 필요한 내용만 적어주세요."></textarea>
       <div><button type="submit">다음</button><button type="submit" class="is-secondary" name="message" value="">건너뛰기</button></div>
     </form>
   `;
