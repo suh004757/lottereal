@@ -20,6 +20,7 @@ if (section) {
         published: 'Published',
         legal: 'Checklist',
         market: 'Market Report',
+        dispute: 'Contract & Dispute',
         views: 'views',
         cta: 'View Details'
       }
@@ -32,6 +33,7 @@ if (section) {
         published: '발행됨',
         legal: '계약 체크리스트',
         market: '시장 리포트',
+        dispute: '계약·분쟁 사례',
         views: '조회',
         cta: '상세보기'
       };
@@ -52,12 +54,12 @@ if (section) {
 
   async function loadReports() {
     try {
-      const reports = await listPublishedReports({ limit: 3 });
+      const reports = await listPublishedReports({ limit: 30 });
       if (!reports.length) {
         renderEmpty();
         return;
       }
-      renderReports(reports);
+      renderReports(selectRepresentativeReports(reports));
     } catch (error) {
       console.error('[HomeReport] Failed to load reports', error);
       renderError();
@@ -101,6 +103,19 @@ if (section) {
     }
   }
 
+  function selectRepresentativeReports(reports) {
+    const dispute = reports.find((report) => {
+      const content_type = String(report.metadata?.content_type || '').toLowerCase();
+      return content_type === 'dispute_case';
+    });
+    const market = reports.find((report) => {
+      const content_type = String(report.metadata?.content_type || '').toLowerCase();
+      return content_type !== 'dispute_case';
+    });
+    const selected = [market, dispute].filter(Boolean);
+    return selected.length === 2 ? selected : reports.slice(0, 2);
+  }
+
   function renderFeatureCard(report) {
     return `
       <article class="lr-card lr-card--feature">
@@ -110,7 +125,6 @@ if (section) {
           <p class="lr-text">${escapeHtml(extractSummary(report))}</p>
           <div class="lr-card__meta">
             <span>${formatUpdated(report.updated_at)}</span>
-            <span>${formatViews(report.view_count)}</span>
           </div>
           <div class="lr-actions">
             <a class="lr-btn lr-btn--primary" href="${getReportHref(report.slug)}">${copy.cta}</a>
@@ -129,7 +143,6 @@ if (section) {
           <p class="lr-text">${escapeHtml(extractSummary(report))}</p>
           <div class="lr-card__meta">
             <span>${formatUpdated(report.updated_at)}</span>
-            <span>${formatViews(report.view_count)}</span>
           </div>
           <div class="lr-actions">
             <a class="lr-btn lr-btn--primary" href="${getReportHref(report.slug)}">${copy.cta}</a>
@@ -165,6 +178,7 @@ if (section) {
 
   function getReportLabel(report) {
     const type = String(report.metadata?.content_type || '').toLowerCase();
+    if (type === 'dispute_case') return copy.dispute;
     if (type.includes('legal')) return copy.legal || copy.published;
     return copy.market || copy.published;
   }
@@ -185,11 +199,6 @@ if (section) {
       month: 'short',
       day: 'numeric'
     });
-  }
-
-  function formatViews(value) {
-    const count = Number(value || 0).toLocaleString();
-    return isEnglish ? `${count} ${copy.views}` : `${copy.views} ${count}회`;
   }
 
   function getReportHref(slug) {

@@ -1,0 +1,73 @@
+import unittest
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parents[1]
+CORE_KOREAN_PAGES = (
+    'index.html',
+    'listings.html',
+    'listing-detail.html',
+    'report.html',
+    'disputes.html',
+    'contact.html',
+    'insights.html',
+    'insight-detail.html',
+    'songpa-market-report.html',
+    'jamsil-market-report.html',
+    'gangnam-office-report.html',
+)
+
+
+class KnowledgeWidgetTest(unittest.TestCase):
+    def test_core_korean_pages_load_the_source_search_widget(self):
+        missing = []
+        for name in CORE_KOREAN_PAGES:
+            text = (REPO / name).read_text(encoding='utf-8', errors='ignore')
+            if 'js/knowledgeWidget.js' not in text:
+                missing.append(name)
+        self.assertEqual(missing, [])
+
+    def test_widget_is_an_accessible_source_search_drawer(self):
+        text = (REPO / 'js/knowledgeWidget.js').read_text(encoding='utf-8')
+        for marker in (
+            'listPublishedKnowledgeReports',
+            "from './knowledgeSearch.mjs'",
+            'role="dialog"',
+            'aria-modal="true"',
+            "event.key === 'Escape'",
+            "event.key === 'Tab'",
+            'focusableElements',
+            'slice(0, 3)',
+            'knowledge_widget_open',
+            'knowledge_widget_search',
+            'knowledge.html',
+            'lr-mobile-actionbar',
+        ):
+            self.assertIn(marker, text)
+        self.assertNotIn('query_text', text)
+        self.assertNotIn('raw_query', text)
+
+    def test_widget_styles_support_desktop_drawer_and_mobile_bottom_sheet(self):
+        text = (REPO / 'css/knowledge-widget.css').read_text(encoding='utf-8')
+        for marker in (
+            '.lr-knowledge-widget__launcher',
+            '.lr-knowledge-widget__panel',
+            '.lr-knowledge-widget__backdrop',
+            '@media (max-width: 640px)',
+            'prefers-reduced-motion',
+        ):
+            self.assertIn(marker, text)
+
+    def test_homepage_keeps_only_two_representative_content_cards(self):
+        html = (REPO / 'index.html').read_text(encoding='utf-8')
+        script = (REPO / 'js/homeReportPreview.js').read_text(encoding='utf-8')
+        self.assertIn('오늘 확인할 두 가지', html)
+        self.assertNotIn('lr-section--report-hubs', html)
+        self.assertNotIn('id="legal-updates"', html)
+        self.assertNotIn('data-feed-list', html)
+        self.assertIn('selectRepresentativeReports', script)
+        self.assertIn("content_type === 'dispute_case'", script)
+        self.assertNotIn('formatViews(', script)
+
+
+if __name__ == '__main__':
+    unittest.main()
