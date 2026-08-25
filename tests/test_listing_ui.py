@@ -2,18 +2,40 @@ from pathlib import Path
 import unittest
 
 REPO = Path(__file__).resolve().parents[1]
-NAV_PAGES = ('index.html', 'listings.html', 'insights.html', 'insight-detail.html', 'report.html')
+
+
+def korean_pages():
+    return [
+        path for path in REPO.glob('*.html')
+        if '<html lang="ko"' in path.read_text(encoding='utf-8')
+    ]
+
+
+def primary_navigation(html):
+    start = html.index('<nav class="lr-nav"')
+    end = html.index('</nav>', start)
+    return html[start:end]
 
 
 class ListingUiTest(unittest.TestCase):
     def test_recommended_listing_navigation_link_is_removed_but_home_content_stays(self):
-        for name in NAV_PAGES:
-            html = (REPO / name).read_text(encoding='utf-8')
-            self.assertNotIn('>추천매물</a>', html, name)
+        for path in korean_pages():
+            html = path.read_text(encoding='utf-8')
+            self.assertNotIn('>추천매물</a>', primary_navigation(html), path.name)
         home = (REPO / 'index.html').read_text(encoding='utf-8')
         listings = (REPO / 'listings.html').read_text(encoding='utf-8')
         self.assertIn('<p class="lr-kicker">추천 매물</p>', home)
         self.assertNotIn('<strong>추천매물</strong>', listings)
+
+    def test_korean_primary_navigation_omits_process_and_english_links(self):
+        for path in korean_pages():
+            html = path.read_text(encoding='utf-8')
+            nav = primary_navigation(html)
+            self.assertNotIn('>진행</a>', nav, path.name)
+            self.assertNotIn('>ENGLISH</a>', nav, path.name)
+
+        home = (REPO / 'index.html').read_text(encoding='utf-8')
+        self.assertIn('<a href="EN.html">ENGLISH</a>', home[home.index('<footer'):])
 
     def test_listing_cards_and_actions_use_non_overlapping_responsive_layout(self):
         css = (REPO / 'style.css').read_text(encoding='utf-8')
