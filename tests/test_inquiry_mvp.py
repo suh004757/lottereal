@@ -5,6 +5,11 @@ REPO = Path(__file__).resolve().parents[1]
 
 
 class InquiryMvpPageTest(unittest.TestCase):
+    def test_home_inquiry_links_open_the_real_form_instead_of_scrolling(self):
+        html = (REPO / 'index.html').read_text(encoding='utf-8')
+        self.assertNotIn('<a href="#contact">문의</a>', html)
+        self.assertGreaterEqual(html.count('href="contact.html#inquiry-options"'), 2)
+
     def test_contact_page_has_simple_no_login_inquiry_flow(self):
         html = (REPO / 'contact.html').read_text(encoding='utf-8')
         self.assertIn('id="inquiry-options"', html)
