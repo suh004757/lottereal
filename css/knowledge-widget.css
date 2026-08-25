@@ -452,7 +452,9 @@
   .has-knowledge-widget .lr-fab:active { transform: translateY(-2px); }
 
   .has-knowledge-widget .lr-mobile-actionbar--with-knowledge {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
   }
 
   .lr-mobile-actionbar__knowledge {
