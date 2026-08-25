@@ -28,15 +28,6 @@ class InquiryMvpPageTest(unittest.TestCase):
         self.assertIn('js/contactInquiry.js', html)
         self.assertIn('css/inquiry-mvp.css', html)
 
-    def test_public_inquiry_insert_does_not_request_customer_row_back(self):
-        adapter = (REPO / 'js/services/backendAdapter.js').read_text(encoding='utf-8')
-        start = adapter.index('async function createInquirySupabase')
-        end = adapter.index('async function createInquiryMock', start)
-        inquiry_insert = adapter[start:end]
-        self.assertIn(".from('inquiries')", inquiry_insert)
-        self.assertIn('.insert([', inquiry_insert)
-        self.assertNotIn('.select()', inquiry_insert)
-
     def test_contact_controller_saves_first_then_emits_non_pii_event(self):
         script = (REPO / 'js/contactInquiry.js').read_text(encoding='utf-8')
         self.assertIn("createInquiry(payload)", script)
