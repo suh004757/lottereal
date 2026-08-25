@@ -37,6 +37,22 @@
     <priority>0.80</priority>
   </url>
 
+  <!-- 계약·분쟁 사례 -->
+  <url>
+    <loc>https://lottes.co.kr/disputes.html</loc>
+    <lastmod>2026-08-25</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.88</priority>
+  </url>
+
+  <!-- 질문으로 자료 찾기 -->
+  <url>
+    <loc>https://lottes.co.kr/knowledge.html</loc>
+    <lastmod>2026-08-25</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+  </url>
+
   <!-- 시장 리포트 -->
   <url>
     <loc>https://lottes.co.kr/report.html</loc>

@@ -122,6 +122,30 @@ export async function listPublishedReports({ limit = 10, excludeSlug } = {}) {
   return listReports({ status: 'published', limit, excludeSlug });
 }
 
+export async function listPublishedKnowledgeReports({ limit = 500 } = {}) {
+  const safeLimit = Math.min(Math.max(Number(limit) || 500, 1), 1000);
+  const provider = getProvider();
+  if (provider !== 'supabase') {
+    return listReportsMock({ status: 'published', limit: safeLimit });
+  }
+
+  const supabase = getSupabaseClient();
+  if (!supabase) return listReportsMock({ status: 'published', limit: safeLimit });
+
+  const { data, error } = await supabase
+    .from('market_reports')
+    .select('id, slug, title, summary, report_md, evidence_json, status, updated_at, created_at, metadata')
+    .eq('status', 'published')
+    .order('updated_at', { ascending: false })
+    .limit(safeLimit);
+
+  if (error) {
+    console.error('Supabase knowledge report list error', error);
+    return [];
+  }
+  return data || [];
+}
+
 export async function incrementReportViews(slug) {
   if (!slug || hasViewedInSession(slug)) return;
 
