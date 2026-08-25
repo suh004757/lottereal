@@ -56,6 +56,12 @@ class InquiryMvpPageTest(unittest.TestCase):
         self.assertIn('이름, 외부 플랫폼 매물번호, 문의 내용', policy)
         self.assertIn('상담 완료 후 1년', policy)
 
+    def test_home_mobile_actionbar_includes_direct_inquiry_action(self):
+        html = (REPO / 'index.html').read_text(encoding='utf-8')
+        css = (REPO / 'style.css').read_text(encoding='utf-8')
+        self.assertIn('<a href="contact.html#inquiry-options"><span>💬</span><strong>문의하기</strong></a>', html)
+        self.assertIn('grid-template-columns: repeat(4, 1fr);', css)
+
     def test_mobile_actions_keep_phone_and_offer_inquiry_without_covering_search(self):
         html = (REPO / 'contact.html').read_text(encoding='utf-8')
         css = (REPO / 'css/inquiry-mvp.css').read_text(encoding='utf-8')

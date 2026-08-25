@@ -4247,7 +4247,7 @@ h1 {
     bottom: 12px;
     z-index: 1200;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 8px;
     padding: 8px;
     border-radius: 22px;
