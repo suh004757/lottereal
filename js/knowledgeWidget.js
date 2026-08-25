@@ -1,6 +1,6 @@
 import { listPublishedKnowledgeReports } from './services/reportAdapter.js';
 import { buildKnowledgeIndex, getOntologySuggestions, searchKnowledge } from './knowledgeSearch.mjs';
-import { mountInquiryChat } from './inquiryChat.js';
+import { createInputModalityTracker, INQUIRY_FOCUSABLE_SELECTOR, mountInquiryChat } from './inquiryChat.js';
 
 const WIDGET_STYLESHEET = 'css/knowledge-widget.css';
 const state = { index: null, loading: false, lastFocused: null, currentMode: 'knowledge' };
@@ -69,9 +69,17 @@ function initializeWidget() {
   const modeButtons = [...root.querySelectorAll('[role="tab"][data-widget-mode]')];
   const modeViews = [...root.querySelectorAll('[data-widget-view]')];
   const inquiryChat = root.querySelector('[data-inquiry-chat]');
+  const getInputModality = createInputModalityTracker(document);
 
   renderSuggestions(suggestions, input, runSearch);
   mountInquiryChat(inquiryChat);
+  syncVisualViewport();
+  const visualViewport = window.visualViewport;
+  if (visualViewport) {
+    visualViewport.addEventListener('resize', syncVisualViewport);
+    visualViewport.addEventListener('scroll', syncVisualViewport);
+  }
+  window.addEventListener('resize', syncVisualViewport);
   launcher.addEventListener('click', () => openPanel('knowledge'));
   closeButton.addEventListener('click', closePanel);
   backdrop.addEventListener('click', closePanel);
@@ -101,12 +109,15 @@ function initializeWidget() {
         .filter((element) => !element.hidden && !element.closest('[hidden]'));
       const first = focusableElements[0];
       const last = focusableElements[focusableElements.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
+      if (!panel.contains(document.activeElement)) {
         event.preventDefault();
-        last?.focus();
+        (event.shiftKey ? last : first)?.focus({ preventScroll: true });
+      } else if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus({ preventScroll: true });
       } else if (!event.shiftKey && document.activeElement === last) {
         event.preventDefault();
-        first?.focus();
+        first?.focus({ preventScroll: true });
       }
     }
   });
@@ -142,8 +153,20 @@ function initializeWidget() {
     if (state.currentMode === 'knowledge' && !state.index && !state.loading) loadIndex(status, results);
     const target = state.currentMode === 'knowledge'
       ? input
-      : inquiryChat.querySelector('button, input, textarea');
-    window.setTimeout(() => target?.focus(), 0);
+      : inquiryChat.querySelector(INQUIRY_FOCUSABLE_SELECTOR);
+    const focusTarget = state.currentMode === 'inquiry' && getInputModality() !== 'keyboard'
+      ? closeButton
+      : target;
+    if (focusTarget) window.setTimeout(() => focusTarget.focus({ preventScroll: true }), 0);
+  }
+
+  function syncVisualViewport() {
+    const viewport = window.visualViewport;
+    const height = Math.max(1, Math.round(viewport?.height || window.innerHeight));
+    const offsetTop = Math.max(0, Math.round(viewport?.offsetTop || 0));
+    const bottom = Math.max(0, Math.round(window.innerHeight - height - offsetTop));
+    root.style.setProperty('--kw-visual-viewport-height', `${height}px`);
+    root.style.setProperty('--kw-visual-viewport-bottom', `${bottom}px`);
   }
 
   function closePanel() {

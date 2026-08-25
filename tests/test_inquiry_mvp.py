@@ -85,7 +85,9 @@ class InquiryMvpPageTest(unittest.TestCase):
         self.assertIn("addEventListener('inquiry-chat-context'", chat)
         self.assertIn('payload.listingId = state.listingContext.listingId', chat)
         self.assertIn('payload.listingTitle = state.listingContext.listingTitle', chat)
-        analytics_call = chat[chat.index("window.gtag('event'"):]
+        analytics_start = chat.index("window.gtag('event'")
+        analytics_end = chat.index('state.complete = true', analytics_start)
+        analytics_call = chat[analytics_start:analytics_end]
         self.assertNotIn('listingId', analytics_call)
         self.assertNotIn('listingTitle', analytics_call)
 

@@ -85,6 +85,28 @@ class KnowledgeWidgetTest(unittest.TestCase):
         end = text.index('.lr-knowledge-widget__modes button[aria-selected', start)
         self.assertIn('min-height: 44px;', text[start:end])
 
+    def test_mobile_listing_inquiry_keeps_the_current_question_stable(self):
+        chat = (REPO / 'js/inquiryChat.js').read_text(encoding='utf-8')
+        styles = (REPO / 'css/knowledge-widget.css').read_text(encoding='utf-8')
+        self.assertIn('lr-inquiry-chat__listing-context', chat)
+        self.assertIn('class="lr-inquiry-chat__prompt" aria-live="polite" tabindex="-1"', chat)
+        mobile_start = styles.index('@media (max-width: 640px)')
+        mobile_block = styles[mobile_start:]
+        self.assertIn('.lr-inquiry-chat__history { display: none; }', mobile_block)
+        self.assertIn('height: 82vh;', mobile_block)
+        self.assertIn('--kw-visual-viewport-height', mobile_block)
+        self.assertIn('--kw-visual-viewport-bottom', mobile_block)
+        self.assertIn('env(safe-area-inset-bottom', mobile_block)
+        self.assertIn('display: flex;', mobile_block)
+        self.assertIn('box-sizing: border-box;', mobile_block)
+        self.assertIn('flex: 1 1 auto;', mobile_block)
+        self.assertIn('min-height: 0;', mobile_block)
+        widget = (REPO / 'js/knowledgeWidget.js').read_text(encoding='utf-8')
+        self.assertIn('window.visualViewport', widget)
+        self.assertIn("visualViewport.addEventListener('resize'", widget)
+        self.assertIn('!panel.contains(document.activeElement)', widget)
+        self.assertIn('closeButton', widget)
+
     def test_homepage_keeps_only_two_representative_content_cards(self):
         html = (REPO / 'index.html').read_text(encoding='utf-8')
         script = (REPO / 'js/homeReportPreview.js').read_text(encoding='utf-8')

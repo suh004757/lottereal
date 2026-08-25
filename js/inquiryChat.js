@@ -41,6 +41,27 @@ const FIELD_LABELS = Object.freeze({
   phone: '연락처'
 });
 
+const modalityTrackers = new WeakMap();
+
+export const INQUIRY_FOCUSABLE_SELECTOR = [
+  'button[data-chat-choice]:not([disabled])',
+  'input:not([type="hidden"]):not(.lr-inquiry-chat__honeypot):not([aria-hidden="true"]):not([tabindex="-1"]):not([disabled])',
+  'textarea:not([aria-hidden="true"]):not([tabindex="-1"]):not([disabled])',
+  'button[data-chat-restart]:not([disabled])',
+  'button[type="submit"]:not([disabled])'
+].join(', ');
+
+export function createInputModalityTracker(target) {
+  if (!target?.addEventListener) return () => 'programmatic';
+  if (modalityTrackers.has(target)) return modalityTrackers.get(target);
+  let modality = 'programmatic';
+  target.addEventListener('pointerdown', () => { modality = 'pointer'; }, true);
+  target.addEventListener('keydown', () => { modality = 'keyboard'; }, true);
+  const getModality = () => modality;
+  modalityTrackers.set(target, getModality);
+  return getModality;
+}
+
 export function nextInquiryChatStep(currentStep, values = {}) {
   if (currentStep === 'sourceChannel' && values.inquiryType !== 'listing') return 'name';
   const index = STEP_ORDER.indexOf(currentStep);
@@ -55,11 +76,16 @@ export function isPersistedInquiryResult(result) {
   return result?.success === true && result.persisted === true;
 }
 
+export function shouldAutofocusInquiryControl({ historyLength = 0, modality = 'programmatic' } = {}) {
+  return historyLength > 0 && modality === 'keyboard';
+}
+
 export function mountInquiryChat(container) {
   if (!container || container.dataset.inquiryChatReady === 'true') return;
   container.dataset.inquiryChatReady = 'true';
 
   const state = freshState();
+  const getInputModality = createInputModalityTracker(document);
   container.addEventListener('click', handleClick);
   container.addEventListener('submit', handleSubmit);
   container.addEventListener('inquiry-chat-context', handleListingContext);
@@ -211,13 +237,25 @@ export function mountInquiryChat(container) {
           <span aria-hidden="true">L</span>
           <div><strong>문의 접수 도우미</strong><p>몇 가지만 알려주시면 담당자가 확인 후 전화드립니다.</p></div>
         </div>
+        ${renderListingContext(state.listingContext)}
         ${renderHistory(state.history)}
         ${state.complete ? renderSuccess(state.status) : renderPrompt(state)}
       </div>
     `;
-    const firstControl = container.querySelector('button[data-chat-choice], input:not([type="hidden"]), textarea, button[type="submit"]');
-    if (state.history.length && firstControl) window.setTimeout(() => firstControl.focus(), 0);
+    const firstControl = container.querySelector(INQUIRY_FOCUSABLE_SELECTOR);
+    const modality = getInputModality();
+    if (firstControl && shouldAutofocusInquiryControl({ historyLength: state.history.length, modality })) {
+      window.setTimeout(() => firstControl.focus({ preventScroll: true }), 0);
+    } else if (state.history.length) {
+      const safeFocusTarget = container.querySelector('.lr-inquiry-chat__prompt, .lr-inquiry-chat__success');
+      window.setTimeout(() => safeFocusTarget?.focus({ preventScroll: true }), 0);
+    }
   }
+}
+
+function renderListingContext(context) {
+  if (!context?.listingTitle) return '';
+  return `<p class="lr-inquiry-chat__listing-context"><span>문의 매물</span><strong>${escapeHtml(context.listingTitle)}</strong></p>`;
 }
 
 function renderHistory(history) {
@@ -230,7 +268,7 @@ function renderHistory(history) {
 function renderPrompt(state) {
   const status = state.status ? `<p class="lr-inquiry-chat__status" role="${state.status.includes('접수하고') ? 'status' : 'alert'}">${escapeHtml(state.status)}</p>` : '';
   return `
-    <section class="lr-inquiry-chat__prompt" aria-live="polite">
+    <section class="lr-inquiry-chat__prompt" aria-live="polite" tabindex="-1">
       <p class="lr-inquiry-chat__bot">${escapeHtml(questionFor(state.step))}</p>
       ${renderControls(state)}
       ${status}
@@ -307,7 +345,7 @@ function renderReview(state) {
 
 function renderSuccess(message) {
   return `
-    <section class="lr-inquiry-chat__success" role="status">
+    <section class="lr-inquiry-chat__success" role="status" tabindex="-1">
       <span aria-hidden="true">✓</span><h3>문의가 접수됐습니다</h3><p>${escapeHtml(message)}</p>
       <button type="button" data-chat-restart>새 문의 남기기</button>
     </section>
