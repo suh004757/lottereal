@@ -58,9 +58,14 @@ class KnowledgeWidgetTest(unittest.TestCase):
         self.assertIn('buildInquiryPayload', chat)
         self.assertIn('privacyConsent', chat)
         self.assertIn("event.submitter?.classList.contains('is-secondary')", chat)
-        self.assertIn('!result?.success', chat)
-        self.assertIn('result.persisted !== true', chat)
+        self.assertIn('isPersistedInquiryResult(result)', chat)
         self.assertNotIn("state.status = error?.message", chat)
+        self.assertIn("name: '이름'", chat)
+        self.assertIn("phone: '연락처'", chat)
+        self.assertIn("externalListingRef: '매물번호'", chat)
+        self.assertIn('aria-label="${escapeHtml(FIELD_LABELS[field])}"', chat)
+        self.assertIn('aria-label="추가 문의 내용"', chat)
+        self.assertNotIn('<div class="lr-inquiry-chat" aria-live="polite">', chat)
         self.assertLess(chat.index('await createInquiry(payload)'), chat.index("window.gtag('event'"))
         analytics_call = chat[chat.index("window.gtag('event'"):]
         self.assertNotIn('payload.phone', analytics_call)
@@ -76,6 +81,9 @@ class KnowledgeWidgetTest(unittest.TestCase):
             'prefers-reduced-motion',
         ):
             self.assertIn(marker, text)
+        start = text.index('.lr-knowledge-widget__modes button {')
+        end = text.index('.lr-knowledge-widget__modes button[aria-selected', start)
+        self.assertIn('min-height: 44px;', text[start:end])
 
     def test_homepage_keeps_only_two_representative_content_cards(self):
         html = (REPO / 'index.html').read_text(encoding='utf-8')
