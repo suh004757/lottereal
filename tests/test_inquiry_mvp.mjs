@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {
   buildInquiryPayload,
   buildInquiryAnalyticsEvent,
+  inquiryValuesFromFormData,
   normalizePhone
 } from '../js/inquiryMvp.js';
 
@@ -12,7 +13,8 @@ const formValues = {
   name: '홍길동',
   phone: '010-1234-5678',
   callbackTime: 'weekday-evening',
-  message: '입주일이 궁금합니다.'
+  message: '입주일이 궁금합니다.',
+  privacyConsent: true
 };
 
 assert.equal(normalizePhone(formValues.phone), '01012345678');
@@ -26,6 +28,14 @@ assert.equal(payload.metadata.inquiry_type, 'listing');
 assert.equal(payload.metadata.source_channel, 'zigbang');
 assert.equal(payload.metadata.external_listing_ref, '12345678');
 assert.equal(payload.metadata.callback_time, 'weekday-evening');
+assert.equal(payload.metadata.privacy_consent, true);
+
+const contactData = new FormData();
+for (const [key, value] of Object.entries(formValues)) contactData.set(key, String(value));
+contactData.set('privacyConsent', 'on');
+assert.equal(inquiryValuesFromFormData(contactData).privacyConsent, true);
+contactData.delete('privacyConsent');
+assert.equal(inquiryValuesFromFormData(contactData).privacyConsent, false);
 assert.match(payload.message, /입주일이 궁금합니다/);
 
 const analytics = buildInquiryAnalyticsEvent(payload);

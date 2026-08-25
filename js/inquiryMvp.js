@@ -39,6 +39,19 @@ export function normalizePhone(value) {
   return digits;
 }
 
+export function inquiryValuesFromFormData(data) {
+  return {
+    inquiryType: data.get('inquiryType'),
+    sourceChannel: data.get('sourceChannel'),
+    externalListingRef: data.get('externalListingRef'),
+    name: data.get('name'),
+    phone: data.get('phone'),
+    callbackTime: data.get('callbackTime'),
+    message: data.get('message'),
+    privacyConsent: data.has('privacyConsent')
+  };
+}
+
 export function buildInquiryPayload(values = {}) {
   const inquiryType = TYPE_LABELS[values.inquiryType] ? values.inquiryType : 'consultation';
   const sourceChannel = SOURCE_LABELS[values.sourceChannel] ? values.sourceChannel : 'other';
@@ -75,7 +88,8 @@ export function buildInquiryPayload(values = {}) {
       inquiry_type: inquiryType,
       source_channel: sourceChannel,
       external_listing_ref: externalListingRef || null,
-      callback_time: callbackTime
+      callback_time: callbackTime,
+      privacy_consent: values.privacyConsent === true
     }
   };
 }

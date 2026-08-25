@@ -1,5 +1,5 @@
 import { createInquiry } from './services/backendAdapter.js';
-import { buildInquiryPayload, buildInquiryAnalyticsEvent } from './inquiryMvp.js';
+import { buildInquiryPayload, buildInquiryAnalyticsEvent, inquiryValuesFromFormData } from './inquiryMvp.js';
 
 const form = document.querySelector('[data-inquiry-mvp-form]');
 const status = document.querySelector('[data-inquiry-status]');
@@ -55,15 +55,7 @@ async function submitInquiry(event) {
   const data = new FormData(form);
   let payload;
   try {
-    payload = buildInquiryPayload({
-      inquiryType: data.get('inquiryType'),
-      sourceChannel: data.get('sourceChannel'),
-      externalListingRef: data.get('externalListingRef'),
-      name: data.get('name'),
-      phone: data.get('phone'),
-      callbackTime: data.get('callbackTime'),
-      message: data.get('message')
-    });
+    payload = buildInquiryPayload(inquiryValuesFromFormData(data));
   } catch (error) {
     showStatus(error.message || '입력 내용을 확인해 주세요.', 'error');
     form.elements.phone?.focus();
