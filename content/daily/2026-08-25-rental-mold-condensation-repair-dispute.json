@@ -7,7 +7,7 @@
   "evidence_json": [
     {
       "name": "국가법령정보센터 - 민법",
-      "url": "https://www.law.go.kr/LSW/lsInfoP.do?ancNo=20432&ancYd=20240920&efYd=20260101&lsiSeq=265307",
+      "url": "https://www.law.go.kr/법령/민법",
       "coverage": "민법 제623조 임대인의 수선의무, 제627조 차임 감액·해지, 제634조 임차인의 통지의무",
       "caseNo": "민법 제623조·제627조·제634조",
       "checkedAt": "2026-08-25"
