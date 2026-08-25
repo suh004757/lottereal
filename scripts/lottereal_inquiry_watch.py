@@ -12,6 +12,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 import os
+import re
 
 from lottereal_supabase import load_env, supabase_request
 
@@ -55,8 +56,14 @@ def compact(value: str | None, max_len: int = 80) -> str:
     return text if len(text) <= max_len else f"{text[:max_len - 1]}…"
 
 
-def format_message(new_items: list[dict]) -> str:
-    mention = os.environ.get("LOTTEREAL_INQUIRY_MENTION") or ""
+def configured_mention(values: dict[str, str] | None = None) -> str:
+    values = values or load_env()
+    mention = values.get("LOTTEREAL_INQUIRY_MENTION") or os.environ.get("LOTTEREAL_INQUIRY_MENTION") or ""
+    return mention if re.fullmatch(r"<@!?\d+>", mention) else ""
+
+
+def format_message(new_items: list[dict], mention: str | None = None) -> str:
+    mention = configured_mention() if mention is None else mention
     prefix = f"{mention} " if mention else ""
     lines = [f"{prefix}롯데부동산 새 문의가 들어왔습니다."]
     for idx, item in enumerate(new_items[:5], 1):
@@ -100,7 +107,7 @@ def run(limit: int, init_only: bool = False) -> str:
     state["seen_ids"] = list(dict.fromkeys(ids + list(seen)))[:200]
     state["last_checked_at"] = datetime.now(timezone.utc).isoformat()
     save_state(state)
-    return format_message(new_items)
+    return format_message(new_items, mention=configured_mention())
 
 
 def main() -> int:

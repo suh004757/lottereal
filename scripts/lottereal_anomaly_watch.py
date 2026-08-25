@@ -12,8 +12,10 @@ import sys
 import urllib.request
 from pathlib import Path
 
+from lottereal_supabase import load_env
+
 REPO = Path(__file__).resolve().parents[1]
-MENTION = "<@286133857881948171>"
+MENTION = load_env().get("LOTTEREAL_INQUIRY_MENTION", "")
 LIVE_URL = "https://lottes.co.kr/"
 
 
