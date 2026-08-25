@@ -4125,7 +4125,7 @@ h1 {
 .lr-listing-grid {
   grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
   gap: 22px;
 }
 
@@ -4149,9 +4149,18 @@ h1 {
 }
 
 .lr-card--listing-premium {
+  min-width: 0;
+  height: 100%;
   overflow: hidden;
   border: 1px solid rgba(30, 58, 95, 0.09);
   background: #fff;
+}
+
+.lr-card--listing-premium .lr-card__body {
+  min-width: 0;
+  flex: 1;
+  grid-template-rows: auto auto auto auto 1fr auto;
+  box-sizing: border-box;
 }
 
 .lr-listing-thumb {
@@ -4192,10 +4201,12 @@ h1 {
 }
 
 .lr-listing-topline span {
+  min-width: 0;
   color: #64748b;
   font-weight: 800;
   font-size: 13px;
   text-align: right;
+  overflow-wrap: anywhere;
 }
 
 .lr-listing-price {
@@ -4204,6 +4215,7 @@ h1 {
   font-size: clamp(1.4rem, 2vw, 1.9rem);
   font-weight: 900;
   letter-spacing: -0.04em;
+  overflow-wrap: anywhere;
 }
 
 .lr-listing-facts {
@@ -4235,14 +4247,17 @@ h1 {
   margin-top: 18px;
 }
 
-.lr-mobile-actionbar {
-  display: none;
+.lr-listing-actions .lr-btn {
+  min-width: 0;
+  width: 100%;
+  min-height: 48px;
+  padding-inline: 14px;
+  box-sizing: border-box;
+  white-space: nowrap;
 }
 
-@media (max-width: 1080px) {
-  .lr-listing-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+.lr-mobile-actionbar {
+  display: none;
 }
 
 @media (max-width: 720px) {
@@ -4273,7 +4288,9 @@ h1 {
     bottom: 12px;
     z-index: 1200;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
     gap: 8px;
     padding: 8px;
     border-radius: 22px;

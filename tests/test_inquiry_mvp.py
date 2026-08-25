@@ -67,7 +67,7 @@ class InquiryMvpPageTest(unittest.TestCase):
         html = (REPO / 'index.html').read_text(encoding='utf-8')
         css = (REPO / 'style.css').read_text(encoding='utf-8')
         self.assertIn('<a href="contact.html#inquiry-options"><span>💬</span><strong>문의하기</strong></a>', html)
-        self.assertIn('grid-template-columns: repeat(4, 1fr);', css)
+        self.assertIn('grid-auto-columns: minmax(0, 1fr);', css)
 
     def test_listing_detail_uses_guided_chat_with_automatic_listing_context(self):
         html = (REPO / 'listing-detail.html').read_text(encoding='utf-8')
