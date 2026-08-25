@@ -27,6 +27,13 @@ class KnowledgeSearchPageTest(unittest.TestCase):
                 missing.append(name)
         self.assertEqual(missing, [])
 
+    def test_adapter_pages_through_all_published_content(self):
+        text = (REPO / 'js/services/reportAdapter.js').read_text(encoding='utf-8')
+        self.assertIn('listPublishedKnowledgeReports', text)
+        self.assertIn(".select('id, slug, title, summary, report_md, evidence_json", text)
+        self.assertIn('.range(from, to)', text)
+        self.assertIn('while (true)', text)
+
     def test_adapter_has_full_content_reader_for_live_auto_updates(self):
         text = (REPO / 'js/services/reportAdapter.js').read_text(encoding='utf-8')
         self.assertIn('listPublishedKnowledgeReports', text)

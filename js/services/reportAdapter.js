@@ -122,28 +122,39 @@ export async function listPublishedReports({ limit = 10, excludeSlug } = {}) {
   return listReports({ status: 'published', limit, excludeSlug });
 }
 
-export async function listPublishedKnowledgeReports({ limit = 500 } = {}) {
-  const safeLimit = Math.min(Math.max(Number(limit) || 500, 1), 1000);
+export async function listPublishedKnowledgeReports({ batchSize = 200 } = {}) {
+  const safeBatchSize = Math.min(Math.max(Number(batchSize) || 200, 25), 1000);
   const provider = getProvider();
   if (provider !== 'supabase') {
-    return listReportsMock({ status: 'published', limit: safeLimit });
+    return listReportsMock({ status: 'published', limit: safeBatchSize });
   }
 
   const supabase = getSupabaseClient();
-  if (!supabase) return listReportsMock({ status: 'published', limit: safeLimit });
+  if (!supabase) return listReportsMock({ status: 'published', limit: safeBatchSize });
 
-  const { data, error } = await supabase
-    .from('market_reports')
-    .select('id, slug, title, summary, report_md, evidence_json, status, updated_at, created_at, metadata')
-    .eq('status', 'published')
-    .order('updated_at', { ascending: false })
-    .limit(safeLimit);
+  const reports = [];
+  let from = 0;
+  while (true) {
+    const to = from + safeBatchSize - 1;
+    const { data, error } = await supabase
+      .from('market_reports')
+      .select('id, slug, title, summary, report_md, evidence_json, status, updated_at, created_at, metadata')
+      .eq('status', 'published')
+      .order('updated_at', { ascending: false })
+      .order('id', { ascending: false })
+      .range(from, to);
 
-  if (error) {
-    console.error('Supabase knowledge report list error', error);
-    return [];
+    if (error) {
+      console.error('Supabase knowledge report list error', error);
+      return reports;
+    }
+
+    const page = data || [];
+    reports.push(...page);
+    if (page.length < safeBatchSize) break;
+    from += safeBatchSize;
   }
-  return data || [];
+  return reports;
 }
 
 export async function incrementReportViews(slug) {
