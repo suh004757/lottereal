@@ -1,5 +1,6 @@
 import { getSupabaseClient } from '../config/supabaseConfig.js';
 import { APP_CONFIG } from '../config/appConfig.js';
+import { collectPaginatedReports } from './knowledgeReportPager.mjs';
 
 const VIEWED_REPORTS_KEY = 'lottereal:viewedReports';
 
@@ -132,29 +133,16 @@ export async function listPublishedKnowledgeReports({ batchSize = 200 } = {}) {
   const supabase = getSupabaseClient();
   if (!supabase) return listReportsMock({ status: 'published', limit: safeBatchSize });
 
-  const reports = [];
-  let from = 0;
-  while (true) {
-    const to = from + safeBatchSize - 1;
-    const { data, error } = await supabase
+  return collectPaginatedReports({
+    batchSize: safeBatchSize,
+    fetchPage: async (from, to) => supabase
       .from('market_reports')
-      .select('id, slug, title, summary, report_md, evidence_json, status, updated_at, created_at, metadata')
+      .select('id, slug, title, summary, report_md, evidence_json, status, view_count, updated_at, created_at, metadata')
       .eq('status', 'published')
       .order('updated_at', { ascending: false })
       .order('id', { ascending: false })
-      .range(from, to);
-
-    if (error) {
-      console.error('Supabase knowledge report list error', error);
-      return reports;
-    }
-
-    const page = data || [];
-    reports.push(...page);
-    if (page.length < safeBatchSize) break;
-    from += safeBatchSize;
-  }
-  return reports;
+      .range(from, to)
+  });
 }
 
 export async function incrementReportViews(slug) {

@@ -64,6 +64,8 @@ export function buildKnowledgeIndex(reports = []) {
         metadata,
         topics,
         contentType: String(metadata.content_type || 'market_report'),
+        viewCount: Number.isFinite(Number(report.view_count)) ? Math.max(0, Math.floor(Number(report.view_count))) : 0,
+        createdAt: report.created_at || '',
         updatedAt: report.updated_at || report.created_at || metadata.as_of || '',
         labels: detectLabels(searchableText),
         normalizedTitle: normalizeText(report.title),
@@ -79,6 +81,21 @@ export function buildKnowledgeIndex(reports = []) {
     indexedAt: new Date().toISOString(),
     ontologyVersion: '2026-08-v1'
   };
+}
+
+export function selectCommunityPulse(index, { now = new Date().toISOString(), maxAgeDays = 60, limit = 3 } = {}) {
+  const documents = Array.isArray(index?.documents) ? index.documents : [];
+  const nowTime = new Date(now).getTime();
+  const oldestTime = nowTime - Math.max(1, Number(maxAgeDays) || 60) * 86400000;
+  const safeLimit = Math.min(Math.max(Number(limit) || 3, 1), 6);
+
+  return documents
+    .filter((document) => {
+      const createdTime = new Date(document.createdAt || 0).getTime();
+      return document.viewCount >= 2 && Number.isFinite(createdTime) && createdTime >= oldestTime && createdTime <= nowTime;
+    })
+    .sort((a, b) => b.viewCount - a.viewCount || new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, safeLimit);
 }
 
 export function searchKnowledge(index, rawQuery, { limit = 5 } = {}) {
