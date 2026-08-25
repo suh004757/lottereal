@@ -22,7 +22,9 @@ async function initializeLanding() {
   renderIntro();
   renderFocusPoints();
   renderFeaturedReport(featuredReport);
-  renderReportList(relatedReports.filter((report) => report?.slug !== featuredReport?.slug).slice(0, 6));
+  const listReports = relatedReports.filter((report) => report?.slug !== featuredReport?.slug);
+  const listLimit = config.key === 'dispute-cases' ? listReports.length : 6;
+  renderReportList(listReports.slice(0, listLimit));
   renderInsights();
   renderFaq();
   renderCta();
@@ -77,7 +79,7 @@ function renderFeaturedReport(report) {
         <p class="lr-text">${escapeHtml(report.summary || '')}</p>
         <div class="lr-card__meta">
           <span>${formatDate(report.updated_at)}</span>
-          <span>조회수 ${Number(report.view_count || 0).toLocaleString()}회</span>
+          <span>${config.key === 'dispute-cases' ? '판례·법령 검증' : '시장·정책 자료'}</span>
         </div>
         <div class="lr-actions">
           <a class="lr-btn lr-btn--primary" href="report.html?slug=${encodeURIComponent(report.slug)}">최신 리포트 보기</a>
@@ -103,7 +105,7 @@ function renderReportList(reports) {
       <p>${escapeHtml(report.summary || '')}</p>
       <div class="lr-card__meta">
         <span>${formatDate(report.updated_at)}</span>
-        <span>조회수 ${Number(report.view_count || 0).toLocaleString()}회</span>
+        <span>${config.key === 'dispute-cases' ? '판례·법령 검증' : '시장·정책 자료'}</span>
       </div>
       <a class="lr-btn lr-btn--ghost" href="report.html?slug=${encodeURIComponent(report.slug)}">리포트 읽기</a>
     </article>
@@ -181,12 +183,14 @@ function applySeo(featuredReport, reports) {
       inLanguage: 'ko-KR',
       mainEntity: {
         '@type': 'ItemList',
-        itemListElement: reports.slice(0, 6).map((report, index) => ({
+        itemListElement: reports
+          .slice(0, config.key === 'dispute-cases' ? reports.length : 6)
+          .map((report, index) => ({
           '@type': 'ListItem',
           position: index + 1,
           url: buildAbsoluteUrl(`report.html?slug=${encodeURIComponent(report.slug)}`),
           name: report.title
-        }))
+          }))
       },
       primaryImageOfPage: image,
       about: featuredReport?.title || config.heroTitle

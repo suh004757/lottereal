@@ -39,6 +39,14 @@ class DisputeHubTest(unittest.TestCase):
         self.assertIn("key: 'dispute-cases'", config)
         self.assertIn("requiredContentTypes: ['dispute_case']", config)
 
+    def test_dispute_hub_lists_every_published_case_without_low_view_counts(self):
+        script = (REPO / 'js/reportLandingPage.js').read_text(encoding='utf-8')
+        self.assertIn("config.key === 'dispute-cases' ? listReports.length : 6", script)
+        self.assertIn('renderReportList(listReports.slice(0, listLimit))', script)
+        self.assertNotIn('.slice(0, 6)', script)
+        self.assertNotIn('report.view_count', script)
+        self.assertIn("'판례·법령 검증'", script)
+
 
 if __name__ == '__main__':
     unittest.main()
