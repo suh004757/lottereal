@@ -95,6 +95,10 @@ class PrivacyFrontendTests(unittest.TestCase):
         self.assertIn('검색 문장·전화번호·문의 내용은 분석 이벤트로 보내지 않습니다', ko)
         self.assertIn('제28조의8', ko)
         self.assertIn('별도 선택 동의', ko)
+        self.assertIn('데이터 저장: 일본(도쿄)', ko)
+        self.assertIn('Data storage: Tokyo, Japan', en)
+        self.assertNotIn('선택된 프로젝트 저장 리전', ko)
+        self.assertNotIn('Selected project storage region', en)
 
     def test_widget_claim_is_limited_to_search_query_transmission(self):
         text = (ROOT / 'js/knowledgeWidget.js').read_text(encoding='utf-8')
