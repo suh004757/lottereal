@@ -1,16 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-VPG00DG5V1"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag() { dataLayer.push(arguments); }
-    gtag('js', new Date());
-    gtag('config', 'G-VPG00DG5V1');
-  </script>
-  <meta charset="UTF-8">
+  <script src="js/privacyAnalytics.js"></script>
+<meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <title>Listing Details | Lotte Real Estate</title>
   <meta name="description" content="Property details for apartments, offices, officetels, and retail listings in Songpa and Gangnam.">
@@ -35,15 +28,7 @@
     rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="css/mobile.css">
-  <!-- Naver Analytics -->
-  <script type="text/javascript" src="https://wcs.pstatic.net/wcslog.js"></script>
-  <script type="text/javascript">
-    if (!wcs_add) var wcs_add = {};
-    wcs_add["wa"] = "1a98a7eafcb1eb0";
-    if (window.wcs) {
-      wcs_do();
-    }
-  </script>
+  <link rel="stylesheet" href="css/inquiry-mvp.css">
 </head>
 
 <body>
@@ -102,24 +87,25 @@
         <form class="lr-form" data-inquiry-form>
           <div class="lr-form__grid">
             <label>
-              Name
-              <input class="lr-input" name="name" type="text" required />
+              Name (optional)
+              <input class="lr-input" name="name" type="text" maxlength="80" autocomplete="name" />
             </label>
             <label>
               Phone
-              <input class="lr-input" name="phone" type="tel" required />
-            </label>
-            <label>
-              Email (optional)
-              <input class="lr-input" name="email" type="email" />
+              <input class="lr-input" name="phone" type="tel" maxlength="20" inputmode="tel" autocomplete="tel" required />
             </label>
           </div>
           <label>
             Request details
-            <textarea class="lr-input" name="message" rows="4"
+            <textarea class="lr-input" name="message" rows="4" maxlength="1000"
               placeholder="Move-in timing, budget, key conditions"></textarea>
           </label>
+          <label class="lr-inquiry-consent">
+            <input name="privacyConsent" type="checkbox" required>
+            <span>I agree to the collection of my phone number for responding to this inquiry. Optional details may be omitted. Retention: 1 year from collection. <a href="privacy_EN.html">Privacy Policy</a></span>
+          </label>
           <button class="lr-btn lr-btn--primary" type="submit">Submit inquiry</button>
+          <p class="lr-inquiry-status" data-inquiry-status aria-live="polite"></p>
         </form>
       </div>
     </section>

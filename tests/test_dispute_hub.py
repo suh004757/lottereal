@@ -12,7 +12,7 @@ class DisputeHubTest(unittest.TestCase):
             '계약·분쟁 사례',
             'js/reportLandingPage.js',
             'js/analyticsEvents.js',
-            'wcs_add["wa"] = "1a98a7eafcb1eb0"',
+            'js/privacyAnalytics.js',
         )
         self.assertEqual([marker for marker in required if marker not in text], [])
         self.assertEqual(text.count('href="disputes.html" class="active"'), 1)

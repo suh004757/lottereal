@@ -74,10 +74,11 @@ class InquiryMvpPageTest(unittest.TestCase):
 
     def test_privacy_policy_matches_minimal_inquiry_collection(self):
         policy = (REPO / 'privacy.html').read_text(encoding='utf-8')
-        self.assertIn('전화 요청 및 매물·일반 상담', policy)
-        self.assertIn('연락처(전화번호), 문의 유형, 유입 경로, 희망 연락시간', policy)
-        self.assertIn('이름, 외부 플랫폼 매물번호, 문의 내용', policy)
-        self.assertIn('상담 완료 후 1년', policy)
+        self.assertIn('전화 요청·매물 문의·일반 상담', policy)
+        self.assertIn('전화번호, 문의 유형, 유입 경로, 희망 연락시간, 수집·이용 동의', policy)
+        self.assertIn('이름, 외부 매물번호 또는 사이트 내 매물, 문의 내용', policy)
+        self.assertIn('수집일로부터 1년', policy)
+        self.assertIn('광고 발송이나 AI 학습 목적으로 이용하지 않습니다', policy)
 
     def test_home_mobile_actionbar_includes_direct_inquiry_action(self):
         html = (REPO / 'index.html').read_text(encoding='utf-8')
