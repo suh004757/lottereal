@@ -51,7 +51,7 @@ function initializeWidget() {
       <footer>
         <a href="knowledge.html">전체 자료검색 페이지 열기</a>
         <a href="contact.html#inquiry-options">전체 문의 양식</a>
-        <span>자료 질문은 저장 안 함 · 문의만 안전하게 접수</span>
+        <span>검색 문장은 분석 도구로 보내지 않음 · 문의만 안전하게 접수</span>
       </footer>
     </section>
   `;

@@ -4,6 +4,7 @@
  */
 
 import { getListingById, createInquiry } from './services/backendAdapter.js';
+import { buildInquiryAnalyticsEvent, buildInquiryPayload } from './inquiryMvp.js';
 import { buildAbsoluteUrl, renderJsonLd, updateSeoMeta } from './utils/seo.js';
 
 // URL 파라미터에서 리스팅 ID 추출
@@ -19,6 +20,7 @@ const featuresEl = document.querySelector('[data-detail-features]');
 const descEl = document.querySelector('[data-detail-desc]');
 const noteEl = document.querySelector('[data-detail-note]');
 const formEl = document.querySelector('[data-inquiry-form]');
+const formStatus = document.querySelector('[data-inquiry-status]');
 const phoneBtn = document.getElementById('phoneBtn');
 
 /**
@@ -211,30 +213,53 @@ function bindForm(listing) {
   formEl.addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(formEl);
-    const payload = {
-      listingId: listing?.id,
-      listingTitle: listing?.title,
+    if (!formData.has('privacyConsent')) {
+      showFormStatus('Please agree to the privacy notice before submitting.', 'error');
+      return;
+    }
+    let payload;
+    try {
+      payload = buildInquiryPayload({
+        inquiryType: 'listing',
+        sourceChannel: 'website',
+        externalListingRef: '',
+        callbackTime: 'anytime',
+        privacyConsent: formData.has('privacyConsent'),
       name: formData.get('name') || '',
       phone: formData.get('phone') || '',
-      email: formData.get('email') || '',
-      message: formData.get('message') || '',
-      metadata: { source: 'public-detail-en' }
-    };
+        message: formData.get('message') || ''
+      });
+    } catch (_) {
+      showFormStatus('Please check your phone number.', 'error');
+      return;
+    }
+    payload.listingId = listing?.id || null;
+    payload.listingTitle = listing?.title || payload.listingTitle;
+    payload.metadata.entry_point = 'english-listing-detail';
+    const submitButton = formEl.querySelector('button[type="submit"]');
+    if (submitButton) submitButton.disabled = true;
+    showFormStatus('Submitting your inquiry securely…', 'pending');
     try {
-      await createInquiry(payload);
+      const result = await createInquiry(payload);
+      if (!result?.success || result.persisted !== true) throw new Error('INQUIRY_NOT_PERSISTED');
       if (typeof window.gtag === 'function') {
-        window.gtag('event', 'contact_submit', {
-          page_path: window.location.pathname,
-          listing_id: payload.listingId || '',
-          listing_title: payload.listingTitle || '',
-          language: 'en'
-        });
+        const analytics = buildInquiryAnalyticsEvent(payload);
+        window.gtag('event', analytics.name, { ...analytics.params, language: 'en' });
       }
-      alert('Your inquiry has been submitted. We will contact you shortly.');
+      showFormStatus('Your inquiry has been submitted. We will contact you shortly.', 'success');
       formEl.reset();
     } catch (err) {
-      console.error(err);
-      alert('Failed to submit inquiry.');
+      console.error('[English Inquiry] submission failed', err);
+      showFormStatus('Submission failed. Please try again or call us.', 'error');
+    } finally {
+      if (submitButton) submitButton.disabled = false;
     }
   });
+}
+
+function showFormStatus(message, state) {
+  if (!formStatus) return;
+  formStatus.textContent = message;
+  formStatus.dataset.state = state;
+  formStatus.setAttribute('role', state === 'error' ? 'alert' : 'status');
 }

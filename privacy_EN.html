@@ -2,15 +2,8 @@
 <html lang="en">
 
 <head>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VPG00DG5V1"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-        gtag('config', 'G-VPG00DG5V1');
-    </script>
-    <meta charset="UTF-8">
+  <script src="js/privacyAnalytics.js"></script>
+<meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description"
         content="Lotte Real Estate Privacy Policy. Information on collected personal data, purposes, and retention periods.">
@@ -25,6 +18,7 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/mobile.css">
     <style>
         .lr-policy {
             background: var(--lr-surface);
@@ -44,7 +38,7 @@
 
         .lr-policy p,
         .lr-policy li {
-            color: var(--lr-muted);
+            color: var(--lr-text-secondary);
             line-height: 1.8;
             margin-bottom: 12px;
         }
@@ -70,7 +64,7 @@
             border: 1px solid var(--lr-border);
             padding: 12px;
             text-align: left;
-            color: var(--lr-muted);
+            color: var(--lr-text-secondary);
         }
 
         .lr-policy-table th {
@@ -81,7 +75,7 @@
 
         .lr-policy-date {
             text-align: right;
-            color: var(--lr-muted);
+            color: var(--lr-text-secondary);
             font-size: 14px;
             margin-top: 32px;
         }
@@ -97,16 +91,23 @@
             margin: 16px 0;
             border-radius: 0 var(--lr-radius-sm) var(--lr-radius-sm) 0;
         }
+
+        .lr-policy-controls { padding: 16px; border: 1px solid var(--lr-border); border-radius: var(--lr-radius-sm); }
+        .lr-policy-controls div { display: flex; flex-wrap: wrap; gap: 10px; }
+        .lr-policy-controls button { min-height: 44px; padding: 10px 16px; border: 1px solid var(--lr-primary); border-radius: 8px; background: transparent; color: var(--lr-text); cursor: pointer; }
+        .lr-policy-controls button:disabled { opacity: .5; cursor: default; }
+        .lr-policy-controls button:focus-visible { outline: 3px solid #8a5b28; outline-offset: 3px; }
+
+        @media (max-width: 640px) {
+            .lr-policy { padding: 20px; }
+            .lr-policy-table, .lr-policy-table tbody, .lr-policy-table tr, .lr-policy-table td { display: block; width: 100%; }
+            .lr-policy-table thead { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+            .lr-policy-table tr { margin-bottom: 14px; border: 1px solid var(--lr-border); border-radius: 8px; overflow: hidden; }
+            .lr-policy-table td { box-sizing: border-box; border: 0; border-bottom: 1px solid var(--lr-border); padding: 12px; }
+            .lr-policy-table td:last-child { border-bottom: 0; }
+            .lr-policy-table td::before { content: attr(data-label); display: block; margin-bottom: 4px; color: var(--lr-text); font-weight: 700; }
+        }
     </style>
-  <!-- Naver Analytics -->
-  <script type="text/javascript" src="https://wcs.pstatic.net/wcslog.js"></script>
-  <script type="text/javascript">
-    if (!wcs_add) var wcs_add = {};
-    wcs_add["wa"] = "1a98a7eafcb1eb0";
-    if (window.wcs) {
-      wcs_do();
-    }
-  </script>
 </head>
 
 <body>
@@ -140,446 +141,70 @@
 
         <section class="lr-section">
             <div class="lr-container">
-
-                <!-- Article 1: Collection Items -->
-                <div class="lr-policy">
-                    <h3>Article 1 (Personal Information Collected and Collection Methods)</h3>
-
-                    <p><strong>1. Personal Information Collected</strong></p>
-                    <table class="lr-policy-table">
-                        <thead>
-                            <tr>
-                                <th>Purpose</th>
-                                <th>Required Items</th>
-                                <th>Optional Items</th>
-                                <th>Retention Period</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Property consultation and inquiry response</td>
-                                <td>Name, Phone number</td>
-                                <td>Email</td>
-                                <td>1 year after consultation</td>
-                            </tr>
-                            <tr>
-                                <td>Property listing service</td>
-                                <td>Name, Phone number, Property info (address, price)</td>
-                                <td>Email, Description</td>
-                                <td>3 years after listing or upon deletion request</td>
-                            </tr>
-                            <tr>
-                                <td>Membership registration and management</td>
-                                <td>Email, Password</td>
-                                <td>Name, Phone number</td>
-                                <td>Until membership withdrawal</td>
-                            </tr>
-                            <tr>
-                                <td>Marketing information (optional consent)</td>
-                                <td>-</td>
-                                <td>Email, Phone number</td>
-                                <td>Until consent withdrawal</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <div class="lr-policy-highlight">
-                        <strong>※ Note on Optional Items:</strong> Services can be used without providing optional
-                        items. However, some additional services (e.g., email notifications) may be limited if optional
-                        items are not provided.
-                    </div>
-
-                    <p><strong>2. Automatically Collected Information</strong></p>
-                    <table class="lr-policy-table">
-                        <thead>
-                            <tr>
-                                <th>Collected Items</th>
-                                <th>Purpose</th>
-                                <th>Retention Period</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>IP address, Access time, Browser information</td>
-                                <td>Service usage statistics, Fraud prevention</td>
-                                <td>3 months</td>
-                            </tr>
-                            <tr>
-                                <td>Cookies</td>
-                                <td>Login maintenance, User settings</td>
-                                <td>Until browser closure or 1 year</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <div class="lr-policy-highlight">
-                        <strong>※ How to Reject Cookies:</strong> Users can refuse cookie storage through browser
-                        settings.<br>
-                        - Chrome: Settings → Privacy and security → Cookies and other site data<br>
-                        - Safari: Preferences → Privacy → Manage Website Data
-                    </div>
-
-                    <p><strong>3. Collection Methods</strong></p>
+                <div class="lr-policy lr-policy-highlight">
+                    <h3>At a glance</h3>
                     <ul>
-                        <li>Consultation request forms and property listing forms on the website</li>
-                        <li>Membership registration process</li>
-                        <li>Direct inquiries via phone and email</li>
-                        <li>Automatic generation/collection during service use</li>
+                        <li>Only a phone number is required for an online inquiry. Name and inquiry details are optional.</li>
+                        <li>Inquiry records are retained for 1 year from collection and then deleted.</li>
+                        <li>Search queries, phone numbers and inquiry text are not sent in analytics events.</li>
+                        <li>We currently do not operate customer accounts, marketing subscriptions or server-synced saved areas.</li>
                     </ul>
                 </div>
 
-                <!-- Article 2: Legal Basis -->
                 <div class="lr-policy">
-                    <h3>Article 2 (Legal Basis for Processing Personal Information)</h3>
-                    <p>The Company processes personal information based on the following legal grounds.</p>
+                    <h3>1. Personal information we process</h3>
                     <table class="lr-policy-table">
-                        <thead>
-                            <tr>
-                                <th>Legal Basis</th>
-                                <th>Applicable Activities</th>
-                                <th>Relevant Law</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><strong>Consent of the data subject</strong></td>
-                                <td>Membership registration, Marketing information</td>
-                                <td>PIPA Article 15(1)1</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Contract performance</strong></td>
-                                <td>Property consultation, Brokerage services</td>
-                                <td>PIPA Article 15(1)4</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Legal obligation compliance</strong></td>
-                                <td>Transaction record retention, Tax-related information</td>
-                                <td>PIPA Article 15(1)2</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Legitimate interests</strong></td>
-                                <td>Service improvement, Fraud prevention</td>
-                                <td>PIPA Article 15(1)6</td>
-                            </tr>
-                        </tbody>
+                        <thead><tr><th>Service</th><th>Required</th><th>Optional</th><th>Purpose and retention</th></tr></thead>
+                        <tbody><tr><td data-label="Service">Callback, listing inquiry or general consultation</td><td data-label="Required">Phone number, inquiry type, source channel, preferred callback time and consent</td><td data-label="Optional">Name, external or internal listing reference and inquiry details</td><td data-label="Purpose and retention">Responding to the inquiry<br>1 year from collection</td></tr></tbody>
                     </table>
+                    <p>Information is collected through the website inquiry form and guided inquiry assistant. If you do not consent, you can contact us by phone instead.</p>
+                    <p>The legal basis is the data subject's consent under Article 15(1)1 of Korea's Personal Information Protection Act. We do not use inquiry data for advertising or AI model training.</p>
                 </div>
 
-                <!-- Article 3: Purpose -->
                 <div class="lr-policy">
-                    <h3>Article 3 (Purpose of Collection and Use of Personal Information)</h3>
-                    <p>The Company uses collected personal information for the following purposes.</p>
+                    <h3>2. Visit analytics and browser storage</h3>
+                    <p>We use Google Analytics 4 to improve the website. Page paths, browser and device information, approximate area, visit and button interaction data, and an analytics cookie identifier may be processed.</p>
                     <ul>
-                        <li><strong>Service Provision:</strong> Real estate consultation, Property information
-                            provision, Contract support</li>
-                        <li><strong>Member Management:</strong> Identity verification for membership services,
-                            Prevention of unauthorized use</li>
-                        <li><strong>Complaint Handling:</strong> Identity verification, Complaint confirmation, Contact
-                            for investigation, Notification of results</li>
-                        <li><strong>Marketing and Advertising:</strong> New property announcements, Event information
-                            <em>(only with separate consent)</em>
-                        </li>
-                        <li><strong>Service Improvement:</strong> Service usage statistics analysis, New service
-                            development</li>
+                        <li>URL query strings are removed from both page-location and referrer values before they are sent.</li>
+                        <li>Google Signals and ad-personalization signals are disabled.</li>
+                        <li>Analytics cookie expiry is limited to 90 days.</li>
+                        <li>Analytics starts only after a separate choice to allow it, and Do Not Track is respected.</li>
+                        <li>Search queries, phone numbers, names and inquiry text are excluded from analytics events.</li>
                     </ul>
-                </div>
-
-                <!-- Article 4: Retention Period -->
-                <div class="lr-policy">
-                    <h3>Article 4 (Retention and Use Period of Personal Information)</h3>
-                    <p>The Company processes and retains personal information within the retention period stipulated by
-                        law or agreed upon when collecting personal information from the data subject.</p>
-
-                    <p><strong>1. Retention Period per Company Policy</strong></p>
-                    <ul>
-                        <li><strong>Consultation records:</strong> 1 year after consultation completion</li>
-                        <li><strong>Property listing information:</strong> 3 years after listing or upon user deletion
-                            request</li>
-                        <li><strong>Member information:</strong> Until membership withdrawal</li>
-                        <li><strong>Marketing consent information:</strong> Until consent withdrawal</li>
-                    </ul>
-
-                    <p><strong>2. Retention Period per Applicable Laws</strong></p>
-                    <table class="lr-policy-table">
-                        <thead>
-                            <tr>
-                                <th>Retention Items</th>
-                                <th>Period</th>
-                                <th>Legal Basis</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Records of contracts or subscription withdrawal</td>
-                                <td>5 years</td>
-                                <td>E-Commerce Act</td>
-                            </tr>
-                            <tr>
-                                <td>Records of payment and supply of goods</td>
-                                <td>5 years</td>
-                                <td>E-Commerce Act</td>
-                            </tr>
-                            <tr>
-                                <td>Records of consumer complaints or dispute resolution</td>
-                                <td>3 years</td>
-                                <td>E-Commerce Act</td>
-                            </tr>
-                            <tr>
-                                <td>Website access logs</td>
-                                <td>3 months</td>
-                                <td>Protection of Communications Secrets Act</td>
-                            </tr>
-                            <tr>
-                                <td>Real estate brokerage records</td>
-                                <td>5 years</td>
-                                <td>Licensed Real Estate Agent Act</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Article 5: Third Party Provision -->
-                <div class="lr-policy">
-                    <h3>Article 5 (Provision of Personal Information to Third Parties)</h3>
-                    <p>The Company does not provide users' personal information to third parties in principle. However,
-                        exceptions are made in the following cases.</p>
-                    <ul>
-                        <li>When the user has given prior consent</li>
-                        <li>When required by law or requested by investigative agencies in accordance with legal
-                            procedures</li>
-                        <li>When contact information needs to be provided to the counterparty during brokerage contract
-                            conclusion (with separate consent)</li>
-                    </ul>
-                </div>
-
-                <!-- Article 6: Processing Entrustment -->
-                <div class="lr-policy">
-                    <h3>Article 6 (Entrustment of Personal Information Processing)</h3>
-                    <p>The Company entrusts personal information processing as follows for smooth service provision.</p>
-
-                    <table class="lr-policy-table">
-                        <thead>
-                            <tr>
-                                <th>Trustee</th>
-                                <th>Entrusted Tasks</th>
-                                <th>Retention Period</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Supabase Inc.</td>
-                                <td>Database hosting and member authentication services</td>
-                                <td>Until termination of entrustment contract</td>
-                            </tr>
-                            <tr>
-                                <td>Google LLC</td>
-                                <td>Map services, Web analytics (Google Analytics)</td>
-                                <td>Until termination of entrustment contract</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <p>When concluding entrustment contracts, the Company specifies matters regarding prohibition of
-                        processing personal information beyond the purpose, technical and administrative protection
-                        measures, restrictions on re-entrustment, supervision of trustees, and liability for damages in
-                        accordance with Article 26 of PIPA, and supervises whether trustees process personal information
-                        safely.</p>
-                </div>
-
-                <!-- Article 7: Overseas Transfer -->
-                <div class="lr-policy">
-                    <h3>Article 7 (Overseas Transfer of Personal Information)</h3>
-                    <p>The Company transfers personal information overseas as follows for service provision.</p>
-
-                    <table class="lr-policy-table">
-                        <thead>
-                            <tr>
-                                <th>Recipient</th>
-                                <th>Country</th>
-                                <th>Transferred Items</th>
-                                <th>Purpose</th>
-                                <th>Retention Period</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Supabase Inc.</td>
-                                <td>USA</td>
-                                <td>Email, Password (encrypted), Member information</td>
-                                <td>Member authentication and data storage</td>
-                                <td>Until membership withdrawal</td>
-                            </tr>
-                            <tr>
-                                <td>Google LLC</td>
-                                <td>USA</td>
-                                <td>IP address, Browser information, Access logs</td>
-                                <td>Map services, Web analytics</td>
-                                <td>26 months after collection</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <div class="lr-policy-highlight">
-                        <strong>※ Right to Refuse Overseas Transfer:</strong><br>
-                        Users have the right to refuse consent to overseas transfer. However, refusal may restrict
-                        membership registration and use of certain services. To refuse, please contact customer service
-                        at 0507-1402-5055.
+                    <p>Report identifiers used to prevent duplicate view counts and language choice are held in sessionStorage and removed when the browser session ends. Your analytics choice is stored in this browser's localStorage.</p>
+                    <div class="lr-policy-controls" id="analytics-control">
+                        <p data-analytics-status role="status">Checking analytics settings.</p>
+                        <div><button type="button" data-analytics-disable>Disable analytics</button><button type="button" data-analytics-enable>Enable analytics</button></div>
                     </div>
                 </div>
 
-                <!-- Article 8: Destruction -->
                 <div class="lr-policy">
-                    <h3>Article 8 (Procedures and Methods for Destruction of Personal Information)</h3>
-                    <p>The Company destroys personal information without delay when it becomes unnecessary due to
-                        expiration of the retention period or achievement of processing purposes.</p>
-                    <ul>
-                        <li><strong>Destruction Procedure:</strong> Unnecessary personal information is destroyed after
-                            approval by the Privacy Officer.</li>
-                        <li><strong>Destruction Method:</strong> Electronic files are permanently deleted using
-                            irreversible methods; paper documents are shredded or incinerated.</li>
-                        <li><strong>Destruction Deadline:</strong> Within 5 days from the end of the retention period
-                        </li>
-                    </ul>
-                </div>
-
-                <!-- Article 9: Data Subject Rights -->
-                <div class="lr-policy">
-                    <h3>Article 9 (Rights and Obligations of Data Subjects and Exercise Methods)</h3>
-                    <p>Users can exercise the following rights as data subjects.</p>
-
-                    <p><strong>1. Exercisable Rights</strong></p>
-                    <ul>
-                        <li>Request to access personal information</li>
-                        <li>Request for correction in case of errors</li>
-                        <li>Request for deletion</li>
-                        <li>Request to suspend processing</li>
-                        <li>Withdrawal of consent</li>
-                    </ul>
-
-                    <p><strong>2. How to Exercise Rights</strong></p>
-                    <ul>
-                        <li><strong>Phone:</strong> 0507-1402-5055</li>
-                        <li><strong>Visit:</strong> 1F, 27 Baekjegobun-ro 27-gil, Songpa-gu, Seoul</li>
-                        <li><strong>Mail:</strong> Send personal information access/correction/deletion request to the
-                            above address</li>
-                    </ul>
-
-                    <p><strong>3. Processing Timeline and Procedure</strong></p>
-                    <ul>
-                        <li>Requests are processed after identity verification.</li>
-                        <li>Results are notified <strong>within 10 days</strong> of receiving the request.</li>
-                        <li>Personal information subject to correction/deletion requests will not be used until
-                            completion.</li>
-                    </ul>
-
-                    <p><strong>4. Restrictions on Exercise of Rights</strong></p>
-                    <p>Exercise of rights may be restricted in the following cases pursuant to PIPA Articles 35(4),
-                        36(1), and 37(2).</p>
-                    <ul>
-                        <li>When there are special provisions in law or when unavoidable for compliance with legal
-                            obligations</li>
-                        <li>When there is concern of harm to another person's life or body, or unfair infringement of
-                            property and interests</li>
-                        <li>When contract performance becomes difficult without processing personal information</li>
-                    </ul>
-                </div>
-
-                <!-- Article 10: Safety Measures -->
-                <div class="lr-policy">
-                    <h3>Article 10 (Measures to Ensure Safety of Personal Information)</h3>
-                    <p>The Company takes the following measures to ensure the safety of personal information.</p>
-                    <ul>
-                        <li><strong>Administrative Measures:</strong> Establishment and implementation of internal
-                            management plans, Regular employee training</li>
-                        <li><strong>Technical Measures:</strong> Access authority management for personal information
-                            processing systems, Installation of access control systems, Encryption of personal
-                            information (passwords, etc.), SSL/TLS encrypted communication</li>
-                        <li><strong>Physical Measures:</strong> Access control to computer rooms and data storage
-                            facilities</li>
-                    </ul>
-                </div>
-
-                <!-- Article 11: Privacy Officer -->
-                <div class="lr-policy">
-                    <h3>Article 11 (Privacy Officer)</h3>
-                    <p>The Company designates a Privacy Officer as follows to take overall responsibility for personal
-                        information processing and to handle data subject complaints and damage relief related to
-                        personal information processing.</p>
+                    <h3>3. Processors and overseas transfer</h3>
                     <table class="lr-policy-table">
+                        <thead><tr><th>Provider</th><th>Task and data</th><th>Method and country</th><th>Basis</th><th>Retention</th></tr></thead>
                         <tbody>
-                            <tr>
-                                <th>Title</th>
-                                <td>Privacy Officer</td>
-                            </tr>
-                            <tr>
-                                <th>Name</th>
-                                <td>SUH BONG HYUN</td>
-                            </tr>
-                            <tr>
-                                <th>Contact</th>
-                                <td>0507-1402-5055</td>
-                            </tr>
-                            <tr>
-                                <th>Address</th>
-                                <td>1F, 27 Baekjegobun-ro 27-gil, Songpa-gu, Seoul, Korea</td>
-                            </tr>
+                            <tr><td data-label="Provider">Supabase Inc. and its contractual processing entity</td><td data-label="Task and data">Inquiry database hosting<br>Inquiry data described in Section 1</td><td data-label="Method and country">Encrypted network transfer upon submission<br>Selected project storage region and processing facilities including the US and Singapore</td><td data-label="Basis">PIPA Article 28-8(1)(3)<br>Processing/storage necessary to perform the requested consultation</td><td data-label="Retention">1 year from collection</td></tr>
+                            <tr><td data-label="Provider">Google LLC</td><td data-label="Task and data">Visit analytics<br>Analytics data described in Section 2</td><td data-label="Method and country">Encrypted network transfer only after analytics is allowed<br>United States and countries where Google data centers operate</td><td data-label="Basis">PIPA Article 28-8(1)(1)<br>Separate optional consent</td><td data-label="Retention">According to our analytics settings and Google's policy</td></tr>
                         </tbody>
                     </table>
+                    <p>You can use the site and inquiry functions without allowing Google Analytics. If you do not want inquiry information stored overseas, do not use the web form and contact us by phone.</p>
+                    <p>Map buttons open Google or Naver websites. Their privacy policies apply after you leave this site.</p>
                 </div>
 
-                <!-- Article 12: Policy Changes -->
                 <div class="lr-policy">
-                    <h3>Article 12 (Changes to Privacy Policy)</h3>
-                    <p>This Privacy Policy is effective from the effective date, and if there are additions, deletions,
-                        or corrections to changes in accordance with laws and policies, we will notify through
-                        announcements <strong>7 days before</strong> the implementation of changes.</p>
-                    <p>For significant changes, we will provide notice <strong>30 days in advance</strong>.</p>
+                    <h3>4. Third-party disclosure, deletion and security</h3>
+                    <p>We do not disclose inquiry data to third parties unless required by law or separately agreed by the data subject.</p>
+                    <p>Electronic records are deleted using methods designed to prevent recovery when retention ends or the purpose is achieved. Inquiry data is protected by access controls, database policies that block public reads, and encryption in transit.</p>
                 </div>
 
-                <!-- Article 13: Remedies -->
                 <div class="lr-policy">
-                    <h3>Article 13 (Remedies for Rights Infringement)</h3>
-                    <p>If you need to report or consult about personal information infringement, please contact the
-                        following organizations.</p>
-                    <table class="lr-policy-table">
-                        <thead>
-                            <tr>
-                                <th>Organization</th>
-                                <th>Contact</th>
-                                <th>Website</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Personal Information Infringement Report Center</td>
-                                <td>118 (Korea)</td>
-                                <td>privacy.kisa.or.kr</td>
-                            </tr>
-                            <tr>
-                                <td>Personal Information Dispute Mediation Committee</td>
-                                <td>1833-6972</td>
-                                <td>kopico.go.kr</td>
-                            </tr>
-                            <tr>
-                                <td>Supreme Prosecutors' Office Cyber Investigation</td>
-                                <td>1301 (Korea)</td>
-                                <td>spo.go.kr</td>
-                            </tr>
-                            <tr>
-                                <td>National Police Agency Cyber Bureau</td>
-                                <td>182 (Korea)</td>
-                                <td>cyberbureau.police.go.kr</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <h3>5. Your rights and contact</h3>
+                    <p>After identity verification, you may request access, correction, deletion, suspension of processing, or withdrawal of consent.</p>
+                    <ul><li>Privacy Officer: SUH BONG HYUN</li><li>Phone: 0507-1402-5055</li><li>Address: 1F, 27 Baekjegobun-ro 27-gil, Songpa-gu, Seoul, Korea</li></ul>
+                    <p>In Korea, you may also contact the Personal Information Infringement Report Center (118) or the Personal Information Dispute Mediation Committee (1833-6972).</p>
                 </div>
 
-                <p class="lr-policy-date">
-                    <strong>Announcement Date:</strong> December 15, 2025<br>
-                    <strong>Effective Date:</strong> December 15, 2025<br>
-                    <strong>Version:</strong> v1.0
-                </p>
-
+                <p class="lr-policy-date"><strong>Published and effective:</strong> August 26, 2026<br><strong>Version:</strong> v2.0</p>
             </div>
         </section>
     </main>
