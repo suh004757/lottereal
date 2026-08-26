@@ -1,4 +1,5 @@
 import { listPublishedReports } from './services/reportAdapter.js';
+import { filterContentForLanguage } from './localizedHomeContent.mjs';
 
 const section = document.querySelector('[data-report-section]');
 
@@ -13,8 +14,8 @@ if (section) {
   const copy = isEnglish
     ? {
         loading: 'Loading latest reports...',
-        emptyTitle: 'No published reports yet.',
-        emptySummary: 'Published reports will appear here automatically.',
+        emptyTitle: 'Start with our English Seoul property guide.',
+        emptySummary: 'Reviewed English market notes will appear here as they are published.',
         errorTitle: 'Failed to load reports.',
         errorSummary: 'Please try again later.',
         published: 'Published',
@@ -54,7 +55,8 @@ if (section) {
 
   async function loadReports() {
     try {
-      const reports = await listPublishedReports({ limit: 30 });
+      const publishedReports = await listPublishedReports({ limit: 30 });
+      const reports = filterContentForLanguage(publishedReports, isEnglish ? 'en' : 'ko');
       if (!reports.length) {
         renderEmpty();
         return;

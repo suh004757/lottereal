@@ -4,6 +4,7 @@
  */
 
 import { listExternalFeeds } from './services/backendAdapter.js';
+import { filterContentForLanguage } from './localizedHomeContent.mjs';
 
 // DOM 요소 참조
 const feedContainer = document.querySelector('[data-feed-list]');
@@ -17,7 +18,8 @@ async function initFeeds() {
   if (!feedContainer) return;
   setLoading();
   try {
-    const feeds = await listExternalFeeds({ limit: 8 });
+    const publishedFeeds = await listExternalFeeds({ limit: 8 });
+    const feeds = filterContentForLanguage(publishedFeeds, isEnglish ? 'en' : 'ko');
     if (!feeds || feeds.length === 0) {
       setEmpty();
       setUpdatedText(null);
@@ -66,7 +68,7 @@ function setLoading() {
  * 빈 상태를 표시합니다.
  */
 function setEmpty() {
-  feedContainer.innerHTML = `<p class="lr-text">${isEnglish ? 'No updates available yet.' : '표시할 업데이트가 없습니다.'}</p>`;
+  feedContainer.innerHTML = `<p class="lr-text">${isEnglish ? 'English updates will appear here after they are reviewed.' : '표시할 업데이트가 없습니다.'}</p>`;
 }
 
 /**
