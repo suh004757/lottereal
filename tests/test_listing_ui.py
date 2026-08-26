@@ -18,6 +18,13 @@ def primary_navigation(html):
 
 
 class ListingUiTest(unittest.TestCase):
+    def test_english_home_does_not_present_category_examples_as_live_inventory(self):
+        html = (REPO / 'EN.html').read_text(encoding='utf-8')
+        self.assertNotIn('Properties available right now', html)
+        self.assertNotIn('Featured Listings', html)
+        self.assertIn('Property types we can help you find', html)
+        self.assertIn('Availability is confirmed before a viewing is arranged.', html)
+
     def test_recommended_listing_navigation_link_is_removed_but_home_content_stays(self):
         for path in korean_pages():
             html = path.read_text(encoding='utf-8')
