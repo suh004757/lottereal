@@ -85,22 +85,6 @@
     <priority>0.80</priority>
   </url>
 
-  <!-- 인사이트 -->
-  <url>
-    <loc>https://lottes.co.kr/insights.html</loc>
-    <lastmod>2026-03-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.75</priority>
-  </url>
-
-  <!-- 인사이트 상세 -->
-  <url>
-    <loc>https://lottes.co.kr/insight-detail.html</loc>
-    <lastmod>2026-03-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.65</priority>
-  </url>
-
   <!-- 매물 상세 KR -->
   <url>
     <loc>https://lottes.co.kr/listing-detail.html</loc>
