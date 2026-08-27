@@ -25,6 +25,13 @@ class ListingUiTest(unittest.TestCase):
         self.assertIn('Property types we can help you find', html)
         self.assertIn('Availability is confirmed before a viewing is arranged.', html)
 
+    def test_english_listings_offer_an_honest_consultation_fallback(self):
+        html = (REPO / 'listings-en.html').read_text(encoding='utf-8')
+        self.assertIn("Can't find the right match?", html)
+        self.assertIn('check current availability before arranging a viewing', html)
+        self.assertIn('href="tel:050714025055">Call for current options</a>', html)
+        self.assertIn('href="contact_EN.html">Plan a visit</a>', html)
+
     def test_recommended_listing_navigation_link_is_removed_but_home_content_stays(self):
         for path in korean_pages():
             html = path.read_text(encoding='utf-8')
