@@ -1,5 +1,6 @@
 import { listPublishedReports } from './services/reportAdapter.js';
 import { filterContentForLanguage } from './localizedHomeContent.mjs';
+import { formatReportDateMeta } from './utils/reportDates.mjs';
 
 const section = document.querySelector('[data-report-section]');
 
@@ -126,7 +127,7 @@ if (section) {
           <h3>${escapeHtml(report.title || 'Report')}</h3>
           <p class="lr-text">${escapeHtml(extractSummary(report))}</p>
           <div class="lr-card__meta">
-            <span>${formatUpdated(report.updated_at)}</span>
+            <span>${formatReportDateMeta(report, { locale: isEnglish ? 'en-US' : 'ko-KR' })}</span>
           </div>
           <div class="lr-actions">
             <a class="lr-btn lr-btn--primary" href="${getReportHref(report.slug)}">${copy.cta}</a>
@@ -144,7 +145,7 @@ if (section) {
           <h3>${escapeHtml(report.title || 'Report')}</h3>
           <p class="lr-text">${escapeHtml(extractSummary(report))}</p>
           <div class="lr-card__meta">
-            <span>${formatUpdated(report.updated_at)}</span>
+            <span>${formatReportDateMeta(report, { locale: isEnglish ? 'en-US' : 'ko-KR' })}</span>
           </div>
           <div class="lr-actions">
             <a class="lr-btn lr-btn--primary" href="${getReportHref(report.slug)}">${copy.cta}</a>
@@ -192,15 +193,6 @@ if (section) {
       .split(/\n\n+/)
       .map((block) => block.replace(/[#>*-]/g, '').trim())
       .filter(Boolean)[0] || '';
-  }
-
-  function formatUpdated(ts) {
-    if (!ts) return '';
-    return new Date(ts).toLocaleDateString(isEnglish ? 'en-US' : 'ko-KR', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
   }
 
   function getReportHref(slug) {

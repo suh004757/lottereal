@@ -1,6 +1,7 @@
 import { getLatestReport, listPublishedReports } from './services/reportAdapter.js';
 import { buildAbsoluteUrl, renderJsonLd, updateSeoMeta } from './utils/seo.js';
 import { getReportLandingConfigByKey } from './config/reportLandingConfig.js';
+import { compareReportsByPublication, formatReportDateMeta } from './utils/reportDates.mjs';
 
 const landingKey = document.body.dataset.reportLanding;
 const config = getReportLandingConfigByKey(landingKey);
@@ -37,7 +38,7 @@ function renderHero(featuredReport) {
   setText('report-landing-summary', config.heroBody);
   setText(
     'report-landing-updated',
-    featuredReport?.updated_at ? formatDate(featuredReport.updated_at) : '최신 발행 기준'
+    featuredReport ? formatReportDateMeta(featuredReport) : '최신 발행 기준'
   );
 }
 
@@ -78,7 +79,7 @@ function renderFeaturedReport(report) {
         <h3>${escapeHtml(report.title || '')}</h3>
         <p class="lr-text">${escapeHtml(report.summary || '')}</p>
         <div class="lr-card__meta">
-          <span>${formatDate(report.updated_at)}</span>
+          <span>${formatReportDateMeta(report)}</span>
           <span>${config.key === 'dispute-cases' ? '판례·법령 검증' : '시장·정책 자료'}</span>
         </div>
         <div class="lr-actions">
@@ -104,7 +105,7 @@ function renderReportList(reports) {
       <h3>${escapeHtml(report.title || '')}</h3>
       <p>${escapeHtml(report.summary || '')}</p>
       <div class="lr-card__meta">
-        <span>${formatDate(report.updated_at)}</span>
+        <span>${formatReportDateMeta(report)}</span>
         <span>${config.key === 'dispute-cases' ? '판례·법령 검증' : '시장·정책 자료'}</span>
       </div>
       <a class="lr-btn lr-btn--ghost" href="report.html?slug=${encodeURIComponent(report.slug)}">리포트 읽기</a>
@@ -205,11 +206,8 @@ function getRelatedReports(reports, landingConfig) {
       score: scoreReport(report, landingConfig)
     }))
     .filter((entry) => entry.score > 0)
-    .sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      return new Date(b.report.updated_at) - new Date(a.report.updated_at);
-    })
-    .map((entry) => entry.report);
+    .map((entry) => entry.report)
+    .sort(compareReportsByPublication);
 }
 
 function scoreReport(report, landingConfig) {
@@ -263,14 +261,6 @@ function setText(id, value) {
   if (node) node.textContent = value;
 }
 
-function formatDate(value) {
-  if (!value) return '';
-  return new Date(value).toLocaleDateString('ko-KR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-}
 
 function escapeHtml(value = '') {
   return String(value)
