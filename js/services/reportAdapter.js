@@ -1,6 +1,7 @@
 import { getSupabaseClient } from '../config/supabaseConfig.js';
 import { APP_CONFIG } from '../config/appConfig.js';
 import { collectPaginatedReports } from './knowledgeReportPager.mjs';
+import { compareReportsByPublication } from '../utils/reportDates.mjs';
 
 const VIEWED_REPORTS_KEY = 'lottereal:viewedReports';
 
@@ -139,7 +140,7 @@ export async function listPublishedKnowledgeReports({ batchSize = 200 } = {}) {
       .from('market_reports')
       .select('id, slug, title, summary, report_md, evidence_json, status, view_count, updated_at, created_at, metadata')
       .eq('status', 'published')
-      .order('updated_at', { ascending: false })
+      .order('created_at', { ascending: false })
       .order('id', { ascending: false })
       .range(from, to)
   });
@@ -258,7 +259,7 @@ async function listReportsSupabase({ status, limit, excludeSlug }) {
   let query = supabase
     .from('market_reports')
     .select('id, slug, title, summary, status, updated_at, created_at, view_count, metadata')
-    .order('updated_at', { ascending: false })
+    .order('created_at', { ascending: false })
     .limit(limit);
 
   if (status) {
@@ -297,7 +298,7 @@ function listReportsMock({ status, limit = 10, excludeSlug } = {}) {
   if (excludeSlug) {
     reports = reports.filter((report) => report.slug !== excludeSlug);
   }
-  reports.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+  reports.sort(compareReportsByPublication);
   return reports.slice(0, limit).map(cloneReport);
 }
 

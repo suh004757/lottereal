@@ -6,6 +6,12 @@ import {
 } from './services/reportAdapter.js';
 import { findMatchingLandingConfigs } from './config/reportLandingConfig.js';
 import { buildAbsoluteUrl, renderJsonLd, updateSeoMeta } from './utils/seo.js';
+import {
+  compareReportsByPublication,
+  formatReportDateMeta,
+  getPublicationDate,
+  getRevisionDate
+} from './utils/reportDates.mjs';
 
 const urlParams = new URLSearchParams(window.location.search);
 const reportSlug = urlParams.get('slug');
@@ -64,7 +70,7 @@ function renderMetadata() {
 
   if (titleNode) titleNode.textContent = currentReport.title || '';
   if (summaryNode) summaryNode.textContent = currentReport.summary || '';
-  if (updatedNode) updatedNode.textContent = formatDate(currentReport.updated_at);
+  if (updatedNode) updatedNode.textContent = formatReportDateMeta(currentReport);
   if (sourceNode) sourceNode.textContent = summarizeSources(currentReport);
 
   renderContextualDisclaimers();
@@ -94,15 +100,25 @@ function renderRevisions() {
   const listDiv = document.getElementById('revision-list');
   if (!listDiv) return;
 
-  listDiv.innerHTML = `
+  const published = getPublicationDate(currentReport);
+  const revised = getRevisionDate(currentReport);
+  const revisionItem = revised ? `
     <div class="lr-revision-item">
       <div class="lr-revision-header">
-        <span class="lr-revision-version">Latest</span>
-        <span class="lr-revision-date">${formatDate(currentReport.updated_at)}</span>
+        <span class="lr-revision-version">수정됨</span>
+        <span class="lr-revision-date">${formatDate(revised)}</span>
       </div>
-      <p class="lr-revision-changes">최종 업데이트</p>
+      <p class="lr-revision-changes">원래 발행일을 유지한 내용 보완</p>
     </div>
-  `;
+  ` : '';
+  listDiv.innerHTML = `${revisionItem}
+    <div class="lr-revision-item">
+      <div class="lr-revision-header">
+        <span class="lr-revision-version">발행</span>
+        <span class="lr-revision-date">${formatDate(published)}</span>
+      </div>
+      <p class="lr-revision-changes">최초 발행</p>
+    </div>`;
 }
 
 function renderArchive() {
@@ -150,7 +166,7 @@ function renderRelatedReports() {
     .filter((entry) => entry.score > 0)
     .sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
-      return new Date(b.report.updated_at) - new Date(a.report.updated_at);
+      return compareReportsByPublication(a.report, b.report);
     })
     .map((entry) => entry.report)
     .slice(0, 4);
@@ -193,7 +209,7 @@ function renderNeighborCard(label, report) {
       <p class="lr-kicker">${escapeHtml(label)}</p>
       <h3>${escapeHtml(report.title || '')}</h3>
       <p>${escapeHtml(report.summary || '')}</p>
-      <span class="lr-link">${formatDate(report.updated_at)}</span>
+      <span class="lr-link">${formatReportDateMeta(report)}</span>
     </a>
   `;
 }
@@ -210,7 +226,7 @@ function renderReportCards(container, reports, emptyMessage) {
       <h3>${escapeHtml(report.title || '')}</h3>
       <p>${escapeHtml(report.summary || '')}</p>
       <div class="lr-card__meta">
-        <span>${formatDate(report.updated_at)}</span>
+        <span>${formatReportDateMeta(report)}</span>
         <span>조회수 ${Number(report.view_count || 0).toLocaleString()}회</span>
       </div>
       <div class="lr-actions">
