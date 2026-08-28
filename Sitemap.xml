@@ -56,7 +56,7 @@
   <!-- 시장 리포트 -->
   <url>
     <loc>https://lottes.co.kr/report.html</loc>
-    <lastmod>2026-03-08</lastmod>
+    <lastmod>2026-08-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
@@ -64,7 +64,7 @@
   <!-- 송파 리포트 허브 -->
   <url>
     <loc>https://lottes.co.kr/songpa-market-report.html</loc>
-    <lastmod>2026-03-08</lastmod>
+    <lastmod>2026-08-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.80</priority>
   </url>
@@ -72,7 +72,7 @@
   <!-- 잠실 리포트 허브 -->
   <url>
     <loc>https://lottes.co.kr/jamsil-market-report.html</loc>
-    <lastmod>2026-03-08</lastmod>
+    <lastmod>2026-08-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.80</priority>
   </url>
@@ -80,7 +80,7 @@
   <!-- 강남 오피스 리포트 허브 -->
   <url>
     <loc>https://lottes.co.kr/gangnam-office-report.html</loc>
-    <lastmod>2026-03-08</lastmod>
+    <lastmod>2026-08-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.80</priority>
   </url>
@@ -88,7 +88,7 @@
   <!-- 2026년 3월 시장 기록 -->
   <url>
     <loc>https://lottes.co.kr/insights.html</loc>
-    <lastmod>2026-08-27</lastmod>
+    <lastmod>2026-08-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
@@ -96,7 +96,7 @@
   <!-- 2026년 3월 송파·잠실 시장 해설 -->
   <url>
     <loc>https://lottes.co.kr/insight-detail.html</loc>
-    <lastmod>2026-08-27</lastmod>
+    <lastmod>2026-08-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.70</priority>
   </url>
