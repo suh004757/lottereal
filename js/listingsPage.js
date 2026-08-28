@@ -4,6 +4,11 @@
  */
 
 import { listListingsPublic } from './services/backendAdapter.js';
+import {
+  getListingFreshness,
+  getListingFreshnessCopy,
+  getSafeListingDescription
+} from './utils/listingFreshness.mjs';
 
 const listContainer = document.querySelector('[data-listings-grid]');
 const filterForm = document.querySelector('[data-filter-form]');
@@ -109,6 +114,12 @@ function buildListingCard(item) {
   const contactPhone = item.contact_phone || '0507-1402-5055';
   const telLink = `tel:${String(contactPhone).replace(/[^0-9]/g, '')}`;
   const details = extractDetails(item);
+  const freshness = getListingFreshness(item);
+  const freshnessCopy = getListingFreshnessCopy(freshness, 'ko');
+  const visibleDetails = freshness.needsReview
+    ? details.filter((detail) => detail.label !== '입주')
+    : details;
+  const price = formatPrice(item);
 
   card.innerHTML = `
     <a class="lr-card__thumb lr-listing-thumb" href="listing-detail.html?id=${encodeURIComponent(item.id)}" style="background-image:url('${escapeAttribute(image)}');" aria-label="${escapeAttribute(item.title || '매물 상세 보기')}">
@@ -120,11 +131,16 @@ function buildListingCard(item) {
         <span>${escapeHtml(buildLocation(item))}</span>
       </div>
       <h3>${escapeHtml(item.title || '상세 매물')}</h3>
-      <div class="lr-listing-price">${escapeHtml(formatPrice(item))}</div>
+      ${freshnessCopy ? `
+        <div class="lr-listing-freshness" role="note">
+          <strong>${escapeHtml(freshnessCopy.label)}</strong>
+          <span>${escapeHtml(freshnessCopy.message)}</span>
+        </div>` : ''}
+      <div class="lr-listing-price">${escapeHtml(freshnessCopy && price ? `${freshnessCopy.pricePrefix} ${price}` : price)}</div>
       <div class="lr-listing-facts">
-        ${details.map((detail) => `<span><strong>${escapeHtml(detail.label)}</strong>${escapeHtml(detail.value)}</span>`).join('')}
+        ${visibleDetails.map((detail) => `<span><strong>${escapeHtml(detail.label)}</strong>${escapeHtml(detail.value)}</span>`).join('')}
       </div>
-      <p class="lr-text">${escapeHtml(buildShortDescription(item))}</p>
+      <p class="lr-text">${escapeHtml(buildShortDescription(item, freshness))}</p>
       <div class="lr-card__actions lr-listing-actions">
         <a class="lr-btn lr-btn--ghost lr-btn--block" href="listing-detail.html?id=${encodeURIComponent(item.id)}">사진·상세 보기</a>
         <a class="lr-btn lr-btn--primary lr-btn--block contact-btn" href="${telLink}" data-phone="${escapeAttribute(formatPhone(contactPhone))}">전화 문의</a>
@@ -200,8 +216,8 @@ function extractDetails(item) {
   return details.slice(0, 4);
 }
 
-function buildShortDescription(item) {
-  const text = String(item.description || item.summary || '').replace(/[📍👉📞]/g, '').replace(/\s+/g, ' ').trim();
+function buildShortDescription(item, freshness = getListingFreshness(item)) {
+  const text = getSafeListingDescription(item, freshness, 'ko').replace(/[📍👉📞]/g, '').replace(/\s+/g, ' ').trim();
   if (!text) return '자세한 조건은 전화로 빠르게 안내해드립니다.';
   return text.length > 96 ? `${text.slice(0, 96)}…` : text;
 }
