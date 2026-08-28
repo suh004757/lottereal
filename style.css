@@ -2931,6 +2931,13 @@ h1 {
   font-size: 13px;
 }
 
+.lr-footer__privacy-contact {
+  margin: 8px 0 0;
+  color: var(--lr-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 @media (max-width: 980px) {
 
   .lr-hero__content,
