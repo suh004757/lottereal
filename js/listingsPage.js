@@ -4,6 +4,7 @@
  */
 
 import { listListingsPublic } from './services/backendAdapter.js';
+import { SAFE_CONTACT_TEL, getPublicContactPhone } from './utils/contactPhone.mjs';
 import {
   getListingFreshness,
   getListingFreshnessCopy,
@@ -111,8 +112,8 @@ function buildListingCard(item) {
 
   const image = item.image || (Array.isArray(item.images) && item.images[0]) || 'img/bg-img/lotte_street_view.png';
   const badge = item.property_type || item.type || '매물';
-  const contactPhone = item.contact_phone || '0507-1402-5055';
-  const telLink = `tel:${String(contactPhone).replace(/[^0-9]/g, '')}`;
+  const contactPhone = getPublicContactPhone();
+  const telLink = SAFE_CONTACT_TEL;
   const details = extractDetails(item);
   const freshness = getListingFreshness(item);
   const freshnessCopy = getListingFreshnessCopy(freshness, 'ko');

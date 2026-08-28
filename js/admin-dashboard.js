@@ -25,6 +25,7 @@ import {
   updateInquiryStatus
 } from './services/backendAdapter.js';
 import { getSupabaseClient } from './config/supabaseConfig.js';
+import { SAFE_CONTACT_PHONE } from './utils/contactPhone.mjs';
 import { initializeReportEditor } from './reportEditorCore.js';
 import { listReports } from './services/reportAdapter.js';
 import { signOutAdmin, getCurrentSessionUser } from './services/authService.js';
@@ -857,7 +858,7 @@ function fillForm(item) {
   propertyForm.querySelector('[name="city"]').value = item.city || '';
   propertyForm.querySelector('[name="district"]').value = item.district || '';
   propertyForm.querySelector('[name="contactName"]').value = item.contact_name || '';
-  propertyForm.querySelector('[name="contactPhone"]').value = item.contact_phone || '';
+  propertyForm.querySelector('[name="contactPhone"]').value = SAFE_CONTACT_PHONE;
   propertyForm.querySelector('[name="contactEmail"]').value = item.contact_email || '';
   propertyForm.querySelector('[name="description"]').value = item.description || '';
   existingImages = Array.isArray(item.images) ? item.images : [];

@@ -5,6 +5,7 @@
 
 import { APP_CONFIG } from '../config/appConfig.js';
 import { getSupabaseClient } from '../config/supabaseConfig.js';
+import { SAFE_CONTACT_PHONE } from '../utils/contactPhone.mjs';
 
 // 리스팅 페이로드 스키마 정의
 export const LISTING_PAYLOAD_SCHEMA = {
@@ -23,7 +24,7 @@ export const LISTING_PAYLOAD_SCHEMA = {
   images: [],
   contact: {
     name: '',
-    phone: '',
+    phone: SAFE_CONTACT_PHONE,
     email: ''
   },
   metadata: {
@@ -48,10 +49,14 @@ function buildDefaultDashboardStats() {
  * @returns {Promise<Object>} 생성된 리스팅
  */
 export async function createListing(payload) {
+  const safePayload = {
+    ...payload,
+    contact: { ...(payload.contact || {}), phone: SAFE_CONTACT_PHONE }
+  };
   const provider = (APP_CONFIG.BACKEND_PROVIDER || 'mock').toLowerCase();
-  if (provider === 'supabase') return createListingSupabase(payload);
-  if (provider === 'api') return createListingApi(payload);
-  return createListingMock(payload);
+  if (provider === 'supabase') return createListingSupabase(safePayload);
+  if (provider === 'api') return createListingApi(safePayload);
+  return createListingMock(safePayload);
 }
 
 /**
@@ -166,9 +171,14 @@ export async function listListingsAdmin({ page = 1, pageSize = 20, sort = 'creat
  * Admin: update listing
  */
 export async function updateListing(id, patch) {
+  const safePatch = {
+    ...patch,
+    contact: { ...(patch.contact || {}), phone: SAFE_CONTACT_PHONE },
+    contact_phone: SAFE_CONTACT_PHONE
+  };
   const provider = (APP_CONFIG.BACKEND_PROVIDER || 'mock').toLowerCase();
-  if (provider === 'supabase') return updateListingSupabase(id, patch);
-  return { id, ...patch };
+  if (provider === 'supabase') return updateListingSupabase(id, safePatch);
+  return { id, ...safePatch };
 }
 
 /**
@@ -245,7 +255,7 @@ async function createListingSupabase(payload) {
     property_type: payload.propertyType,
     images: payload.images,
     contact_name: payload.contact?.name,
-    contact_phone: payload.contact?.phone,
+    contact_phone: SAFE_CONTACT_PHONE,
     contact_email: payload.contact?.email,
     user_id: payload.metadata?.userId
   };
@@ -467,7 +477,7 @@ async function updateListingSupabase(id, patch) {
     property_type: patch.propertyType || patch.property_type,
     images: patch.images,
     contact_name: patch.contact?.name || patch.contact_name,
-    contact_phone: patch.contact?.phone || patch.contact_phone,
+    contact_phone: SAFE_CONTACT_PHONE,
     contact_email: patch.contact?.email || patch.contact_email
   };
   const { data, error } = await supabase.from('property_listings').update(dbPatch).eq('id', id).select().single();

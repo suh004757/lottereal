@@ -4,6 +4,7 @@
  */
 
 import { listListingsPublic } from './services/backendAdapter.js';
+import { SAFE_CONTACT_TEL, getPublicContactPhone } from './utils/contactPhone.mjs';
 import {
   getListingFreshness,
   getListingFreshnessCopy,
@@ -81,9 +82,8 @@ function renderListings(data) {
     const freshnessCopy = getListingFreshnessCopy(freshness, 'en');
     const formattedPrice = formatPrice(item.price, item.metadata?.deposit, item.property_type);
 
-    // 연락처 전화번호 로직
-    const contactPhone = item.contact_phone || '0507-1402-5055';
-    const telLink = `tel:${contactPhone.replace(/[^0-9]/g, '')}`;
+    const contactPhone = getPublicContactPhone();
+    const telLink = SAFE_CONTACT_TEL;
 
     card.innerHTML = `
       <div class="lr-card__thumb" style="background-image:url('${image}');"></div>

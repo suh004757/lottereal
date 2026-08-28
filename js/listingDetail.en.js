@@ -6,6 +6,7 @@
 import { getListingById, createInquiry } from './services/backendAdapter.js';
 import { buildInquiryAnalyticsEvent, buildInquiryPayload } from './inquiryMvp.js';
 import { buildAbsoluteUrl, renderJsonLd, updateSeoMeta } from './utils/seo.js';
+import { SAFE_CONTACT_TEL, getPublicContactPhone } from './utils/contactPhone.mjs';
 import {
   getListingFreshness,
   getListingFreshnessCopy,
@@ -207,8 +208,8 @@ function formatPrice(price, deposit, type) {
 function bindPhoneBtn(listing) {
   if (!phoneBtn) return;
 
-  const contactPhone = listing.contact_phone || '0507-1402-5055';
-  const telLink = `tel:${contactPhone.replace(/[^0-9]/g, '')}`;
+  const contactPhone = getPublicContactPhone();
+  const telLink = SAFE_CONTACT_TEL;
 
   phoneBtn.href = telLink;
   phoneBtn.setAttribute('data-phone', contactPhone);
