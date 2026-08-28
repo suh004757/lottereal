@@ -5,6 +5,11 @@
 
 import { getListingById } from './services/backendAdapter.js';
 import { buildAbsoluteUrl, renderJsonLd, updateSeoMeta } from './utils/seo.js';
+import {
+  getListingFreshness,
+  getListingFreshnessCopy,
+  getSafeListingDescription
+} from './utils/listingFreshness.mjs';
 
 // URL 파라미터에서 리스팅 ID 가져오기
 const params = new URLSearchParams(window.location.search);
@@ -40,21 +45,32 @@ function renderDetail(listing) {
   if (titleEl) titleEl.textContent = listing.title || '';
 
   const formattedPrice = formatPrice(listing.price, listing.metadata?.deposit, listing.property_type);
+  const freshness = getListingFreshness(listing);
+  const freshnessCopy = getListingFreshnessCopy(freshness, 'ko');
 
   const infoParts = [
     listing.address || listing.city || '',
-    formattedPrice,
+    freshnessCopy && formattedPrice ? `${freshnessCopy.pricePrefix} ${formattedPrice}` : formattedPrice,
     listing.property_type || ''
   ].filter(Boolean);
   if (infoEl) infoEl.textContent = infoParts.join(' · ');
   if (tagsEl) tagsEl.innerHTML = (listing.tags || []).map((t) => `<span>${t}</span>`).join('');
   if (featuresEl) featuresEl.innerHTML = (listing.features || []).map((f) => `<li>${f}</li>`).join('');
-  if (descEl) descEl.innerHTML = (listing.description || '').replace(/\n/g, '<br>');
+  if (descEl) {
+    if (freshnessCopy) {
+      descEl.insertAdjacentHTML('beforebegin', `
+        <div class="lr-listing-freshness lr-listing-freshness--detail" role="note">
+          <strong>${freshnessCopy.label}</strong>
+          <span>${freshnessCopy.message}</span>
+        </div>`);
+    }
+    descEl.textContent = getSafeListingDescription(listing, freshness, 'ko');
+  }
   if (noteEl) noteEl.textContent = listing.contactNote || '';
 
   // Render image gallery
   renderImageGallery(listing);
-  applySeo(listing, formattedPrice);
+  applySeo(listing, formattedPrice, freshness);
 }
 
 /**
@@ -102,7 +118,7 @@ function renderImageGallery(listing) {
   });
 }
 
-function applySeo(listing, formattedPrice) {
+function applySeo(listing, formattedPrice, freshness) {
   const title = listing.title
     ? `${listing.title} | 롯데부동산`
     : '매물 상세 | 롯데부동산';
@@ -111,7 +127,7 @@ function applySeo(listing, formattedPrice) {
     listing.title,
     location,
     formattedPrice,
-    listing.description || listing.property_type || '송파·강남 부동산 상세 정보'
+    getSafeListingDescription(listing, freshness, 'ko') || listing.property_type || '송파·강남 부동산 상세 정보'
   ].filter(Boolean).join(' | ').slice(0, 160);
   const canonical = buildAbsoluteUrl(`listing-detail.html?id=${encodeURIComponent(listing.id || '')}`);
   const image = listing.images?.[0] || listing.image || buildAbsoluteUrl('img/bg-img/lotte_street_view.png');

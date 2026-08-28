@@ -4218,6 +4218,32 @@ h1 {
   overflow-wrap: anywhere;
 }
 
+.lr-listing-freshness {
+  display: grid;
+  gap: 4px;
+  margin: 12px 0 4px;
+  padding: 14px 16px;
+  border: 1px solid #d7a84a;
+  border-radius: 14px;
+  background: #fff9e8;
+  color: #5f4514;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.lr-listing-freshness strong {
+  color: #3e2b08;
+  font-size: 15px;
+}
+
+.lr-listing-freshness--detail {
+  width: min(100%, calc(100vw - 48px));
+  max-width: 100%;
+  margin: 18px 0;
+  padding: 18px;
+  box-sizing: border-box;
+}
+
 .lr-listing-facts {
   display: grid;
   grid-template-columns: 1fr 1fr;

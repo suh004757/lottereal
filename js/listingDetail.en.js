@@ -6,6 +6,11 @@
 import { getListingById, createInquiry } from './services/backendAdapter.js';
 import { buildInquiryAnalyticsEvent, buildInquiryPayload } from './inquiryMvp.js';
 import { buildAbsoluteUrl, renderJsonLd, updateSeoMeta } from './utils/seo.js';
+import {
+  getListingFreshness,
+  getListingFreshnessCopy,
+  getSafeListingDescription
+} from './utils/listingFreshness.mjs';
 
 // URL 파라미터에서 리스팅 ID 추출
 const params = new URLSearchParams(window.location.search);
@@ -48,9 +53,11 @@ function renderDetail(listing) {
   if (titleEl) titleEl.textContent = listing.title || '';
 
   const formattedPrice = formatPrice(listing.price, listing.metadata?.deposit, listing.property_type);
+  const freshness = getListingFreshness(listing);
+  const freshnessCopy = getListingFreshnessCopy(freshness, 'en');
   const infoParts = [
     listing.address || listing.city || '',
-    formattedPrice,
+    freshnessCopy && formattedPrice ? `${freshnessCopy.pricePrefix} ${formattedPrice}` : formattedPrice,
     listing.property_type || ''
   ].filter(Boolean);
 
@@ -60,9 +67,18 @@ function renderDetail(listing) {
 
   // Render image gallery
   renderImageGallery(listing);
-  if (descEl) descEl.innerHTML = (listing.description || '').replace(/\n/g, '<br>');
+  if (descEl) {
+    if (freshnessCopy) {
+      descEl.insertAdjacentHTML('beforebegin', `
+        <div class="lr-listing-freshness lr-listing-freshness--detail" role="note">
+          <strong>${freshnessCopy.label}</strong>
+          <span>${freshnessCopy.message}</span>
+        </div>`);
+    }
+    descEl.textContent = getSafeListingDescription(listing, freshness, 'en');
+  }
   if (noteEl) noteEl.textContent = listing.contactNote || '';
-  applySeo(listing, formattedPrice);
+  applySeo(listing, formattedPrice, freshness);
 }
 
 /**
@@ -110,7 +126,7 @@ function renderImageGallery(listing) {
   });
 }
 
-function applySeo(listing, formattedPrice) {
+function applySeo(listing, formattedPrice, freshness) {
   const title = listing.title
     ? `${listing.title} | Lotte Real Estate`
     : 'Listing Details | Lotte Real Estate';
@@ -119,7 +135,7 @@ function applySeo(listing, formattedPrice) {
     listing.title,
     location,
     formattedPrice,
-    listing.description || listing.property_type || 'Real estate listing details in Songpa and Gangnam'
+    getSafeListingDescription(listing, freshness, 'en') || listing.property_type || 'Real estate listing details in Songpa and Gangnam'
   ].filter(Boolean).join(' | ').slice(0, 160);
   const canonical = buildAbsoluteUrl(`listing-detail-en.html?id=${encodeURIComponent(listing.id || '')}`);
   const image = listing.images?.[0] || listing.image || buildAbsoluteUrl('img/bg-img/lotte_street_view.png');

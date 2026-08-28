@@ -4,6 +4,11 @@
  */
 
 import { listListingsPublic } from './services/backendAdapter.js';
+import {
+  getListingFreshness,
+  getListingFreshnessCopy,
+  getSafeListingDescription
+} from './utils/listingFreshness.mjs';
 
 // DOM 요소 참조
 const listContainer = document.querySelector('[data-listings-grid]');
@@ -72,6 +77,9 @@ function renderListings(data) {
     card.className = 'lr-card lr-card--listing';
     const image = item.image || (item.images && item.images[0]) || '';
     const badge = item.property_type || item.type || 'Listing';
+    const freshness = getListingFreshness(item);
+    const freshnessCopy = getListingFreshnessCopy(freshness, 'en');
+    const formattedPrice = formatPrice(item.price, item.metadata?.deposit, item.property_type);
 
     // 연락처 전화번호 로직
     const contactPhone = item.contact_phone || '0507-1402-5055';
@@ -82,10 +90,15 @@ function renderListings(data) {
       <div class="lr-card__body">
         <p class="lr-badge">${badge}</p>
         <h3>${item.title}</h3>
-        <p class="lr-text">${item.description || item.summary || ''}</p>
+        ${freshnessCopy ? `
+          <div class="lr-listing-freshness" role="note">
+            <strong>${freshnessCopy.label}</strong>
+            <span>${freshnessCopy.message}</span>
+          </div>` : ''}
+        <p class="lr-text">${getSafeListingDescription(item, freshness, 'en')}</p>
         <div class="lr-card__meta">
           <span>${item.address || item.city || ''}</span>
-          <span>${formatPrice(item.price, item.metadata?.deposit, item.property_type)}</span>
+          <span>${freshnessCopy && formattedPrice ? `${freshnessCopy.pricePrefix} ${formattedPrice}` : formattedPrice}</span>
         </div>
         <div class="lr-card__actions">
           <a class="lr-btn lr-btn--ghost lr-btn--block" href="listing-detail-en.html?id=${encodeURIComponent(item.id)}">View details</a>
