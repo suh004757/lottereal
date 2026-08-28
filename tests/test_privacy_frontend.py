@@ -100,6 +100,28 @@ class PrivacyFrontendTests(unittest.TestCase):
         self.assertNotIn('선택된 프로젝트 저장 리전', ko)
         self.assertNotIn('Selected project storage region', en)
 
+    def test_policy_does_not_misidentify_the_privacy_officer(self):
+        ko = (ROOT / 'privacy.html').read_text(encoding='utf-8')
+        en = (ROOT / 'privacy_EN.html').read_text(encoding='utf-8')
+
+        self.assertNotIn('개인정보 보호책임자: 서봉현', ko)
+        self.assertNotIn('Privacy Officer: SUH BONG HYUN', en)
+        self.assertIn('개인정보 보호 문의: 대표전화 0507-1402-5055', ko)
+        self.assertIn('개인정보 보호책임자 정보는 확인 후 반영합니다.', ko)
+        self.assertIn('Privacy inquiries: 0507-1402-5055', en)
+        self.assertIn('Privacy officer details will be updated after confirmation.', en)
+
+        ko_footer = ko.split('<footer class="lr-footer">', 1)[1]
+        en_footer = en.split('<footer class="lr-footer">', 1)[1]
+        self.assertIn('lr-footer__privacy-contact', ko_footer)
+        self.assertIn('lr-footer__privacy-contact', en_footer)
+
+        ko_home_footer = (ROOT / 'index.html').read_text(encoding='utf-8').split('<footer class="lr-footer">', 1)[1]
+        en_home_footer = (ROOT / 'EN.html').read_text(encoding='utf-8').split('<footer class="lr-footer">', 1)[1]
+        self.assertIn('개인정보 보호 문의 0507-1402-5055', ko_home_footer)
+        self.assertIn('Privacy inquiries: 0507-1402-5055', en_home_footer)
+        self.assertIn('.lr-footer__privacy-contact', (ROOT / 'style.css').read_text(encoding='utf-8'))
+
     def test_widget_claim_is_limited_to_search_query_transmission(self):
         text = (ROOT / 'js/knowledgeWidget.js').read_text(encoding='utf-8')
         self.assertIn('검색 문장은 분석 도구로 보내지 않음', text)
