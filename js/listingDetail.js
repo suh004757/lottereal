@@ -5,6 +5,7 @@
 
 import { getListingById } from './services/backendAdapter.js';
 import { buildAbsoluteUrl, renderJsonLd, updateSeoMeta } from './utils/seo.js';
+import { SAFE_CONTACT_TEL, getPublicContactPhone } from './utils/contactPhone.mjs';
 import {
   getListingFreshness,
   getListingFreshnessCopy,
@@ -199,9 +200,8 @@ function formatPrice(price, deposit, type) {
 function bindPhoneBtn(listing) {
   if (!phoneBtn) return;
 
-  // 리스팅의 연락처 전화번호 사용, 없으면 기본 번호
-  const contactPhone = listing.contact_phone || '0507-1402-5055';
-  const telLink = `tel:${contactPhone.replace(/[^0-9]/g, '')}`; // tel: 링크용 숫자만 추출
+  const contactPhone = getPublicContactPhone();
+  const telLink = SAFE_CONTACT_TEL;
 
   // href 동적 설정
   phoneBtn.href = telLink;

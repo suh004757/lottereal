@@ -32,6 +32,22 @@ class ListingUiTest(unittest.TestCase):
         self.assertIn('href="tel:050714025055">Call for current options</a>', html)
         self.assertIn('href="contact_EN.html">Plan a visit</a>', html)
 
+    def test_public_listing_phone_is_always_the_approved_safe_number(self):
+        for relative in (
+            'js/listingsPage.js',
+            'js/listingsPage.en.js',
+            'js/listingDetail.js',
+            'js/listingDetail.en.js',
+        ):
+            source = (REPO / relative).read_text(encoding='utf-8')
+            self.assertIn("from './utils/contactPhone.mjs'", source, relative)
+            self.assertNotIn('listing.contact_phone', source, relative)
+            self.assertNotIn('item.contact_phone', source, relative)
+
+        adapter = (REPO / 'js/services/backendAdapter.js').read_text(encoding='utf-8')
+        self.assertIn("from '../utils/contactPhone.mjs'", adapter)
+        self.assertIn('contact_phone: SAFE_CONTACT_PHONE', adapter)
+
     def test_recommended_listing_navigation_link_is_removed_but_home_content_stays(self):
         for path in korean_pages():
             html = path.read_text(encoding='utf-8')
