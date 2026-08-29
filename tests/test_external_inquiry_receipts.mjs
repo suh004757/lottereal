@@ -72,7 +72,8 @@ assert.equal(normalizePublicReceipts([{ ...rows[1], received_bucket: '2026-08-28
 assert.equal(normalizePublicReceipts([{ ...rows[1], received_bucket: '2025-08-29' }], now).length, 1);
 
 const html = renderPublicReceipts(normalized, summary);
-assert.match(html, /최근 1년 관심 문의 27건/);
+assert.match(html, /최근 확인된 관심 문의 27건/);
+assert.doesNotMatch(html, /최근 1년 관심 문의/);
 assert.match(html, /전세 12/);
 assert.match(html, /월세 9/);
 assert.match(html, /매매 6/);

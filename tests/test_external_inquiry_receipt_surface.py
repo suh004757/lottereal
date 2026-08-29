@@ -13,7 +13,8 @@ class ExternalInquiryReceiptSurfaceTest(unittest.TestCase):
     def test_home_explains_current_and_historical_interest_activity(self):
         self.assertIn('data-external-inquiry-receipts', self.index)
         self.assertIn('지금 고객들이 관심 있게 보고 있는 매물입니다', self.index)
-        self.assertIn('최근 1년 관심 문의', self.index)
+        self.assertIn('현재는 직방 문의 중 공개 가능한 기록만 표시합니다', self.index)
+        self.assertIn('비공개 채널 문의는 이 숫자에 포함하지 않습니다', self.index)
         self.assertIn('최근 24시간은 1시간 단위', self.index)
         self.assertIn('지난 기록은 접수 날짜만', self.index)
         self.assertIn('고객 이름·연락처·문의 내용·가격은 공개하지 않습니다', self.index)
