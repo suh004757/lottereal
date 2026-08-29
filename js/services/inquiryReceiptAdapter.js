@@ -6,7 +6,7 @@ export async function listPublicExternalInquiryReceipts({ limit = 8 } = {}) {
   const safeLimit = Math.min(Math.max(Number(limit) || 8, 1), 20);
   const { data, error } = await supabase
     .from('external_inquiry_receipts')
-    .select('source, listing_number, received_hour, status, expires_at')
+    .select('source, listing_number, transaction_type, received_hour, status, expires_at')
     .gt('expires_at', new Date().toISOString())
     .order('received_hour', { ascending: false })
     .limit(safeLimit);

@@ -476,18 +476,21 @@ class GmailInquiryWatchTest(unittest.TestCase):
         self.assertEqual(payload, {
             'source': 'zigbang',
             'listing_number': '50181019',
+            'transaction_type': '전세',
             'received_hour': '2026-08-29T12:00:00+09:00',
             'status': 'received',
             'source_message_hash': 'c' * 64,
         })
         serialized = json.dumps(payload, ensure_ascii=False)
-        for private_value in ('삼전동', '반지하', '쓰리룸', '전세', '16300', '고객 문의'):
+        self.assertIn('전세', serialized)
+        for private_value in ('삼전동', '반지하', '쓰리룸', '16300', '고객 문의'):
             self.assertNotIn(private_value, serialized)
 
     def test_public_receipt_writer_rejects_extra_or_private_fields(self):
         safe = {
             'source': 'zigbang',
             'listing_number': '50181019',
+            'transaction_type': '전세',
             'received_hour': '2026-08-29T12:00:00+09:00',
             'status': 'received',
             'source_message_hash': 'd' * 64,

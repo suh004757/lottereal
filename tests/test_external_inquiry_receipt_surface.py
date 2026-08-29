@@ -12,14 +12,15 @@ class ExternalInquiryReceiptSurfaceTest(unittest.TestCase):
 
     def test_home_discloses_limited_24_hour_receipt_status(self):
         self.assertIn('data-external-inquiry-receipts', self.index)
-        self.assertIn('매물번호와 접수 시간대', self.index)
-        self.assertIn('고객 이름·연락처·문의 내용은 공개하지 않습니다', self.index)
-        self.assertIn('24시간 후 자동으로 숨겨집니다', self.index)
+        self.assertIn('지금 고객들이 관심 있게 보고 있는 매물입니다', self.index)
+        self.assertIn('거래유형·매물번호·접수 시간대', self.index)
+        self.assertIn('고객 이름·연락처·문의 내용은 공개하지 않으며', self.index)
+        self.assertIn('24시간 동안만 표시됩니다', self.index)
         self.assertIn('js/homeInquiryReceipts.js', self.index)
 
     def test_public_adapter_requests_only_granted_columns(self):
         self.assertIn(
-            "select('source, listing_number, received_hour, status, expires_at')",
+            "select('source, listing_number, transaction_type, received_hour, status, expires_at')",
             self.adapter,
         )
         self.assertNotIn('source_message_hash', self.adapter)
@@ -28,6 +29,8 @@ class ExternalInquiryReceiptSurfaceTest(unittest.TestCase):
         self.assertIn('개인정보 보호책임자: 서준혁', self.privacy)
         self.assertIn('개인정보 보호책임자 서준혁', self.index)
         self.assertIn('고객 이름·전화번호·이메일·연락처 확인 링크·문의 원문은 전송하지 않습니다', self.privacy)
+        self.assertIn('거래유형(전세·월세·매매)', self.privacy)
+        self.assertIn('가격·고객 식별정보·상세 문의 내용은 저장·공개하지 않습니다', self.privacy)
         self.assertIn('24시간 후 자동으로 숨깁니다', self.privacy)
         self.assertNotIn('개인정보 보호책임자 정보는 확인 후 반영', self.privacy)
         self.assertNotIn('개인정보 보호책임자 정보는 확인 후 반영', self.index)

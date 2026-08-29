@@ -20,6 +20,20 @@
     const href = link.getAttribute('href') || '';
     const lowerHref = href.toLowerCase();
 
+    if (link.hasAttribute('data-current-interest-entry')) {
+      return {
+        name: 'current_interest_entry_click',
+        params: { entry_type: 'report_to_live_interest' }
+      };
+    }
+
+    if (link.hasAttribute('data-listing-reference-inquiry')) {
+      return {
+        name: 'listing_reference_inquiry_click',
+        params: { link_type: 'listing_reference_contact', source_platform: 'zigbang' }
+      };
+    }
+
     if (lowerHref.startsWith('tel:')) {
       return { name: 'phone_click', params: { link_type: 'phone_link' } };
     }
