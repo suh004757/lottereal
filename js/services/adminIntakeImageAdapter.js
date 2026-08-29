@@ -4,12 +4,16 @@ import {
   createPrivateImagePath
 } from '../adminIntakeImageRules.mjs';
 import { runAdminIntakeUploadQueue } from '../adminIntakeUploadQueue.mjs';
+import { readImageDimensions, getOrientedDimensions } from '../adminIntakeImageDimensions.mjs';
 
 const BUCKET = 'admin-intake-images';
 const MAX_OUTPUT_BYTES = 8 * 1024 * 1024;
+const LEGACY_SOURCE_BYTES = 20 * 1024 * 1024;
 const MAX_DIMENSION = 1920;
+const THUMBNAIL_DIMENSION = 320;
 const JPEG_QUALITY = 0.82;
-const CONCURRENCY = 3;
+const THUMBNAIL_QUALITY = 0.72;
+const CONCURRENCY = 1;
 
 export async function uploadAdminIntakeImages(files, { userId, batchId, onProgress } = {}) {
   const sourceFiles = validateAdminIntakeImages(files);
@@ -40,8 +44,21 @@ export async function uploadAdminIntakeImages(files, { userId, batchId, onProgre
 }
 
 export async function prepareAdminIntakeImage(file) {
-  const bitmap = await loadBitmap(file);
-  const scale = Math.min(1, MAX_DIMENSION / Math.max(bitmap.width, bitmap.height));
+  const blob = await renderDownsizedJpeg(file, MAX_DIMENSION, JPEG_QUALITY);
+  if (blob.size > MAX_OUTPUT_BYTES) {
+    throw new Error('변환된 사진이 8MB를 초과합니다.');
+  }
+  return new File([blob], 'field-photo.jpg', { type: 'image/jpeg', lastModified: Date.now() });
+}
+
+export async function createAdminIntakeThumbnail(file) {
+  const blob = await renderDownsizedJpeg(file, THUMBNAIL_DIMENSION, THUMBNAIL_QUALITY);
+  return URL.createObjectURL(blob);
+}
+
+async function renderDownsizedJpeg(file, maxDimension, quality) {
+  const bitmap = await loadBitmap(file, maxDimension);
+  const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
   const width = Math.max(1, Math.round(bitmap.width * scale));
   const height = Math.max(1, Math.round(bitmap.height * scale));
   const canvas = document.createElement('canvas');
@@ -52,17 +69,28 @@ export async function prepareAdminIntakeImage(file) {
   context.fillRect(0, 0, width, height);
   context.drawImage(bitmap, 0, 0, width, height);
   bitmap.close?.();
-  const blob = await new Promise((resolve, reject) => {
-    canvas.toBlob((value) => value ? resolve(value) : reject(new Error('사진을 변환하지 못했습니다.')), 'image/jpeg', JPEG_QUALITY);
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((value) => value ? resolve(value) : reject(new Error('사진을 변환하지 못했습니다.')), 'image/jpeg', quality);
   });
-  if (blob.size > MAX_OUTPUT_BYTES) {
-    throw new Error('변환된 사진이 8MB를 초과합니다.');
-  }
-  return new File([blob], 'field-photo.jpg', { type: 'image/jpeg', lastModified: Date.now() });
 }
 
-async function loadBitmap(file) {
-  if (typeof createImageBitmap === 'function') return createImageBitmap(file);
+async function loadBitmap(file, maxDimension = MAX_DIMENSION) {
+  const sourceDimensions = await readImageDimensions(file);
+  const dimensions = getOrientedDimensions(sourceDimensions);
+  const scale = Math.min(1, maxDimension / Math.max(dimensions.width, dimensions.height));
+  const resizeWidth = Math.max(1, Math.round(dimensions.width * scale));
+  const resizeHeight = Math.max(1, Math.round(dimensions.height * scale));
+  if (typeof createImageBitmap === 'function') {
+    return createImageBitmap(file, {
+      resizeWidth,
+      resizeHeight,
+      resizeQuality: 'high',
+      imageOrientation: 'from-image'
+    });
+  }
+  if (file.size > LEGACY_SOURCE_BYTES) {
+    throw new Error('대형 사진을 안전하게 줄이려면 최신 브라우저가 필요합니다.');
+  }
   const url = URL.createObjectURL(file);
   try {
     const image = await new Promise((resolve, reject) => {

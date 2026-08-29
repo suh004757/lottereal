@@ -1,6 +1,6 @@
 import { buildAdminIntakePayload, detectSensitiveDetails } from './adminIntake.mjs';
 import { saveAdminIntakeDraft, finalizeAdminIntakeImages } from './services/adminIntakeAdapter.js';
-import { uploadAdminIntakeImages } from './services/adminIntakeImageAdapter.js';
+import { uploadAdminIntakeImages, createAdminIntakeThumbnail } from './services/adminIntakeImageAdapter.js';
 import { validateAdminIntakeImages, attachPendingImageManifest } from './adminIntakeImageRules.mjs';
 import { getCurrentSessionUser, signOutAdmin } from './services/authService.js';
 
@@ -13,13 +13,17 @@ const transactionField = document.getElementById('transactionField');
 const sourceField = document.getElementById('sourceField');
 const statusEl = document.getElementById('intakeStatus');
 const saveBtn = document.getElementById('saveIntakeBtn');
+const resetBtn = document.getElementById('resetIntakeBtn');
 const history = document.getElementById('chatHistory');
 const imageSection = document.getElementById('intakeImageSection');
 const imageDropzone = document.getElementById('intakeImageDropzone');
 const imageInput = document.getElementById('intakeImages');
 const imageSummary = document.getElementById('intakeImageSummary');
 const imagePreview = document.getElementById('intakeImagePreview');
+const successActions = document.getElementById('intakeSuccessActions');
 let selectedImages = [];
+let selectingImages = false;
+let isSubmitting = false;
 let pendingDraftContext = null;
 
 function addBubble(text, side = 'assistant') {
@@ -38,9 +42,27 @@ function showStatus(message, error = false) {
   statusEl.classList.toggle('intake-status--error', error);
 }
 
-function addSelectedImages(files) {
+async function addSelectedImages(files) {
+  if (isSubmitting) {
+    showStatus('초안을 저장 중입니다. 완료된 뒤 사진을 변경해 주세요.', true);
+    return;
+  }
+  if (selectingImages) {
+    showStatus('사진 미리보기를 준비 중입니다. 잠시만 기다려 주세요.', true);
+    return;
+  }
+  if (pendingDraftContext?.locked) {
+    showStatus('저장된 초안의 사진은 재시도 중 변경할 수 없습니다. 처음부터 다시 작성해 주세요.', true);
+    return;
+  }
+  const createdPreviewUrls = [];
+  const saveWasDisabled = saveBtn.disabled;
+  const resetWasDisabled = resetBtn.disabled;
+  selectingImages = true;
+  saveBtn.disabled = true;
+  resetBtn.disabled = true;
+  renderSelectedImages();
   try {
-    if (pendingDraftContext?.locked) throw new Error('저장된 초안의 사진은 재시도 중 변경할 수 없습니다. 처음부터 다시 작성해 주세요.');
     const incoming = Array.from(files || []);
     const seenFiles = new Set(selectedImages.map(({ file }) => file));
     const uniqueByIdentity = incoming.filter((file) => {
@@ -49,15 +71,30 @@ function addSelectedImages(files) {
       return true;
     });
     const combined = validateAdminIntakeImages([...selectedImages.map(({ file }) => file), ...uniqueByIdentity]);
-    selectedImages = combined.map((file) => {
+    showStatus(`사진 ${uniqueByIdentity.length}장의 가벼운 미리보기를 준비하는 중입니다.`);
+    const nextImages = [];
+    for (const file of combined) {
       const existing = selectedImages.find((entry) => entry.file === file);
-      return existing || { file, previewUrl: URL.createObjectURL(file) };
-    });
+      if (existing) {
+        nextImages.push(existing);
+      } else {
+        const previewUrl = await createAdminIntakeThumbnail(file);
+        createdPreviewUrls.push(previewUrl);
+        nextImages.push({ file, previewUrl });
+      }
+    }
+    selectedImages = nextImages;
+    createdPreviewUrls.length = 0;
     renderSelectedImages();
     statusEl.hidden = true;
   } catch (error) {
+    createdPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
     showStatus(error?.message || '사진을 추가하지 못했습니다.', true);
   } finally {
+    selectingImages = false;
+    saveBtn.disabled = saveWasDisabled;
+    resetBtn.disabled = resetWasDisabled;
+    renderSelectedImages();
     imageInput.value = '';
   }
 }
@@ -80,9 +117,9 @@ function renderSelectedImages() {
     remove.className = 'image-preview-remove';
     remove.setAttribute('aria-label', `현장 사진 ${index + 1} 삭제`);
     remove.textContent = '×';
-    remove.disabled = Boolean(pendingDraftContext?.locked);
+    remove.disabled = selectingImages || isSubmitting || Boolean(pendingDraftContext?.locked);
     remove.addEventListener('click', () => {
-      if (pendingDraftContext?.locked) return;
+      if (selectingImages || isSubmitting || pendingDraftContext?.locked) return;
       URL.revokeObjectURL(entry.previewUrl);
       selectedImages.splice(index, 1);
       renderSelectedImages();
@@ -98,17 +135,25 @@ function clearSelectedImages() {
   renderSelectedImages();
 }
 
-function setDraftFieldsLocked(locked) {
+function setFormControlsDisabled(disabled) {
   form.querySelectorAll('textarea, select, input:not([type="hidden"])').forEach((element) => {
-    element.disabled = locked;
+    element.disabled = disabled;
   });
-  imageDropzone.setAttribute('aria-disabled', String(locked));
-  imageDropzone.tabIndex = locked ? -1 : 0;
-  pendingDraftContext && (pendingDraftContext.locked = locked);
+  imageDropzone.setAttribute('aria-disabled', String(disabled));
+  imageDropzone.tabIndex = disabled ? -1 : 0;
   renderSelectedImages();
 }
 
+function setDraftFieldsLocked(locked) {
+  pendingDraftContext && (pendingDraftContext.locked = locked);
+  setFormControlsDisabled(locked);
+}
+
 function chooseType(type) {
+  if (isSubmitting) {
+    showStatus('초안을 저장 중입니다. 완료될 때까지 기다려 주세요.', true);
+    return;
+  }
   const draftId = globalThis.crypto?.randomUUID?.();
   if (!draftId) {
     showStatus('이 브라우저에서는 안전한 초안 식별자를 만들 수 없습니다. 브라우저를 업데이트해 주세요.', true);
@@ -123,6 +168,7 @@ function chooseType(type) {
     files: null
   };
   const isListing = type === 'listing';
+  successActions.hidden = true;
   typeInput.value = type;
   choices.hidden = true;
   form.hidden = false;
@@ -141,6 +187,10 @@ function chooseType(type) {
 }
 
 function resetForm() {
+  if (isSubmitting) {
+    showStatus('초안을 저장 중입니다. 완료될 때까지 기다려 주세요.', true);
+    return false;
+  }
   form.reset();
   setDraftFieldsLocked(false);
   form.hidden = true;
@@ -148,19 +198,25 @@ function resetForm() {
   typeInput.value = '';
   pendingDraftContext = null;
   imageSection.hidden = true;
+  successActions.hidden = true;
   clearSelectedImages();
   statusEl.hidden = true;
   while (history.children.length > 1) history.lastElementChild.remove();
+  return true;
 }
 
 document.getElementById('intakeListingBtn').addEventListener('click', () => chooseType('listing'));
 document.getElementById('intakeReportBtn').addEventListener('click', () => chooseType('report'));
-document.getElementById('resetIntakeBtn').addEventListener('click', resetForm);
+resetBtn.addEventListener('click', resetForm);
+document.getElementById('newListingIntakeBtn').addEventListener('click', () => {
+  if (!resetForm()) return;
+  chooseType('listing');
+});
 imageDropzone.addEventListener('click', () => {
-  if (!pendingDraftContext?.locked) imageInput.click();
+  if (!isSubmitting && !pendingDraftContext?.locked) imageInput.click();
 });
 imageDropzone.addEventListener('keydown', (event) => {
-  if (!pendingDraftContext?.locked && (event.key === 'Enter' || event.key === ' ')) {
+  if (!isSubmitting && !pendingDraftContext?.locked && (event.key === 'Enter' || event.key === ' ')) {
     event.preventDefault();
     imageInput.click();
   }
@@ -178,7 +234,12 @@ imageDropzone.addEventListener('drop', (event) => addSelectedImages(event.dataTr
 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
+  if (isSubmitting) return;
+  const submittedValues = Object.fromEntries(new FormData(form).entries());
+  isSubmitting = true;
   saveBtn.disabled = true;
+  resetBtn.disabled = true;
+  setFormControlsDisabled(true);
   let savedDraftId = null;
   showStatus('비공개 초안을 먼저 저장하는 중입니다.');
   try {
@@ -188,15 +249,14 @@ form.addEventListener('submit', async (event) => {
     if (!pendingDraftContext?.id) throw new Error('초안 식별자를 확인할 수 없습니다. 처음부터 다시 작성해 주세요.');
 
     if (!pendingDraftContext.payload) {
-      const values = Object.fromEntries(new FormData(form).entries());
-      let payload = buildAdminIntakePayload(values, {
+      let payload = buildAdminIntakePayload(submittedValues, {
         now: pendingDraftContext.now,
         nonce: pendingDraftContext.nonce
       });
       payload.id = pendingDraftContext.id;
       payload.metadata.submitted_by = user.id;
       const files = selectedImages.map(({ file }) => file);
-      if (values.type === 'listing' && files.length) {
+      if (submittedValues.type === 'listing' && files.length) {
         payload = attachPendingImageManifest(payload, {
           userId: user.id,
           draftId: pendingDraftContext.id,
@@ -230,6 +290,7 @@ form.addEventListener('submit', async (event) => {
     const flags = detectSensitiveDetails(payload.report_md);
     const warning = flags.length ? ' 개인정보 가능 항목이 있어 공개 전 제거 여부를 확인합니다.' : '';
     form.hidden = true;
+    successActions.hidden = false;
     addBubble(`검토 대기 초안으로 저장했어요.${imageCount ? ` 현장 사진 ${imageCount}장도 비공개로 첨부했습니다.` : ''}`, 'user');
     addBubble(`접수 완료. 이 내용은 공개되지 않았습니다.${warning} 함께 확인한 뒤 승인된 내용만 올릴게요.`);
     showStatus(`접수번호 ${String(saved.id).slice(0, 8)} · 검토 대기`, false);
@@ -247,7 +308,11 @@ form.addEventListener('submit', async (event) => {
       window.setTimeout(() => { window.location.href = 'login.html'; }, 1200);
     }
   } finally {
+    isSubmitting = false;
+    if (!savedDraftId && !pendingDraftContext?.locked) setFormControlsDisabled(false);
     saveBtn.disabled = false;
+    resetBtn.disabled = false;
+    renderSelectedImages();
   }
 });
 
