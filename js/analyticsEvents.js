@@ -30,7 +30,11 @@
 
     if (lowerHref.includes('contact')) {
       const isEnglish = document.documentElement.lang?.toLowerCase().startsWith('en');
-      return { name: isEnglish ? 'english_contact_click' : 'report_to_contact_click', params: { link_type: 'contact_link' } };
+      const isReportPage = window.location.pathname.includes('report');
+      const eventName = isEnglish
+        ? 'english_contact_click'
+        : (isReportPage ? 'report_to_contact_click' : 'contact_click');
+      return { name: eventName, params: { link_type: 'contact_link' } };
     }
 
     if (lowerHref.includes('listings')) {

@@ -76,3 +76,16 @@ test('does not send visible text from internal or classified links', () => {
   assert.ok(events.some((item) => item.name === 'internal_navigation_click'));
   assert.ok(!JSON.stringify(events).includes('010-1234-5678'));
 });
+
+test('keeps generic contact clicks separate from report-to-contact conversions', () => {
+  const home = loadAnalytics('/index.html');
+  const contactLink = link('contact.html#inquiry-options', '문의 남기기');
+  home.listeners.click({ target: { closest: () => contactLink } });
+  assert.ok(home.events.some((item) => item.name === 'contact_click'));
+  assert.ok(!home.events.some((item) => item.name === 'report_to_contact_click'));
+
+  const report = loadAnalytics('/report.html');
+  report.listeners.click({ target: { closest: () => contactLink } });
+  assert.ok(report.events.some((item) => item.name === 'report_to_contact_click'));
+  assert.ok(!report.events.some((item) => item.name === 'contact_click'));
+});
