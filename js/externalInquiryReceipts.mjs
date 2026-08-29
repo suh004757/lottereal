@@ -37,8 +37,8 @@ export function renderPublicReceipts(receipts = [], summary = null) {
   }
 
   const summaryHtml = safeSummary ? `
-    <div class="lr-activity-summary" aria-label="최근 1년 문의 유형별 현황">
-      <strong>최근 1년 관심 문의 ${safeSummary.total}건</strong>
+    <div class="lr-activity-summary" aria-label="문의 유형별 현황">
+      <strong>최근 확인된 관심 문의 ${safeSummary.total}건</strong>
       <span>전세 ${safeSummary.jeonse}</span>
       <span>월세 ${safeSummary.monthlyRent}</span>
       <span>매매 ${safeSummary.sale}</span>
