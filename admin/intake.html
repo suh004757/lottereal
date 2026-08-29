@@ -60,6 +60,19 @@
         <label class="message-label" for="intakeMessage" id="messageLabel">내용</label>
         <textarea id="intakeMessage" name="text" rows="7" maxlength="12000" required
           placeholder="알고 있는 내용을 편하게 적어주세요."></textarea>
+        <section id="intakeImageSection" class="intake-images" aria-labelledby="intakeImageTitle" hidden>
+          <h3 id="intakeImageTitle">현장 사진</h3>
+          <div id="intakeImageDropzone" class="image-dropzone" role="button" tabindex="0"
+            aria-controls="intakeImages">
+            <strong>사진을 여기에 끌어놓으세요</strong>
+            <span>또는 눌러서 여러 장 선택 · 최대 30장</span>
+            <small>JPG, PNG, WebP · 원본 한 장당 20MB 이하</small>
+          </div>
+          <input type="file" id="intakeImages" class="image-file-input"
+            accept="image/jpeg,image/png,image/webp" multiple>
+          <div id="intakeImageSummary" class="image-summary" aria-live="polite">선택한 사진 없음</div>
+          <div id="intakeImagePreview" class="image-preview-grid"></div>
+        </section>
         <div class="privacy-note" id="privacyNote">동·호수, 개인 연락처, 출입 비밀번호가 있으면 공개 전 반드시 제거합니다.</div>
         <div id="intakeStatus" class="intake-status" role="status" aria-live="polite" hidden></div>
         <div class="form-actions">
