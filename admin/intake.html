@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>초안 접수 | 롯데부동산 ADMIN</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="../img/core-img/favicon.ico">
+  <link rel="stylesheet" href="../css/admin-intake.css">
+</head>
+<body>
+  <main class="intake-shell">
+    <header class="intake-header">
+      <div>
+        <p class="intake-kicker">LOTTE REAL ADMIN</p>
+        <h1>무엇을 준비할까요?</h1>
+        <p>평소 말하듯 적어주세요. 초안으로만 저장되며 자동으로 공개되지 않습니다.</p>
+      </div>
+      <a class="advanced-link" href="dashboard.html">고급 관리</a>
+    </header>
+
+    <section class="intake-chat" aria-labelledby="chatTitle">
+      <h2 id="chatTitle" class="sr-only">채팅형 초안 접수</h2>
+      <div class="chat-history" id="chatHistory" aria-live="polite">
+        <div class="chat-row chat-row--assistant">
+          <div class="chat-bubble">안녕하세요. 오늘은 글을 쓸까요, 매물을 등록할까요?</div>
+        </div>
+      </div>
+
+      <div class="intent-grid" id="intentChoices">
+        <button type="button" class="intent-button" id="intakeReportBtn" data-intake-type="report">
+          <strong>글 작성</strong><span>시장 안내·체크리스트·리포트</span>
+        </button>
+        <button type="button" class="intent-button" id="intakeListingBtn" data-intake-type="listing">
+          <strong>매물 등록</strong><span>카톡 내용을 그대로 붙여넣기</span>
+        </button>
+      </div>
+
+      <form id="intakeForm" class="intake-form" hidden>
+        <input type="hidden" name="type" id="intakeType">
+        <div class="context-grid">
+          <label>관련 지역
+            <input type="text" id="intakeRegion" name="region" placeholder="예: 잠실, 삼전동">
+          </label>
+          <label id="transactionField" hidden>거래 유형
+            <select id="intakeTransactionType" name="transactionType">
+              <option value="">모르면 비워두기</option>
+              <option value="매매">매매</option>
+              <option value="전세">전세</option>
+              <option value="월세">월세</option>
+            </select>
+          </label>
+          <label id="sourceField" hidden>참고자료 주소
+            <input type="text" id="intakeSources" name="sources" placeholder="기사나 공식자료 주소, 없어도 됨">
+          </label>
+        </div>
+        <label class="message-label" for="intakeMessage" id="messageLabel">내용</label>
+        <textarea id="intakeMessage" name="text" rows="7" maxlength="12000" required
+          placeholder="알고 있는 내용을 편하게 적어주세요."></textarea>
+        <div class="privacy-note" id="privacyNote">동·호수, 개인 연락처, 출입 비밀번호가 있으면 공개 전 반드시 제거합니다.</div>
+        <div id="intakeStatus" class="intake-status" role="status" aria-live="polite" hidden></div>
+        <div class="form-actions">
+          <button type="button" class="secondary-button" id="resetIntakeBtn">처음으로</button>
+          <button type="submit" class="save-button" id="saveIntakeBtn">검토 대기 초안 저장</button>
+        </div>
+      </form>
+    </section>
+
+    <footer class="intake-footer">저장 후 함께 확인하고, 명시적으로 승인한 내용만 공개합니다.</footer>
+  </main>
+  <script type="module" src="../js/admin-intake-page.js"></script>
+</body>
+</html>

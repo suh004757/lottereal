@@ -31,9 +31,12 @@ async function init() {
 
   try {
     const existingUser = await getCurrentSessionUser();
-    if (existingUser) {
-      setMessage('Already signed in. Redirecting to dashboard...', 'success');
-      window.location.href = './dashboard.html';
+    if (existingUser?.app_metadata?.role === 'admin') {
+      setMessage('관리자 확인 완료. 초안 접수 화면으로 이동합니다.', 'success');
+      window.location.href = './intake.html';
+    } else if (existingUser) {
+      await signOutAdmin();
+      setMessage('관리자 권한이 없는 계정입니다.', 'error');
     }
   } catch (error) {
     console.error('[Admin] Failed to resolve current session:', error);
@@ -64,9 +67,12 @@ function bindEvents() {
           ipAddressHint: null
         });
 
-        if (result.success) {
-          setMessage('Login successful. Redirecting...', 'success');
-          window.location.href = './dashboard.html';
+        if (result.success && result.user?.app_metadata?.role === 'admin') {
+          setMessage('로그인 완료. 초안 접수 화면으로 이동합니다.', 'success');
+          window.location.href = './intake.html';
+        } else if (result.success) {
+          await signOutAdmin();
+          setMessage('관리자 권한이 없는 계정입니다.', 'error');
         } else {
           setMessage(result.error || 'Login failed. Check your credentials.', 'error');
         }
