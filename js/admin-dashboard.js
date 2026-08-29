@@ -127,7 +127,8 @@ document.addEventListener('DOMContentLoaded', () => {
 async function initAdminDashboard() {
   try {
     currentAdmin = await getCurrentSessionUser();
-    if (!currentAdmin) {
+    if (!currentAdmin || currentAdmin.app_metadata?.role !== 'admin') {
+      if (currentAdmin) await signOutAdmin();
       redirectToLogin();
       return;
     }
@@ -160,6 +161,51 @@ function setAdminIdentity(user) {
   userNameEl.textContent = user?.email || user?.user_metadata?.name || 'Admin';
 }
 
+function setTableMessage(tbody, colspan, message) {
+  if (!tbody) return;
+  const row = document.createElement('tr');
+  const cell = document.createElement('td');
+  cell.colSpan = colspan;
+  cell.textContent = String(message || '');
+  row.appendChild(cell);
+  tbody.replaceChildren(row);
+}
+
+function appendTextCell(row, value, childTag = '') {
+  const cell = document.createElement('td');
+  if (childTag) {
+    const child = document.createElement(childTag);
+    child.textContent = String(value ?? '');
+    cell.appendChild(child);
+  } else {
+    cell.textContent = String(value ?? '');
+  }
+  row.appendChild(cell);
+  return cell;
+}
+
+function createAdminButton(label, className, dataset = {}) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = className;
+  button.textContent = label;
+  Object.entries(dataset).forEach(([key, value]) => {
+    button.dataset[key] = String(value ?? '');
+  });
+  return button;
+}
+
+function createStatusBadge(status, publishedLabels = false) {
+  const normalized = String(status || '').toLowerCase();
+  const active = publishedLabels ? normalized === 'published' : normalized === 'read';
+  const badge = document.createElement('span');
+  badge.className = active ? 'admin-status-badge' : 'admin-status-badge pending';
+  badge.textContent = publishedLabels
+    ? (active ? '발행됨' : '초안')
+    : (active ? '읽음' : '미확인');
+  return badge;
+}
+
 // ============================================
 // 네비게이션 관련
 // ============================================
@@ -173,11 +219,13 @@ function bindNav() {
   const sections = document.querySelectorAll('.admin-section');
   navItems.forEach((item) => {
     item.addEventListener('click', (e) => {
+      const section = item.getAttribute('data-section');
+      if (!section) return;
       e.preventDefault();
       navItems.forEach((n) => n.classList.remove('active'));
       sections.forEach((s) => s.classList.remove('active'));
       item.classList.add('active');
-      const sectionId = item.getAttribute('data-section') + '-section';
+      const sectionId = section + '-section';
       const target = document.getElementById(sectionId);
       if (target) target.classList.add('active');
     });
@@ -284,44 +332,34 @@ async function loadRecent() {
  */
 async function loadListingsAdmin() {
   if (!listingsTbody) return;
-  listingsTbody.innerHTML = '<tr><td colspan="6">\uBD88\uB7EC\uC624\uB294 \uC911...</td></tr>';
+  setTableMessage(listingsTbody, 6, '불러오는 중...');
   try {
     const response = await listListingsAdmin({ page: 1, pageSize: 50 });
     const items = response?.data || [];
     if (!response?.ok) {
-      listingsTbody.innerHTML = `<tr><td colspan="6">\uB9E4\uBB3C \uBD88\uB7EC\uC624\uAE30 \uC2E4\uD328: ${response?.error || '\uC54C \uC218 \uC5C6\uB294 \uC624\uB958'}</td></tr>`;
+      setTableMessage(listingsTbody, 6, `매물 불러오기 실패: ${response?.error || '알 수 없는 오류'}`);
       return;
     }
     if (items.length === 0) {
-      listingsTbody.innerHTML = '<tr><td colspan="6">\uB9E4\uBB3C\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.</td></tr>';
+      setTableMessage(listingsTbody, 6, '매물이 없습니다.');
       return;
     }
-    listingsTbody.innerHTML = '';
+    listingsTbody.replaceChildren();
     items.forEach((item, idx) => {
       const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${idx + 1}</td>
-        <td>${item.title || ''}</td>
-        <td>${item.property_type || ''}</td>
-        <td>${item.address || ''}</td>
-        <td>${formatKst(item.created_at) || ''}</td>
-        <td>
-          <div class="admin-table-actions">
-            <button class="admin-icon-btn" data-edit="${item.id}" title="\uC218\uC815">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-              </svg>
-            </button>
-            <button class="admin-icon-btn danger" data-delete="${item.id}" title="\uC0AD\uC81C">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-              </svg>
-            </button>
-          </div>
-        </td>
-      `;
+      appendTextCell(tr, idx + 1);
+      appendTextCell(tr, item.title || '');
+      appendTextCell(tr, item.property_type || '');
+      appendTextCell(tr, item.address || '');
+      appendTextCell(tr, formatKst(item.created_at) || '');
+      const actionCell = document.createElement('td');
+      const actions = document.createElement('div');
+      actions.className = 'admin-table-actions';
+      const editButton = createAdminButton('수정', 'admin-btn admin-btn--ghost', { edit: item.id });
+      const deleteButton = createAdminButton('삭제', 'admin-btn admin-btn--ghost danger', { delete: item.id });
+      actions.append(editButton, deleteButton);
+      actionCell.appendChild(actions);
+      tr.appendChild(actionCell);
       listingsTbody.appendChild(tr);
     });
 
@@ -350,7 +388,7 @@ async function loadListingsAdmin() {
     });
   } catch (err) {
     console.error('\uB9E4\uBB3C \uAD00\uB9AC \uB85C\uB4DC \uC2E4\uD328', err);
-    listingsTbody.innerHTML = '<tr><td colspan="6">\uB9E4\uBB3C \uBD88\uB7EC\uC624\uAE30 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4.</td></tr>';
+    setTableMessage(listingsTbody, 6, '매물 불러오기 실패했습니다.');
   }
 }// ============================================
 // 문의 관리
@@ -365,39 +403,46 @@ async function loadListingsAdmin() {
  */
 async function loadInquiriesAdmin() {
   if (!inquiriesTbody) return;
-  inquiriesTbody.innerHTML = '<tr><td colspan="8">\uBD88\uB7EC\uC624\uB294 \uC911...</td></tr>';
+  setTableMessage(inquiriesTbody, 8, '불러오는 중...');
   try {
     const response = await listInquiriesAdmin({ page: 1, pageSize: 50 });
     const inquiries = response?.data || [];
     if (!response?.ok) {
-      inquiriesTbody.innerHTML = `<tr><td colspan="8">\uBB38\uC758 \uBD88\uB7EC\uC624\uAE30 \uC2E4\uD328: ${response?.error || '\uC54C \uC218 \uC5C6\uB294 \uC624\uB958'}</td></tr>`;
+      setTableMessage(inquiriesTbody, 8, `문의 불러오기 실패: ${response?.error || '알 수 없는 오류'}`);
       return;
     }
     if (inquiries.length === 0) {
-      inquiriesTbody.innerHTML = '<tr><td colspan="8">\uBB38\uC758\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.</td></tr>';
+      setTableMessage(inquiriesTbody, 8, '문의가 없습니다.');
       return;
     }
-    inquiriesTbody.innerHTML = '';
+    inquiriesTbody.replaceChildren();
     inquiries.forEach((inq, idx) => {
       const tr = document.createElement('tr');
       if ((inq.status || '').toLowerCase() === 'unread') {
         tr.classList.add('admin-inquiry--unread');
       }
-      tr.innerHTML = `
-        <td>${idx + 1}</td>
-        <td>${inq.listing_title || ''}</td>
-        <td>${inq.name || ''}</td>
-        <td>${inq.phone || ''}</td>
-        <td>${inq.message || ''}</td>
-        <td>${renderStatusBadge(inq.status)}</td>
-        <td>${formatKst(inq.created_at) || ''}</td>
-        <td>
-          <div class="admin-table-actions">
-            <button class="admin-btn admin-btn--ghost" data-inquiry="${inq.id}" data-status="${inq.status === 'read' ? 'unread' : 'read'}">${inq.status === 'read' ? '\uC548\uC77D\uC74C\uC73C\uB85C' : '\uC77D\uC74C\uC73C\uB85C'}</button>
-            <button class="admin-btn admin-btn--ghost" data-share-inquiry="${inq.id}">\uACF5\uC720</button>
-          </div>
-        </td>
-      `;
+      appendTextCell(tr, idx + 1);
+      appendTextCell(tr, inq.listing_title || '');
+      appendTextCell(tr, inq.name || '');
+      appendTextCell(tr, inq.phone || '');
+      appendTextCell(tr, inq.message || '');
+      const statusCell = document.createElement('td');
+      statusCell.appendChild(createStatusBadge(inq.status));
+      tr.appendChild(statusCell);
+      appendTextCell(tr, formatKst(inq.created_at) || '');
+      const actionCell = document.createElement('td');
+      const actions = document.createElement('div');
+      actions.className = 'admin-table-actions';
+      const nextStatus = inq.status === 'read' ? 'unread' : 'read';
+      const statusButton = createAdminButton(
+        inq.status === 'read' ? '안읽음으로' : '읽음으로',
+        'admin-btn admin-btn--ghost',
+        { inquiry: inq.id, status: nextStatus }
+      );
+      const shareButton = createAdminButton('공유', 'admin-btn admin-btn--ghost', { shareInquiry: inq.id });
+      actions.append(statusButton, shareButton);
+      actionCell.appendChild(actions);
+      tr.appendChild(actionCell);
       tr.addEventListener('click', (e) => {
         if (e.target.closest('button')) return;
         openInquiryModal(inq);
@@ -443,7 +488,7 @@ async function loadInquiriesAdmin() {
     });
   } catch (err) {
     console.error('\uBB38\uC758 \uAD00\uB9AC \uB85C\uB4DC \uC2E4\uD328', err);
-    inquiriesTbody.innerHTML = '<tr><td colspan="8">\uBB38\uC758 \uBD88\uB7EC\uC624\uAE30 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4.</td></tr>';
+    setTableMessage(inquiriesTbody, 8, '문의 불러오기 실패했습니다.');
   }
 }
 // ============================================
@@ -582,7 +627,7 @@ function openInquiryModal(inq) {
   inquiryFields.name.textContent = inq.name || '-';
   inquiryFields.phone.textContent = inq.phone || '-';
   inquiryFields.email.textContent = inq.email || '-';
-  inquiryFields.status.innerHTML = renderStatusBadge(inq.status);
+  inquiryFields.status.replaceChildren(createStatusBadge(inq.status));
   inquiryFields.created.textContent = formatKst(inq.created_at) || '-';
   inquiryFields.message.textContent = inq.message || '-';
   inquiryModal.classList.add('active');
@@ -817,19 +862,6 @@ function togglePropertyFormDisabled(isDisabled) {
 }
 
 /**
- * 문의 상태 배지 HTML을 렌더링합니다.
- *
- * @param {string} status - 문의 상태 ('read' | 'unread')
- * @returns {string} HTML 문자열
- */
-function renderStatusBadge(status) {
-  const normalized = (status || '').toLowerCase();
-  const label = normalized === 'read' ? '읽음' : '미확인';
-  const cls = normalized === 'read' ? 'admin-status-badge' : 'admin-status-badge pending';
-  return `<span class="${cls}">${label}</span>`;
-}
-
-/**
  * 매물 수정 시 폼을 데이터로 채웁니다.
  *
  * @param {Object} item - 매물 데이터 객체
@@ -974,45 +1006,33 @@ function updateReportEditorTitle(report = null) {
 
 async function loadReportsAdmin() {
   if (!reportsTbody) return;
-  reportsTbody.innerHTML = '<tr><td colspan="7">불러오는 중...</td></tr>';
+  setTableMessage(reportsTbody, 7, '불러오는 중...');
   try {
     const reports = await listReports({ limit: 50 });
     if (!reports || reports.length === 0) {
-      reportsTbody.innerHTML = '<tr><td colspan="7">리포트가 없습니다.</td></tr>';
+      setTableMessage(reportsTbody, 7, '리포트가 없습니다.');
       return;
     }
 
-    reportsTbody.innerHTML = '';
+    reportsTbody.replaceChildren();
     reports.forEach((report, idx) => {
       const tr = document.createElement('tr');
-      const statusBadge = report.status === 'published'
-        ? '<span class="admin-status-badge">발행됨</span>'
-        : '<span class="admin-status-badge pending">초안</span>';
-
-      tr.innerHTML = `
-        <td>${idx + 1}</td>
-        <td>${report.title || ''}</td>
-        <td><code style="font-size:0.875rem;">${report.slug || ''}</code></td>
-        <td>${statusBadge}</td>
-        <td>${Number(report.view_count || 0).toLocaleString()}</td>
-        <td>${formatKst(report.updated_at) || ''}</td>
-        <td>
-          <div class="admin-table-actions">
-            <button class="admin-icon-btn" data-edit-report="${report.id}" title="수정">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-              </svg>
-            </button>
-            <button class="admin-icon-btn" data-view-report="${report.slug}" title="미리보기">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-              </svg>
-            </button>
-          </div>
-        </td>
-      `;
+      appendTextCell(tr, idx + 1);
+      appendTextCell(tr, report.title || '');
+      appendTextCell(tr, report.slug || '', 'code');
+      const statusCell = document.createElement('td');
+      statusCell.appendChild(createStatusBadge(report.status, true));
+      tr.appendChild(statusCell);
+      appendTextCell(tr, Number(report.view_count || 0).toLocaleString());
+      appendTextCell(tr, formatKst(report.updated_at) || '');
+      const actionCell = document.createElement('td');
+      const actions = document.createElement('div');
+      actions.className = 'admin-table-actions';
+      const editButton = createAdminButton('수정', 'admin-btn admin-btn--ghost', { editReport: report.id });
+      const viewButton = createAdminButton('미리보기', 'admin-btn admin-btn--ghost', { viewReport: report.slug });
+      actions.append(editButton, viewButton);
+      actionCell.appendChild(actions);
+      tr.appendChild(actionCell);
       reportsTbody.appendChild(tr);
     });
 
@@ -1032,7 +1052,7 @@ async function loadReportsAdmin() {
     });
   } catch (err) {
     console.error('리포트 관리 로드 실패', err);
-    reportsTbody.innerHTML = '<tr><td colspan="7">리포트 불러오기 실패했습니다.</td></tr>';
+    setTableMessage(reportsTbody, 7, '리포트 불러오기 실패했습니다.');
   }
 }
 

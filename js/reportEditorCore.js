@@ -1,4 +1,5 @@
 import { getReportAdmin, saveReport } from './services/reportAdapter.js';
+import { mergeReportMetadata, buildSanitizedPreview } from './reportEditorSecurity.mjs';
 
 const DEFAULT_EVIDENCE = [
   {
@@ -266,6 +267,7 @@ export function initializeReportEditor({
       }))
       .filter((entry) => entry.name || entry.url || entry.coverage);
 
+    const now = new Date().toISOString();
     return {
       slug,
       title,
@@ -273,24 +275,40 @@ export function initializeReportEditor({
       report_md,
       evidence_json,
       status,
-      metadata: {
-        evidenceCount: evidence_json.length,
-        lastEditedAt: new Date().toISOString()
-      },
-      updated_at: new Date().toISOString()
+      metadata: mergeReportMetadata(
+        editingReport?.metadata,
+        evidence_json.length,
+        now,
+        status
+      ),
+      updated_at: now
     };
   }
 
   function showPreview() {
     if (!refs.previewModal || !refs.previewBody) return;
-    const title = refs.titleInput?.value || '무제 리포트';
-    const rawHtml = window.marked ? window.marked.parse(getEditorContent()) : getEditorContent();
-    const safeTitle = window.DOMPurify ? window.DOMPurify.sanitize(title) : title;
-    const safeHtml = window.DOMPurify ? window.DOMPurify.sanitize(rawHtml) : rawHtml;
-    const previewTitle = typeof previewTitleRenderer === 'function'
-      ? previewTitleRenderer(safeTitle)
-      : `<h1 style="font-size:2.5rem;margin-bottom:1rem;color:#111827;">${safeTitle}</h1>`;
-    refs.previewBody.innerHTML = `${previewTitle}<div class="lr-report-body">${safeHtml}</div>`;
+    let preview;
+    try {
+      preview = buildSanitizedPreview({
+        title: refs.titleInput?.value || '무제 리포트',
+        markdown: getEditorContent(),
+        marked: window.marked,
+        purifier: window.DOMPurify
+      });
+    } catch (error) {
+      setStatus(error.message || '안전한 미리보기를 만들지 못했습니다.', 'error');
+      return;
+    }
+
+    const titleElement = document.createElement('h1');
+    titleElement.style.fontSize = '2.5rem';
+    titleElement.style.marginBottom = '1rem';
+    titleElement.style.color = '#111827';
+    titleElement.textContent = preview.title;
+    const bodyElement = document.createElement('div');
+    bodyElement.className = 'lr-report-body';
+    bodyElement.innerHTML = preview.bodyHtml;
+    refs.previewBody.replaceChildren(titleElement, bodyElement);
     refs.previewModal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
   }
