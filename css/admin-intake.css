@@ -46,6 +46,20 @@ h1 { margin: 0; font-size: clamp(30px, 6vw, 46px); line-height: 1.2; letter-spac
 input, select, textarea { width: 100%; margin-top: 6px; padding: 14px 15px; border: 1px solid #bcc6c0; border-radius: 14px; color: var(--ink); background: white; }
 textarea { min-height: 190px; resize: vertical; }
 input:focus, select:focus, textarea:focus { border-color: var(--green); outline: 3px solid rgba(31,90,67,.14); }
+.intake-images { margin: 18px 0; }
+.intake-images h3 { margin: 0 0 10px; font-size: 18px; }
+.image-dropzone { display: grid; gap: 3px; min-height: 128px; place-content: center; padding: 20px; text-align: center; border: 2px dashed #9eafa5; border-radius: 18px; color: var(--green-dark); background: #f4f8f5; cursor: pointer; transition: border-color .18s ease, background .18s ease, transform .18s ease; }
+.image-dropzone strong { font-size: 20px; }
+.image-dropzone span, .image-dropzone small { color: var(--muted); }
+.image-dropzone:hover, .image-dropzone:focus-visible, .image-dropzone.is-dragging { border-color: var(--green); background: #e9f3ed; outline: 3px solid rgba(31,90,67,.12); transform: translateY(-1px); }
+.image-dropzone[aria-disabled="true"] { cursor: not-allowed; opacity: .62; transform: none; }
+.image-file-input { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.image-summary { margin: 10px 0; color: var(--muted); font-size: 15px; font-weight: 700; }
+.image-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 10px; }
+.image-preview-item { position: relative; overflow: hidden; aspect-ratio: 1; border: 1px solid var(--line); border-radius: 14px; background: #e8ebe8; }
+.image-preview-item img { width: 100%; height: 100%; object-fit: cover; }
+.image-preview-item span { position: absolute; left: 7px; bottom: 7px; min-width: 28px; padding: 2px 7px; border-radius: 999px; color: white; background: rgba(22,63,49,.84); font-size: 12px; text-align: center; }
+.image-preview-remove { position: absolute; top: 6px; right: 6px; min-height: 36px; min-width: 36px; padding: 0; border: 0; border-radius: 50%; color: white; background: rgba(20,28,24,.78); cursor: pointer; }
 .privacy-note { margin: 9px 0 16px; padding: 12px 14px; border-radius: 12px; color: var(--warning); background: #fff4dc; font-size: 14px; }
 .form-actions { display: grid; grid-template-columns: minmax(120px, .42fr) 1fr; gap: 12px; }
 .form-actions button { padding: 12px 18px; border-radius: 14px; font-weight: 700; cursor: pointer; }
