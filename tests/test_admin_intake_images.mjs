@@ -9,6 +9,7 @@ import {
   isCompatibleImageManifest
 } from '../js/adminIntakeImageRules.mjs';
 import { runAdminIntakeUploadQueue } from '../js/adminIntakeUploadQueue.mjs';
+import { readImageDimensions, getOrientedDimensions } from '../js/adminIntakeImageDimensions.mjs';
 
 const image = (name, type = 'image/jpeg', size = 2_000_000) => ({ name, type, size });
 
@@ -18,9 +19,87 @@ test('accepts up to 30 supported field photos', () => {
   assert.throws(() => validateAdminIntakeImages([...files, image('extra.jpg')]), /최대 30장/);
 });
 
+test('accepts modern high-resolution source photos up to 60MB', () => {
+  const files = [image('galaxy-s-ultra.jpg', 'image/jpeg', 60 * 1024 * 1024)];
+  assert.equal(validateAdminIntakeImages(files).length, 1);
+});
+
 test('rejects unsupported or oversized image files', () => {
-  assert.throws(() => validateAdminIntakeImages([image('raw.heic', 'image/heic')]), /JPG, PNG, WebP/);
-  assert.throws(() => validateAdminIntakeImages([image('huge.jpg', 'image/jpeg', 21 * 1024 * 1024)]), /20MB/);
+  assert.throws(() => validateAdminIntakeImages([image('a.gif', 'image/gif')]), /JPG/);
+  assert.throws(() => validateAdminIntakeImages([image('huge.jpg', 'image/jpeg', 61 * 1024 * 1024)]), /60MB/);
+});
+
+test('reads a safe large JPEG without decoding the full image', async () => {
+  const bytes = new Uint8Array([
+    0xff, 0xd8,
+    0xff, 0xc0, 0x00, 0x0b, 0x08,
+    0x17, 0x70,
+    0x27, 0x10,
+    0x01, 0x01, 0x11, 0x00,
+    0xff, 0xd9
+  ]);
+  const dimensions = await readImageDimensions(new Blob([bytes], { type: 'image/jpeg' }));
+  assert.deepEqual(dimensions, { width: 10000, height: 6000, orientation: 1 });
+});
+
+test('rejects a compressed image above the 64MP decode safety ceiling', async () => {
+  const bytes = new Uint8Array([
+    0xff, 0xd8,
+    0xff, 0xc0, 0x00, 0x0b, 0x08,
+    0x23, 0x28,
+    0x2e, 0xe0,
+    0x01, 0x01, 0x11, 0x00,
+    0xff, 0xd9
+  ]);
+  await assert.rejects(
+    readImageDimensions(new Blob([bytes], { type: 'image/jpeg' })),
+    /64MP/
+  );
+});
+
+test('reads EXIF orientation 6 and preserves the oriented aspect ratio', async () => {
+  const exif = new Uint8Array([
+    0xff, 0xd8,
+    0xff, 0xe1, 0x00, 0x22,
+    0x45, 0x78, 0x69, 0x66, 0x00, 0x00,
+    0x49, 0x49, 0x2a, 0x00, 0x08, 0x00, 0x00, 0x00,
+    0x01, 0x00,
+    0x12, 0x01, 0x03, 0x00, 0x01, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00,
+    0xff, 0xc0, 0x00, 0x0b, 0x08,
+    0x27, 0x10,
+    0x17, 0x70,
+    0x01, 0x01, 0x11, 0x00,
+    0xff, 0xd9
+  ]);
+  const dimensions = await readImageDimensions(new Blob([exif], { type: 'image/jpeg' }));
+  assert.deepEqual(dimensions, { width: 6000, height: 10000, orientation: 6 });
+  assert.deepEqual(getOrientedDimensions(dimensions), { width: 10000, height: 6000 });
+});
+
+test('reads PNG dimensions only from a valid IHDR first chunk', async () => {
+  const bytes = new Uint8Array(24);
+  bytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0);
+  bytes.set([0x00, 0x00, 0x00, 0x0d, ...Buffer.from('IHDR')], 8);
+  const view = new DataView(bytes.buffer);
+  view.setUint32(16, 8000);
+  view.setUint32(20, 6000);
+  const dimensions = await readImageDimensions(new Blob([bytes], { type: 'image/png' }));
+  assert.deepEqual(dimensions, { width: 8000, height: 6000, orientation: 1 });
+
+  bytes.set(Buffer.from('IDAT'), 12);
+  await assert.rejects(readImageDimensions(new Blob([bytes], { type: 'image/png' })), /픽셀 크기/);
+});
+
+test('reads WebP VP8X dimensions from its header', async () => {
+  const bytes = new Uint8Array(30);
+  bytes.set([...Buffer.from('RIFF'), 0, 0, 0, 0, ...Buffer.from('WEBPVP8X')], 0);
+  const width = 9000 - 1;
+  const height = 7000 - 1;
+  bytes.set([width & 0xff, (width >> 8) & 0xff, (width >> 16) & 0xff], 24);
+  bytes.set([height & 0xff, (height >> 8) & 0xff, (height >> 16) & 0xff], 27);
+  const dimensions = await readImageDimensions(new Blob([bytes], { type: 'image/webp' }));
+  assert.deepEqual(dimensions, { width: 9000, height: 7000, orientation: 1 });
 });
 
 test('private object paths do not expose original filenames', () => {

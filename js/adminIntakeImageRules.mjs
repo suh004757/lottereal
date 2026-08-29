@@ -1,5 +1,5 @@
 const MAX_IMAGES = 30;
-const MAX_SOURCE_BYTES = 20 * 1024 * 1024;
+const MAX_SOURCE_BYTES = 60 * 1024 * 1024;
 const SUPPORTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 export function validateAdminIntakeImages(files) {
@@ -12,7 +12,7 @@ export function validateAdminIntakeImages(files) {
       throw new Error('사진은 JPG, PNG, WebP 형식만 첨부할 수 있습니다.');
     }
     if (!Number.isFinite(file?.size) || file.size <= 0 || file.size > MAX_SOURCE_BYTES) {
-      throw new Error('사진 한 장의 원본 크기는 20MB 이하여야 합니다.');
+      throw new Error('사진 한 장의 원본 크기는 60MB 이하여야 합니다.');
     }
   });
   return list;
