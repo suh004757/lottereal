@@ -54,7 +54,7 @@ class ListingUiTest(unittest.TestCase):
             self.assertNotIn('>추천매물</a>', primary_navigation(html), path.name)
         home = (REPO / 'index.html').read_text(encoding='utf-8')
         listings = (REPO / 'listings.html').read_text(encoding='utf-8')
-        self.assertIn('<p class="lr-kicker">추천 매물</p>', home)
+        self.assertIn('<p class="lr-kicker">매물 유형 찾기</p>', home)
         self.assertNotIn('<strong>추천매물</strong>', listings)
 
     def test_korean_primary_navigation_omits_process_and_english_links(self):
@@ -66,6 +66,33 @@ class ListingUiTest(unittest.TestCase):
 
         home = (REPO / 'index.html').read_text(encoding='utf-8')
         self.assertIn('<a href="EN.html">ENGLISH</a>', home[home.index('<footer'):])
+
+    def test_korean_primary_navigation_is_consistent_and_bounded(self):
+        expected = ('현재 관심', '매물 찾기', '시장·정책', '계약 사례', '자료 찾기', '문의·방문')
+        for path in korean_pages():
+            html = path.read_text(encoding='utf-8')
+            nav = primary_navigation(html)
+            self.assertEqual(nav.count('<a '), 6, path.name)
+            for label in expected:
+                self.assertIn(f'>{label}</a>', nav, path.name)
+            self.assertNotIn('>홈</a>', nav, path.name)
+            self.assertNotIn('>찾아오는 길</a>', nav, path.name)
+
+    def test_home_prioritizes_live_interest_and_property_search_before_editorial_sections(self):
+        home = (REPO / 'index.html').read_text(encoding='utf-8')
+        ordered = (
+            'id="inquiry-receipts"',
+            'id="listings"',
+            'lr-home-intro',
+            'id="services"',
+            'id="official-stats"',
+            'id="market-report"',
+            'id="contact"',
+        )
+        positions = [home.index(marker) for marker in ordered]
+        self.assertEqual(positions, sorted(positions))
+        self.assertIn('어떤 매물을 찾고 계신가요?', home)
+        self.assertNotIn('지금 바로 만날 수 있는 매물들', home)
 
     def test_listing_cards_and_actions_use_non_overlapping_responsive_layout(self):
         css = (REPO / 'style.css').read_text(encoding='utf-8')

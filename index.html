@@ -66,14 +66,13 @@
     <div class="lr-container">
       <div class="lr-brand"><a href="#hero">롯데부동산</a></div>
       <button class="lr-hamburger" aria-label="메뉴" aria-expanded="false">☰</button>
-      <nav class="lr-nav">
-        <a href="#hero">홈</a>
-        <a href="#market-report">시장·정책</a>
-        <a href="disputes.html">계약·분쟁 사례</a>
+      <nav class="lr-nav" aria-label="주요 메뉴">
+        <a href="#inquiry-receipts">현재 관심</a>
+        <a href="listings.html">매물 찾기</a>
+        <a href="report.html">시장·정책</a>
+        <a href="disputes.html">계약 사례</a>
         <a href="knowledge.html">자료 찾기</a>
-        <a href="listings.html">매물리스트</a>
-        <a href="contact.html#inquiry-options">문의</a>
-        <a href="contact.html" class="lr-nav-cta">찾아오는 길</a>
+        <a href="contact.html" class="lr-nav-cta">문의·방문</a>
       </nav>
     </div>
   </header>
@@ -137,80 +136,29 @@
       </div>
     </section>
 
-    <section class="lr-home-intro">
-      <div class="lr-container">
-        <div class="lr-home-intro__card">
-          <p class="lr-kicker">Local Coverage</p>
-          <h2>송파구·잠실·삼전동·석촌동 중심 부동산 상담</h2>
-          <p class="lr-lead">롯데부동산은 송파구 아파트 전월세, 잠실 오피스텔, 삼전동 사무실, 석촌동 상가 임대처럼 실제 검색 수요가 높은 지역과 자산 유형에 맞춰 매물을 연결합니다.</p>
-          <p class="lr-text">송파와 강남 생활권에서 주거·오피스·리테일 수요를 함께 다루며, 실거래 흐름과 현장 네트워크를 바탕으로 조건에 맞는 매물을 빠르게 제안합니다.</p>
-        </div>
-      </div>
-    </section>
-
-    <section class="lr-section lr-stats-snapshot" id="official-stats">
-      <div class="lr-container">
-        <div class="lr-stats-card">
-          <div class="lr-stats-card__intro">
-            <p class="lr-kicker">공식 지표 요약</p>
-            <h2>한국부동산원 발표 기준 최신 아파트 시장 흐름</h2>
-            <p class="lr-lead">2026년 8월 17일 주간 발표 기준입니다. 상담 때 체감 분위기만 보지 않고, 공신력 있는 발표 자료도 함께 확인합니다.</p>
-          </div>
-          <div class="lr-stats-grid" aria-label="한국부동산원 주간 아파트 매매가격지수">
-            <div class="lr-stat-pill"><span>서울</span><strong>101.51</strong><small>매매가격지수</small></div>
-            <div class="lr-stat-pill"><span>강남구</span><strong>100.28</strong><small>동남권 세부</small></div>
-            <div class="lr-stat-pill"><span>송파구</span><strong>101.19</strong><small>롯데부동산 핵심권역</small></div>
-          </div>
-          <p class="lr-source-note">출처: 한국부동산원 부동산통계정보, 기준일 2026-08-17. 아래 숫자는 지역 흐름을 보는 참고 지표이며, 개별 단지·매물 가격과는 다를 수 있습니다.</p>
-        </div>
-      </div>
-    </section>
-
     <section class="lr-section lr-inquiry-receipts" id="inquiry-receipts" data-external-inquiry-receipts data-nosnippet>
       <div class="lr-container">
         <div class="lr-section__head">
           <div>
-            <p class="lr-kicker">문의 접수 확인</p>
-            <h2>외부 플랫폼 문의가 이메일로 도착했는지 확인하세요</h2>
-            <p class="lr-lead">최근 24시간 동안 수신된 직방 문의를 매물번호와 접수 시간대로 표시합니다. 고객 이름·연락처·문의 내용은 공개하지 않습니다.</p>
+            <p class="lr-kicker">현재 문의 현황</p>
+            <h2>지금 고객들이 관심 있게 보고 있는 매물입니다</h2>
+            <p class="lr-lead">최근 24시간 직방에서 실제 문의가 접수된 매물입니다. 거래유형·매물번호·접수 시간대를 확인하고, 궁금한 매물은 바로 상담해보세요.</p>
           </div>
         </div>
         <div class="lr-receipt-card" data-receipt-list aria-live="polite">
-          <p class="lr-receipt-empty">최근 접수 내역을 확인하는 중입니다.</p>
+          <p class="lr-receipt-empty">실시간 관심 현황을 불러오는 중입니다.</p>
         </div>
-        <p class="lr-source-note">직방에서 발송한 이메일의 수신 시각을 1시간 단위로 표시합니다. 플랫폼 전송 또는 메일 전달 지연이 있을 수 있으며, 표시 내역은 24시간 후 자동으로 숨겨집니다.</p>
+        <p class="lr-source-note">직방 문의 접수 기준이며 시각은 1시간 단위로 표시합니다. 고객 이름·연락처·문의 내용은 공개하지 않으며, 현황은 24시간 동안만 표시됩니다.</p>
       </div>
     </section>
-
-    <section class="lr-section" id="market-report" data-report-section>
-      <div class="lr-container">
-        <div class="lr-section__head">
-          <div>
-            <p class="lr-kicker">오늘의 시장 · 계약 자료</p>
-            <h2>오늘 확인할 두 가지</h2>
-            <p class="lr-lead">최신 시장 흐름 한 건과 생활에 가까운 계약·분쟁 사례 한 건만 보여드립니다. 더 필요한 내용은 하단 자료 찾기에서 질문해보세요.</p>
-          </div>
-          <a class="lr-link" href="report.html" data-report-link>전체 리포트 보기</a>
-        </div>
-        <div class="lr-report-showcase" data-report-list>
-          <div class="lr-report-showcase__feature" data-report-featured></div>
-          <div class="lr-report-showcase__secondary" data-report-secondary-list></div>
-        </div>
-        <div class="lr-disclaimer" style="margin-top:1.5rem;">
-          <strong>중요 고지</strong><br>
-          시장·정책 글은 공신력 있는 공개 자료를 쉽게 풀어쓴 참고자료입니다. 실제 계약 전에는 매물별 조건과 서류를 다시 확인해야 합니다.
-        </div>
-      </div>
-    </section>
-
 
     <section class="lr-section" id="listings">
       <div class="lr-container">
         <div class="lr-section__head">
           <div>
-            <p class="lr-kicker">추천 매물</p>
-            <h2>지금 바로 만날 수 있는 매물들</h2>
-            <p class="lr-lead">아파트, 사무실, 상가, 오피스텔을 조건에 맞게 추천해드립니다.</p>
+            <p class="lr-kicker">매물 유형 찾기</p>
+            <h2>어떤 매물을 찾고 계신가요?</h2>
+            <p class="lr-lead">아파트·오피스텔·사무실·상가 중 원하는 유형을 먼저 살펴보고, 현재 확인 가능한 매물은 매물리스트나 상담에서 안내받으세요.</p>
           </div>
           <a class="lr-link" href="listings.html">전체 매물 보기</a>
         </div>
@@ -246,6 +194,17 @@
       </div>
     </section>
 
+    <section class="lr-home-intro">
+      <div class="lr-container">
+        <div class="lr-home-intro__card">
+          <p class="lr-kicker">Local Coverage</p>
+          <h2>송파구·잠실·삼전동·석촌동 중심 부동산 상담</h2>
+          <p class="lr-lead">롯데부동산은 송파구 아파트 전월세, 잠실 오피스텔, 삼전동 사무실, 석촌동 상가 임대처럼 실제 검색 수요가 높은 지역과 자산 유형에 맞춰 매물을 연결합니다.</p>
+          <p class="lr-text">송파와 강남 생활권에서 주거·오피스·리테일 수요를 함께 다루며, 실거래 흐름과 현장 네트워크를 바탕으로 조건에 맞는 매물을 빠르게 제안합니다.</p>
+        </div>
+      </div>
+    </section>
+
     <section class="lr-section lr-section--muted" id="services">
       <div class="lr-container">
         <div class="lr-section__head">
@@ -276,6 +235,45 @@
             <h4>입주 · 사후관리</h4>
             <p>입주부터 관리, 임대 운영까지 계속 지원합니다.</p>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="lr-section lr-stats-snapshot" id="official-stats">
+      <div class="lr-container">
+        <div class="lr-stats-card">
+          <div class="lr-stats-card__intro">
+            <p class="lr-kicker">공식 지표 요약</p>
+            <h2>한국부동산원 발표 기준 최신 아파트 시장 흐름</h2>
+            <p class="lr-lead">2026년 8월 17일 주간 발표 기준입니다. 상담 때 체감 분위기만 보지 않고, 공신력 있는 발표 자료도 함께 확인합니다.</p>
+          </div>
+          <div class="lr-stats-grid" aria-label="한국부동산원 주간 아파트 매매가격지수">
+            <div class="lr-stat-pill"><span>서울</span><strong>101.51</strong><small>매매가격지수</small></div>
+            <div class="lr-stat-pill"><span>강남구</span><strong>100.28</strong><small>동남권 세부</small></div>
+            <div class="lr-stat-pill"><span>송파구</span><strong>101.19</strong><small>롯데부동산 핵심권역</small></div>
+          </div>
+          <p class="lr-source-note">출처: 한국부동산원 부동산통계정보, 기준일 2026-08-17. 아래 숫자는 지역 흐름을 보는 참고 지표이며, 개별 단지·매물 가격과는 다를 수 있습니다.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="lr-section" id="market-report" data-report-section>
+      <div class="lr-container">
+        <div class="lr-section__head">
+          <div>
+            <p class="lr-kicker">오늘의 시장 · 계약 자료</p>
+            <h2>오늘 확인할 두 가지</h2>
+            <p class="lr-lead">최신 시장 흐름 한 건과 생활에 가까운 계약·분쟁 사례 한 건만 보여드립니다. 더 필요한 내용은 하단 자료 찾기에서 질문해보세요.</p>
+          </div>
+          <a class="lr-link" href="report.html" data-report-link>전체 리포트 보기</a>
+        </div>
+        <div class="lr-report-showcase" data-report-list>
+          <div class="lr-report-showcase__feature" data-report-featured></div>
+          <div class="lr-report-showcase__secondary" data-report-secondary-list></div>
+        </div>
+        <div class="lr-disclaimer" style="margin-top:1.5rem;">
+          <strong>중요 고지</strong><br>
+          시장·정책 글은 공신력 있는 공개 자료를 쉽게 풀어쓴 참고자료입니다. 실제 계약 전에는 매물별 조건과 서류를 다시 확인해야 합니다.
         </div>
       </div>
     </section>

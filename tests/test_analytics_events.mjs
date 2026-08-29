@@ -23,9 +23,11 @@ function loadAnalytics(pathname = '/', href = `https://lottes.co.kr${pathname}`)
   return { events, listeners };
 }
 
-function link(href, text = '이동') {
+function link(href, text = '이동', attributes = []) {
+  const names = new Set(attributes);
   return {
     getAttribute(name) { return name === 'href' ? href : ''; },
+    hasAttribute(name) { return names.has(name); },
     textContent: text,
   };
 }
@@ -75,6 +77,31 @@ test('does not send visible text from internal or classified links', () => {
   assert.ok(events.some((item) => item.name === 'listing_view'));
   assert.ok(events.some((item) => item.name === 'internal_navigation_click'));
   assert.ok(!JSON.stringify(events).includes('010-1234-5678'));
+});
+
+test('tracks report-to-current-interest entry as its own aggregate event', () => {
+  const { events, listeners } = loadAnalytics('/report.html');
+  const targetLink = link('index.html#inquiry-receipts', '현재 관심 매물', ['data-current-interest-entry']);
+  listeners.click({ target: { closest: () => targetLink } });
+  const clickEvent = events.find((item) => item.name === 'current_interest_entry_click');
+  assert.ok(clickEvent);
+  assert.equal(clickEvent.params.page_path, '/report.html');
+  assert.equal(clickEvent.params.entry_type, 'report_to_live_interest');
+  assert.doesNotMatch(JSON.stringify(clickEvent), /listing|query|고객/);
+});
+
+test('tracks listing-reference inquiry CTA without sending the listing number', () => {
+  const { events, listeners } = loadAnalytics('/index.html');
+  const targetLink = link(
+    'contact.html?source=zigbang&listing=50181019#inquiry-options',
+    '이 매물 문의',
+    ['data-listing-reference-inquiry']
+  );
+  listeners.click({ target: { closest: () => targetLink } });
+  const event = events.find((item) => item.name === 'listing_reference_inquiry_click');
+  assert.ok(event);
+  assert.equal(event.params.source_platform, 'zigbang');
+  assert.ok(!JSON.stringify(event.params).includes('50181019'));
 });
 
 test('keeps generic contact clicks separate from report-to-contact conversions', () => {

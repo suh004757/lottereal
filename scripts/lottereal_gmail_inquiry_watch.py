@@ -236,12 +236,20 @@ def build_public_receipt_payload(item: dict) -> dict | None:
     ):
         return None
     listing_number = ''
+    transaction_type = ''
     for line in details:
-        match = re.fullmatch(r'• 등록번호 ([0-9]{5,20})', str(line))
-        if match:
-            listing_number = match.group(1)
-            break
-    if not listing_number:
+        value = str(line)
+        listing_match = re.fullmatch(r'• 등록번호 ([0-9]{5,20})', value)
+        if listing_match:
+            listing_number = listing_match.group(1)
+            continue
+        transaction_match = re.fullmatch(
+            r'• (전세|매매) [0-9]{1,9}|• (월세) [0-9]{1,9}/[0-9]{1,9}',
+            value,
+        )
+        if transaction_match:
+            transaction_type = transaction_match.group(1) or transaction_match.group(2)
+    if not listing_number or not transaction_type:
         return None
     try:
         raw_received = str(item.get('received_at') or '')
@@ -267,6 +275,7 @@ def build_public_receipt_payload(item: dict) -> dict | None:
     return {
         'source': 'zigbang',
         'listing_number': listing_number,
+        'transaction_type': transaction_type,
         'received_hour': received_hour.isoformat(),
         'status': 'received',
         'source_message_hash': key,
@@ -346,6 +355,7 @@ def publish_public_receipt(
     allowed_keys = {
         'source',
         'listing_number',
+        'transaction_type',
         'received_hour',
         'status',
         'source_message_hash',
@@ -360,6 +370,7 @@ def publish_public_receipt(
         set(payload) != allowed_keys
         or payload.get('source') != 'zigbang'
         or payload.get('status') != 'received'
+        or payload.get('transaction_type') not in {'전세', '월세', '매매'}
         or not re.fullmatch(r'[0-9]{5,20}', str(payload.get('listing_number') or ''))
         or not re.fullmatch(r'[0-9a-f]{64}', str(payload.get('source_message_hash') or ''))
         or received_utc is None
