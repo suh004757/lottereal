@@ -19,7 +19,7 @@ import re
 import ssl
 import sys
 import time
-from urllib.parse import parse_qsl, urlencode, urlparse
+from urllib.parse import urlencode, urlparse
 from urllib.request import Request, urlopen
 from uuid import UUID
 from zoneinfo import ZoneInfo
@@ -28,6 +28,10 @@ ZIGBANG_SENDER = 'cs@zigbang.com'
 ZIGBANG_SUBJECT = '직방에서 고객 문의가 들어왔습니다.'
 DEFAULT_ENV_PATH = Path('/opt/data/.env')
 DEFAULT_STATE_PATH = Path('/opt/data/state/lottereal/gmail-inquiry-watch.json')
+SONGPA_LEGAL_DONGS = frozenset({
+    '가락동', '거여동', '마천동', '문정동', '방이동', '삼전동', '석촌동',
+    '송파동', '신천동', '오금동', '잠실동', '장지동', '풍납동',
+})
 
 
 def classify_inquiry(sender: str, subject: str) -> str | None:
@@ -193,16 +197,36 @@ class _HtmlText(HTMLParser):
         super().__init__()
         self.parts: list[str] = []
         self.links: list[str] = []
+        self.events: list[tuple[str, str, str | None]] = []
+        self._anchor_href: str | None = None
+        self._anchor_parts: list[str] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-        if tag.lower() != 'a':
+        if tag.lower() != 'a' or self._anchor_href is not None:
             return
         href = dict(attrs).get('href')
         if isinstance(href, str):
-            self.links.append(unescape(href))
+            self._anchor_href = unescape(href)
+            self._anchor_parts = []
+            self.links.append(self._anchor_href)
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag.lower() != 'a' or self._anchor_href is None:
+            return
+        label = ' '.join(' '.join(self._anchor_parts).split())
+        self.events.append(('anchor', label, self._anchor_href))
+        self._anchor_href = None
+        self._anchor_parts = []
 
     def handle_data(self, data: str) -> None:
-        self.parts.append(data)
+        normalized = ' '.join(unescape(data).split())
+        if not normalized:
+            return
+        self.parts.append(normalized)
+        if self._anchor_href is not None:
+            self._anchor_parts.append(normalized)
+        else:
+            self.events.append(('text', normalized, None))
 
 
 def normalize_zigbang_inquiry_link(value: str) -> str | None:
@@ -210,24 +234,51 @@ def normalize_zigbang_inquiry_link(value: str) -> str | None:
         parsed = urlparse(str(value or ''))
         if (
             parsed.scheme != 'https'
+            or parsed.netloc != 'sp.zigbang.com'
             or parsed.hostname != 'sp.zigbang.com'
-            or parsed.port not in (None, 443)
+            or parsed.port is not None
             or parsed.username is not None
             or parsed.password is not None
             or parsed.path != '/inquiry/list'
+            or parsed.params
             or parsed.fragment
         ):
             return None
-        query = parse_qsl(parsed.query, keep_blank_values=True)
-        if len(query) != 1 or query[0][0] != 'token':
+        raw_match = re.fullmatch(
+            r'token=([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})',
+            parsed.query,
+        )
+        if not raw_match:
             return None
-        token = query[0][1]
+        token = raw_match.group(1)
         canonical = str(UUID(token))
-        if token != canonical:
+        if token != canonical or parsed.query != f'token={canonical}':
             return None
         return f'https://sp.zigbang.com/inquiry/list?token={canonical}'
     except (ValueError, TypeError):
         return None
+
+
+def _normalize_zigbang_location_line(value: str) -> str | None:
+    match = re.fullmatch(
+        r'• 송파구 ([가-힣]{1,10}), ((?:[1-9][0-9]?층|반지하층)), '
+        r'(오픈형 원룸|분리형 원룸|투룸|쓰리룸\+)',
+        str(value or ''),
+    )
+    if not match or match.group(1) not in SONGPA_LEGAL_DONGS:
+        return None
+    return f'• 송파구 {match.group(1)}, {match.group(2)}, {match.group(3)}'
+
+
+def _normalize_zigbang_transaction_line(value: str) -> str | None:
+    raw = str(value or '')
+    sale = re.fullmatch(r'• (전세|매매) ([0-9]{1,9})', raw)
+    if sale:
+        return raw
+    rent = re.fullmatch(r'• 월세 ([0-9]{1,9})\s*/\s*([0-9]{1,9})', raw)
+    if rent:
+        return f'• 월세 {rent.group(1)}/{rent.group(2)}'
+    return None
 
 
 def extract_zigbang_inquiry_link(detail_lines: list[str]) -> str | None:
@@ -244,55 +295,42 @@ def build_kakao_inquiry_button_link(inquiry_link: str) -> str | None:
     safe_link = normalize_zigbang_inquiry_link(inquiry_link)
     if not safe_link:
         return None
-    token = parse_qsl(urlparse(safe_link).query, keep_blank_values=True)[0][1]
+    token = safe_link.removeprefix('https://sp.zigbang.com/inquiry/list?token=')
     return f'https://lottes.co.kr/redirect/zigbang-inquiry.html#token={token}'
 
 
 def parse_zigbang_detail(html_body: str) -> list[str]:
     parser = _HtmlText()
     parser.feed(str(html_body or '')[:250_000])
-    lines = [' '.join(unescape(part).split()) for part in parser.parts]
-    lines = [line for line in lines if line]
-    try:
-        start = next(index for index, line in enumerate(lines) if line == '[매물정보]') + 1
-    except StopIteration:
-        return []
-    safe: list[str] = []
-    listing_seen = False
-    location_seen = False
-    transaction_seen = False
-    for line in lines[start:start + 20]:
-        if '연락처 확인' in line:
-            break
-        if not listing_seen and re.fullmatch(r'• 등록번호 [0-9]{5,20}', line):
-            safe.append(line)
-            listing_seen = True
+    candidates: list[list[str]] = []
+    for index in range(max(0, len(parser.events) - 4)):
+        marker, listing_event, location_event, transaction_event, link_event = parser.events[index:index + 5]
+        if marker != ('text', '[매물정보]', None):
             continue
-        if (
-            listing_seen
-            and not location_seen
-            and re.fullmatch(
-                r'• 송파구 [가-힣0-9·-]{1,15}(?:동|가), (?:[1-9][0-9]?층|반지하층), '
-                r'(?:오픈형 원룸|분리형 원룸|투룸|쓰리룸\+)',
-                line,
-            )
-        ):
-            safe.append(line)
-            location_seen = True
+        if listing_event[0] != 'text' or not re.fullmatch(r'• 등록번호 [0-9]{5,20}', listing_event[1]):
             continue
-        if (
-            listing_seen
-            and not transaction_seen
-            and re.fullmatch(r'• (?:전세|매매) [0-9]{1,9}|• 월세 [0-9]{1,9}/[0-9]{1,9}', line)
-        ):
-            safe.append(line)
-            transaction_seen = True
-    for raw_link in parser.links:
-        link = normalize_zigbang_inquiry_link(raw_link)
-        if link:
-            safe.append(f'• 문의링크 {link}')
-            break
-    return safe if listing_seen else []
+        if location_event[0] != 'text':
+            continue
+        location = _normalize_zigbang_location_line(location_event[1])
+        if not location:
+            continue
+        if transaction_event[0] != 'text':
+            continue
+        transaction = _normalize_zigbang_transaction_line(transaction_event[1])
+        if not transaction:
+            continue
+        if link_event[0] != 'anchor' or link_event[1] != '연락처 확인하기':
+            continue
+        link = normalize_zigbang_inquiry_link(link_event[2] or '')
+        if not link:
+            continue
+        candidates.append([
+            listing_event[1],
+            location,
+            transaction,
+            f'• 문의링크 {link}',
+        ])
+    return candidates[0] if len(candidates) == 1 else []
 
 
 def build_public_receipt_payload(item: dict) -> dict | None:
@@ -547,14 +585,15 @@ def build_alert(items: list[dict]) -> str:
                 if listing_match:
                     listing_number = listing_match.group(1)
                     continue
-                location_match = re.fullmatch(
-                    r'• (송파구 [가-힣0-9·-]{1,15}(?:동|가)), '
-                    r'((?:[1-9][0-9]?층|반지하층)), '
-                    r'(오픈형 원룸|분리형 원룸|투룸|쓰리룸\+)',
-                    raw_line,
-                )
-                if location_match:
-                    location = ' · '.join(location_match.groups())
+                normalized_location = _normalize_zigbang_location_line(raw_line)
+                if normalized_location:
+                    location_match = re.fullmatch(
+                        r'• (송파구 [가-힣]{1,10}), ((?:[1-9][0-9]?층|반지하층)), '
+                        r'(오픈형 원룸|분리형 원룸|투룸|쓰리룸\+)',
+                        normalized_location,
+                    )
+                    if location_match:
+                        location = ' · '.join(location_match.groups())
                     continue
                 formatted = _format_transaction(raw_line)
                 if formatted:
