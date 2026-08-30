@@ -8,6 +8,7 @@ class ExternalInquiryReceiptSurfaceTest(unittest.TestCase):
         root = Path(__file__).parents[1]
         cls.index = (root / 'index.html').read_text(encoding='utf-8')
         cls.privacy = (root / 'privacy.html').read_text(encoding='utf-8')
+        cls.privacy_en = (root / 'privacy_EN.html').read_text(encoding='utf-8')
         cls.adapter = (root / 'js' / 'services' / 'inquiryReceiptAdapter.js').read_text(encoding='utf-8')
 
     def test_home_explains_current_and_historical_interest_activity(self):
@@ -28,7 +29,9 @@ class ExternalInquiryReceiptSurfaceTest(unittest.TestCase):
     def test_privacy_policy_names_owner_and_describes_actual_processing(self):
         self.assertIn('개인정보 보호책임자: 서준혁', self.privacy)
         self.assertIn('개인정보 보호책임자 서준혁', self.index)
-        self.assertIn('고객 이름·전화번호·이메일·연락처 확인 링크·문의 원문은 전송하지 않습니다', self.privacy)
+        self.assertIn('공개 매물정보(매물번호·동 단위 소재지·층·방 구조·거래유형·가격)와 직방 문의 확인 링크', self.privacy)
+        self.assertIn('고객 이름·전화번호·이메일·문의 원문은 전송하지 않습니다', self.privacy)
+        self.assertIn('coarse location, floor, room layout, transaction type, price, and the Zigbang inquiry access link', self.privacy_en)
         self.assertIn('거래유형(전세·월세·매매)', self.privacy)
         self.assertIn('가격·고객 식별정보·상세 문의 내용은 저장·공개하지 않습니다', self.privacy)
         self.assertIn('최근 1년 동안 공개', self.privacy)
