@@ -6,3 +6,8 @@ supabase/migrations/004_market_reports_admin_policies.sql
 .env.*
 !.env.example
 content/daily/*.json
+
+# Local agent plans and generated Python caches are private runtime artifacts.
+.hermes/
+__pycache__/
+*.py[cod]
