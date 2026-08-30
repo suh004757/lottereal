@@ -44,6 +44,12 @@ function requireClient() {
   return client;
 }
 
+function chunkValues(values, size = 100) {
+  const chunks = [];
+  for (let index = 0; index < values.length; index += size) chunks.push(values.slice(index, index + size));
+  return chunks;
+}
+
 export async function listFamilyListings() {
   const { data, error } = await requireClient()
     .from('family_listing_records')
@@ -52,6 +58,25 @@ export async function listFamilyListings() {
     .limit(500);
   if (error) throw error;
   return Array.isArray(data) ? data : [];
+}
+
+export async function listFamilyListingPhotoBatches(recordIds = []) {
+  const ids = Array.from(new Set(recordIds.map((value) => String(value || '').trim()).filter(Boolean)));
+  if (!ids.length) return [];
+  const pages = await Promise.all(chunkValues(ids).map(async (chunk) => {
+    const { data, error } = await requireClient()
+      .from('market_reports')
+      .select('id,metadata,created_at')
+      .eq('status', 'draft')
+      .eq('metadata->>intake_type', 'listing')
+      .eq('metadata->>photo_upload_state', 'complete')
+      .in('metadata->>family_listing_id', chunk)
+      .order('created_at', { ascending: false })
+      .limit(1000);
+    if (error) throw error;
+    return Array.isArray(data) ? data : [];
+  }));
+  return pages.flat().sort((left, right) => String(right.created_at).localeCompare(String(left.created_at)));
 }
 
 export async function listFamilyListingAliases() {
@@ -75,12 +100,22 @@ export async function listFamilyListingEvents(recordId) {
   return Array.isArray(data) ? data : [];
 }
 
-export async function createFamilyListing(payload) {
+export async function createFamilyListing(payload, options = {}) {
+  const recordId = String(options.id || '').trim();
+  const insertPayload = recordId ? { ...payload, id: recordId } : payload;
   const { data, error } = await requireClient()
     .from('family_listing_records')
-    .insert([payload])
+    .insert([insertPayload])
     .select(FIELDS)
     .single();
+  if (error && recordId) {
+    const { data: existing, error: readError } = await requireClient()
+      .from('family_listing_records')
+      .select(FIELDS)
+      .eq('id', recordId)
+      .maybeSingle();
+    if (!readError && existing) return existing;
+  }
   if (error) throw error;
   return data;
 }
@@ -97,21 +132,45 @@ export async function updateFamilyListing(id, payload) {
   return data;
 }
 
-export async function createFamilyParseDraft(sourceText, recordId = null) {
+export async function createFamilyParseDraft(sourceText, recordId = null, options = {}) {
   const source = String(sourceText ?? '');
   if (!source.trim()) throw new Error('정리할 매물 내용을 입력해 주세요.');
+  const draftId = String(options.id || '').trim();
   const payload = { source_text: source };
+  if (draftId) payload.id = draftId;
   if (recordId) payload.record_id = recordId;
   const { data, error } = await requireClient()
     .from('family_listing_parse_reviews')
     .insert([payload])
     .select(PARSE_FIELDS)
     .single();
+  if (error && draftId) {
+    const { data: existing, error: readError } = await requireClient()
+      .from('family_listing_parse_reviews')
+      .select(PARSE_FIELDS)
+      .eq('id', draftId)
+      .maybeSingle();
+    if (!readError && existing) return existing;
+  }
   if (error) throw error;
   return data;
 }
 
-export async function listFamilyParseDrafts() {
+export async function listFamilyParseDrafts(recordIds = []) {
+  const ids = Array.from(new Set(recordIds.map((value) => String(value || '').trim()).filter(Boolean)));
+  if (ids.length) {
+    const pages = await Promise.all(chunkValues(ids).map(async (chunk) => {
+      const { data, error } = await requireClient()
+        .from('family_listing_parse_reviews')
+        .select(PARSE_FIELDS)
+        .in('record_id', chunk)
+        .order('created_at', { ascending: false })
+        .limit(1000);
+      if (error) throw error;
+      return Array.isArray(data) ? data : [];
+    }));
+    return pages.flat().sort((left, right) => String(right.created_at).localeCompare(String(left.created_at)));
+  }
   const { data, error } = await requireClient()
     .from('family_listing_parse_reviews')
     .select(PARSE_FIELDS)

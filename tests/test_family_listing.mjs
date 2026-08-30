@@ -2,6 +2,9 @@ import assert from 'node:assert/strict';
 import {
   buildFamilyListingAlias,
   buildAdvertisingDraftText,
+  buildQuickFamilyListingInput,
+  buildOriginalListingShareText,
+  groupFamilyListingPhotos,
   buildStaffShareText,
   buildFamilyParseReview,
   finalizeFamilyParseReview,
@@ -25,6 +28,101 @@ assert.deepEqual(describeIntakeYearMonth('2026-08'), {
   code: '2608',
   label: '2026년 8월 접수'
 });
+
+const quickPost = buildQuickFamilyListingInput({
+  listingTitle: '삼전 미성 301 월세',
+  text: '천에 70, 방 둘이고 바로 입주. 사진 같이 올림',
+  mode: 'post'
+}, { now: new Date('2026-08-31T01:00:00+09:00') });
+assert.equal(quickPost.neighborhood, '삼전');
+assert.equal(quickPost.buildingKeyword, '미성');
+assert.equal(quickPost.unitLabel, '301호');
+assert.equal(quickPost.transactionType, '월세');
+assert.equal(quickPost.intakeYearMonth, '2026-08');
+assert.equal(quickPost.status, 'new');
+
+const photoTask = buildQuickFamilyListingInput({
+  listingTitle: '석촌 시장뒤 원룸',
+  text: '외관, 현관, 화장실, 주방 사진 필요',
+  mode: 'photo_task',
+  visitDate: '2026-09-02'
+}, { now: new Date('2026-08-31T01:00:00+09:00') });
+assert.equal(photoTask.status, 'needs_info');
+assert.equal(photoTask.transactionType, '기타');
+assert.match(photoTask.staffTask, /9월 2일/);
+assert.match(photoTask.staffTask, /외관/);
+const shortStayTask = buildQuickFamilyListingInput({ listingTitle: '석촌 원룸 단기', text: '내부 전체', mode: 'photo_task' }, { now: new Date('2026-08-31T01:00:00+09:00') });
+assert.equal(shortStayTask.transactionType, '임대');
+assert.throws(
+  () => normalizeFamilyListingInput({ ...shortStayTask, transactionType: '단기' }, { aliasCode: '석촌-원룸-호수확인-단기-2608' }),
+  /거래유형을 확인/
+);
+const longTaskText = '가'.repeat(221);
+assert.throws(
+  () => buildQuickFamilyListingInput({ listingTitle: '석촌 원룸', text: longTaskText, mode: 'photo_task', visitDate: '2026-09-02' }, { now: new Date('2026-08-31T01:00:00+09:00') }),
+  /220자 이내/
+);
+
+const previousTimeZone = process.env.TZ;
+process.env.TZ = 'UTC';
+const koreaMonthBoundary = buildQuickFamilyListingInput({
+  listingTitle: '삼전 미성 302 월세',
+  text: '월말 늦은 시간 접수',
+  mode: 'post'
+}, { now: new Date('2026-08-31T16:30:00Z') });
+process.env.TZ = previousTimeZone;
+assert.equal(koreaMonthBoundary.intakeYearMonth, '2026-09');
+
+const groupedPhotos = groupFamilyListingPhotos([
+  {
+    id: 'batch-current',
+    created_at: '2026-08-31T01:00:00Z',
+    metadata: {
+      family_listing_id: 'listing-a',
+      photo_upload_state: 'complete',
+      private_image_paths: ['user-a/batch-current/01.jpg', 'user-a/batch-current/02.jpg']
+    }
+  },
+  {
+    id: 'batch-other',
+    created_at: '2026-08-30T01:00:00Z',
+    metadata: {
+      family_listing_id: 'listing-b',
+      photo_upload_state: 'complete',
+      private_image_paths: ['user-a/batch-other/01.jpg']
+    }
+  },
+  {
+    id: 'batch-pending',
+    metadata: {
+      family_listing_id: 'listing-a',
+      photo_upload_state: 'pending',
+      private_image_paths: ['user-a/batch-pending/01.jpg']
+    }
+  }
+], new Map([
+  ['user-a/batch-current/01.jpg', 'https://signed.example/01'],
+  ['user-a/batch-current/02.jpg', 'https://signed.example/02'],
+  ['user-a/batch-other/01.jpg', 'https://signed.example/other']
+]));
+assert.equal(groupedPhotos['listing-a'].length, 2);
+assert.equal(groupedPhotos['listing-a'][0].batchId, 'batch-current');
+assert.equal(groupedPhotos['listing-a'][0].url, 'https://signed.example/01');
+assert.equal(groupedPhotos['listing-b'].length, 1);
+assert.equal(groupedPhotos['batch-pending'], undefined);
+
+const originalShare = buildOriginalListingShareText({
+  neighborhood: '삼전동',
+  building_keyword: '미성빌라',
+  unit_label: '301호'
+}, '천에 70, 방 둘. 연락은 010-1234-5678, 공동현관 2580, 국민 123-456-789012, 집주인 홍길동, mail owner@example.com, 링크 https://example.com/token?key=secret, 123-456-789');
+assert.match(originalShare, /천에 70, 방 둘/);
+for (const privateValue of [
+  '010-1234-5678', '2580', '123-456-789012', '홍길동',
+  'owner@example.com', 'https://example.com/token?key=secret', '123-456-789'
+]) {
+  assert.equal(originalShare.includes(privateValue), false);
+}
 
 assert.equal(
   ensureUniqueFamilyAlias(alias, [alias, `${alias}-2`]),
