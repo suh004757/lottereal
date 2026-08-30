@@ -56,6 +56,65 @@ export async function createAdminIntakeThumbnail(file) {
   return URL.createObjectURL(blob);
 }
 
+export async function removeAdminIntakeImages(paths) {
+  const safePaths = Array.from(new Set(paths || []));
+  if (!safePaths.length) return;
+  if (safePaths.length > 30 || safePaths.some((path) => typeof path !== 'string' || !path || /^https?:\/\//i.test(path))) {
+    throw new Error('정리할 사진 경로를 확인할 수 없습니다.');
+  }
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('사진 저장소에 연결할 수 없습니다.');
+  const { error } = await supabase.storage.from(BUCKET).remove(safePaths);
+  if (error) throw new Error('완료되지 않은 사진을 정리하지 못했습니다.');
+}
+
+export async function createAdminIntakeImageSignedUrls(paths, { expiresIn = 900 } = {}) {
+  const safePaths = Array.from(new Set(paths || []));
+  if (!safePaths.length) return new Map();
+  if (safePaths.length > 15000 || safePaths.some((path) => (
+    typeof path !== 'string' || !path || /^https?:\/\//i.test(path)
+  ))) {
+    throw new Error('매물 사진 경로를 확인할 수 없습니다.');
+  }
+  const ttl = Number(expiresIn);
+  if (!Number.isInteger(ttl) || ttl < 60 || ttl > 3600) {
+    throw new Error('사진 보기 시간을 확인할 수 없습니다.');
+  }
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('사진 저장소에 연결할 수 없습니다.');
+  const urls = new Map();
+  for (let index = 0; index < safePaths.length; index += 100) {
+    const chunk = safePaths.slice(index, index + 100);
+    const { data, error } = await supabase.storage.from(BUCKET).createSignedUrls(chunk, ttl);
+    if (error) continue;
+    for (const item of data || []) {
+      if (item?.path && item?.signedUrl) urls.set(item.path, item.signedUrl);
+    }
+  }
+  return urls;
+}
+
+
+export async function createAdminIntakeImageShareFiles(paths) {
+  const safePaths = Array.from(new Set(paths || [])).slice(0, 10);
+  if (!safePaths.length) return [];
+  if (safePaths.some((path) => typeof path !== 'string' || !path || /^https?:\/\//i.test(path))) {
+    throw new Error('공유할 사진 경로를 확인할 수 없습니다.');
+  }
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('사진 저장소에 연결할 수 없습니다.');
+  const files = [];
+  for (const [index, path] of safePaths.entries()) {
+    const { data, error } = await supabase.storage.from(BUCKET).download(path);
+    if (error || !data) throw new Error('공유할 사진을 불러오지 못했습니다.');
+    files.push(new File([data], `listing-photo-${index + 1}.jpg`, {
+      type: 'image/jpeg',
+      lastModified: Date.now()
+    }));
+  }
+  return files;
+}
+
 async function renderDownsizedJpeg(file, maxDimension, quality) {
   const bitmap = await loadBitmap(file, maxDimension);
   const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));

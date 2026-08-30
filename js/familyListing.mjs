@@ -38,22 +38,112 @@ function cleanLine(value, maxLength = 120) {
   return String(value ?? '').replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, maxLength);
 }
 
+const FAMILY_TRANSACTION_TYPES = new Set(['매매', '전세', '월세', '임대', '기타']);
+
+export function buildQuickFamilyListingInput(values = {}, options = {}) {
+  const listingTitle = cleanLine(values.listingTitle, 100);
+  const mode = values.mode === 'photo_task' ? 'photo_task' : 'post';
+  const rawText = String(values.text ?? '').replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim();
+  if (mode === 'photo_task' && rawText.length > 220) {
+    throw new Error('촬영할 내용은 220자 이내로 적어 주세요.');
+  }
+  const text = cleanLine(rawText, mode === 'photo_task' ? 220 : 2000);
+  if (!listingTitle) throw new Error('어느 매물인지 적어 주세요.');
+  if (!text) throw new Error(mode === 'photo_task' ? '찍을 곳을 적어 주세요.' : '매물 내용을 적어 주세요.');
+
+  const tokens = listingTitle.split(/\s+/).filter(Boolean);
+  const transactionMatch = listingTitle.match(/매매|전세|월세|단기|임대/);
+  const transactionToken = transactionMatch?.[0] || '';
+  const transactionType = transactionToken === '단기' ? '임대' : (transactionToken || '기타');
+  const unitMatch = [...listingTitle.matchAll(/(?:^|\s)(\d{1,4})(?:호)?(?=\s|$)/g)].at(-1);
+  const unitToken = unitMatch?.[1] || '';
+  const unitLabel = unitToken ? `${unitToken}호` : '호수확인';
+  const neighborhood = tokens.length > 1 ? tokens[0].replace(/동$/, '') : '위치확인';
+  const buildingTokens = tokens.filter((token, index) => (
+    index !== 0
+    && token !== transactionToken
+    && !/^\d{1,4}호?$/.test(token)
+  ));
+  const buildingKeyword = cleanToken(buildingTokens.join(' '))
+    || cleanToken(tokens[0])
+    || '건물확인';
+  const now = options.now instanceof Date ? options.now : new Date();
+  const monthParts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit'
+  }).formatToParts(now);
+  const year = monthParts.find((part) => part.type === 'year')?.value;
+  const month = monthParts.find((part) => part.type === 'month')?.value;
+  const intakeYearMonth = `${year}-${month}`;
+  const visitMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(values.visitDate || ''));
+  const visitLabel = visitMatch ? `${Number(visitMatch[2])}월 ${Number(visitMatch[3])}일 · ` : '';
+
+  return {
+    neighborhood,
+    buildingKeyword,
+    unitLabel,
+    transactionType,
+    intakeYearMonth,
+    status: mode === 'photo_task' ? 'needs_info' : 'new',
+    sourceLabel: mode === 'photo_task' ? '현장 촬영 예정' : '빠른 등록',
+    staffTask: mode === 'photo_task' ? `${visitLabel}${text}` : ''
+  };
+}
+
+export function groupFamilyListingPhotos(batches = [], signedUrls = new Map()) {
+  const urlFor = (path) => signedUrls instanceof Map ? signedUrls.get(path) : signedUrls?.[path];
+  const groups = {};
+  const orderedBatches = Array.from(batches || []).sort((left, right) => (
+    String(right?.created_at || '').localeCompare(String(left?.created_at || ''))
+  ));
+  orderedBatches.forEach((batch) => {
+    const metadata = batch?.metadata || {};
+    const listingId = cleanLine(metadata.family_listing_id, 80);
+    const paths = Array.isArray(metadata.private_image_paths) ? metadata.private_image_paths : [];
+    if (!listingId || metadata.photo_upload_state !== 'complete' || !paths.length) return;
+    groups[listingId] ||= [];
+    paths.forEach((path, index) => {
+      if (typeof path !== 'string' || !path || /^https?:\/\//i.test(path)) return;
+      groups[listingId].push({
+        batchId: String(batch.id || ''),
+        path,
+        url: String(urlFor(path) || ''),
+        createdAt: String(batch.created_at || ''),
+        position: index + 1
+      });
+    });
+  });
+  return groups;
+}
+
 function redactStaffValue(value, maxLength = 120) {
   const redacted = String(value ?? '')
     .replace(/[\r\n\t]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
+    .replace(/https?:\/\/[^\s]+/gi, '[민감 링크 제외]')
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '[이메일 제외]')
+    .replace(/(집주인|임대인|임차인|세입자|고객|소유자)(?:\s*(?:이름|성명))?\s*[:=]?\s*[가-힣]{2,4}/g, '$1 [개인정보 제외]')
     .replace(/(?<!\d)(?:\+82[\s.-]?(?:\(0\)[\s.-]?)?1[016789]|\(?01[016789]\)?)[\s.-]?\d{3,4}[\s.-]?\d{4}(?!\d)/g, '[연락처 제외]')
     .replace(/(?<!\d)(?:\+82[\s.-]?(?:\(0\)[\s.-]?)?(?:2|[3-6][1-5])|\(?0(?:2|[3-6][1-5])\)?)[\s.-]?\d{3,4}[\s.-]?\d{4}(?!\d)/g, '[연락처 제외]')
     .replace(/(?<!\d)\d{6}[-\s]?[1-8]\d{6}(?!\d)/g, '[신분번호 제외]')
     .replace(/(공동\s*현관|현관|출입\s*(?:비밀\s*)?(?:번호|코드|암호)|출입|도어\s*[- ]?\s*락|도어락|세대\s*비밀\s*번호|비밀\s*번호|비번|access\s*(?:code|number|password)|door\s*[- ]?\s*(?:code|lock)|doorlock|password)(?:\s*(?:번호|암호|코드))?(?:은|는)?\s*(?:(?:종|열쇠|키|버튼|호출)\s*)?[:=]?\s*[#*]?(?:\d[\s#*\-]*){3,12}/gi, '$1 [제외]')
-    .replace(/(계좌\s*(?:번호)?|입금|국민|신한|우리|하나|농협|기업|카카오뱅크|토스뱅크|account(?:\s*number)?|bank\s*account)(?:은행)?(?:은|는)?\s*[:=]?\s*[0-9][0-9\s-]{5,}[0-9]/gi, '$1 [제외]');
+    .replace(/(계좌\s*(?:번호)?|입금|국민|신한|우리|하나|농협|기업|카카오뱅크|토스뱅크|account(?:\s*number)?|bank\s*account)(?:은행)?(?:은|는)?\s*[:=]?\s*[0-9][0-9\s-]{5,}[0-9]/gi, '$1 [제외]')
+    .replace(/(?<!\d)\d(?:[\s-]?\d){8,15}(?!\d)/g, '[긴 숫자 제외]');
   return cleanLine(redacted, maxLength);
+}
+
+export function buildOriginalListingShareText(record = {}, sourceText = '') {
+  const title = [record.neighborhood, record.building_keyword, record.unit_label]
+    .map((value) => redactStaffValue(value, 80))
+    .filter(Boolean)
+    .join(' ');
+  const source = redactStaffValue(sourceText, 2000);
+  return [`[${title || '매물'}]`, source || buildStaffShareText(record)].join('\n');
 }
 
 export const FAMILY_LISTING_STATUSES = Object.freeze({
   new: '신규',
-  needs_info: '정보 확인 필요',
+  needs_info: '사진·정보 필요',
   ready: '광고 준비',
   advertising: '광고 중',
   inquiry: '문의 있음',
@@ -87,6 +177,9 @@ export function normalizeFamilyListingInput(values = {}, options = {}) {
   const transactionType = cleanLine(readValue(values, 'transactionType', 'transaction_type'), 20);
   if (!neighborhood || !buildingKeyword || !unitLabel || !transactionType) {
     throw new Error('동네, 건물 키워드, 호수/층, 거래유형을 입력해 주세요.');
+  }
+  if (!FAMILY_TRANSACTION_TYPES.has(transactionType)) {
+    throw new Error('거래유형을 확인해 주세요.');
   }
   return {
     alias_code: aliasCode,
