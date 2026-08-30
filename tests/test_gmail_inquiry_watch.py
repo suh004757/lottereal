@@ -1,6 +1,7 @@
 import io
 import json
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 import subprocess
 import sys
@@ -385,6 +386,64 @@ class GmailInquiryWatchTest(unittest.TestCase):
                 '⚠️ 직방 문의 처리 지연 1건. Gmail에서 확인하세요.\n'
                 '⚠️ 직방 문의 자동 처리 제외 1건. Gmail에서 확인하세요.\n',
             )
+
+    def test_successful_mailbox_check_writes_private_heartbeat(self):
+        with tempfile.TemporaryDirectory() as directory:
+            env_path = Path(directory) / '.env'
+            state_path = Path(directory) / 'state.json'
+            heartbeat_path = Path(directory) / 'heartbeat.json'
+            env_path.write_text(
+                'LOTTEREAL_GMAIL_ADDRESS=owner@example.com\n'
+                'LOTTEREAL_GMAIL_APP_PASSWORD=secret\n',
+                encoding='utf-8',
+            )
+            with (
+                mock.patch.dict(os.environ, {
+                    'LOTTEREAL_ENV_PATH': str(env_path),
+                    'LOTTEREAL_GMAIL_WATCH_STATE': str(state_path),
+                    'LOTTEREAL_GMAIL_WATCH_HEARTBEAT': str(heartbeat_path),
+                }),
+                mock.patch.object(gmail_watch, 'fetch_verified_messages', return_value=[]),
+            ):
+                self.assertEqual(gmail_watch.main(), 0)
+            heartbeat = json.loads(heartbeat_path.read_text(encoding='utf-8'))
+            self.assertEqual(set(heartbeat), {'last_attempt_at', 'last_success_at'})
+            attempted = datetime.fromisoformat(heartbeat['last_attempt_at'].replace('Z', '+00:00'))
+            recorded = datetime.fromisoformat(heartbeat['last_success_at'].replace('Z', '+00:00'))
+            self.assertEqual(attempted.tzinfo, timezone.utc)
+            self.assertEqual(recorded.tzinfo, timezone.utc)
+            self.assertGreaterEqual(recorded, attempted)
+            self.assertEqual(heartbeat_path.stat().st_mode & 0o777, 0o600)
+
+    def test_failed_mailbox_check_records_attempt_without_success(self):
+        with tempfile.TemporaryDirectory() as directory:
+            env_path = Path(directory) / '.env'
+            state_path = Path(directory) / 'state.json'
+            heartbeat_path = Path(directory) / 'heartbeat.json'
+            env_path.write_text(
+                'LOTTEREAL_GMAIL_ADDRESS=owner@example.com\n'
+                'LOTTEREAL_GMAIL_APP_PASSWORD=secret\n',
+                encoding='utf-8',
+            )
+            with (
+                mock.patch.dict(os.environ, {
+                    'LOTTEREAL_ENV_PATH': str(env_path),
+                    'LOTTEREAL_GMAIL_WATCH_STATE': str(state_path),
+                    'LOTTEREAL_GMAIL_WATCH_HEARTBEAT': str(heartbeat_path),
+                }),
+                mock.patch.object(
+                    gmail_watch,
+                    'fetch_verified_messages',
+                    side_effect=RuntimeError('mailbox unavailable'),
+                ),
+            ):
+                with self.assertRaisesRegex(RuntimeError, 'mailbox unavailable'):
+                    gmail_watch.main()
+            heartbeat = json.loads(heartbeat_path.read_text(encoding='utf-8'))
+            self.assertEqual(set(heartbeat), {'last_attempt_at'})
+            attempted = datetime.fromisoformat(heartbeat['last_attempt_at'].replace('Z', '+00:00'))
+            self.assertEqual(attempted.tzinfo, timezone.utc)
+            self.assertEqual(heartbeat_path.stat().st_mode & 0o777, 0o600)
 
     def test_runtime_failure_stderr_is_fixed_and_contains_no_secret_path(self):
         script = Path(__file__).parents[1] / 'scripts' / 'lottereal_gmail_inquiry_watch.py'

@@ -28,6 +28,7 @@ ZIGBANG_SENDER = 'cs@zigbang.com'
 ZIGBANG_SUBJECT = '직방에서 고객 문의가 들어왔습니다.'
 DEFAULT_ENV_PATH = Path('/opt/data/.env')
 DEFAULT_STATE_PATH = Path('/opt/data/state/lottereal/gmail-inquiry-watch.json')
+DEFAULT_HEARTBEAT_PATH = Path('/opt/data/state/lottereal/gmail-inquiry-watch-heartbeat.json')
 SONGPA_LEGAL_DONGS = frozenset({
     '가락동', '거여동', '마천동', '문정동', '방이동', '삼전동', '석촌동',
     '송파동', '신천동', '오금동', '잠실동', '장지동', '풍납동',
@@ -689,6 +690,39 @@ def write_state(path: Path, state: dict) -> None:
     os.replace(temporary, path)
 
 
+def write_heartbeat(
+    path: Path,
+    *,
+    success: bool = True,
+    now: datetime | None = None,
+) -> None:
+    instant = now or datetime.now(timezone.utc)
+    if instant.tzinfo is None:
+        raise ValueError('heartbeat time must be timezone-aware')
+    timestamp = instant.astimezone(timezone.utc).isoformat().replace('+00:00', 'Z')
+    payload = {'last_attempt_at': timestamp}
+    if success:
+        payload['last_success_at'] = timestamp
+    elif path.exists():
+        try:
+            previous = json.loads(path.read_text(encoding='utf-8'))
+            previous_success = previous.get('last_success_at')
+            if isinstance(previous_success, str):
+                parsed = datetime.fromisoformat(previous_success.replace('Z', '+00:00'))
+                if parsed.tzinfo is not None:
+                    payload['last_success_at'] = previous_success
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError, TypeError, ValueError):
+            pass
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f'.{path.name}.{os.getpid()}.tmp')
+    temporary.write_text(
+        json.dumps(payload, sort_keys=True),
+        encoding='utf-8',
+    )
+    os.chmod(temporary, 0o600)
+    os.replace(temporary, path)
+
+
 def build_discord_fallback(items: list[dict]) -> str:
     if len(items) == 1:
         summary = build_alert(items).replace(
@@ -809,6 +843,7 @@ def load_private_env(path: Path) -> dict[str, str]:
 def main() -> int:
     env_path = Path(os.environ.get('LOTTEREAL_ENV_PATH', DEFAULT_ENV_PATH))
     state_path = Path(os.environ.get('LOTTEREAL_GMAIL_WATCH_STATE', DEFAULT_STATE_PATH))
+    heartbeat_path = Path(os.environ.get('LOTTEREAL_GMAIL_WATCH_HEARTBEAT', DEFAULT_HEARTBEAT_PATH))
     values = load_private_env(env_path)
     address = values.get('LOTTEREAL_GMAIL_ADDRESS', '')
     password = values.get('LOTTEREAL_GMAIL_APP_PASSWORD', '')
@@ -822,10 +857,12 @@ def main() -> int:
             fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
             return 0
+        write_heartbeat(heartbeat_path, success=False)
         items = fetch_verified_messages(address, password)
         state = load_state(state_path)
         if not state['initialized']:
             process_items(items, state_path)
+            write_heartbeat(heartbeat_path)
             return 0
         seen = set(state['seen_keys'])
         dead = set(state['dead_keys'])
@@ -834,6 +871,7 @@ def main() -> int:
             if item.get('key') not in seen and item.get('key') not in dead
         ]
         if not unseen:
+            write_heartbeat(heartbeat_path)
             return 0
 
         for item in unseen[:10]:
@@ -880,6 +918,7 @@ def main() -> int:
                 continue
 
             mark_delivered(state_path, item['key'])
+        write_heartbeat(heartbeat_path)
     return 0
 
 
