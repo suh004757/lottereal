@@ -38,8 +38,28 @@ class FamilyListingUiTest(unittest.TestCase):
         self.assertIn('별표가 있는 항목만 꼭 입력하세요', html)
         self.assertIn('min-height: 58px', css)
         self.assertIn('font-size: 19px', css)
-        self.assertIn('.family-topbar__actions a { display: inline-flex; }', css)
+        self.assertNotIn('href="intake.html"', html)
+        self.assertNotIn('href="dashboard.html"', html)
+        self.assertIn('.family-topbar__actions { grid-template-columns: 1fr; }', css)
         self.assertIn('.form-actions .primary-action { order: -1; }', css)
+
+    def test_private_contact_and_access_notes_are_allowed_but_hidden_on_cards(self):
+        html = (REPO / 'admin' / 'family-listings.html').read_text(encoding='utf-8')
+        page = (REPO / 'js' / 'family-listings-page.js').read_text(encoding='utf-8')
+        self.assertIn('연락처·출입정보 메모', html)
+        self.assertIn('직원방용 복사에는 들어가지 않습니다', html)
+        self.assertNotIn('전화번호, 출입 비밀번호, 계좌번호는 여기 적지 마세요', html)
+        self.assertIn("document.createElement('details')", page)
+        self.assertIn("summary.textContent = '내부 메모 보기'", page)
+
+    def test_family_card_creates_private_ad_draft_without_publication(self):
+        page = (REPO / 'js' / 'family-listings-page.js').read_text(encoding='utf-8')
+        self.assertIn('buildAdvertisingDraftText', page)
+        self.assertIn('buildAdminIntakePayload', page)
+        self.assertIn('saveAdminIntakeDraft', page)
+        self.assertIn("advertise.textContent = '광고 준비'", page)
+        self.assertIn("publish_approved", page)
+        self.assertNotIn("status: 'published'", page)
 
     def test_family_board_uses_private_adapter_without_delete_or_public_publish(self):
         adapter = (REPO / 'js' / 'services' / 'familyListingAdapter.js').read_text(encoding='utf-8')

@@ -1,5 +1,6 @@
 import {
   FAMILY_LISTING_STATUSES,
+  buildAdvertisingDraftText,
   buildFamilyListingAlias,
   buildStaffShareText,
   buildFamilyParseReview,
@@ -10,6 +11,8 @@ import {
   normalizeFamilyListingInput,
   statusLabel
 } from './familyListing.mjs';
+import { buildAdminIntakePayload } from './adminIntake.mjs';
+import { saveAdminIntakeDraft } from './services/adminIntakeAdapter.js';
 import {
   createFamilyListing,
   createFamilyParseDraft,
@@ -65,7 +68,7 @@ const PARSE_FIELD_META = Object.freeze([
   ['assigned_to', 'assignedTo', '담당'],
   ['source_label', 'sourceLabel', '어디서 들었나요'],
   ['staff_task', 'staffTask', '직원 확인사항'],
-  ['internal_notes', 'internalNotes', '내부 메모']
+  ['internal_notes', 'internalNotes', '연락처·출입정보 메모']
 ]);
 
 let records = [];
@@ -478,14 +481,24 @@ function createRecordCard(record) {
     article.appendChild(task);
   }
   if (record.internal_notes) {
+    const details = document.createElement('details');
+    details.className = 'listing-card__private';
+    const summary = document.createElement('summary');
+    summary.textContent = '내부 메모 보기';
     const note = document.createElement('p');
     note.className = 'listing-card__internal';
-    note.textContent = `메모: ${record.internal_notes}`;
-    article.appendChild(note);
+    note.textContent = record.internal_notes;
+    details.append(summary, note);
+    article.appendChild(details);
   }
 
   const actions = document.createElement('div');
   actions.className = 'listing-card__actions';
+  const advertise = document.createElement('button');
+  advertise.type = 'button';
+  advertise.dataset.advertise = record.id;
+  advertise.textContent = '광고 준비';
+  advertise.addEventListener('click', () => createAdvertisingDraft(record, advertise));
   const copy = document.createElement('button');
   copy.type = 'button';
   copy.dataset.copyStaff = record.id;
@@ -506,9 +519,51 @@ function createRecordCard(record) {
   edit.type = 'button';
   edit.textContent = '수정';
   edit.addEventListener('click', () => openEditor(record));
-  actions.append(copy, history, edit);
+  actions.append(advertise, copy, history, edit);
   article.append(actions, historyPanel);
   return article;
+}
+
+async function createAdvertisingDraft(record, button) {
+  button.disabled = true;
+  button.textContent = '광고 초안 만드는 중';
+  let draftSaved = false;
+  try {
+    const user = await getCurrentSessionUser();
+    if (!user || user.app_metadata?.role !== 'admin') throw new Error('로그인을 다시 확인해 주세요.');
+    if (!globalThis.crypto?.randomUUID) throw new Error('이 브라우저에서는 광고 초안을 만들 수 없습니다.');
+    const payload = buildAdminIntakePayload({
+      type: 'listing',
+      text: buildAdvertisingDraftText(record),
+      region: record.neighborhood,
+      transactionType: record.transaction_type
+    }, { now: new Date() });
+    payload.id = globalThis.crypto.randomUUID();
+    payload.metadata.submitted_by = user.id;
+    payload.metadata.family_listing_id = record.id;
+    if (payload.metadata.publish_approved !== false || payload.status !== 'draft') {
+      throw new Error('광고 초안의 비공개 상태를 확인하지 못했습니다.');
+    }
+    await saveAdminIntakeDraft(payload);
+    draftSaved = true;
+    try {
+      await updateFamilyListing(record.id, { status: 'ready' });
+      record.status = 'ready';
+      button.textContent = '광고 초안 완료';
+      window.setTimeout(() => reloadRecords().catch((error) => {
+        console.error('[Family listings] Reload after ad draft failed', error);
+      }), 1500);
+    } catch (statusError) {
+      console.error('[Family listings] Ad draft saved but status update failed', statusError);
+      button.textContent = '초안 저장됨';
+    }
+  } catch (error) {
+    console.error('[Family listings] Ad draft create failed', error);
+    button.textContent = '다시 시도';
+    button.title = error?.message || '광고 초안을 만들지 못했습니다.';
+  } finally {
+    if (!draftSaved) button.disabled = false;
+  }
 }
 
 async function toggleHistory(record, button, panel) {
