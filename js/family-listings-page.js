@@ -53,19 +53,19 @@ const refs = {
 
 const PARSE_FIELD_META = Object.freeze([
   ['neighborhood', 'neighborhood', '동네'],
-  ['building_keyword', 'buildingKeyword', '건물·기억 키워드'],
+  ['building_keyword', 'buildingKeyword', '건물 이름·기억할 말'],
   ['unit_label', 'unitLabel', '호수·층'],
   ['transaction_type', 'transactionType', '거래 유형'],
-  ['intake_year_month', 'intakeYearMonth', '접수연월'],
+  ['intake_year_month', 'intakeYearMonth', '처음 받은 달'],
   ['status', 'status', '현재 상태'],
   ['price_summary', 'priceSummary', '가격'],
   ['floor_summary', 'floorSummary', '층수'],
   ['layout_summary', 'layoutSummary', '구조'],
   ['move_in_summary', 'moveInSummary', '입주'],
   ['assigned_to', 'assignedTo', '담당'],
-  ['source_label', 'sourceLabel', '출처'],
+  ['source_label', 'sourceLabel', '어디서 들었나요'],
   ['staff_task', 'staffTask', '직원 확인사항'],
-  ['internal_notes', 'internalNotes', '가족 내부 메모']
+  ['internal_notes', 'internalNotes', '내부 메모']
 ]);
 
 let records = [];
@@ -144,23 +144,23 @@ async function requestParseDraft() {
     return;
   }
   refs.requestParse.disabled = true;
-  setParseStatus('원문을 보존하고 Hermes 정리 대기열에 등록하고 있습니다.');
+  setParseStatus('적어둔 내용을 저장하고 있습니다.');
   try {
     activeParseDraft = await createFamilyParseDraft(sourceText, editingRecord?.id || null);
     activeParseReview = null;
     pendingReviewedParse = null;
     renderParseDraft(activeParseDraft);
-    setParseStatus('원문을 저장했습니다. Hermes가 정리하면 이 화면과 james 개인 DM에서 확인할 수 있습니다.', 'success');
+    setParseStatus('적어둔 내용을 저장했습니다. 정리가 끝나면 여기에서 확인할 수 있어요.', 'success');
   } catch (error) {
     console.error('[Family listings] Parse draft create failed', error);
-    setParseStatus(error?.message || '자동 정리 요청을 저장하지 못했습니다.', 'error');
+    setParseStatus(error?.message || '내용 정리를 요청하지 못했습니다.', 'error');
   } finally {
     refs.requestParse.disabled = false;
   }
 }
 
 async function refreshParseDrafts(options = {}) {
-  if (!options.silent) setParseStatus('최근 자동 정리 결과를 확인하고 있습니다.');
+  if (!options.silent) setParseStatus('정리된 내용을 확인하고 있습니다.');
   try {
     const drafts = await listFamilyParseDrafts();
     const current = activeParseDraft
@@ -169,7 +169,7 @@ async function refreshParseDrafts(options = {}) {
         editingRecord ? draft.record_id === editingRecord.id : !draft.record_id
       ));
     if (!current) {
-      if (!options.silent) setParseStatus('확인할 자동 정리 결과가 없습니다.');
+      if (!options.silent) setParseStatus('새로 확인할 내용이 없습니다.');
       return;
     }
     activeParseDraft = current;
@@ -177,7 +177,7 @@ async function refreshParseDrafts(options = {}) {
     renderParseDraft(current);
   } catch (error) {
     console.error('[Family listings] Parse draft load failed', error);
-    setParseStatus(error?.message || '자동 정리 결과를 불러오지 못했습니다.', 'error');
+    setParseStatus(error?.message || '정리된 내용을 불러오지 못했습니다.', 'error');
   }
 }
 
@@ -185,7 +185,7 @@ function renderParseDraft(draft) {
   refs.parseReview.hidden = false;
   refs.parseSource.replaceChildren();
   const sourceTitle = document.createElement('strong');
-  sourceTitle.textContent = '입력 원문';
+  sourceTitle.textContent = '처음 적은 내용';
   const source = document.createElement('pre');
   source.textContent = draft.source_text;
   refs.parseSource.append(sourceTitle, source);
@@ -193,10 +193,10 @@ function renderParseDraft(draft) {
 
   const statusMessages = {
     queued: '정리 대기 중',
-    processing: 'Hermes가 정리 중',
-    review_needed: '가족 확인 필요',
+    processing: '내용 정리 중',
+    review_needed: '내용 확인 필요',
     reviewed: '확인 완료',
-    failed: '자동 정리 실패'
+    failed: '정리하지 못함'
   };
   refs.parseReviewState.textContent = statusMessages[draft.parse_status] || draft.parse_status;
   if (draft.parse_status === 'failed') {
@@ -205,7 +205,7 @@ function renderParseDraft(draft) {
     return;
   }
   if (draft.parse_status !== 'review_needed') {
-    refs.parseFields.appendChild(messageNode('정리 결과가 준비되면 제안값과 기존값을 함께 보여드립니다.'));
+    refs.parseFields.appendChild(messageNode('정리가 끝나면 지금 적힌 내용과 나란히 보여드릴게요.'));
     refs.applyParse.disabled = true;
     return;
   }
@@ -230,14 +230,14 @@ function createParseFieldReview(field, label, candidate) {
   title.textContent = label;
   const badge = document.createElement('span');
   const labels = {
-    suggested: '제안', needs_review: '확인 필요', kept_existing: '기존값 유지', empty: '비어 있음'
+    suggested: '새로 정리됨', needs_review: '골라주세요', kept_existing: '그대로 둠', empty: '내용 없음'
   };
   badge.textContent = labels[candidate.status] || candidate.status;
   heading.append(title, badge);
   const existing = document.createElement('p');
-  existing.textContent = `기존값: ${candidate.existing_value || '없음'}`;
+  existing.textContent = `지금 적힌 값: ${candidate.existing_value || '없음'}`;
   const suggested = document.createElement('p');
-  suggested.textContent = `자동 제안: ${candidate.suggested_value || '추출 못 함'}`;
+  suggested.textContent = `정리된 값: ${candidate.suggested_value || '없음'}`;
   card.append(heading, existing, suggested);
 
   if (candidate.status === 'needs_review') {
@@ -246,8 +246,8 @@ function createParseFieldReview(field, label, candidate) {
     const choice = document.createElement('select');
     choice.dataset.reviewChoice = field;
     choice.append(new Option('선택해 주세요', ''));
-    if (candidate.existing_value) choice.append(new Option(`기존값 · ${candidate.existing_value}`, 'existing'));
-    if (candidate.suggested_value) choice.append(new Option(`제안값 · ${candidate.suggested_value}`, 'suggested'));
+    if (candidate.existing_value) choice.append(new Option(`지금 값 · ${candidate.existing_value}`, 'existing'));
+    if (candidate.suggested_value) choice.append(new Option(`정리된 값 · ${candidate.suggested_value}`, 'suggested'));
     choice.append(new Option('직접 수정', 'custom'));
     const custom = document.createElement('input');
     custom.dataset.reviewCustom = field;
@@ -282,7 +282,7 @@ async function applyParseReviewToForm() {
     }
     pendingReviewedParse = reviewed;
     updateAliasPreview();
-    setParseStatus('검토값을 입력칸에 반영했습니다. 아래 내용을 확인한 뒤 가족 원장에 저장하세요.', 'success');
+    setParseStatus('입력칸에 채웠습니다. 아래 내용만 한번 보고 저장하세요.', 'success');
     refs.save.focus();
   } catch (error) {
     setParseStatus(error?.message || '확인할 항목을 모두 선택해 주세요.', 'error');
@@ -323,7 +323,7 @@ function updateAliasPreview() {
   try {
     const values = formValues();
     if (!values.intakeYearMonth) {
-      refs.aliasPreview.textContent = '접수연월을 선택하면 관리호칭이 만들어집니다.';
+      refs.aliasPreview.textContent = '처음 받은 달을 선택하면 매물 이름이 만들어집니다.';
       return;
     }
     const alias = buildFamilyListingAlias(values);
@@ -340,7 +340,7 @@ async function handleSubmit(event) {
   const values = formValues();
   isSaving = true;
   setSaving(true);
-  setFormStatus(editingRecord ? '매물 정보를 수정하고 있습니다.' : '가족 원장에 저장하고 있습니다.');
+  setFormStatus(editingRecord ? '매물 정보를 수정하고 있습니다.' : '저장하고 있습니다.');
   try {
     const baseAlias = buildFamilyListingAlias(values);
     const aliases = await listFamilyListingAliases();
@@ -349,21 +349,21 @@ async function handleSubmit(event) {
     const payload = normalizeFamilyListingInput(values, { aliasCode });
     if (pendingReviewedParse && activeParseDraft) {
       await finalizeFamilyParseDraft(activeParseDraft.id, payload);
-      setFormStatus(editingRecord ? '검토한 내용으로 매물 정보를 수정했습니다.' : '검토한 내용을 가족 원장에 저장했습니다.', 'success');
+      setFormStatus(editingRecord ? '확인한 내용으로 매물 정보를 수정했습니다.' : '확인한 내용을 저장했습니다.', 'success');
       pendingReviewedParse = null;
     } else if (editingRecord) {
       await updateFamilyListing(editingRecord.id, payload);
       setFormStatus('매물 정보를 수정했습니다.', 'success');
     } else {
       await createFamilyListing(payload);
-      setFormStatus('가족 원장에 저장했습니다.', 'success');
+      setFormStatus('저장했습니다.', 'success');
     }
     await reloadRecords();
     resetEditor({ keepStatus: true });
   } catch (error) {
     console.error('[Family listings] Save failed', error);
     const duplicate = String(error?.code || '') === '23505';
-    setFormStatus(duplicate ? '같은 관리호칭이 이미 있습니다. 접수연월이나 키워드를 확인해 주세요.' : (error?.message || '저장하지 못했습니다.'), 'error');
+    setFormStatus(duplicate ? '같은 매물 이름이 이미 있습니다. 받은 달이나 건물 이름을 확인해 주세요.' : (error?.message || '저장하지 못했습니다.'), 'error');
   } finally {
     isSaving = false;
     setSaving(false);
@@ -452,7 +452,7 @@ function createRecordCard(record) {
 
   const alias = document.createElement('p');
   alias.className = 'listing-card__alias';
-  alias.textContent = `관리호칭: ${record.alias_code}`;
+  alias.textContent = `매물 이름: ${record.alias_code}`;
 
   const date = document.createElement('p');
   date.className = 'listing-card__date';
@@ -480,7 +480,7 @@ function createRecordCard(record) {
   if (record.internal_notes) {
     const note = document.createElement('p');
     note.className = 'listing-card__internal';
-    note.textContent = `가족 메모: ${record.internal_notes}`;
+    note.textContent = `메모: ${record.internal_notes}`;
     article.appendChild(note);
   }
 
@@ -623,7 +623,7 @@ function openEditor(record = null) {
       if (control) control.value = value || '';
     }
   } else {
-    refs.formTitle.textContent = '새 매물 정리';
+    refs.formTitle.textContent = '새 매물 적기';
   }
   setFormStatus('');
   updateAliasPreview();
@@ -635,7 +635,7 @@ function resetEditor(options = {}) {
   resetParseEditor({ keepStatus: options.keepStatus });
   refs.form.reset();
   refs.id.value = '';
-  refs.formTitle.textContent = '새 매물 정리';
+  refs.formTitle.textContent = '새 매물 적기';
   setDefaultYearMonth();
   updateAliasPreview();
   if (!options.keepStatus) setFormStatus('');

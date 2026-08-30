@@ -80,7 +80,7 @@ export function normalizeFamilyListingInput(values = {}, options = {}) {
   const intakeYearMonth = cleanLine(readValue(values, 'intakeYearMonth', 'intake_year_month'), 7);
   describeIntakeYearMonth(intakeYearMonth);
   const aliasCode = cleanLine(options.aliasCode || readValue(values, 'aliasCode', 'alias_code'), 100);
-  if (!aliasCode) throw new Error('관리호칭을 확인해 주세요.');
+  if (!aliasCode) throw new Error('매물 이름을 확인해 주세요.');
   const neighborhood = cleanLine(readValue(values, 'neighborhood'), 40);
   const buildingKeyword = cleanLine(readValue(values, 'buildingKeyword', 'building_keyword'), 80);
   const unitLabel = cleanLine(readValue(values, 'unitLabel', 'unit_label'), 40);
@@ -158,7 +158,7 @@ export function buildFamilyParseReview({ sourceText = '', existingRecord = {}, s
 
 export function finalizeFamilyParseReview(draft = {}, decisions = {}) {
   if (!draft?.fields || typeof draft.fields !== 'object') {
-    throw new Error('검토할 자동 정리 결과가 없습니다.');
+    throw new Error('확인할 정리 결과가 없습니다.');
   }
   const reviewedValues = {};
   const unresolved = [];

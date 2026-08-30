@@ -8,8 +8,14 @@ class FamilyListingUiTest(unittest.TestCase):
     def test_family_board_is_admin_only_and_explains_korean_alias_date_code(self):
         html = (REPO / 'admin' / 'family-listings.html').read_text(encoding='utf-8')
         page = (REPO / 'js' / 'family-listings-page.js').read_text(encoding='utf-8')
-        self.assertIn('가족 매물 관리', html)
+        self.assertIn('우리 매물', html)
         self.assertIn('2608은 2026년 8월 접수', html)
+        self.assertIn('내용 정리하기', html)
+        self.assertIn('처음 적은 내용도 같이 남아요', html)
+        visible_copy = html + page
+        self.assertNotIn('Hermes', visible_copy)
+        self.assertNotIn('james', visible_copy)
+        self.assertNotIn('사장님', visible_copy)
         self.assertIn('id="familyListingForm"', html)
         self.assertIn('id="familyListingsGrid"', html)
         self.assertIn('id="familyListingSearch"', html)
@@ -24,6 +30,16 @@ class FamilyListingUiTest(unittest.TestCase):
         self.assertIn("setAttribute('aria-controls'", page)
         self.assertNotIn('Kakao', page)
         self.assertNotIn('employeeLogin', html)
+
+    def test_family_board_keeps_older_users_actions_large_and_obvious(self):
+        html = (REPO / 'admin' / 'family-listings.html').read_text(encoding='utf-8')
+        css = (REPO / 'css' / 'family-listings.css').read_text(encoding='utf-8')
+        self.assertIn('aria-label="사용 순서"', html)
+        self.assertIn('별표가 있는 항목만 꼭 입력하세요', html)
+        self.assertIn('min-height: 58px', css)
+        self.assertIn('font-size: 19px', css)
+        self.assertIn('.family-topbar__actions a { display: inline-flex; }', css)
+        self.assertIn('.form-actions .primary-action { order: -1; }', css)
 
     def test_family_board_uses_private_adapter_without_delete_or_public_publish(self):
         adapter = (REPO / 'js' / 'services' / 'familyListingAdapter.js').read_text(encoding='utf-8')
@@ -76,7 +92,7 @@ class FamilyListingUiTest(unittest.TestCase):
         self.assertIn('id="familySourceText"', html)
         self.assertIn('id="requestFamilyParse"', html)
         self.assertIn('id="familyParseReview"', html)
-        self.assertIn('확인하고 입력칸에 반영', html)
+        self.assertIn('아래 입력칸에 채우기', html)
         self.assertIn('createFamilyParseDraft', page)
         self.assertIn('listFamilyParseDrafts', page)
         self.assertIn('finalizeFamilyParseReview', page)

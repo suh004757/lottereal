@@ -40,7 +40,7 @@ const PARSE_FIELDS = [
 
 function requireClient() {
   const client = getSupabaseClient();
-  if (!client) throw new Error('가족 매물 원장에 연결할 수 없습니다.');
+  if (!client) throw new Error('매물 목록에 연결할 수 없습니다.');
   return client;
 }
 
@@ -122,7 +122,7 @@ export async function listFamilyParseDrafts() {
 }
 
 export async function finalizeFamilyParseDraft(id, payload) {
-  if (!id) throw new Error('확인할 자동 정리 초안이 없습니다.');
+  if (!id) throw new Error('확인할 내용이 없습니다.');
   const { data, error } = await requireClient()
     .rpc('finalize_family_listing_parse_review', {
       p_draft_id: id,
