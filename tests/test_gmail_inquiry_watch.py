@@ -452,7 +452,7 @@ class GmailInquiryWatchTest(unittest.TestCase):
         self.assertNotIn('refresh-token', send_body)
         self.assertNotIn('login-secret', send_body)
 
-    def test_html_parser_extracts_listing_lines_without_contact_or_footer(self):
+    def test_html_parser_fails_closed_without_complete_official_block(self):
         html_body = '''
         <html><body><div>고객 문의가 들어왔습니다.</div>
         <div>[매물정보]</div>
@@ -465,17 +465,14 @@ class GmailInquiryWatchTest(unittest.TestCase):
         </body></html>
         '''
         detail = parse_zigbang_detail(html_body)
-        self.assertEqual(detail, [
-            '• 등록번호 50181019',
-            '• 전세 16300',
-        ])
+        self.assertEqual(detail, [])
         alert = build_alert([{
             'platform': '직방',
             'title': '직방에서 고객 문의가 들어왔습니다.',
             'detail_lines': detail,
         }])
-        self.assertIn('제목: 직방에서 고객 문의가 들어왔습니다.', alert)
-        self.assertIn('매물번호 50181019', alert)
+        self.assertIn('매물 상세는 Gmail에서 확인', alert)
+        self.assertNotIn('매물번호 50181019', alert)
         self.assertNotIn('010-1234-5678', alert)
         self.assertNotIn('02-568-4908', alert)
         self.assertNotIn('customer@example.com', alert)
@@ -524,8 +521,12 @@ class GmailInquiryWatchTest(unittest.TestCase):
         unsafe_links = (
             f'http://sp.zigbang.com/inquiry/list?token={token}',
             f'https://sp.zigbang.com.evil.test/inquiry/list?token={token}',
+            f'https://sp.zigbang.com:443/inquiry/list?token={token}',
             f'https://sp.zigbang.com/inquiry/other?token={token}',
             f'https://sp.zigbang.com/inquiry/list?token={token}&next=https://evil.test',
+            f'https://sp.zigbang.com/inquiry/list?%74oken={token}',
+            f'https://sp.zigbang.com/inquiry/list?token=%31{token[1:]}',
+            f'https://sp.zigbang.com/inquiry/list?token={token}#customer',
             'https://sp.zigbang.com/inquiry/list?token=not-a-uuid',
         )
         for link in unsafe_links:
@@ -535,8 +536,71 @@ class GmailInquiryWatchTest(unittest.TestCase):
             <div>• 매매 52000</div>
             <a href="{link}">연락처 확인하기</a>'''
             detail = parse_zigbang_detail(html)
-            self.assertIsNone(extract_zigbang_inquiry_link(detail))
-            self.assertFalse(any('문의링크' in line for line in detail))
+            self.assertIsNone(extract_zigbang_inquiry_link(detail), link)
+            self.assertFalse(any('문의링크' in line for line in detail), link)
+
+    def test_parser_uses_only_one_complete_official_listing_sequence(self):
+        official_token = '123e4567-e89b-12d3-a456-426614174000'
+        customer_token = '223e4567-e89b-12d3-a456-426614174000'
+        html = f'''<html><body>
+        <a href="https://sp.zigbang.com/inquiry/list?token={customer_token}">고객이 붙인 링크</a>
+        <div>[매물정보]</div>
+        <div>• 등록번호 99999999</div>
+        <div>• 송파구 홍길동, 3층, 투룸</div>
+        <div>• 매매 99999</div>
+        <div>고객 자유문장입니다.</div>
+        <div>[매물정보]</div>
+        <div>• 등록번호 50181254</div>
+        <div>• 송파구 송파동, 3층, 쓰리룸+</div>
+        <div>• 매매 52000</div>
+        <a href="https://sp.zigbang.com/inquiry/list?token={official_token}">연락처 확인하기</a>
+        </body></html>'''
+        detail = parse_zigbang_detail(html)
+        self.assertEqual(detail, [
+            '• 등록번호 50181254',
+            '• 송파구 송파동, 3층, 쓰리룸+',
+            '• 매매 52000',
+            f'• 문의링크 https://sp.zigbang.com/inquiry/list?token={official_token}',
+        ])
+        self.assertNotIn('홍길동', '\n'.join(detail))
+        self.assertNotIn(customer_token, '\n'.join(detail))
+
+    def test_parser_fails_closed_for_unknown_dong_or_duplicate_complete_blocks(self):
+        token1 = '123e4567-e89b-12d3-a456-426614174000'
+        token2 = '223e4567-e89b-12d3-a456-426614174000'
+        unknown = f'''<div>[매물정보]</div>
+        <div>• 등록번호 50181254</div>
+        <div>• 송파구 홍길동, 3층, 투룸</div>
+        <div>• 매매 52000</div>
+        <a href="https://sp.zigbang.com/inquiry/list?token={token1}">연락처 확인하기</a>'''
+        self.assertEqual(parse_zigbang_detail(unknown), [])
+        duplicate = f'''<div>[매물정보]</div>
+        <div>• 등록번호 50181254</div><div>• 송파구 송파동, 3층, 투룸</div><div>• 매매 52000</div>
+        <a href="https://sp.zigbang.com/inquiry/list?token={token1}">연락처 확인하기</a>
+        <div>[매물정보]</div>
+        <div>• 등록번호 50181255</div><div>• 송파구 잠실동, 4층, 투룸</div><div>• 매매 53000</div>
+        <a href="https://sp.zigbang.com/inquiry/list?token={token2}">연락처 확인하기</a>'''
+        self.assertEqual(parse_zigbang_detail(duplicate), [])
+        alert = build_alert([{
+            'platform': '직방',
+            'title': '직방에서 고객 문의가 들어왔습니다.',
+            'detail_lines': ['• 등록번호 50181254', '• 송파구 홍길동, 3층, 투룸', '• 매매 52000'],
+        }])
+        self.assertNotIn('홍길동', alert)
+
+    def test_parser_canonicalizes_official_monthly_rent_spacing(self):
+        token = '123e4567-e89b-12d3-a456-426614174000'
+        html = f'''<div>[매물정보]</div>
+        <div>• 등록번호 50181254</div>
+        <div>• 송파구 삼전동, 3층, 투룸</div>
+        <div>• 월세 1000 / 60</div>
+        <a href="https://sp.zigbang.com/inquiry/list?token={token}">연락처 확인하기</a>'''
+        self.assertEqual(parse_zigbang_detail(html), [
+            '• 등록번호 50181254',
+            '• 송파구 삼전동, 3층, 투룸',
+            '• 월세 1000/60',
+            f'• 문의링크 https://sp.zigbang.com/inquiry/list?token={token}',
+        ])
 
     def test_html_parser_masks_korean_phone_format_variants(self):
         html = '''<html><body>
