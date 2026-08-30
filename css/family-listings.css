@@ -37,7 +37,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
   gap: 24px;
   border-bottom: 1px solid var(--line);
 }
-.family-brand { display: flex; align-items: baseline; gap: 12px; color: var(--ink); text-decoration: none; }
+.family-brand { display: flex; align-items: baseline; gap: 12px; color: var(--ink); }
 .family-brand span { color: var(--forest); font-family: "Noto Serif KR", serif; font-weight: 700; }
 .family-brand strong { font-size: 16px; color: var(--muted); }
 .family-topbar__actions { display: flex; align-items: center; gap: 8px; }
@@ -155,8 +155,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .listing-card__facts dt { color: var(--muted); font-size: 14px; font-weight: 700; }
 .listing-card__facts dd { margin: 2px 0 0; font-weight: 700; overflow-wrap: anywhere; }
 .listing-card__task { margin: 0 0 12px; padding: 12px; border-radius: 10px; background: #f2efe7; }
-.listing-card__internal { margin: 0 0 16px; color: var(--muted); font-size: 16px; }
-.listing-card__actions { display: flex; gap: 8px; margin-top: auto; }
+.listing-card__private { margin: 0 0 16px; padding: 12px 14px; border: 2px solid var(--line); border-radius: 10px; background: #f8f4eb; }
+.listing-card__private summary { min-height: 34px; cursor: pointer; color: var(--forest-dark); font-weight: 700; }
+.listing-card__private[open] summary { margin-bottom: 8px; }
+.listing-card__internal { margin: 0; color: var(--ink); font-size: 16px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.listing-card__actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: auto; }
 .listing-card__actions button { flex: 1; min-height: 56px; border-radius: 10px; border: 2px solid var(--line); background: #fff; color: var(--ink); cursor: pointer; font-weight: 700; }
 .listing-card__actions [data-copy-staff] { background: var(--forest); color: #fff; border-color: var(--forest); }
 .listing-card__history { margin-top: 14px; padding: 13px 15px; border-radius: 10px; background: #f2efe7; font-size: 14px; }
@@ -177,8 +180,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .family-shell { padding: 0 16px 60px; }
   .family-topbar { display: grid; align-items: start; padding: 15px 0; }
   .family-brand { display: grid; gap: 0; }
-  .family-topbar__actions { display: grid; grid-template-columns: 1fr 1fr 1fr; width: 100%; }
-  .family-topbar__actions a { display: inline-flex; }
+  .family-topbar__actions { grid-template-columns: 1fr; }
   .family-topbar__actions a, .family-topbar__actions button { align-items: center; justify-content: center; min-width: 0; padding: 10px 6px; border-color: var(--line); }
   .family-hero { padding: 42px 0 30px; gap: 28px; }
   .family-hero h1 { font-size: 38px; }

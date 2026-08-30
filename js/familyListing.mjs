@@ -231,3 +231,19 @@ export function buildStaffShareText(item = {}) {
   if (task) rows.push('', `확인할 내용: ${task}`);
   return rows.join('\n');
 }
+
+export function buildAdvertisingDraftText(item = {}) {
+  const safe = (value, maxLength = 180) => redactStaffValue(value, maxLength);
+  return [
+    '[광고 준비용 매물]',
+    `매물 이름: ${safe(item.alias_code, 100) || '미정'}`,
+    `동네: ${safe(item.neighborhood, 40) || '확인 필요'}`,
+    `건물: ${safe(item.building_keyword, 80) || '확인 필요'}`,
+    `호수·층: ${safe(item.unit_label, 40) || '확인 필요'}`,
+    `거래 유형: ${safe(item.transaction_type, 20) || '확인 필요'}`,
+    `가격: ${safe(item.price_summary, 120) || '확인 필요'}`,
+    `층수: ${safe(item.floor_summary, 60) || '확인 필요'}`,
+    `구조: ${safe(item.layout_summary, 80) || '확인 필요'}`,
+    `입주: ${safe(item.move_in_summary, 80) || '확인 필요'}`
+  ].join('\n');
+}

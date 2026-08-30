@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {
   buildFamilyListingAlias,
+  buildAdvertisingDraftText,
   buildStaffShareText,
   buildFamilyParseReview,
   finalizeFamilyParseReview,
@@ -65,6 +66,26 @@ for (const privateValue of [
   '123-456-789', '1234', '5678', '65만원', '가족 내부 정산'
 ]) {
   assert.equal(staffText.includes(privateValue), false);
+}
+
+const advertisingText = buildAdvertisingDraftText({
+  alias_code: alias,
+  neighborhood: '삼전동',
+  building_keyword: '미성빌라',
+  unit_label: '301호',
+  transaction_type: '월세',
+  price_summary: '보증금 1,000 / 월 70',
+  floor_summary: '3층',
+  layout_summary: '방 2 / 욕실 1',
+  move_in_summary: '즉시 가능',
+  assigned_to: '준혁',
+  staff_task: '공동현관 2580',
+  internal_notes: '집주인 010-1234-5678 · 세대 비밀번호 1234'
+});
+assert.match(advertisingText, /삼전동/);
+assert.match(advertisingText, /보증금 1,000 \/ 월 70/);
+for (const privateValue of ['준혁', '2580', '010-1234-5678', '1234']) {
+  assert.equal(advertisingText.includes(privateValue), false);
 }
 
 const variantStaffText = buildStaffShareText({
