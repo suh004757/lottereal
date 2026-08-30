@@ -19,8 +19,9 @@ import re
 import ssl
 import sys
 import time
-from urllib.parse import urlencode, urlparse
+from urllib.parse import parse_qsl, urlencode, urlparse
 from urllib.request import Request, urlopen
+from uuid import UUID
 from zoneinfo import ZoneInfo
 
 ZIGBANG_SENDER = 'cs@zigbang.com'
@@ -191,9 +192,60 @@ class _HtmlText(HTMLParser):
     def __init__(self) -> None:
         super().__init__()
         self.parts: list[str] = []
+        self.links: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag.lower() != 'a':
+            return
+        href = dict(attrs).get('href')
+        if isinstance(href, str):
+            self.links.append(unescape(href))
 
     def handle_data(self, data: str) -> None:
         self.parts.append(data)
+
+
+def normalize_zigbang_inquiry_link(value: str) -> str | None:
+    try:
+        parsed = urlparse(str(value or ''))
+        if (
+            parsed.scheme != 'https'
+            or parsed.hostname != 'sp.zigbang.com'
+            or parsed.port not in (None, 443)
+            or parsed.username is not None
+            or parsed.password is not None
+            or parsed.path != '/inquiry/list'
+            or parsed.fragment
+        ):
+            return None
+        query = parse_qsl(parsed.query, keep_blank_values=True)
+        if len(query) != 1 or query[0][0] != 'token':
+            return None
+        token = query[0][1]
+        canonical = str(UUID(token))
+        if token != canonical:
+            return None
+        return f'https://sp.zigbang.com/inquiry/list?token={canonical}'
+    except (ValueError, TypeError):
+        return None
+
+
+def extract_zigbang_inquiry_link(detail_lines: list[str]) -> str | None:
+    if not isinstance(detail_lines, list):
+        return None
+    for line in detail_lines:
+        if not isinstance(line, str) or not line.startswith('• 문의링크 '):
+            continue
+        return normalize_zigbang_inquiry_link(line.removeprefix('• 문의링크 '))
+    return None
+
+
+def build_kakao_inquiry_button_link(inquiry_link: str) -> str | None:
+    safe_link = normalize_zigbang_inquiry_link(inquiry_link)
+    if not safe_link:
+        return None
+    token = parse_qsl(urlparse(safe_link).query, keep_blank_values=True)[0][1]
+    return f'https://lottes.co.kr/redirect/zigbang-inquiry.html#token={token}'
 
 
 def parse_zigbang_detail(html_body: str) -> list[str]:
@@ -207,6 +259,7 @@ def parse_zigbang_detail(html_body: str) -> list[str]:
         return []
     safe: list[str] = []
     listing_seen = False
+    location_seen = False
     transaction_seen = False
     for line in lines[start:start + 20]:
         if '연락처 확인' in line:
@@ -217,11 +270,28 @@ def parse_zigbang_detail(html_body: str) -> list[str]:
             continue
         if (
             listing_seen
+            and not location_seen
+            and re.fullmatch(
+                r'• 송파구 [가-힣0-9·-]{1,15}(?:동|가), (?:[1-9][0-9]?층|반지하층), '
+                r'(?:오픈형 원룸|분리형 원룸|투룸|쓰리룸\+)',
+                line,
+            )
+        ):
+            safe.append(line)
+            location_seen = True
+            continue
+        if (
+            listing_seen
             and not transaction_seen
             and re.fullmatch(r'• (?:전세|매매) [0-9]{1,9}|• 월세 [0-9]{1,9}/[0-9]{1,9}', line)
         ):
             safe.append(line)
             transaction_seen = True
+    for raw_link in parser.links:
+        link = normalize_zigbang_inquiry_link(raw_link)
+        if link:
+            safe.append(f'• 문의링크 {link}')
+            break
     return safe if listing_seen else []
 
 
@@ -286,6 +356,7 @@ def send_kakao_owner_alert(
     values: dict[str, str],
     alert: str,
     *,
+    inquiry_link: str | None = None,
     opener=urlopen,
 ) -> dict[str, str]:
     client_id = values.get('LOTTEREAL_KAKAO_REST_API_KEY', '')
@@ -311,14 +382,16 @@ def send_kakao_owner_alert(
     access_token = token.get('access_token', '')
     if not access_token:
         raise RuntimeError('kakao token refresh failed')
+    safe_link = build_kakao_inquiry_button_link(inquiry_link or '')
+    destination = safe_link or 'https://lottes.co.kr/'
     template = {
         'object_type': 'text',
         'text': alert,
         'link': {
-            'web_url': 'https://mail.google.com',
-            'mobile_web_url': 'https://mail.google.com',
+            'web_url': destination,
+            'mobile_web_url': destination,
         },
-        'button_title': 'Gmail에서 확인',
+        'button_title': '직방 문의 바로보기' if safe_link else '롯데부동산 열기',
     }
     send_request = Request(
         'https://kapi.kakao.com/v2/api/talk/memo/default/send',
@@ -438,6 +511,25 @@ def update_private_env(path: Path, updates: dict[str, str]) -> None:
     os.replace(temporary, path)
 
 
+def _format_manwon(value: int) -> str:
+    billions, remainder = divmod(value, 10_000)
+    if billions and remainder:
+        return f'{billions}억 {remainder:,}만원'
+    if billions:
+        return f'{billions}억원'
+    return f'{value:,}만원'
+
+
+def _format_transaction(line: str) -> str | None:
+    sale = re.fullmatch(r'• (전세|매매) ([0-9]{1,9})', line)
+    if sale:
+        return f'{sale.group(1)} {_format_manwon(int(sale.group(2)))}'
+    rent = re.fullmatch(r'• 월세 ([0-9]{1,9})/([0-9]{1,9})', line)
+    if rent:
+        return f'월세 보증금 {_format_manwon(int(rent.group(1)))} · 월 {int(rent.group(2)):,}만원'
+    return None
+
+
 def build_alert(items: list[dict]) -> str:
     count = len(items)
     if count == 1:
@@ -445,21 +537,41 @@ def build_alert(items: list[dict]) -> str:
         title = item.get('title')
         detail_lines = item.get('detail_lines')
         if title == ZIGBANG_SUBJECT and isinstance(detail_lines, list):
-            details = [
-                line for line in detail_lines[:3]
-                if isinstance(line, str)
-                and len(line) <= 80
-                and re.fullmatch(
-                    r'• 등록번호 [0-9]{5,20}|• (?:전세|매매) [0-9]{1,9}|• 월세 [0-9]{1,9}/[0-9]{1,9}',
-                    line,
+            listing_number = ''
+            location = ''
+            transaction = ''
+            for raw_line in detail_lines:
+                if not isinstance(raw_line, str) or len(raw_line) > 120:
+                    continue
+                listing_match = re.fullmatch(r'• 등록번호 ([0-9]{5,20})', raw_line)
+                if listing_match:
+                    listing_number = listing_match.group(1)
+                    continue
+                location_match = re.fullmatch(
+                    r'• (송파구 [가-힣0-9·-]{1,15}(?:동|가)), '
+                    r'((?:[1-9][0-9]?층|반지하층)), '
+                    r'(오픈형 원룸|분리형 원룸|투룸|쓰리룸\+)',
+                    raw_line,
                 )
-            ]
-            body = '\n'.join(details) if details else '• 매물 상세는 Gmail에서 확인'
+                if location_match:
+                    location = ' · '.join(location_match.groups())
+                    continue
+                formatted = _format_transaction(raw_line)
+                if formatted:
+                    transaction = formatted
+            details = []
+            if listing_number:
+                details.append(f'매물번호 {listing_number}')
+            if location:
+                details.append(location)
+            if transaction:
+                details.append(transaction)
+            body = '\n'.join(details) if details else '매물 상세는 Gmail에서 확인'
             return (
                 '📨 직방 새 고객 문의\n'
                 f'제목: {ZIGBANG_SUBJECT}\n'
-                f'내용:\n{body}\n'
-                '연락처: Gmail에서 확인'
+                f'{body}\n'
+                '고객 연락처: 아래 버튼에서 확인'
             )
     platforms = {item.get('platform') for item in items if item.get('platform') == '직방'}
     platform = '직방' if platforms == {'직방'} else '매물 플랫폼'
@@ -538,6 +650,17 @@ def write_state(path: Path, state: dict) -> None:
     os.replace(temporary, path)
 
 
+def build_discord_fallback(items: list[dict]) -> str:
+    if len(items) == 1:
+        summary = build_alert(items).replace(
+            '고객 연락처: 아래 버튼에서 확인',
+            '고객 연락처: Gmail에서 확인',
+        )
+        if '매물번호 ' in summary:
+            return f'⚠️ 카카오 전송 지연—Discord 임시 알림\n{summary}'
+    return f'⚠️ 직방 문의 처리 지연 {len(items)}건. Gmail에서 확인하세요.'
+
+
 def record_fallback(state_path: Path, items: list[dict]) -> str:
     state = load_state(state_path)
     valid_keys = [
@@ -554,7 +677,8 @@ def record_fallback(state_path: Path, items: list[dict]) -> str:
     })
     if not new_keys:
         return ''
-    return f'⚠️ 직방 문의 처리 지연 {len(new_keys)}건. Gmail에서 확인하세요.'
+    new_items = [item for item in items if item.get('key') in set(new_keys)]
+    return build_discord_fallback(new_items)
 
 
 def record_parse_failure(state_path: Path, item: dict) -> str:
@@ -701,8 +825,13 @@ def main() -> int:
                 continue
 
             alert = build_alert([item])
+            inquiry_link = extract_zigbang_inquiry_link(item['detail_lines'])
             try:
-                token_updates = send_kakao_owner_alert(values, alert)
+                token_updates = send_kakao_owner_alert(
+                    values,
+                    alert,
+                    inquiry_link=inquiry_link,
+                )
                 update_private_env(env_path, token_updates)
                 values.update(token_updates)
             except Exception:

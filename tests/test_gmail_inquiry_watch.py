@@ -8,13 +8,16 @@ import tempfile
 import unittest
 from unittest import mock
 from email.header import Header
+from urllib.parse import parse_qs
 
 import scripts.lottereal_gmail_inquiry_watch as gmail_watch
 from scripts.lottereal_gmail_inquiry_watch import (
+    ZIGBANG_SUBJECT,
     authentication_passes,
     build_alert,
     build_public_receipt_payload,
     classify_inquiry,
+    extract_zigbang_inquiry_link,
     fetch_verified_messages,
     message_key,
     parse_zigbang_detail,
@@ -183,6 +186,37 @@ class GmailInquiryWatchTest(unittest.TestCase):
             self.assertEqual(state['seen_keys'], [])
             self.assertEqual(state['fallback_keys'], ['f' * 64])
 
+    def test_discord_fallback_contains_safe_listing_summary_without_access_token(self):
+        key = '9' * 64
+        token = '123e4567-e89b-12d3-a456-426614174000'
+        item = {
+            'key': key,
+            'platform': '직방',
+            'title': ZIGBANG_SUBJECT,
+            'detail_lines': [
+                '• 등록번호 50181254',
+                '• 송파구 송파동, 3층, 쓰리룸+',
+                '• 매매 52000',
+                f'• 문의링크 https://sp.zigbang.com/inquiry/list?token={token}',
+                '• 고객 홍길동 010-1234-5678 private@example.com',
+            ],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory) / 'state.json'
+            state_path.write_text(json.dumps({
+                'initialized': True,
+                'seen_keys': [],
+                'fallback_keys': [],
+                'parse_failures': {},
+                'dead_keys': [],
+            }), encoding='utf-8')
+            message = record_fallback(state_path, [item])
+            for expected in ('카카오 전송 지연', '매물번호 50181254', '송파구 송파동 · 3층 · 쓰리룸+', '매매 5억 2,000만원'):
+                self.assertIn(expected, message)
+            for forbidden in (token, '문의링크', '홍길동', '010-1234-5678', 'private@example.com'):
+                self.assertNotIn(forbidden, message)
+            self.assertEqual(record_fallback(state_path, [item]), '')
+
     def test_main_retries_kakao_after_one_fixed_discord_fallback(self):
         key = 'e' * 64
         item = {
@@ -223,10 +257,11 @@ class GmailInquiryWatchTest(unittest.TestCase):
             ):
                 self.assertEqual(gmail_watch.main(), 0)
                 self.assertEqual(gmail_watch.main(), 0)
-            self.assertEqual(
-                output.getvalue(),
-                '⚠️ 직방 문의 처리 지연 1건. Gmail에서 확인하세요.\n',
-            )
+            fallback_output = output.getvalue()
+            self.assertEqual(fallback_output.count('카카오 전송 지연'), 1)
+            self.assertIn('매물번호 50181019', fallback_output)
+            self.assertIn('전세 1억 6,300만원', fallback_output)
+            self.assertNotIn('http', fallback_output)
             self.assertEqual(send.call_count, 2)
             state = json.loads(state_path.read_text(encoding='utf-8'))
             self.assertEqual(state['seen_keys'], [])
@@ -395,9 +430,11 @@ class GmailInquiryWatchTest(unittest.TestCase):
             'LOTTEREAL_KAKAO_CLIENT_Login_SECRET': 'login-secret',
             'LOTTEREAL_KAKAO_REFRESH_TOKEN': 'refresh-token',
         }
+        inquiry_link = 'https://sp.zigbang.com/inquiry/list?token=123e4567-e89b-12d3-a456-426614174000'
         updates = send_kakao_owner_alert(
             values,
             '📨 직방 새 고객 문의 1건\nGmail에서 문의 내용을 확인하세요.',
+            inquiry_link=inquiry_link,
             opener=opener,
         )
         self.assertEqual(updates['LOTTEREAL_KAKAO_ACCESS_TOKEN'], 'new-access')
@@ -407,6 +444,11 @@ class GmailInquiryWatchTest(unittest.TestCase):
         self.assertIn('client_secret=login-secret', refresh_body)
         send_body = requests[1].data.decode()
         self.assertIn('template_object=', send_body)
+        template = json.loads(parse_qs(send_body)['template_object'][0])
+        expected_button_link = f'https://lottes.co.kr/redirect/zigbang-inquiry.html#token={inquiry_link.rsplit("=", 1)[1]}'
+        self.assertEqual(template['link']['web_url'], expected_button_link)
+        self.assertEqual(template['link']['mobile_web_url'], expected_button_link)
+        self.assertEqual(template['button_title'], '직방 문의 바로보기')
         self.assertNotIn('refresh-token', send_body)
         self.assertNotIn('login-secret', send_body)
 
@@ -433,7 +475,7 @@ class GmailInquiryWatchTest(unittest.TestCase):
             'detail_lines': detail,
         }])
         self.assertIn('제목: 직방에서 고객 문의가 들어왔습니다.', alert)
-        self.assertIn('• 등록번호 50181019', alert)
+        self.assertIn('매물번호 50181019', alert)
         self.assertNotIn('010-1234-5678', alert)
         self.assertNotIn('02-568-4908', alert)
         self.assertNotIn('customer@example.com', alert)
@@ -444,9 +486,57 @@ class GmailInquiryWatchTest(unittest.TestCase):
             'title': '직방에서 고객 문의가 들어왔습니다.',
             'detail_lines': ['• 등록번호 50181019', '• 담당자 홍길동 010.1234.5678'],
         }])
-        self.assertIn('• 등록번호 50181019', defense_alert)
+        self.assertIn('매물번호 50181019', defense_alert)
         self.assertNotIn('홍길동', defense_alert)
         self.assertNotIn('010.1234.5678', defense_alert)
+
+    def test_rich_owner_alert_accepts_only_coarse_listing_data_and_exact_zigbang_link(self):
+        token = '123e4567-e89b-12d3-a456-426614174000'
+        html_body = f'''<html><body>
+        <div>[매물정보]</div>
+        <div>• 등록번호 50181254</div>
+        <div>• 송파구 송파동, 3층, 쓰리룸+</div>
+        <div>• 매매 52000</div>
+        <a href="https://sp.zigbang.com/inquiry/list?token={token}">연락처 확인하기</a>
+        <div>고객 홍길동 010-1234-5678 private@example.com</div>
+        </body></html>'''
+        detail = parse_zigbang_detail(html_body)
+        self.assertEqual(detail, [
+            '• 등록번호 50181254',
+            '• 송파구 송파동, 3층, 쓰리룸+',
+            '• 매매 52000',
+            f'• 문의링크 https://sp.zigbang.com/inquiry/list?token={token}',
+        ])
+        link = extract_zigbang_inquiry_link(detail)
+        self.assertEqual(link, f'https://sp.zigbang.com/inquiry/list?token={token}')
+        alert = build_alert([{
+            'platform': '직방',
+            'title': '직방에서 고객 문의가 들어왔습니다.',
+            'detail_lines': detail,
+        }])
+        for expected in ('매물번호 50181254', '송파구 송파동 · 3층 · 쓰리룸+', '매매 5억 2,000만원'):
+            self.assertIn(expected, alert)
+        for private_value in ('홍길동', '010-1234-5678', 'private@example.com', token, '문의링크'):
+            self.assertNotIn(private_value, alert)
+
+    def test_rejects_token_links_outside_exact_allowlist(self):
+        token = '123e4567-e89b-12d3-a456-426614174000'
+        unsafe_links = (
+            f'http://sp.zigbang.com/inquiry/list?token={token}',
+            f'https://sp.zigbang.com.evil.test/inquiry/list?token={token}',
+            f'https://sp.zigbang.com/inquiry/other?token={token}',
+            f'https://sp.zigbang.com/inquiry/list?token={token}&next=https://evil.test',
+            'https://sp.zigbang.com/inquiry/list?token=not-a-uuid',
+        )
+        for link in unsafe_links:
+            html = f'''<div>[매물정보]</div>
+            <div>• 등록번호 50181254</div>
+            <div>• 송파구 송파동, 3층, 투룸</div>
+            <div>• 매매 52000</div>
+            <a href="{link}">연락처 확인하기</a>'''
+            detail = parse_zigbang_detail(html)
+            self.assertIsNone(extract_zigbang_inquiry_link(detail))
+            self.assertFalse(any('문의링크' in line for line in detail))
 
     def test_html_parser_masks_korean_phone_format_variants(self):
         html = '''<html><body>
