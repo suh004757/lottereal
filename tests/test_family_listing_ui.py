@@ -1,0 +1,109 @@
+from pathlib import Path
+import unittest
+
+REPO = Path(__file__).resolve().parents[1]
+
+
+class FamilyListingUiTest(unittest.TestCase):
+    def test_family_board_is_admin_only_and_explains_korean_alias_date_code(self):
+        html = (REPO / 'admin' / 'family-listings.html').read_text(encoding='utf-8')
+        page = (REPO / 'js' / 'family-listings-page.js').read_text(encoding='utf-8')
+        self.assertIn('가족 매물 관리', html)
+        self.assertIn('2608은 2026년 8월 접수', html)
+        self.assertIn('id="familyListingForm"', html)
+        self.assertIn('id="familyListingsGrid"', html)
+        self.assertIn('id="familyListingSearch"', html)
+        self.assertIn('dataset.copyStaff', page)
+        self.assertIn("user.app_metadata?.role !== 'admin'", page)
+        self.assertIn('signOutAdmin', page)
+        self.assertIn('onAuthStateChange', page)
+        self.assertIn("event === 'SIGNED_OUT'", page)
+        self.assertIn('records = []', page)
+        self.assertIn("setAttribute('aria-pressed'", page)
+        self.assertIn("setAttribute('aria-expanded'", page)
+        self.assertIn("setAttribute('aria-controls'", page)
+        self.assertNotIn('Kakao', page)
+        self.assertNotIn('employeeLogin', html)
+
+    def test_family_board_uses_private_adapter_without_delete_or_public_publish(self):
+        adapter = (REPO / 'js' / 'services' / 'familyListingAdapter.js').read_text(encoding='utf-8')
+        self.assertIn(".from('family_listing_records')", adapter)
+        self.assertIn(".from('family_listing_events')", adapter)
+        self.assertIn('.insert(', adapter)
+        self.assertIn('.update(', adapter)
+        self.assertNotIn('.delete(', adapter)
+        self.assertNotIn('property_listings', adapter)
+        self.assertNotIn('service_role', adapter.lower())
+
+    def test_migration_denies_anon_and_allows_only_admin_family_accounts(self):
+        migration = (REPO / 'supabase' / 'migrations' / '015_family_listing_records.sql').read_text(encoding='utf-8').lower()
+        self.assertIn('create table if not exists public.family_listing_records', migration)
+        self.assertIn('enable row level security', migration)
+        self.assertIn('revoke all privileges on table public.family_listing_records from anon, authenticated, public', migration)
+        self.assertIn('grant select, insert, update on table public.family_listing_records to authenticated', migration)
+        self.assertNotIn('grant select on table public.family_listing_records to anon', migration)
+        self.assertNotIn('grant delete', migration)
+        self.assertNotIn('for delete', migration)
+        self.assertIn('create table if not exists public.family_listing_members', migration)
+        self.assertIn("check (family_role in ('owner', 'spouse', 'daughter'))", migration)
+        self.assertIn('unique (family_role)', migration)
+        self.assertIn('grant select on table public.family_listing_members to authenticated', migration)
+        self.assertNotIn('grant insert, update, delete on table public.family_listing_members', migration)
+        self.assertIn('public.is_family_listing_member()', migration)
+        self.assertGreaterEqual(migration.count('public.is_family_listing_member()'), 5)
+        self.assertIn('insert into public.family_listing_members', migration)
+        self.assertIn("raw_app_meta_data ->> 'role' = 'admin'", migration)
+        self.assertNotIn("auth.jwt() -> 'app_metadata' ->> 'role' = 'admin'", migration)
+        self.assertIn("check (status in ('new', 'needs_info', 'ready', 'advertising', 'inquiry', 'visit', 'contract', 'completed', 'hold', 'closed'))", migration)
+        self.assertIn("check (intake_year_month ~ '^\\d{4}-(0[1-9]|1[0-2])$')", migration)
+        self.assertIn('create table if not exists public.family_listing_events', migration)
+        self.assertIn('grant select on table public.family_listing_events to authenticated', migration)
+        self.assertNotIn('grant insert, update, delete on table public.family_listing_events', migration)
+        self.assertIn('after insert or update on public.family_listing_records', migration)
+        self.assertIn('security definer', migration)
+
+    def test_page_loads_immutable_history_on_demand(self):
+        page = (REPO / 'js' / 'family-listings-page.js').read_text(encoding='utf-8')
+        self.assertIn('listFamilyListingEvents', page)
+        self.assertIn('dataset.history', page)
+        self.assertIn('변경 이력', page)
+
+    def test_free_text_parse_review_is_non_destructive_and_private(self):
+        html = (REPO / 'admin' / 'family-listings.html').read_text(encoding='utf-8')
+        page = (REPO / 'js' / 'family-listings-page.js').read_text(encoding='utf-8')
+        adapter = (REPO / 'js' / 'services' / 'familyListingAdapter.js').read_text(encoding='utf-8')
+        migration = (REPO / 'supabase' / 'migrations' / '016_family_listing_parse_reviews.sql').read_text(encoding='utf-8').lower()
+        self.assertIn('id="familySourceText"', html)
+        self.assertIn('id="requestFamilyParse"', html)
+        self.assertIn('id="familyParseReview"', html)
+        self.assertIn('확인하고 입력칸에 반영', html)
+        self.assertIn('createFamilyParseDraft', page)
+        self.assertIn('listFamilyParseDrafts', page)
+        self.assertIn('finalizeFamilyParseReview', page)
+        self.assertNotIn('fetch(', page)
+        self.assertNotIn('discord', page.lower())
+        self.assertIn(".from('family_listing_parse_reviews')", adapter)
+        self.assertIn(".rpc('finalize_family_listing_parse_review'", adapter)
+        self.assertNotIn('markFamilyParseDraftReviewed', adapter)
+        self.assertIn('create table if not exists public.family_listing_parse_reviews', migration)
+        self.assertIn("check (parse_status in ('queued', 'processing', 'review_needed', 'reviewed', 'failed'))", migration)
+        self.assertIn('claimed_at timestamptz', migration)
+        self.assertIn('attempt_count integer', migration)
+        self.assertIn('create or replace function public.finalize_family_listing_parse_review', migration)
+        self.assertIn('for update', migration)
+        self.assertIn('source_text cannot be changed', migration)
+        self.assertIn('public.is_family_listing_member()', migration)
+        self.assertNotIn('grant select, insert, update on table public.family_listing_parse_reviews to authenticated', migration)
+        self.assertIn('grant select, insert on table public.family_listing_parse_reviews to authenticated', migration)
+        self.assertNotIn('grant delete', migration)
+        self.assertNotIn('for delete', migration)
+
+    def test_existing_admin_surfaces_link_to_family_board(self):
+        intake = (REPO / 'admin' / 'intake.html').read_text(encoding='utf-8')
+        dashboard = (REPO / 'admin' / 'dashboard.html').read_text(encoding='utf-8')
+        self.assertIn('href="family-listings.html"', intake)
+        self.assertIn('href="family-listings.html"', dashboard)
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>가족 매물 관리 | 롯데부동산 ADMIN</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@700&display=swap" rel="stylesheet">
+  <link rel="icon" href="../img/core-img/favicon.ico">
+  <link rel="stylesheet" href="../css/family-listings.css">
+</head>
+<body>
+  <main class="family-shell">
+    <header class="family-topbar">
+      <a class="family-brand" href="intake.html" aria-label="ADMIN 초안 접수로 이동">
+        <span>롯데부동산</span>
+        <strong>가족 매물 원장</strong>
+      </a>
+      <nav class="family-topbar__actions" aria-label="관리 화면 이동">
+        <a href="intake.html">빠른 초안</a>
+        <a href="dashboard.html">고급 관리</a>
+        <button type="button" id="familyLogoutBtn">로그아웃</button>
+      </nav>
+    </header>
+
+    <section class="family-hero" aria-labelledby="familyPageTitle">
+      <div>
+        <p class="family-eyebrow">사장님 부부와 딸이 함께 보는 비공개 원장</p>
+        <h1 id="familyPageTitle">매물이 쌓여도<br>한눈에 구분되게</h1>
+        <p class="family-hero__copy">평소 부르던 동네·건물·호수 키워드를 그대로 씁니다. 직원에게는 필요한 내용만 복사해서 기존 카톡방에 붙여넣으세요.</p>
+      </div>
+      <aside class="alias-guide" aria-label="관리호칭 읽는 법">
+        <span class="alias-guide__label">관리호칭 예시</span>
+        <strong>삼전-미성빌라-301-월세-2608</strong>
+        <p><b>2608은 2026년 8월 접수</b>를 뜻합니다. 화면에서는 항상 풀어쓴 날짜를 함께 보여줍니다.</p>
+      </aside>
+    </section>
+
+    <section class="family-status-board" id="familyStatusBoard" aria-label="매물 상태 요약"></section>
+
+    <section class="family-toolbar" aria-label="매물 검색과 필터">
+      <label class="search-field" for="familyListingSearch">
+        <span>매물 찾기</span>
+        <input id="familyListingSearch" type="search" placeholder="예: 삼전 미성 301 월세" autocomplete="off">
+      </label>
+      <label for="familyListingStatusFilter">
+        <span>상태</span>
+        <select id="familyListingStatusFilter">
+          <option value="">전체 상태</option>
+          <option value="new">신규</option>
+          <option value="needs_info">정보 확인 필요</option>
+          <option value="ready">광고 준비</option>
+          <option value="advertising">광고 중</option>
+          <option value="inquiry">문의 있음</option>
+          <option value="visit">방문 예정</option>
+          <option value="contract">계약 진행</option>
+          <option value="completed">계약 완료</option>
+          <option value="hold">보류</option>
+          <option value="closed">종료</option>
+        </select>
+      </label>
+      <button class="primary-action" type="button" id="openFamilyListingForm">새 매물 정리</button>
+    </section>
+
+    <section class="family-editor" id="familyListingEditor" aria-labelledby="familyFormTitle">
+      <div class="family-editor__heading">
+        <div>
+          <p class="family-eyebrow">30초 가족 입력</p>
+          <h2 id="familyFormTitle">새 매물 정리</h2>
+        </div>
+        <button type="button" class="quiet-button" id="closeFamilyListingForm">접기</button>
+      </div>
+      <form id="familyListingForm">
+        <input type="hidden" id="familyListingId" name="id">
+
+        <section class="parse-intake" aria-labelledby="familyParseTitle">
+          <div class="parse-intake__heading">
+            <div>
+              <p class="family-eyebrow">말하듯 입력</p>
+              <h3 id="familyParseTitle">아는 내용을 편하게 적으세요</h3>
+            </div>
+            <span>원문은 그대로 보존됩니다</span>
+          </div>
+          <label for="familySourceText">매물 원문
+            <textarea id="familySourceText" name="sourceText" maxlength="10000" rows="5" placeholder="예: 삼전 미성 301 월세 천에 70, 방둘이고 바로 입주. 주차는 확인 필요"></textarea>
+          </label>
+          <div class="parse-intake__actions">
+            <button type="button" class="quiet-button" id="refreshFamilyParse">정리 결과 새로 확인</button>
+            <button type="button" class="primary-action" id="requestFamilyParse">Hermes에 자동 정리 요청</button>
+          </div>
+          <div id="familyParseStatus" class="family-message" role="status" aria-live="polite" hidden></div>
+          <section id="familyParseReview" class="parse-review" aria-labelledby="familyParseReviewTitle" hidden>
+            <div class="parse-review__heading">
+              <div>
+                <p class="family-eyebrow">자동 정리 검토</p>
+                <h3 id="familyParseReviewTitle">기존값과 제안값을 확인하세요</h3>
+              </div>
+              <span id="familyParseReviewState"></span>
+            </div>
+            <div id="familyParseSource" class="parse-review__source"></div>
+            <div id="familyParseFields" class="parse-review__fields"></div>
+            <button type="button" class="primary-action" id="applyFamilyParseReview">확인하고 입력칸에 반영</button>
+          </section>
+        </section>
+
+        <div class="form-grid form-grid--identity">
+          <label>동네 *
+            <input name="neighborhood" required maxlength="40" placeholder="예: 삼전동">
+          </label>
+          <label>건물·기억할 키워드 *
+            <input name="buildingKeyword" required maxlength="80" placeholder="예: 미성빌라, 시장뒤원룸">
+          </label>
+          <label>호수·층 *
+            <input name="unitLabel" required maxlength="40" placeholder="예: 301호, 1층">
+          </label>
+          <label>거래 유형 *
+            <select name="transactionType" required>
+              <option value="">선택</option>
+              <option value="매매">매매</option>
+              <option value="전세">전세</option>
+              <option value="월세">월세</option>
+              <option value="임대">임대</option>
+              <option value="기타">기타</option>
+            </select>
+          </label>
+          <label>접수연월 *
+            <input name="intakeYearMonth" type="month" required>
+            <small>예: 2026년 8월 → 관리호칭의 2608</small>
+          </label>
+          <label>현재 상태 *
+            <select name="status" required>
+              <option value="new">신규</option>
+              <option value="needs_info">정보 확인 필요</option>
+              <option value="ready">광고 준비</option>
+              <option value="advertising">광고 중</option>
+              <option value="inquiry">문의 있음</option>
+              <option value="visit">방문 예정</option>
+              <option value="contract">계약 진행</option>
+              <option value="completed">계약 완료</option>
+              <option value="hold">보류</option>
+              <option value="closed">종료</option>
+            </select>
+          </label>
+        </div>
+
+        <output class="alias-preview" id="familyAliasPreview" aria-live="polite">동네와 건물, 호수, 거래유형을 입력하면 관리호칭이 만들어집니다.</output>
+
+        <div class="form-grid">
+          <label>가격 요약
+            <input name="priceSummary" maxlength="120" placeholder="예: 보증금 1,000 / 월 70">
+          </label>
+          <label>층수
+            <input name="floorSummary" maxlength="60" placeholder="예: 3층 / 총 5층">
+          </label>
+          <label>구조
+            <input name="layoutSummary" maxlength="80" placeholder="예: 방 2 / 욕실 1">
+          </label>
+          <label>입주
+            <input name="moveInSummary" maxlength="80" placeholder="예: 즉시 가능, 10월 협의">
+          </label>
+          <label>담당
+            <input name="assignedTo" maxlength="60" placeholder="예: 사장님, 직원">
+          </label>
+          <label>출처
+            <input name="sourceLabel" maxlength="60" placeholder="예: 집주인, 직방, 소개">
+          </label>
+        </div>
+        <label>직원방에 전달할 확인사항
+          <textarea name="staffTask" maxlength="240" rows="3" placeholder="예: 주차 가능 여부와 관리비 확인"></textarea>
+        </label>
+        <label>가족만 보는 내부 메모
+          <textarea name="internalNotes" maxlength="1000" rows="4" placeholder="직원방 복사 내용에는 포함되지 않습니다."></textarea>
+        </label>
+        <p class="privacy-rail">집주인 연락처·출입 비밀번호·계좌·고객 개인정보는 이 원장에도 적지 않습니다. 필요한 연락처는 기존 휴대전화에서 확인하세요.</p>
+        <div id="familyFormStatus" class="family-message" role="status" aria-live="polite" hidden></div>
+        <div class="form-actions">
+          <button type="button" class="quiet-button" id="cancelFamilyListingEdit">취소</button>
+          <button type="submit" class="primary-action" id="saveFamilyListing">가족 원장에 저장</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="family-results" aria-labelledby="familyResultsTitle">
+      <div class="family-results__heading">
+        <div>
+          <p class="family-eyebrow">우리 매물</p>
+          <h2 id="familyResultsTitle">찾은 매물 <span id="familyResultCount">0</span>건</h2>
+        </div>
+        <p>종료 매물도 삭제하지 않고 이력으로 남깁니다.</p>
+      </div>
+      <div id="familyListingsGrid" class="family-listings-grid" aria-live="polite">
+        <p class="family-empty">매물을 불러오는 중입니다.</p>
+      </div>
+    </section>
+  </main>
+  <textarea id="familyCopyFallback" class="copy-fallback" aria-hidden="true" tabindex="-1"></textarea>
+  <script type="module" src="../js/family-listings-page.js"></script>
+</body>
+</html>
