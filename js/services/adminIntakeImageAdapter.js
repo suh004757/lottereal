@@ -70,7 +70,7 @@ export async function uploadFamilyListingImages(files, { userId, batchId, onProg
 
       const originalPath = createFamilyOriginalImagePath(userId, batchId, position, file.type);
       const originalResult = await supabase.storage.from(BUCKET).upload(originalPath, file, {
-        contentType: file.type, upsert: true
+        contentType: file.type, upsert: false
       });
       if (originalResult.error) throw originalResult.error;
       completedPaths.push(originalPath);
