@@ -253,6 +253,16 @@ class FamilyListingUiTest(unittest.TestCase):
         self.assertIn('after insert or update on public.family_listing_records', migration)
         self.assertIn('security definer', migration)
 
+    def test_family_membership_allows_multiple_daughters_but_one_owner_and_spouse(self):
+        migration = (
+            REPO / 'supabase' / 'migrations' / '023_allow_multiple_daughter_members.sql'
+        ).read_text(encoding='utf-8').lower()
+        self.assertIn('drop constraint family_listing_members_family_role_key', migration)
+        self.assertIn("where family_role = 'owner'", migration)
+        self.assertIn("where family_role = 'spouse'", migration)
+        self.assertNotIn("where family_role = 'daughter'", migration)
+        self.assertNotIn('delete from public.family_listing_members', migration)
+
     def test_page_loads_immutable_history_on_demand(self):
         page = (REPO / 'js' / 'family-listings-page.js').read_text(encoding='utf-8')
         self.assertIn('listFamilyListingEvents', page)
