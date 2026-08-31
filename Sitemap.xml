@@ -13,12 +13,20 @@
     <priority>1.00</priority>
   </url>
 
-  <!-- 영문 홈 -->
+  <!-- 국제 고객용 영문 안내 -->
   <url>
     <loc>https://lottes.co.kr/EN.html</loc>
-    <lastmod>2026-03-07</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.90</priority>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.70</priority>
+  </url>
+
+  <!-- 국제 고객용 일본어 안내 -->
+  <url>
+    <loc>https://lottes.co.kr/JP.html</loc>
+    <lastmod>2026-08-31</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.65</priority>
   </url>
 
   <!-- 매물 리스트 KR -->
@@ -27,14 +35,6 @@
     <lastmod>2026-03-07</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
-  </url>
-
-  <!-- 매물 리스트 EN -->
-  <url>
-    <loc>https://lottes.co.kr/listings-en.html</loc>
-    <lastmod>2026-03-07</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.80</priority>
   </url>
 
   <!-- 계약·분쟁 사례 -->
@@ -219,14 +219,6 @@
     <priority>0.70</priority>
   </url>
 
-  <!-- 매물 상세 EN -->
-  <url>
-    <loc>https://lottes.co.kr/listing-detail-en.html</loc>
-    <lastmod>2026-03-07</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.65</priority>
-  </url>
-
   <!-- 문의/찾아오는 길 KR -->
   <url>
     <loc>https://lottes.co.kr/contact.html</loc>
@@ -235,36 +227,12 @@
     <priority>0.80</priority>
   </url>
 
-  <!-- 문의/찾아오는 길 EN -->
-  <url>
-    <loc>https://lottes.co.kr/contact_EN.html</loc>
-    <lastmod>2026-03-07</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.70</priority>
-  </url>
-
   <!-- 개인정보처리방침 KR -->
   <url>
     <loc>https://lottes.co.kr/privacy.html</loc>
     <lastmod>2026-03-07</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.30</priority>
-  </url>
-
-  <!-- 개인정보처리방침 EN -->
-  <url>
-    <loc>https://lottes.co.kr/privacy_EN.html</loc>
-    <lastmod>2026-03-07</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.30</priority>
-  </url>
-
-  <!-- English Seoul property guide -->
-  <url>
-    <loc>https://lottes.co.kr/seoul-property-guide.html</loc>
-    <lastmod>2026-08-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.78</priority>
   </url>
 
 </urlset>
