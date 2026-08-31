@@ -5,6 +5,12 @@ function cleanToken(value) {
     .replace(/[^0-9A-Za-z가-힣_-]/g, '');
 }
 
+export function shouldQueueFamilySourceDraft(sourceText, existingSourceText = '') {
+  const normalize = (value) => String(value ?? '').trim().replace(/\s+/g, ' ');
+  const next = normalize(sourceText);
+  return Boolean(next) && next !== normalize(existingSourceText);
+}
+
 export function describeIntakeYearMonth(value) {
   const match = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(String(value ?? '').trim());
   if (!match) throw new Error('접수연월은 YYYY-MM 형식으로 입력해 주세요.');
