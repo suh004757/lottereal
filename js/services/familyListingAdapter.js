@@ -54,10 +54,22 @@ export async function listFamilyListings() {
   const { data, error } = await requireClient()
     .from('family_listing_records')
     .select(FIELDS)
+    .is('deleted_at', null)
     .order('updated_at', { ascending: false })
     .limit(500);
   if (error) throw error;
   return Array.isArray(data) ? data : [];
+}
+
+export async function getFamilyListingMembership(userId) {
+  if (!userId) throw new Error('사용자 권한을 확인할 수 없습니다.');
+  const { data, error } = await requireClient()
+    .from('family_listing_members')
+    .select('family_role,display_name')
+    .eq('user_id', userId)
+    .single();
+  if (error) throw error;
+  return data;
 }
 
 export async function listFamilyListingPhotoBatches(recordIds = []) {
@@ -127,6 +139,15 @@ export async function updateFamilyListing(id, payload) {
     .update(payload)
     .eq('id', id)
     .select(FIELDS)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function archiveFamilyListingAsOwner(id) {
+  if (!id) throw new Error('삭제할 매물을 확인할 수 없습니다.');
+  const { data, error } = await requireClient()
+    .rpc('archive_family_listing_as_owner', { p_record_id: id })
     .single();
   if (error) throw error;
   return data;

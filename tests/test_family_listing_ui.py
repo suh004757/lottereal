@@ -5,7 +5,7 @@ REPO = Path(__file__).resolve().parents[1]
 
 
 class FamilyListingUiTest(unittest.TestCase):
-    def test_family_members_have_no_direct_listing_delete_path(self):
+    def test_only_live_owner_can_archive_listing_without_direct_delete_policy(self):
         migrations = '\n'.join(
             path.read_text(encoding='utf-8')
             for path in sorted((REPO / 'supabase' / 'migrations').glob('*.sql'))
@@ -13,8 +13,14 @@ class FamilyListingUiTest(unittest.TestCase):
         page = (REPO / 'js' / 'family-listings-page.js').read_text(encoding='utf-8')
         adapter = (REPO / 'js' / 'services' / 'familyListingAdapter.js').read_text(encoding='utf-8')
         self.assertNotIn('on public.family_listing_records\nfor delete', migrations)
-        self.assertNotIn('deletefamilylisting', page.lower())
-        self.assertNotIn('deletefamilylisting', adapter.lower())
+        self.assertIn('archive_family_listing_as_owner', migrations)
+        self.assertIn("family_role = 'owner'", migrations)
+        self.assertIn('deleted_at is null', migrations)
+        self.assertIn(".rpc('archive_family_listing_as_owner'", adapter)
+        self.assertIn("currentFamilyRole === 'owner'", page)
+        self.assertIn("deleteButton.textContent = '매물 삭제'", page)
+        self.assertIn('record.alias_code', page)
+        self.assertNotIn(".from('family_listing_records')\n    .delete(", adapter)
 
     def test_backend_auto_apply_is_service_only_and_excludes_sensitive_fields(self):
         migration = (REPO / 'supabase' / 'migrations' / '020_auto_apply_family_listing_parse.sql').read_text(encoding='utf-8').lower()
@@ -100,8 +106,8 @@ class FamilyListingUiTest(unittest.TestCase):
         self.assertIn('min-height: 58px', css)
         self.assertIn('font-size: 19px', css)
         self.assertNotIn('href="intake.html"', html)
-        self.assertNotIn('href="dashboard.html"', html)
-        self.assertIn('.family-topbar__actions { grid-template-columns: 1fr; }', css)
+        self.assertIn('href="dashboard.html#properties"', html)
+        self.assertIn('공식 홈페이지에 광고 올리기', html)
         self.assertIn('.form-actions .primary-action { order: -1; }', css)
 
     def test_quick_post_keeps_each_photo_attached_to_one_listing(self):
@@ -203,14 +209,12 @@ class FamilyListingUiTest(unittest.TestCase):
         self.assertIn("document.createElement('details')", page)
         self.assertIn("summary.textContent = '내부 메모 보기'", page)
 
-    def test_family_card_creates_private_ad_draft_without_publication(self):
+    def test_family_card_uses_clear_admin_advertising_link_instead_of_ambiguous_draft(self):
+        html = (REPO / 'admin' / 'family-listings.html').read_text(encoding='utf-8')
         page = (REPO / 'js' / 'family-listings-page.js').read_text(encoding='utf-8')
-        self.assertIn('buildAdvertisingDraftText', page)
-        self.assertIn('buildAdminIntakePayload', page)
-        self.assertIn('saveAdminIntakeDraft', page)
-        self.assertIn("advertise.textContent = '광고 준비'", page)
-        self.assertIn("publish_approved", page)
-        self.assertNotIn("status: 'published'", page)
+        self.assertIn('href="dashboard.html#properties"', html)
+        self.assertNotIn("advertise.textContent = '광고 준비'", page)
+        self.assertNotIn('createAdvertisingDraft(record, advertise)', page)
 
     def test_family_board_uses_private_adapter_without_delete_or_public_publish(self):
         adapter = (REPO / 'js' / 'services' / 'familyListingAdapter.js').read_text(encoding='utf-8')

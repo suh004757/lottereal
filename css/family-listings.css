@@ -46,6 +46,8 @@ button, a { -webkit-tap-highlight-color: transparent; }
   background: transparent; color: var(--muted); text-decoration: none; cursor: pointer;
 }
 .family-topbar__actions a:hover, .family-topbar__actions button:hover { border-color: var(--line); color: var(--ink); }
+.family-topbar__actions .family-ad-link { background: var(--forest); border-color: var(--forest); color: #fff; font-weight: 700; }
+.family-topbar__actions .family-ad-link:hover { background: var(--forest-dark); border-color: var(--forest-dark); color: #fff; }
 
 .family-hero {
   display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(330px, .9fr);
@@ -213,8 +215,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .listing-card__share-status { margin: 10px 0 0; padding: 12px 14px; border-radius: 10px; background: #f8e9e5; color: var(--alert); font-weight: 700; }
 .listing-card__more { margin-top: 12px; border-top: 1px solid var(--line); }
 .listing-card__more > summary { min-height: 52px; display: flex; align-items: center; cursor: pointer; color: var(--forest-dark); font-weight: 700; }
-.listing-card__more-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-bottom: 12px; }
+.listing-card__more-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 7px; margin-bottom: 12px; }
 .listing-card__more-actions button { min-height: 50px; border: 1px solid var(--line); border-radius: 9px; background: #fff; color: var(--ink); font-weight: 700; cursor: pointer; }
+.listing-card__more-actions .listing-card__delete { border-color: #c68f87; color: var(--alert); background: #fff7f5; }
 .listing-card__original { margin-bottom: 12px; padding: 12px 14px; border-radius: 10px; background: #eef5f0; }
 .listing-card__original summary { min-height: 48px; display: flex; align-items: center; cursor: pointer; color: var(--forest-dark); font-weight: 700; }
 .listing-card__original p { margin: 8px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -241,7 +244,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .family-shell { padding: 0 16px 60px; }
   .family-topbar { display: grid; align-items: start; padding: 15px 0; }
   .family-brand { display: grid; gap: 0; }
-  .family-topbar__actions { grid-template-columns: 1fr; }
+  .family-topbar__actions { display: grid; grid-template-columns: 1fr; width: 100%; }
   .family-topbar__actions a, .family-topbar__actions button { align-items: center; justify-content: center; min-width: 0; padding: 10px 6px; border-color: var(--line); }
   .family-board-intro { padding: 30px 0 22px; gap: 20px; }
   .quick-choice { grid-template-columns: 1fr; }
