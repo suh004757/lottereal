@@ -11,6 +11,19 @@ class AdminAuthGuardTest(unittest.TestCase):
         self.assertIn("./intake.html", source)
         self.assertNotIn("window.location.href = './dashboard.html'", source)
 
+    def test_google_oauth_is_runtime_gated_and_keeps_admin_role_check(self):
+        html = (REPO / 'admin' / 'login.html').read_text(encoding='utf-8')
+        login = (REPO / 'js' / 'admin-login.js').read_text(encoding='utf-8')
+        auth = (REPO / 'js' / 'services' / 'authService.js').read_text(encoding='utf-8')
+        self.assertIn('id="googleLoginButton"', html)
+        self.assertIn('hidden', html.split('id="googleLoginButton"', 1)[1].split('>', 1)[0])
+        self.assertIn('isGoogleSignInAvailable', login)
+        self.assertIn('signInAdminWithGoogle', login)
+        self.assertIn("provider: 'google'", auth)
+        self.assertIn("new URL('./login.html', window.location.href).href", auth)
+        self.assertIn("'/auth/v1/settings'", auth)
+        self.assertIn("app_metadata?.role === 'admin'", login)
+
     def test_intake_page_checks_server_managed_admin_role(self):
         source = (REPO / 'js' / 'admin-intake-page.js').read_text(encoding='utf-8')
         self.assertIn("user.app_metadata?.role !== 'admin'", source)
