@@ -49,6 +49,8 @@
 
       <!-- 로그인 폼 -->
       <form id="adminLoginForm" class="admin-form">
+        <button type="button" id="googleLoginButton" class="admin-google" hidden>Google 계정으로 로그인</button>
+        <div class="admin-divider" id="googleLoginDivider" aria-hidden="true" hidden><span>또는 이메일로 로그인</span></div>
         <label class="admin-field">
           <span>이메일</span>
           <input type="email" name="email" placeholder="admin@example.com" autocomplete="username" required>

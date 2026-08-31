@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>우리 매물 | 롯데부동산</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@700&display=swap" rel="stylesheet">
+  <link rel="icon" href="../img/core-img/favicon.ico">
+  <link rel="stylesheet" href="../css/family-listings.css">
+</head>
+<body>
+  <main class="family-shell">
+    <header class="family-topbar">
+      <div class="family-brand">
+        <span>롯데부동산</span>
+        <strong>우리 매물</strong>
+      </div>
+      <nav class="family-topbar__actions" aria-label="매물 화면 이동">
+        <a href="dashboard.html#properties" class="family-ad-link">공식 홈페이지에 광고 올리기</a>
+        <button type="button" id="familyLogoutBtn">로그아웃</button>
+      </nav>
+    </header>
+
+    <section class="family-board-intro" aria-labelledby="familyPageTitle">
+      <div>
+        <p class="family-eyebrow">매물 게시판</p>
+        <h1 id="familyPageTitle">새 매물을 어떻게 올릴까요?</h1>
+        <p>글과 사진을 한 번에 올리거나, 사진 찍으러 갈 곳부터 적어두세요.</p>
+      </div>
+      <div class="quick-choice" role="group" aria-label="새 매물 올리기">
+        <button type="button" class="quick-choice__button quick-choice__button--primary" id="openQuickPost" aria-pressed="false">
+          <strong>글과 사진 같이 올리기</strong>
+          <span>카톡에 적듯이 한 번에 저장</span>
+        </button>
+        <button type="button" class="quick-choice__button" id="openPhotoTask" aria-pressed="false">
+          <strong>사진 찍을 곳 적기</strong>
+          <span>임장 전에 할 일만 먼저 저장</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="quick-panel" id="familyQuickPostPanel" aria-labelledby="familyQuickPostTitle" hidden>
+      <div class="quick-panel__heading">
+        <div>
+          <p class="family-eyebrow">글 + 사진</p>
+          <h2 id="familyQuickPostTitle">매물 올리기</h2>
+        </div>
+        <button type="button" class="quiet-button" data-close-quick>닫기</button>
+      </div>
+      <form id="familyQuickPostForm">
+        <label>어느 매물인가요?
+          <input name="listingTitle" maxlength="100" required placeholder="예: 삼전 미성 301 월세">
+        </label>
+        <label>들은 내용
+          <textarea name="text" maxlength="10000" rows="5" required placeholder="예: 천에 70, 방 둘, 바로 입주. 주차는 확인 필요"></textarea>
+        </label>
+        <label class="photo-picker" for="familyQuickPhotos">
+          <strong>사진 추가</strong>
+          <span>여러 장을 한 번에 고르세요. 화면에는 작게 보이고 원본은 따로 보관돼요.</span>
+          <input id="familyQuickPhotos" name="photos" type="file" accept="image/jpeg,image/png,image/webp" multiple>
+        </label>
+        <div id="familyQuickPhotoPreview" class="quick-photo-preview" aria-live="polite"></div>
+        <div id="familyQuickPostStatus" class="family-message" role="status" aria-live="polite" hidden></div>
+        <button type="submit" class="primary-action quick-submit">매물 올리기</button>
+      </form>
+    </section>
+
+    <section class="quick-panel" id="familyPhotoTaskPanel" aria-labelledby="familyPhotoTaskTitle" hidden>
+      <div class="quick-panel__heading">
+        <div>
+          <p class="family-eyebrow">임장 할 일</p>
+          <h2 id="familyPhotoTaskTitle">사진 찍을 곳 적기</h2>
+        </div>
+        <button type="button" class="quiet-button" data-close-quick>닫기</button>
+      </div>
+      <form id="familyPhotoTaskForm">
+        <label>어느 매물인가요?
+          <input name="listingTitle" maxlength="100" required placeholder="예: 석촌 시장뒤 202 전세">
+        </label>
+        <label>언제 갈까요?
+          <input name="visitDate" type="date">
+        </label>
+        <label>무엇을 찍을까요?
+          <textarea name="text" maxlength="220" rows="4" required placeholder="예: 외관, 현관, 거실, 주방, 화장실"></textarea>
+        </label>
+        <div id="familyPhotoTaskStatus" class="family-message" role="status" aria-live="polite" hidden></div>
+        <button type="submit" class="primary-action quick-submit">촬영할 곳 저장</button>
+      </form>
+    </section>
+
+    <section class="family-toolbar" aria-label="매물 검색과 필터">
+      <label class="search-field" for="familyListingSearch">
+        <span>매물 찾기</span>
+        <input id="familyListingSearch" type="search" placeholder="동네, 건물, 호수로 검색" autocomplete="off">
+      </label>
+      <label for="familyListingStatusFilter">
+        <span>상태</span>
+        <select id="familyListingStatusFilter">
+          <option value="">전체</option>
+          <option value="needs_info">사진·정보 필요</option>
+          <option value="new">새 매물</option>
+          <option value="ready">광고 준비</option>
+          <option value="advertising">광고 중</option>
+          <option value="inquiry">문의 있음</option>
+          <option value="visit">방문 예정</option>
+          <option value="contract">계약 진행</option>
+          <option value="completed">계약 완료</option>
+          <option value="hold">보류</option>
+          <option value="closed">종료</option>
+        </select>
+      </label>
+    </section>
+
+    <section class="family-editor is-collapsed" id="familyListingEditor" aria-labelledby="familyFormTitle">
+      <div class="family-editor__heading">
+        <div>
+          <p class="family-eyebrow">빠르게 적기</p>
+          <h2 id="familyFormTitle">새 매물 적기</h2>
+        </div>
+        <button type="button" class="quiet-button" id="closeFamilyListingForm">접기</button>
+      </div>
+      <form id="familyListingForm">
+        <input type="hidden" id="familyListingId" name="id">
+
+        <section class="parse-intake" aria-labelledby="familyParseTitle">
+          <div class="parse-intake__heading">
+            <div>
+              <p class="family-eyebrow">들은 내용 그대로</p>
+              <h3 id="familyParseTitle">아는 대로 편하게 적으세요</h3>
+            </div>
+            <span>처음 적은 내용도 같이 남아요</span>
+          </div>
+          <label for="familySourceText">처음 들은 내용
+            <textarea id="familySourceText" name="sourceText" maxlength="10000" rows="5" placeholder="예: 삼전 미성 301 월세 천에 70, 방둘이고 바로 입주. 주차는 확인 필요"></textarea>
+          </label>
+          <p class="parse-intake__automatic">매물을 저장하면 기본 정보가 뒤에서 자동으로 정리됩니다. 원문은 그대로 남고, 틀린 내용은 언제든 수정할 수 있어요.</p>
+        </section>
+
+        <div class="form-section-heading">
+          <h3>매물 기본 정보</h3>
+          <p>별표가 있는 항목만 꼭 입력하세요. 나머지는 아는 것만 적으면 됩니다.</p>
+        </div>
+        <div class="form-grid form-grid--identity">
+          <label>동네 *
+            <input name="neighborhood" required maxlength="40" placeholder="예: 삼전동">
+          </label>
+          <label>건물 이름·기억할 말 *
+            <input name="buildingKeyword" required maxlength="80" placeholder="예: 미성빌라, 시장뒤원룸">
+          </label>
+          <label>호수·층 *
+            <input name="unitLabel" required maxlength="40" placeholder="예: 301호, 1층">
+          </label>
+          <label>거래 유형 *
+            <select name="transactionType" required>
+              <option value="">선택</option>
+              <option value="매매">매매</option>
+              <option value="전세">전세</option>
+              <option value="월세">월세</option>
+              <option value="임대">임대</option>
+              <option value="기타">기타</option>
+            </select>
+          </label>
+          <label>처음 받은 달 *
+            <input name="intakeYearMonth" type="month" required>
+            <small>예: 2026년 8월이면 매물 이름에 2608이 붙습니다.</small>
+          </label>
+          <label>현재 상태 *
+            <select name="status" required>
+              <option value="new">신규</option>
+              <option value="needs_info">정보 확인 필요</option>
+              <option value="ready">광고 준비</option>
+              <option value="advertising">광고 중</option>
+              <option value="inquiry">문의 있음</option>
+              <option value="visit">방문 예정</option>
+              <option value="contract">계약 진행</option>
+              <option value="completed">계약 완료</option>
+              <option value="hold">보류</option>
+              <option value="closed">종료</option>
+            </select>
+          </label>
+        </div>
+
+        <output class="alias-preview" id="familyAliasPreview" aria-live="polite">동네와 건물, 호수, 거래 유형을 입력하면 매물 이름이 만들어집니다.</output>
+
+        <div class="form-grid">
+          <label>가격
+            <input name="priceSummary" maxlength="120" placeholder="예: 보증금 1,000 / 월 70">
+          </label>
+          <label>층수
+            <input name="floorSummary" maxlength="60" placeholder="예: 3층 / 총 5층">
+          </label>
+          <label>구조
+            <input name="layoutSummary" maxlength="80" placeholder="예: 방 2 / 욕실 1">
+          </label>
+          <label>입주
+            <input name="moveInSummary" maxlength="80" placeholder="예: 즉시 가능, 10월 협의">
+          </label>
+          <label>담당
+            <input name="assignedTo" maxlength="60" placeholder="예: 준혁, 김대리">
+          </label>
+          <label>어디서 들었나요
+            <input name="sourceLabel" maxlength="60" placeholder="예: 집주인, 직방, 소개">
+          </label>
+        </div>
+        <label>현장·직원 확인사항
+          <textarea name="staffTask" maxlength="240" rows="4" placeholder="예: 주차 가능 여부와 관리비 확인"></textarea>
+        </label>
+        <label>연락처·출입정보 메모
+          <textarea name="internalNotes" maxlength="1000" rows="4" placeholder="예: 집주인 전화번호, 공동현관 비밀번호, 세대 출입정보"></textarea>
+        </label>
+        <p class="privacy-rail">전화번호와 출입 비밀번호를 적어도 됩니다. 이 메모는 카드에서 기본으로 가려지고 직원방용 복사에는 들어가지 않습니다.</p>
+        <div id="familyFormStatus" class="family-message" role="status" aria-live="polite" hidden></div>
+        <div class="form-actions">
+          <button type="button" class="quiet-button" id="cancelFamilyListingEdit">입력 취소</button>
+          <button type="submit" class="primary-action" id="saveFamilyListing">매물 저장</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="family-results" aria-labelledby="familyResultsTitle">
+      <div class="family-results__heading">
+        <div>
+          <p class="family-eyebrow">우리 매물</p>
+          <h2 id="familyResultsTitle">찾은 매물 <span id="familyResultCount">0</span>건</h2>
+        </div>
+        <p>끝난 매물도 지우지 않고 남겨둡니다.</p>
+      </div>
+      <div id="familyListingsGrid" class="family-listings-grid" aria-live="polite">
+        <p class="family-empty">매물을 불러오는 중입니다.</p>
+      </div>
+    </section>
+  </main>
+
+  <dialog class="family-photo-dialog" id="familyPhotoDialog" aria-labelledby="familyPhotoDialogTitle">
+    <form id="familyCardPhotoForm">
+      <div class="quick-panel__heading">
+        <div>
+          <p class="family-eyebrow">이 매물에 사진 추가</p>
+          <h2 id="familyPhotoDialogTitle">매물 선택 확인</h2>
+          <strong id="familyPhotoListingName"></strong>
+        </div>
+        <button type="button" class="quiet-button" id="closeFamilyPhotoDialog">닫기</button>
+      </div>
+      <label class="photo-picker" for="familyCardPhotoInput">
+        <strong>사진 고르기</strong>
+        <span>위 매물에만 저장됩니다. 화면에는 작게 보이고 원본은 따로 보관돼요.</span>
+        <input id="familyCardPhotoInput" data-family-photo-input type="file" accept="image/jpeg,image/png,image/webp" multiple required>
+      </label>
+      <div id="familyCardPhotoPreview" class="quick-photo-preview" aria-live="polite"></div>
+      <div id="familyCardPhotoStatus" class="family-message" role="status" aria-live="polite" hidden></div>
+      <button type="submit" class="primary-action quick-submit">이 매물에 사진 저장</button>
+    </form>
+  </dialog>
+
+  <textarea id="familyCopyFallback" class="copy-fallback" aria-hidden="true" tabindex="-1"></textarea>
+  <script type="module" src="../js/family-listings-page.js"></script>
+</body>
+</html>

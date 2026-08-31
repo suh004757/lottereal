@@ -189,6 +189,32 @@ export async function signInAdmin(email, password, options = {}) {
   return { success: true, session: data.session, user: data.user };
 }
 
+export async function isGoogleSignInAvailable() {
+  try {
+    const settingsUrl = new URL('/auth/v1/settings', APP_CONFIG.SUPABASE_URL);
+    const response = await fetch(settingsUrl, {
+      method: 'GET',
+      headers: { apikey: APP_CONFIG.SUPABASE_KEY }
+    });
+    if (!response.ok) return false;
+    const settings = await response.json();
+    return settings?.external?.google === true;
+  } catch (_error) {
+    return false;
+  }
+}
+
+export async function signInAdminWithGoogle() {
+  const client = ensureClient();
+  const redirectTo = new URL('./login.html', window.location.href).href;
+  const { error } = await client.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo }
+  });
+  if (error) return { success: false, error: error.message };
+  return { success: true };
+}
+
 /**
  * 관리자 로그아웃을 수행합니다.
  * @param {Object} options - 로그아웃 옵션 (onSignedOut 콜백 등)
