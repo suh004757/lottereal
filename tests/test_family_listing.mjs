@@ -80,7 +80,8 @@ const groupedPhotos = groupFamilyListingPhotos([
     metadata: {
       family_listing_id: 'listing-a',
       photo_upload_state: 'complete',
-      private_image_paths: ['user-a/batch-current/01.jpg', 'user-a/batch-current/02.jpg']
+      private_image_paths: ['user-a/batch-current/preview/01.jpg', 'user-a/batch-current/preview/02.jpg'],
+      private_original_image_paths: ['user-a/batch-current/original/01.jpg', 'user-a/batch-current/original/02.png']
     }
   },
   {
@@ -101,13 +102,15 @@ const groupedPhotos = groupFamilyListingPhotos([
     }
   }
 ], new Map([
-  ['user-a/batch-current/01.jpg', 'https://signed.example/01'],
-  ['user-a/batch-current/02.jpg', 'https://signed.example/02'],
+  ['user-a/batch-current/preview/01.jpg', 'https://signed.example/preview-01'],
+  ['user-a/batch-current/preview/02.jpg', 'https://signed.example/preview-02'],
   ['user-a/batch-other/01.jpg', 'https://signed.example/other']
 ]));
 assert.equal(groupedPhotos['listing-a'].length, 2);
 assert.equal(groupedPhotos['listing-a'][0].batchId, 'batch-current');
-assert.equal(groupedPhotos['listing-a'][0].url, 'https://signed.example/01');
+assert.equal(groupedPhotos['listing-a'][0].url, 'https://signed.example/preview-01');
+assert.equal(groupedPhotos['listing-a'][0].originalUrl, '');
+assert.equal(groupedPhotos['listing-a'][1].originalPath, 'user-a/batch-current/original/02.png');
 assert.equal(groupedPhotos['listing-b'].length, 1);
 assert.equal(groupedPhotos['batch-pending'], undefined);
 

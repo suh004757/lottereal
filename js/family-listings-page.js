@@ -15,13 +15,14 @@ import {
 } from './familyListing.mjs';
 import { buildAdminIntakePayload } from './adminIntake.mjs';
 import { attachPendingImageManifest, validateAdminIntakeImages } from './adminIntakeImageRules.mjs';
-import { saveAdminIntakeDraft, finalizeAdminIntakeImages } from './services/adminIntakeAdapter.js';
+import { saveAdminIntakeDraft, finalizeFamilyListingImages } from './services/adminIntakeAdapter.js';
 import {
   createAdminIntakeImageSignedUrls,
   createAdminIntakeImageShareFiles,
   createAdminIntakeThumbnail,
+  downloadAdminIntakeImage,
   removeAdminIntakeImages,
-  uploadAdminIntakeImages
+  uploadFamilyListingImages
 } from './services/adminIntakeImageAdapter.js';
 import {
   createFamilyListing,
@@ -118,6 +119,7 @@ let parseRequestGeneration = 0;
 let quickRecordOperationId = null;
 let quickSourceOperationId = null;
 let photoTaskOperationId = null;
+const pendingPhotoFinalizations = new Map();
 let parsePollTimer = null;
 
 init();
@@ -186,9 +188,15 @@ function openQuickPanel(mode) {
   if (!isPost && !refs.quickPostPanel.hidden) resetQuickPostInputs();
   refs.quickPostPanel.hidden = !isPost;
   refs.photoTaskPanel.hidden = isPost;
+  setQuickChoiceMode(mode);
   const panel = isPost ? refs.quickPostPanel : refs.photoTaskPanel;
   panel?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   panel?.querySelector('input')?.focus({ preventScroll: true });
+}
+
+function setQuickChoiceMode(mode = '') {
+  refs.openQuickPost?.setAttribute('aria-pressed', String(mode === 'post'));
+  refs.openPhotoTask?.setAttribute('aria-pressed', String(mode === 'photo_task'));
 }
 
 function closeQuickPanels() {
@@ -199,6 +207,7 @@ function closeQuickPanels() {
   setElementStatus(refs.photoTaskStatus, '');
   refs.quickPostPanel.hidden = true;
   refs.photoTaskPanel.hidden = true;
+  setQuickChoiceMode();
 }
 
 function setElementStatus(element, message = '', state = 'info') {
@@ -361,6 +370,20 @@ async function createQuickRecord(values, operationId) {
 
 async function savePhotosForRecord(record, files, onProgress = () => {}) {
   if (!files.length) return [];
+  const pending = pendingPhotoFinalizations.get(record.id);
+  if (pending) {
+    try {
+      await finalizeFamilyListingImages(pending.draftId, pending.uploads);
+      pendingPhotoFinalizations.delete(record.id);
+      return pending.uploads.previewPaths;
+    } catch (error) {
+      if (error?.safeToCleanup) {
+        await removeAdminIntakeImages([...pending.uploads.previewPaths, ...pending.uploads.originalPaths]);
+        pendingPhotoFinalizations.delete(record.id);
+      }
+      throw error;
+    }
+  }
   const user = await getCurrentSessionUser();
   if (!user || user.app_metadata?.role !== 'admin') throw new Error('로그인을 다시 확인해 주세요.');
   if (!globalThis.crypto?.randomUUID) throw new Error('이 브라우저에서는 사진을 저장할 수 없습니다.');
@@ -380,9 +403,9 @@ async function savePhotosForRecord(record, files, onProgress = () => {}) {
     imageCount: files.length
   });
   const saved = await saveAdminIntakeDraft(payload);
-  let paths;
+  let uploads;
   try {
-    paths = await uploadAdminIntakeImages(files, {
+    uploads = await uploadFamilyListingImages(files, {
       userId: user.id,
       batchId: saved.id,
       onProgress
@@ -396,8 +419,18 @@ async function savePhotosForRecord(record, files, onProgress = () => {}) {
     }
     throw uploadError;
   }
-  await finalizeAdminIntakeImages(saved.id, paths);
-  return paths;
+  pendingPhotoFinalizations.set(record.id, { draftId: saved.id, uploads });
+  try {
+    await finalizeFamilyListingImages(saved.id, uploads);
+    pendingPhotoFinalizations.delete(record.id);
+    return uploads.previewPaths;
+  } catch (error) {
+    if (error?.safeToCleanup) {
+      await removeAdminIntakeImages([...uploads.previewPaths, ...uploads.originalPaths]);
+      pendingPhotoFinalizations.delete(record.id);
+    }
+    throw error;
+  }
 }
 
 async function handleQuickPost(event) {
@@ -709,6 +742,7 @@ function clearSensitiveView() {
   photoMap = {};
   parseDraftMap = new Map();
   sourceDraftMap = new Map();
+  pendingPhotoFinalizations.clear();
   photoSelectionGeneration += 1;
   decorationGeneration += 1;
   parseRequestGeneration += 1;
@@ -721,6 +755,7 @@ function clearSensitiveView() {
   setElementStatus(refs.photoTaskStatus, '');
   if (refs.quickPostPanel) refs.quickPostPanel.hidden = true;
   if (refs.photoTaskPanel) refs.photoTaskPanel.hidden = true;
+  setQuickChoiceMode();
   if (refs.photoDialog?.open) refs.photoDialog.close();
   cleanupPhotoDialogState();
   isQuickSaving = false;
@@ -1017,6 +1052,46 @@ function createRecordCard(record) {
     }
     gallery.append(summary, grid);
     article.appendChild(gallery);
+  }
+
+  const originalPhotos = photos.filter((photo) => photo.originalPath);
+  if (originalPhotos.length) {
+    const downloads = document.createElement('details');
+    downloads.className = 'listing-card__original-downloads';
+    const summary = document.createElement('summary');
+    summary.textContent = `원본 사진 받기 (${originalPhotos.length}장)`;
+    const links = document.createElement('div');
+    links.className = 'listing-card__original-links';
+    for (const photo of originalPhotos) {
+      const extension = ['jpg', 'png', 'webp'].includes(String(photo.originalPath).split('.').pop())
+        ? String(photo.originalPath).split('.').pop()
+        : 'jpg';
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = `${photo.position}번 원본 받기`;
+      button.addEventListener('click', async () => {
+        const label = button.textContent;
+        button.disabled = true;
+        button.textContent = '원본 받는 중…';
+        try {
+          await downloadAdminIntakeImage(
+            photo.originalPath,
+            `${record.alias_code}-${String(photo.position).padStart(2, '0')}.${extension}`
+          );
+          button.textContent = '원본 받기 완료';
+        } catch (error) {
+          button.textContent = error?.message || '다시 눌러주세요';
+        } finally {
+          window.setTimeout(() => {
+            button.disabled = false;
+            button.textContent = label;
+          }, 2500);
+        }
+      });
+      links.appendChild(button);
+    }
+    downloads.append(summary, links);
+    article.appendChild(downloads);
   }
 
   const actions = document.createElement('div');

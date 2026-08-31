@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   validateAdminIntakeImages,
+  createFamilyOriginalImagePath,
+  createFamilyPreviewImagePath,
   createPrivateImagePath,
   attachPrivateImageMetadata,
   attachPendingImageManifest,
@@ -12,6 +14,14 @@ import { runAdminIntakeUploadQueue } from '../js/adminIntakeUploadQueue.mjs';
 import { readImageDimensions, getOrientedDimensions } from '../js/adminIntakeImageDimensions.mjs';
 
 const image = (name, type = 'image/jpeg', size = 2_000_000) => ({ name, type, size });
+
+test('family board keeps separate preview and original private paths', () => {
+  assert.equal(createFamilyPreviewImagePath('user-1', 'draft-1', 1), 'user-1/draft-1/preview/01.jpg');
+  assert.equal(createFamilyOriginalImagePath('user-1', 'draft-1', 1, 'image/jpeg'), 'user-1/draft-1/original/01.jpg');
+  assert.equal(createFamilyOriginalImagePath('user-1', 'draft-1', 2, 'image/png'), 'user-1/draft-1/original/02.png');
+  assert.equal(createFamilyOriginalImagePath('user-1', 'draft-1', 3, 'image/webp'), 'user-1/draft-1/original/03.webp');
+  assert.throws(() => createFamilyOriginalImagePath('user-1', 'draft-1', 1, 'image/gif'));
+});
 
 test('accepts up to 30 supported field photos', () => {
   const files = Array.from({ length: 30 }, (_, index) => image(`field-${index}.jpg`));
