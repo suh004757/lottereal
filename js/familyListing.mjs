@@ -99,14 +99,20 @@ export function groupFamilyListingPhotos(batches = [], signedUrls = new Map()) {
     const metadata = batch?.metadata || {};
     const listingId = cleanLine(metadata.family_listing_id, 80);
     const paths = Array.isArray(metadata.private_image_paths) ? metadata.private_image_paths : [];
+    const originalPaths = Array.isArray(metadata.private_original_image_paths) ? metadata.private_original_image_paths : [];
     if (!listingId || metadata.photo_upload_state !== 'complete' || !paths.length) return;
     groups[listingId] ||= [];
     paths.forEach((path, index) => {
       if (typeof path !== 'string' || !path || /^https?:\/\//i.test(path)) return;
+      const originalPath = typeof originalPaths[index] === 'string' && !/^https?:\/\//i.test(originalPaths[index])
+        ? originalPaths[index]
+        : '';
       groups[listingId].push({
         batchId: String(batch.id || ''),
         path,
         url: String(urlFor(path) || ''),
+        originalPath,
+        originalUrl: String(originalPath ? urlFor(originalPath) || '' : ''),
         createdAt: String(batch.created_at || ''),
         position: index + 1
       });

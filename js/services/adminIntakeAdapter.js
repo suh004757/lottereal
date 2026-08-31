@@ -42,6 +42,45 @@ export async function saveAdminIntakeDraft(payload = {}) {
   throw new Error('백엔드의 비공개 초안 저장 결과를 확인하지 못했습니다.');
 }
 
+export async function finalizeFamilyListingImages(reportId, { previewPaths = [], originalPaths = [] } = {}) {
+  const previews = Array.from(previewPaths || []);
+  const originals = Array.from(originalPaths || []);
+  if (!reportId || !previews.length || previews.length > 30 || originals.length !== previews.length) {
+    throw new Error('원본 사진 최종 저장 정보를 확인할 수 없습니다.');
+  }
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('백엔드 연결이 없어 원본 사진을 확정하지 못했습니다.');
+  const { data, error } = await supabase.rpc('finalize_family_listing_images', {
+    p_report_id: reportId,
+    p_preview_paths: previews,
+    p_original_paths: originals
+  });
+  if (!error && data?.id === reportId && isFinalizedFamilyImageManifest(data.metadata, previews, originals)) return data;
+  const existing = await readAdminIntakeDraft(reportId, supabase).catch(() => null);
+  if (existing?.id === reportId && isFinalizedFamilyImageManifest(existing.metadata, previews, originals)) return existing;
+  if (error) {
+    const failure = new Error(error.message || '원본 사진 첨부를 확정하지 못했습니다.');
+    failure.code = error.code;
+    failure.safeToCleanup = Boolean(error.code)
+      && existing?.id === reportId
+      && existing?.metadata?.photo_upload_state === 'pending';
+    throw failure;
+  }
+  const failure = new Error('원본 사진 첨부 상태를 확인하지 못했습니다. 초안은 보존되며 재확인이 필요합니다.');
+  failure.safeToCleanup = existing?.id === reportId && existing?.metadata?.photo_upload_state === 'pending';
+  throw failure;
+}
+
+function isFinalizedFamilyImageManifest(metadata, previews, originals) {
+  return metadata?.photo_upload_state === 'complete'
+    && metadata?.image_count === previews.length
+    && metadata?.original_image_count === originals.length
+    && Array.isArray(metadata?.private_image_paths)
+    && Array.isArray(metadata?.private_original_image_paths)
+    && metadata.private_image_paths.every((path, index) => path === previews[index])
+    && metadata.private_original_image_paths.every((path, index) => path === originals[index]);
+}
+
 export async function finalizeAdminIntakeImages(reportId, paths) {
   const safePaths = Array.from(paths || []);
   if (!reportId || !safePaths.length || safePaths.length > 30) {

@@ -18,13 +18,31 @@ export function validateAdminIntakeImages(files) {
   return list;
 }
 
-export function createPrivateImagePath(userId, batchId, index) {
+function privatePathParts(userId, batchId, index) {
   const safeUser = String(userId || '').replace(/[^a-zA-Z0-9-]/g, '');
   const safeBatch = String(batchId || '').replace(/[^a-zA-Z0-9-]/g, '');
   if (!safeUser || !safeBatch || !Number.isInteger(index) || index < 0 || index > 99) {
     throw new Error('비공개 사진 경로를 만들 수 없습니다.');
   }
-  return `${safeUser}/${safeBatch}/${String(index).padStart(2, '0')}.jpg`;
+  return { safeUser, safeBatch, position: String(index).padStart(2, '0') };
+}
+
+export function createPrivateImagePath(userId, batchId, index) {
+  const { safeUser, safeBatch, position } = privatePathParts(userId, batchId, index);
+  return `${safeUser}/${safeBatch}/${position}.jpg`;
+}
+
+export function createFamilyPreviewImagePath(userId, batchId, index) {
+  const { safeUser, safeBatch, position } = privatePathParts(userId, batchId, index);
+  return `${safeUser}/${safeBatch}/preview/${position}.jpg`;
+}
+
+export function createFamilyOriginalImagePath(userId, batchId, index, mimeType) {
+  const extensions = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+  const extension = extensions[String(mimeType || '').toLowerCase()];
+  if (!extension) throw new Error('원본 사진 형식을 확인할 수 없습니다.');
+  const { safeUser, safeBatch, position } = privatePathParts(userId, batchId, index);
+  return `${safeUser}/${safeBatch}/original/${position}.${extension}`;
 }
 
 export function attachPrivateImageMetadata(payload, paths) {

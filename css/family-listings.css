@@ -87,10 +87,19 @@ button, a { -webkit-tap-highlight-color: transparent; }
   min-height: 126px; display: grid; align-content: center; gap: 7px; padding: 22px;
   border: 2px solid var(--forest); border-radius: 18px; background: #fff; color: var(--ink); text-align: left; cursor: pointer;
 }
-.quick-choice__button--primary { background: var(--forest); color: #fff; }
+.quick-choice__button--primary { background: #fff; color: var(--ink); }
 .quick-choice__button strong { font-size: 21px; }
 .quick-choice__button span { color: var(--muted); font-size: 16px; }
-.quick-choice__button--primary span { color: #d9eadf; }
+.quick-choice__button--primary span { color: var(--muted); }
+.quick-choice__button[aria-pressed="true"] {
+  background: var(--forest); color: #fff; border-color: var(--forest-dark);
+  box-shadow: 0 0 0 4px rgba(31, 78, 61, .16), 0 12px 24px rgba(31, 78, 61, .18);
+}
+.quick-choice__button[aria-pressed="true"] span { color: #d9eadf; }
+.quick-choice__button[aria-pressed="true"]::after {
+  content: "선택됨"; justify-self: start; margin-top: 2px; padding: 4px 9px;
+  border-radius: 999px; background: #fff; color: var(--forest-dark); font-size: 14px; font-weight: 800;
+}
 .quick-panel {
   max-width: 860px; margin: 0 auto 28px; padding: 26px; border: 2px solid var(--forest);
   border-radius: 20px; background: var(--card); box-shadow: var(--shadow);
@@ -188,6 +197,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .listing-card__gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
 .listing-card__gallery-grid a { display: block; min-height: 48px; border-radius: 8px; overflow: hidden; }
 .listing-card__gallery-grid img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; }
+.listing-card__original-downloads { margin: 0 0 16px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; background: #f8f5ed; }
+.listing-card__original-downloads > summary { min-height: 48px; display: flex; align-items: center; cursor: pointer; color: var(--forest-dark); font-weight: 800; }
+.listing-card__original-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 0 0 12px; }
+.listing-card__original-links button { min-height: 48px; display: flex; align-items: center; justify-content: center; padding: 8px; border: 1px solid var(--forest); border-radius: 9px; background: #fff; color: var(--forest-dark); font: inherit; font-weight: 700; cursor: pointer; }
+.listing-card__original-links button:disabled { opacity: .7; cursor: wait; }
 .listing-card__top { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
 .listing-card__title { margin: 0; font-size: 21px; line-height: 1.38; overflow-wrap: anywhere; }
 .listing-card__price { margin: 12px 0 14px; color: var(--forest-dark); font-size: 22px; font-weight: 700; }
