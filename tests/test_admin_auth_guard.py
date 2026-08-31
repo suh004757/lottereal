@@ -11,18 +11,45 @@ class AdminAuthGuardTest(unittest.TestCase):
         self.assertIn("./intake.html", source)
         self.assertNotIn("window.location.href = './dashboard.html'", source)
 
-    def test_google_oauth_is_runtime_gated_and_keeps_admin_role_check(self):
+    def test_google_only_login_is_minimal_and_keeps_runtime_admin_guard(self):
         html = (REPO / 'admin' / 'login.html').read_text(encoding='utf-8')
         login = (REPO / 'js' / 'admin-login.js').read_text(encoding='utf-8')
         auth = (REPO / 'js' / 'services' / 'authService.js').read_text(encoding='utf-8')
+        css_path = REPO / 'css' / 'admin-login.css'
+        self.assertTrue(css_path.exists(), 'Google-only login stylesheet is missing')
+        css = css_path.read_text(encoding='utf-8')
+
         self.assertIn('id="googleLoginButton"', html)
-        self.assertIn('hidden', html.split('id="googleLoginButton"', 1)[1].split('>', 1)[0])
+        button = html.split('id="googleLoginButton"', 1)[1].split('>', 1)[0]
+        self.assertNotIn('hidden', button)
+        self.assertIn('disabled', button)
+        self.assertIn('Google 계정으로 계속', html)
+        self.assertIn('허용된 관리자 계정만 관리 화면에 접근할 수 있습니다.', html)
+        self.assertIn('href="../index.html"', html)
+        self.assertIn('../css/admin-login.css', html)
+
+        for forbidden in (
+            'id="adminLoginForm"',
+            'type="email"',
+            'type="password"',
+            'googleLoginDivider',
+            'geoButton',
+            'logoutButton',
+            'sessionStatus',
+            'admin-checklist',
+        ):
+            self.assertNotIn(forbidden, html)
+        for forbidden in ('signInAdmin,', 'new FormData', 'navigator.geolocation', 'setInterval'):
+            self.assertNotIn(forbidden, login)
+
         self.assertIn('isGoogleSignInAvailable', login)
         self.assertIn('signInAdminWithGoogle', login)
         self.assertIn("provider: 'google'", auth)
         self.assertIn("new URL('./login.html', window.location.href).href", auth)
         self.assertIn("'/auth/v1/settings'", auth)
         self.assertIn("app_metadata?.role === 'admin'", login)
+        self.assertIn('min-height: 56px', css)
+        self.assertIn('max-width: 460px', css)
 
     def test_intake_page_checks_server_managed_admin_role(self):
         source = (REPO / 'js' / 'admin-intake-page.js').read_text(encoding='utf-8')
