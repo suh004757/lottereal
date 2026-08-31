@@ -1,5 +1,4 @@
 import {
-  buildAdvertisingDraftText,
   buildFamilyListingAlias,
   buildOriginalListingShareText,
   buildQuickFamilyListingInput,
@@ -24,8 +23,10 @@ import {
   uploadFamilyListingImages
 } from './services/adminIntakeImageAdapter.js';
 import {
+  archiveFamilyListingAsOwner,
   createFamilyListing,
   createFamilyParseDraft,
+  getFamilyListingMembership,
   listFamilyListingAliases,
   listFamilyListingEvents,
   listFamilyListingPhotoBatches,
@@ -92,6 +93,7 @@ let photoTaskOperationId = null;
 const pendingPhotoFinalizations = new Map();
 const pendingSourceDraftIds = new Map();
 let parsePollTimer = null;
+let currentFamilyRole = null;
 
 init();
 
@@ -103,6 +105,8 @@ async function init() {
       window.location.href = './login.html';
       return;
     }
+    const membership = await getFamilyListingMembership(user.id);
+    currentFamilyRole = membership?.family_role || null;
     bindEvents();
     onAuthStateChange((event) => {
       if (event === 'SIGNED_OUT') {
@@ -539,6 +543,7 @@ async function handleCardPhotoUpload(event) {
 }
 
 function clearSensitiveView() {
+  currentFamilyRole = null;
   records = [];
   photoMap = {};
   parseDraftMap = new Map();
@@ -943,11 +948,6 @@ function createRecordCard(record) {
   edit.type = 'button';
   edit.textContent = '정보 수정';
   edit.addEventListener('click', () => openEditor(record));
-  const advertise = document.createElement('button');
-  advertise.type = 'button';
-  advertise.dataset.advertise = record.id;
-  advertise.textContent = '광고 준비';
-  advertise.addEventListener('click', () => createAdvertisingDraft(record, advertise));
   const history = document.createElement('button');
   history.type = 'button';
   history.dataset.history = record.id;
@@ -959,7 +959,15 @@ function createRecordCard(record) {
   history.setAttribute('aria-controls', historyPanel.id);
   history.setAttribute('aria-expanded', 'false');
   history.addEventListener('click', () => toggleHistory(record, history, historyPanel));
-  moreActions.append(edit, advertise, history);
+  moreActions.append(edit, history);
+  if (currentFamilyRole === 'owner') {
+    const deleteButton = document.createElement('button');
+    deleteButton.type = 'button';
+    deleteButton.className = 'listing-card__delete';
+    deleteButton.textContent = '매물 삭제';
+    deleteButton.addEventListener('click', () => archiveListing(record, deleteButton));
+    moreActions.appendChild(deleteButton);
+  }
   more.append(moreSummary, moreActions);
 
   const sourceDraft = sourceDraftMap.get(record.id);
@@ -990,44 +998,24 @@ function createRecordCard(record) {
   return article;
 }
 
-async function createAdvertisingDraft(record, button) {
+async function archiveListing(record, button) {
+  if (currentFamilyRole !== 'owner') return;
+  const confirmed = window.confirm(
+    `${record.alias_code}\n\n이 매물을 목록에서 삭제할까요?\n사진과 변경 이력은 복구할 수 있도록 보관됩니다.`
+  );
+  if (!confirmed) return;
+  const label = button.textContent;
   button.disabled = true;
-  button.textContent = '광고 초안 만드는 중';
-  let draftSaved = false;
+  button.textContent = '삭제 중…';
   try {
-    const user = await getCurrentSessionUser();
-    if (!user || user.app_metadata?.role !== 'admin') throw new Error('로그인을 다시 확인해 주세요.');
-    if (!globalThis.crypto?.randomUUID) throw new Error('이 브라우저에서는 광고 초안을 만들 수 없습니다.');
-    const payload = buildAdminIntakePayload({
-      type: 'listing',
-      text: buildAdvertisingDraftText(record),
-      region: record.neighborhood,
-      transactionType: record.transaction_type
-    }, { now: new Date() });
-    payload.id = globalThis.crypto.randomUUID();
-    payload.metadata.submitted_by = user.id;
-    payload.metadata.family_listing_id = record.id;
-    if (payload.metadata.publish_approved !== false || payload.status !== 'draft') {
-      throw new Error('광고 초안의 비공개 상태를 확인하지 못했습니다.');
-    }
-    await saveAdminIntakeDraft(payload);
-    draftSaved = true;
-    try {
-      await updateFamilyListing(record.id, { status: 'ready' });
-      record.status = 'ready';
-      button.textContent = '광고 초안 완료';
-      window.setTimeout(() => reloadRecords().catch((error) => {
-        console.error('[Family listings] Reload after ad draft failed', error);
-      }), 1500);
-    } catch (statusError) {
-      console.error('[Family listings] Ad draft saved but status update failed', statusError);
-      button.textContent = '초안 저장됨';
-    }
+    await archiveFamilyListingAsOwner(record.id);
+    await reloadRecords();
   } catch (error) {
-    console.error('[Family listings] Ad draft create failed', error);
-    button.textContent = '다시 시도';
+    console.error('[Family listings] Owner archive failed', error);
+    button.textContent = '삭제 실패 · 다시 시도';
+    window.setTimeout(() => { button.textContent = label; }, 2500);
   } finally {
-    if (!draftSaved) button.disabled = false;
+    button.disabled = false;
   }
 }
 

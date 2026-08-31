@@ -2,20 +2,42 @@
 
 /* Dashboard Layout */
 body.admin-dashboard-shell {
+    --admin-bg: #f4f1e9;
+    --admin-card: #fffdf8;
+    --admin-surface: #f7f3e9;
+    --admin-border: #bdb6aa;
+    --admin-text: #15211d;
+    --admin-muted: #52605a;
+    --admin-accent: #1f5b48;
+    --admin-accent-2: #b68b45;
+    --admin-shadow: 0 16px 45px rgba(36, 49, 43, 0.09);
+    --admin-font: "Noto Sans KR", sans-serif;
     margin: 0;
     min-height: 100vh;
     display: grid;
     grid-template-columns: 280px 1fr;
-    background: radial-gradient(circle at 20% 20%, rgba(37, 99, 235, 0.08), transparent 35%),
-        radial-gradient(circle at 80% 0%, rgba(16, 185, 129, 0.12), transparent 40%),
+    background: linear-gradient(rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.42)),
+        repeating-linear-gradient(90deg, transparent 0 39px, rgba(31, 91, 72, 0.025) 40px),
         var(--admin-bg);
     color: var(--admin-text);
     font-family: var(--admin-font);
 }
 
+body.admin-dashboard-shell button,
+body.admin-dashboard-shell input,
+body.admin-dashboard-shell select,
+body.admin-dashboard-shell textarea {
+    font: inherit;
+}
+
+body.admin-dashboard-shell button,
+body.admin-dashboard-shell .admin-nav__item {
+    min-height: 52px;
+}
+
 /* Sidebar */
 .admin-sidebar {
-    background: linear-gradient(180deg, var(--admin-card), var(--admin-surface));
+    background: rgba(255, 253, 248, 0.96);
     border-right: 1px solid var(--admin-border);
     display: flex;
     flex-direction: column;
@@ -45,7 +67,7 @@ body.admin-dashboard-shell {
     align-items: center;
     gap: 12px;
     padding: 12px;
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--admin-surface);
     border-radius: 12px;
     border: 1px solid var(--admin-border);
 }
@@ -59,7 +81,7 @@ body.admin-dashboard-shell {
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    color: #0b1220;
+    color: #fff;
     flex-shrink: 0;
 }
 
@@ -98,12 +120,12 @@ body.admin-dashboard-shell {
 }
 
 .admin-nav__item:hover {
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(31, 91, 72, 0.08);
     color: var(--admin-text);
 }
 
 .admin-nav__item.active {
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(37, 99, 235, 0.15));
+    background: #e8f0eb;
     color: var(--admin-text);
     border: 1px solid rgba(16, 185, 129, 0.3);
 }
@@ -188,6 +210,8 @@ body.admin-dashboard-shell {
 .admin-section__header h1 {
     margin: 8px 0 4px;
     font-size: 36px;
+    font-family: "Noto Serif KR", serif;
+    letter-spacing: -0.035em;
 }
 
 /* Stats Grid */
