@@ -1,6 +1,8 @@
 import { APP_CONFIG } from './config/appConfig.js';
 import {
   signInAdmin,
+  signInAdminWithGoogle,
+  isGoogleSignInAvailable,
   signOutAdmin,
   getSessionRemainingMs,
   getCurrentSessionUser
@@ -13,6 +15,8 @@ const messageEl = document.getElementById('loginMessage');
 const geoButton = document.getElementById('geoButton');
 const geoStatus = document.getElementById('geoStatus');
 const sessionStatus = document.getElementById('sessionStatus');
+const googleLoginButton = document.getElementById('googleLoginButton');
+const googleLoginDivider = document.getElementById('googleLoginDivider');
 
 let geoData = null;
 let authUnavailable = false;
@@ -30,6 +34,10 @@ async function init() {
   }
 
   try {
+    if (googleLoginButton && await isGoogleSignInAvailable()) {
+      googleLoginButton.hidden = false;
+      if (googleLoginDivider) googleLoginDivider.hidden = false;
+    }
     const existingUser = await getCurrentSessionUser();
     if (existingUser?.app_metadata?.role === 'admin') {
       setMessage('관리자 확인 완료. 초안 접수 화면으로 이동합니다.', 'success');
@@ -45,6 +53,23 @@ async function init() {
 }
 
 function bindEvents() {
+  googleLoginButton?.addEventListener('click', async () => {
+    if (authUnavailable) return;
+    setMessage('Google 로그인 화면으로 이동합니다.', 'info');
+    toggleFormDisabled(true);
+    try {
+      const result = await signInAdminWithGoogle();
+      if (!result.success) {
+        setMessage(result.error || 'Google 로그인을 시작하지 못했습니다.', 'error');
+        toggleFormDisabled(false);
+      }
+    } catch (error) {
+      console.error('[Admin] Google login error:', error);
+      setMessage('Google 로그인을 시작하지 못했습니다.', 'error');
+      toggleFormDisabled(false);
+    }
+  });
+
   if (form) {
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
@@ -129,6 +154,7 @@ function toggleFormDisabled(isDisabled) {
   const submit = form?.querySelector('button[type="submit"]');
   if (submit) submit.disabled = isDisabled;
   if (geoButton) geoButton.disabled = isDisabled;
+  if (googleLoginButton) googleLoginButton.disabled = isDisabled;
 }
 
 function updateSessionStatus() {

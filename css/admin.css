@@ -195,6 +195,25 @@ body.admin-shell {
   justify-content: space-between;
 }
 
+.admin-google {
+  width: 100%;
+  min-height: 52px;
+  padding: 13px 18px;
+  border: 1px solid #d7dce3;
+  border-radius: 14px;
+  background: #fff;
+  color: #202124;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-google[hidden] { display: none; }
+.admin-google:disabled { cursor: wait; opacity: 0.65; }
+.admin-divider { display: flex; align-items: center; gap: 12px; color: var(--admin-muted); font-size: 13px; }
+.admin-divider[hidden] { display: none; }
+.admin-divider::before, .admin-divider::after { content: ''; flex: 1; height: 1px; background: var(--admin-border); }
+
 /* 액션 버튼 스타일 */
 .admin-actions {
   display: flex;

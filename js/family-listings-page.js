@@ -4,11 +4,9 @@ import {
   buildOriginalListingShareText,
   buildQuickFamilyListingInput,
   buildStaffShareText,
-  buildFamilyParseReview,
   describeIntakeYearMonth,
   ensureUniqueFamilyAlias,
   filterFamilyListings,
-  finalizeFamilyParseReview,
   groupFamilyListingPhotos,
   normalizeFamilyListingInput,
   shouldQueueFamilySourceDraft,
@@ -28,7 +26,6 @@ import {
 import {
   createFamilyListing,
   createFamilyParseDraft,
-  finalizeFamilyParseDraft,
   listFamilyListingAliases,
   listFamilyListingEvents,
   listFamilyListingPhotoBatches,
@@ -56,12 +53,6 @@ const refs = {
   logout: document.getElementById('familyLogoutBtn'),
   copyFallback: document.getElementById('familyCopyFallback'),
   sourceText: document.getElementById('familySourceText'),
-  parseStatus: document.getElementById('familyParseStatus'),
-  parseReview: document.getElementById('familyParseReview'),
-  parseReviewState: document.getElementById('familyParseReviewState'),
-  parseSource: document.getElementById('familyParseSource'),
-  parseFields: document.getElementById('familyParseFields'),
-  applyParse: document.getElementById('applyFamilyParseReview'),
   openQuickPost: document.getElementById('openQuickPost'),
   openPhotoTask: document.getElementById('openPhotoTask'),
   quickPostPanel: document.getElementById('familyQuickPostPanel'),
@@ -81,29 +72,9 @@ const refs = {
   closePhotoDialog: document.getElementById('closeFamilyPhotoDialog')
 };
 
-const PARSE_FIELD_META = Object.freeze([
-  ['neighborhood', 'neighborhood', '동네'],
-  ['building_keyword', 'buildingKeyword', '건물 이름·기억할 말'],
-  ['unit_label', 'unitLabel', '호수·층'],
-  ['transaction_type', 'transactionType', '거래 유형'],
-  ['intake_year_month', 'intakeYearMonth', '처음 받은 달'],
-  ['status', 'status', '현재 상태'],
-  ['price_summary', 'priceSummary', '가격'],
-  ['floor_summary', 'floorSummary', '층수'],
-  ['layout_summary', 'layoutSummary', '구조'],
-  ['move_in_summary', 'moveInSummary', '입주'],
-  ['assigned_to', 'assignedTo', '담당'],
-  ['source_label', 'sourceLabel', '어디서 들었나요'],
-  ['staff_task', 'staffTask', '직원 확인사항'],
-  ['internal_notes', 'internalNotes', '연락처·출입정보 메모']
-]);
-
 let records = [];
 let editingRecord = null;
 let isSaving = false;
-let activeParseDraft = null;
-let activeParseReview = null;
-let pendingReviewedParse = null;
 let photoMap = {};
 let parseDraftMap = new Map();
 let sourceDraftMap = new Map();
@@ -159,7 +130,6 @@ function bindEvents() {
 
   refs.close?.addEventListener('click', () => refs.editor?.classList.add('is-collapsed'));
   refs.cancel?.addEventListener('click', resetEditor);
-  refs.applyParse?.addEventListener('click', applyParseReviewToForm);
   refs.openQuickPost?.addEventListener('click', () => openQuickPanel('post'));
   refs.openPhotoTask?.addEventListener('click', () => openQuickPanel('photo_task'));
   document.querySelectorAll('[data-close-quick]').forEach((button) => button.addEventListener('click', closeQuickPanels));
@@ -568,128 +538,6 @@ async function handleCardPhotoUpload(event) {
   }
 }
 
-function setParseStatus(message = '', state = 'info') {
-  refs.parseStatus.hidden = !message;
-  refs.parseStatus.textContent = message;
-  refs.parseStatus.dataset.state = state;
-}
-
-function formRecordValues() {
-  const values = {};
-  for (const [field, formName] of PARSE_FIELD_META) {
-    values[field] = refs.form?.elements?.[formName]?.value || '';
-  }
-  return values;
-}
-
-function renderParseDraft(draft) {
-  refs.parseReview.hidden = false;
-  refs.parseSource.replaceChildren();
-  const sourceTitle = document.createElement('strong');
-  sourceTitle.textContent = '처음 적은 내용';
-  const source = document.createElement('pre');
-  source.textContent = draft.source_text;
-  refs.parseSource.append(sourceTitle, source);
-  refs.parseFields.replaceChildren();
-
-  const statusMessages = {
-    queued: '정리 대기 중',
-    processing: '내용 정리 중',
-    review_needed: '내용 확인 필요',
-    reviewed: '확인 완료',
-    failed: '정리하지 못함'
-  };
-  refs.parseReviewState.textContent = statusMessages[draft.parse_status] || draft.parse_status;
-  if (draft.parse_status === 'failed') {
-    refs.parseFields.appendChild(messageNode(draft.parser_error || '정형 입력칸을 직접 작성해 주세요.'));
-    refs.applyParse.disabled = true;
-    return;
-  }
-  if (draft.parse_status !== 'review_needed') {
-    refs.parseFields.appendChild(messageNode('정리가 끝나면 지금 적힌 내용과 나란히 보여드릴게요.'));
-    refs.applyParse.disabled = true;
-    return;
-  }
-
-  activeParseReview = buildFamilyParseReview({
-    sourceText: draft.source_text,
-    existingRecord: formRecordValues(),
-    suggestions: draft.suggestions
-  });
-  for (const [field, , label] of PARSE_FIELD_META) {
-    refs.parseFields.appendChild(createParseFieldReview(field, label, activeParseReview.fields[field]));
-  }
-  refs.applyParse.disabled = false;
-}
-
-function createParseFieldReview(field, label, candidate) {
-  const card = document.createElement('article');
-  card.className = `parse-field parse-field--${candidate.status}`;
-  card.dataset.parseField = field;
-  const heading = document.createElement('div');
-  const title = document.createElement('h4');
-  title.textContent = label;
-  const badge = document.createElement('span');
-  const labels = {
-    suggested: '새로 정리됨', needs_review: '골라주세요', kept_existing: '그대로 둠', empty: '내용 없음'
-  };
-  badge.textContent = labels[candidate.status] || candidate.status;
-  heading.append(title, badge);
-  const existing = document.createElement('p');
-  existing.textContent = `지금 적힌 값: ${candidate.existing_value || '없음'}`;
-  const suggested = document.createElement('p');
-  suggested.textContent = `정리된 값: ${candidate.suggested_value || '없음'}`;
-  card.append(heading, existing, suggested);
-
-  if (candidate.status === 'needs_review') {
-    const choiceLabel = document.createElement('label');
-    choiceLabel.textContent = '어떤 값을 쓸까요?';
-    const choice = document.createElement('select');
-    choice.dataset.reviewChoice = field;
-    choice.append(new Option('선택해 주세요', ''));
-    if (candidate.existing_value) choice.append(new Option(`지금 값 · ${candidate.existing_value}`, 'existing'));
-    if (candidate.suggested_value) choice.append(new Option(`정리된 값 · ${candidate.suggested_value}`, 'suggested'));
-    choice.append(new Option('직접 수정', 'custom'));
-    const custom = document.createElement('input');
-    custom.dataset.reviewCustom = field;
-    custom.placeholder = `${label} 직접 입력`;
-    custom.hidden = true;
-    choice.addEventListener('change', () => {
-      custom.hidden = choice.value !== 'custom';
-      if (!custom.hidden) custom.focus();
-    });
-    choiceLabel.append(choice, custom);
-    card.appendChild(choiceLabel);
-  }
-  return card;
-}
-
-async function applyParseReviewToForm() {
-  if (!activeParseDraft || !activeParseReview) return;
-  const decisions = {};
-  for (const choice of refs.parseFields.querySelectorAll('[data-review-choice]')) {
-    if (!choice.value) continue;
-    const field = choice.dataset.reviewChoice;
-    decisions[field] = { choice: choice.value };
-    if (choice.value === 'custom') {
-      decisions[field].value = refs.parseFields.querySelector(`[data-review-custom="${field}"]`)?.value || '';
-    }
-  }
-  try {
-    const reviewed = finalizeFamilyParseReview(activeParseReview, decisions);
-    for (const [field, formName] of PARSE_FIELD_META) {
-      const control = refs.form.elements[formName];
-      if (control) control.value = reviewed.reviewed_values[field] || '';
-    }
-    pendingReviewedParse = reviewed;
-    updateAliasPreview();
-    setParseStatus('입력칸에 채웠습니다. 아래 내용만 한번 보고 저장하세요.', 'success');
-    refs.save.focus();
-  } catch (error) {
-    setParseStatus(error?.message || '확인할 항목을 모두 선택해 주세요.', 'error');
-  }
-}
-
 function clearSensitiveView() {
   records = [];
   photoMap = {};
@@ -716,13 +564,7 @@ function clearSensitiveView() {
   setFormLocked(refs.quickPostForm, false);
   setFormLocked(refs.photoTaskForm, false);
   editingRecord = null;
-  activeParseDraft = null;
-  activeParseReview = null;
-  pendingReviewedParse = null;
   refs.form?.reset();
-  refs.parseSource?.replaceChildren();
-  refs.parseFields?.replaceChildren();
-  if (refs.parseReview) refs.parseReview.hidden = true;
 
   refs.grid?.replaceChildren(messageNode('세션이 만료되어 화면을 잠급니다.'));
   if (refs.editor) refs.editor.hidden = true;
@@ -792,11 +634,7 @@ async function handleSubmit(event) {
     const aliasCode = ensureUniqueFamilyAlias(baseAlias, withoutCurrent);
     const payload = normalizeFamilyListingInput(values, { aliasCode });
     let savedRecord;
-    if (pendingReviewedParse && activeParseDraft) {
-      savedRecord = await finalizeFamilyParseDraft(activeParseDraft.id, payload);
-      setFormStatus(editingRecord ? '확인한 내용으로 매물 정보를 수정했습니다.' : '확인한 내용을 저장했습니다.', 'success');
-      pendingReviewedParse = null;
-    } else if (editingRecord) {
+    if (editingRecord) {
       savedRecord = await updateFamilyListing(editingRecord.id, payload);
       setFormStatus('매물 정보를 수정했습니다.', 'success');
     } else {
@@ -912,7 +750,13 @@ function startParsePolling() {
     if (document.hidden) return;
     const generation = decorationGeneration;
     const changed = await loadParseDraftMap(generation);
-    if (changed && generation === decorationGeneration) renderRecords();
+    if (changed && generation === decorationGeneration) {
+      try {
+        await reloadRecords();
+      } catch (error) {
+        console.error('[Family listings] Record refresh after automatic organization failed', error);
+      }
+    }
   }, 15000);
 }
 
@@ -993,21 +837,6 @@ function createRecordCard(record) {
     : describeIntakeYearMonth(record.intake_year_month).label;
 
   article.append(cover, top, price, facts, updated);
-
-  const parseDraft = parseDraftMap.get(record.id);
-  if (parseDraft) {
-    const organization = document.createElement('button');
-    organization.type = 'button';
-    organization.className = 'listing-card__organization';
-    organization.textContent = parseDraft.parse_status === 'review_needed'
-      ? '정리된 내용 있음 · 확인하기'
-      : parseDraft.parse_status === 'failed'
-        ? '직접 확인할 내용 있음'
-        : '내용 정리 중';
-    organization.disabled = !['review_needed', 'failed'].includes(parseDraft.parse_status);
-    organization.addEventListener('click', () => openEditor(record));
-    article.appendChild(organization);
-  }
 
   if (record.staff_task) {
     const task = document.createElement('p');
@@ -1321,20 +1150,8 @@ async function shareListing(record, button, statusElement) {
   }
 }
 
-function resetParseEditor(options = {}) {
-  activeParseDraft = null;
-  activeParseReview = null;
-  pendingReviewedParse = null;
-  if (refs.sourceText) refs.sourceText.value = '';
-  refs.parseSource?.replaceChildren();
-  refs.parseFields?.replaceChildren();
-  if (refs.parseReview) refs.parseReview.hidden = true;
-  if (!options.keepStatus) setParseStatus('');
-}
-
 function openEditor(record = null) {
   editingRecord = record;
-  resetParseEditor();
   refs.editor.classList.remove('is-collapsed');
   refs.form.reset();
   setDefaultYearMonth();
@@ -1361,11 +1178,9 @@ function openEditor(record = null) {
       const control = refs.form.elements[name];
       if (control) control.value = value || '';
     }
-    const sourceDraft = parseDraftMap.get(record.id) || sourceDraftMap.get(record.id);
+    const sourceDraft = sourceDraftMap.get(record.id);
     if (sourceDraft) {
-      activeParseDraft = sourceDraft;
       refs.sourceText.value = sourceDraft.source_text || '';
-      renderParseDraft(sourceDraft);
     }
   } else {
     refs.formTitle.textContent = '새 매물 적기';
@@ -1377,7 +1192,6 @@ function openEditor(record = null) {
 
 function resetEditor(options = {}) {
   editingRecord = null;
-  resetParseEditor({ keepStatus: options.keepStatus });
   refs.form.reset();
   refs.id.value = '';
   refs.formTitle.textContent = '새 매물 적기';
