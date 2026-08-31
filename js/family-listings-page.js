@@ -11,6 +11,7 @@ import {
   finalizeFamilyParseReview,
   groupFamilyListingPhotos,
   normalizeFamilyListingInput,
+  shouldQueueFamilySourceDraft,
   statusLabel
 } from './familyListing.mjs';
 import { buildAdminIntakePayload } from './adminIntake.mjs';
@@ -55,8 +56,6 @@ const refs = {
   logout: document.getElementById('familyLogoutBtn'),
   copyFallback: document.getElementById('familyCopyFallback'),
   sourceText: document.getElementById('familySourceText'),
-  requestParse: document.getElementById('requestFamilyParse'),
-  refreshParse: document.getElementById('refreshFamilyParse'),
   parseStatus: document.getElementById('familyParseStatus'),
   parseReview: document.getElementById('familyParseReview'),
   parseReviewState: document.getElementById('familyParseReviewState'),
@@ -120,6 +119,7 @@ let quickRecordOperationId = null;
 let quickSourceOperationId = null;
 let photoTaskOperationId = null;
 const pendingPhotoFinalizations = new Map();
+const pendingSourceDraftIds = new Map();
 let parsePollTimer = null;
 
 init();
@@ -159,8 +159,6 @@ function bindEvents() {
 
   refs.close?.addEventListener('click', () => refs.editor?.classList.add('is-collapsed'));
   refs.cancel?.addEventListener('click', resetEditor);
-  refs.requestParse?.addEventListener('click', requestParseDraft);
-  refs.refreshParse?.addEventListener('click', refreshParseDrafts);
   refs.applyParse?.addEventListener('click', applyParseReviewToForm);
   refs.openQuickPost?.addEventListener('click', () => openQuickPanel('post'));
   refs.openPhotoTask?.addEventListener('click', () => openQuickPanel('photo_task'));
@@ -584,51 +582,6 @@ function formRecordValues() {
   return values;
 }
 
-async function requestParseDraft() {
-  const sourceText = refs.sourceText?.value || '';
-  if (!sourceText.trim()) {
-    setParseStatus('정리할 매물 내용을 먼저 적어 주세요.', 'error');
-    refs.sourceText?.focus();
-    return;
-  }
-  refs.requestParse.disabled = true;
-  setParseStatus('적어둔 내용을 저장하고 있습니다.');
-  try {
-    activeParseDraft = await createFamilyParseDraft(sourceText, editingRecord?.id || null);
-    activeParseReview = null;
-    pendingReviewedParse = null;
-    renderParseDraft(activeParseDraft);
-    setParseStatus('적어둔 내용을 저장했습니다. 정리가 끝나면 여기에서 확인할 수 있어요.', 'success');
-  } catch (error) {
-    console.error('[Family listings] Parse draft create failed', error);
-    setParseStatus('내용을 저장하지 못했습니다. 잠시 후 다시 눌러 주세요.', 'error');
-  } finally {
-    refs.requestParse.disabled = false;
-  }
-}
-
-async function refreshParseDrafts(options = {}) {
-  if (!options.silent) setParseStatus('정리된 내용을 확인하고 있습니다.');
-  try {
-    const drafts = await listFamilyParseDrafts();
-    const current = activeParseDraft
-      ? drafts.find((draft) => draft.id === activeParseDraft.id)
-      : drafts.find((draft) => draft.parse_status !== 'reviewed' && (
-        editingRecord ? draft.record_id === editingRecord.id : !draft.record_id
-      ));
-    if (!current) {
-      if (!options.silent) setParseStatus('새로 확인할 내용이 없습니다.');
-      return;
-    }
-    activeParseDraft = current;
-    if (refs.sourceText && !refs.sourceText.value) refs.sourceText.value = current.source_text;
-    renderParseDraft(current);
-  } catch (error) {
-    console.error('[Family listings] Parse draft load failed', error);
-    setParseStatus('정리된 내용을 불러오지 못했습니다. 잠시 후 다시 눌러 주세요.', 'error');
-  }
-}
-
 function renderParseDraft(draft) {
   refs.parseReview.hidden = false;
   refs.parseSource.replaceChildren();
@@ -743,6 +696,7 @@ function clearSensitiveView() {
   parseDraftMap = new Map();
   sourceDraftMap = new Map();
   pendingPhotoFinalizations.clear();
+  pendingSourceDraftIds.clear();
   photoSelectionGeneration += 1;
   decorationGeneration += 1;
   parseRequestGeneration += 1;
@@ -804,6 +758,26 @@ function updateAliasPreview() {
   }
 }
 
+async function queueSourceDraftAfterSave(sourceText, savedRecord) {
+  const recordId = savedRecord?.id;
+  if (!recordId) return false;
+  const existingSource = sourceDraftMap.get(recordId)?.source_text || '';
+  const normalizedSource = String(sourceText ?? '').trim().replace(/\s+/g, ' ');
+  const retryKey = JSON.stringify([recordId, normalizedSource]);
+  if (!shouldQueueFamilySourceDraft(sourceText, existingSource)) {
+    pendingSourceDraftIds.delete(retryKey);
+    return false;
+  }
+  if (!globalThis.crypto?.randomUUID) throw new Error('원문을 안전하게 등록할 수 없는 브라우저입니다.');
+  const draftId = pendingSourceDraftIds.get(retryKey) || globalThis.crypto.randomUUID();
+  pendingSourceDraftIds.set(retryKey, draftId);
+  const draft = await createFamilyParseDraft(sourceText, recordId, { id: draftId });
+  pendingSourceDraftIds.delete(retryKey);
+  sourceDraftMap.set(recordId, draft);
+  parseDraftMap.set(recordId, draft);
+  return true;
+}
+
 async function handleSubmit(event) {
   event.preventDefault();
   if (isSaving) return;
@@ -817,16 +791,31 @@ async function handleSubmit(event) {
     const withoutCurrent = aliases.filter((value) => value !== editingRecord?.alias_code);
     const aliasCode = ensureUniqueFamilyAlias(baseAlias, withoutCurrent);
     const payload = normalizeFamilyListingInput(values, { aliasCode });
+    let savedRecord;
     if (pendingReviewedParse && activeParseDraft) {
-      await finalizeFamilyParseDraft(activeParseDraft.id, payload);
+      savedRecord = await finalizeFamilyParseDraft(activeParseDraft.id, payload);
       setFormStatus(editingRecord ? '확인한 내용으로 매물 정보를 수정했습니다.' : '확인한 내용을 저장했습니다.', 'success');
       pendingReviewedParse = null;
     } else if (editingRecord) {
-      await updateFamilyListing(editingRecord.id, payload);
+      savedRecord = await updateFamilyListing(editingRecord.id, payload);
       setFormStatus('매물 정보를 수정했습니다.', 'success');
     } else {
-      await createFamilyListing(payload);
+      savedRecord = await createFamilyListing(payload);
       setFormStatus('저장했습니다.', 'success');
+    }
+    try {
+      const queued = await queueSourceDraftAfterSave(values.sourceText, savedRecord);
+      if (queued) setFormStatus('매물을 저장했습니다. 내용은 자동으로 정리됩니다.', 'success');
+    } catch (sourceError) {
+      console.error('[Family listings] Automatic source queue failed', sourceError);
+      editingRecord = savedRecord;
+      try {
+        await reloadRecords();
+      } catch (reloadError) {
+        console.error('[Family listings] Record reload after source queue failure failed', reloadError);
+      }
+      setFormStatus('매물은 저장했습니다. 원문 자동 등록만 실패했습니다. 잠시 후 저장을 다시 눌러 주세요.', 'error');
+      return;
     }
     await reloadRecords();
     resetEditor({ keepStatus: true });
@@ -1372,7 +1361,7 @@ function openEditor(record = null) {
       const control = refs.form.elements[name];
       if (control) control.value = value || '';
     }
-    const sourceDraft = sourceDraftMap.get(record.id);
+    const sourceDraft = parseDraftMap.get(record.id) || sourceDraftMap.get(record.id);
     if (sourceDraft) {
       activeParseDraft = sourceDraft;
       refs.sourceText.value = sourceDraft.source_text || '';

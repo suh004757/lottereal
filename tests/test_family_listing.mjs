@@ -12,8 +12,13 @@ import {
   ensureUniqueFamilyAlias,
   filterFamilyListings,
   normalizeFamilyListingInput,
+  shouldQueueFamilySourceDraft,
   statusLabel
 } from '../js/familyListing.mjs';
+
+assert.equal(shouldQueueFamilySourceDraft(' 새 원문 ', ''), true);
+assert.equal(shouldQueueFamilySourceDraft('같은 원문', ' 같은 원문 '), false);
+assert.equal(shouldQueueFamilySourceDraft('   ', '기존 원문'), false);
 
 const alias = buildFamilyListingAlias({
   neighborhood: '삼전동',

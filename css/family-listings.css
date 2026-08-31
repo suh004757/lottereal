@@ -151,7 +151,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .parse-intake h3, .parse-review h3 { margin: 0; font-size: 23px; line-height: 1.35; }
 .parse-intake__heading > span { color: var(--muted); font-size: 16px; }
 .parse-intake textarea { min-height: 140px; background: #fff; font-size: 18px; }
-.parse-intake__actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 12px; }
+.parse-intake__automatic { margin: 12px 0 0; padding: 12px 14px; border-radius: 10px; background: #e2efe8; color: var(--forest-dark); font-weight: 700; }
 .parse-review { margin-top: 20px; padding-top: 20px; border-top: 1px solid #c9d9d0; }
 .parse-review__heading > span { padding: 5px 10px; border-radius: 999px; background: #fff1c7; color: #71551b; font-size: 14px; font-weight: 700; }
 .parse-review__source { margin-bottom: 15px; padding: 14px; border-radius: 10px; background: #fff; }
@@ -270,8 +270,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .family-editor { padding: 20px 16px; }
   .parse-intake { padding: 18px 14px; }
   .parse-intake__heading, .parse-review__heading { display: grid; }
-  .parse-intake__actions { display: grid; }
-  .parse-intake__actions button { width: 100%; }
   .parse-review__fields { grid-template-columns: 1fr; }
   .form-grid, .form-grid--identity, .family-listings-grid { grid-template-columns: 1fr; }
   .family-status-board { grid-template-columns: 1fr 1fr; }
