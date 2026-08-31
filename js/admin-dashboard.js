@@ -214,22 +214,41 @@ function createStatusBadge(status, publishedLabels = false) {
  * 대시보드 네비게이션 탭을 바인딩합니다.
  * 탭 클릭 시 해당 섹션을 활성화합니다.
  */
-function bindNav() {
+function activateSection(section) {
   const navItems = document.querySelectorAll('.admin-nav__item');
   const sections = document.querySelectorAll('.admin-section');
+  const targetItem = Array.from(navItems).find((item) => item.getAttribute('data-section') === section);
+  const target = document.getElementById(`${section}-section`);
+  if (!targetItem || !target) return false;
+  navItems.forEach((item) => item.classList.remove('active'));
+  sections.forEach((item) => item.classList.remove('active'));
+  targetItem.classList.add('active');
+  target.classList.add('active');
+  return true;
+}
+
+function activateSectionFromHash() {
+  const requested = window.location.hash.replace(/^#/, '') || 'dashboard';
+  if (!activateSection(requested)) activateSection('dashboard');
+}
+
+function bindNav() {
+  const navItems = document.querySelectorAll('.admin-nav__item');
   navItems.forEach((item) => {
-    item.addEventListener('click', (e) => {
+    item.addEventListener('click', (event) => {
       const section = item.getAttribute('data-section');
       if (!section) return;
-      e.preventDefault();
-      navItems.forEach((n) => n.classList.remove('active'));
-      sections.forEach((s) => s.classList.remove('active'));
-      item.classList.add('active');
-      const sectionId = section + '-section';
-      const target = document.getElementById(sectionId);
-      if (target) target.classList.add('active');
+      event.preventDefault();
+      if (window.location.hash === `#${section}`) {
+        activateSection(section);
+      } else {
+        window.location.hash = section;
+      }
     });
   });
+  window.addEventListener('hashchange', activateSectionFromHash);
+  if (window.location.hash === '#properties') activateSection('properties');
+  else activateSectionFromHash();
 }
 
 // ============================================
