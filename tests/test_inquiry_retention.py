@@ -7,11 +7,13 @@ ROOT = Path(__file__).resolve().parents[1]
 class InquiryRetentionTest(unittest.TestCase):
     def test_policy_uses_a_measurable_collection_based_retention_period(self):
         ko = (ROOT / 'privacy.html').read_text(encoding='utf-8')
-        en = (ROOT / 'privacy_EN.html').read_text(encoding='utf-8')
+        english = (ROOT / 'EN.html').read_text(encoding='utf-8')
+        japanese = (ROOT / 'JP.html').read_text(encoding='utf-8')
         self.assertIn('수집일로부터 1년', ko)
         self.assertNotIn('상담 완료 후 1년', ko)
-        self.assertIn('1 year from collection', en)
-        self.assertNotIn('1 year after consultation', en)
+        for guide in (english, japanese):
+            self.assertIn('href="privacy.html"', guide)
+            self.assertNotIn('<form', guide)
 
     def test_purge_script_deletes_only_inquiries_older_than_one_year(self):
         script = (ROOT / 'scripts/purge_expired_inquiries.py').read_text(encoding='utf-8')
