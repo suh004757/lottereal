@@ -18,26 +18,23 @@ def primary_navigation(html):
 
 
 class ListingUiTest(unittest.TestCase):
-    def test_english_home_does_not_present_category_examples_as_live_inventory(self):
+    def test_english_home_is_an_international_scope_guide_not_live_inventory(self):
         html = (REPO / 'EN.html').read_text(encoding='utf-8')
-        self.assertNotIn('Properties available right now', html)
-        self.assertNotIn('Featured Listings', html)
-        self.assertIn('Property types we can help you find', html)
-        self.assertIn('Availability is confirmed before a viewing is arranged.', html)
+        self.assertIn('What we can help you ask about', html)
+        self.assertIn('Availability, viewing schedules', html)
+        self.assertNotIn('listings-en.html', html)
+        self.assertNotIn('data-listing', html)
 
-    def test_english_listings_offer_an_honest_consultation_fallback(self):
+    def test_legacy_english_listings_moves_to_the_single_guide(self):
         html = (REPO / 'listings-en.html').read_text(encoding='utf-8')
-        self.assertIn("Can't find the right match?", html)
-        self.assertIn('check current availability before arranging a viewing', html)
-        self.assertIn('href="tel:050714025055">Call for current options</a>', html)
-        self.assertIn('href="contact_EN.html">Plan a visit</a>', html)
+        self.assertIn('<meta name="robots" content="noindex,follow">', html)
+        self.assertIn('<meta http-equiv="refresh" content="0; url=EN.html">', html)
+        self.assertNotIn('listingsPage.en.js', html)
 
     def test_public_listing_phone_is_always_the_approved_safe_number(self):
         for relative in (
             'js/listingsPage.js',
-            'js/listingsPage.en.js',
             'js/listingDetail.js',
-            'js/listingDetail.en.js',
         ):
             source = (REPO / relative).read_text(encoding='utf-8')
             self.assertIn("from './utils/contactPhone.mjs'", source, relative)
