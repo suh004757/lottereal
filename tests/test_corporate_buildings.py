@@ -59,10 +59,12 @@ class CorporateBuildingsTest(unittest.TestCase):
             '지하 1층 92.25평',
             '주출입구 기준 남동향',
             '5호선 방이역',
-            '공동중개 협력 매물',
         ):
             self.assertIn(approved, public_copy)
 
+        self.assertNotIn('공동중개', public_copy)
+        self.assertIn('기업 사옥 매매', hub)
+        self.assertIn('최신 매물 상태와 답사 가능 여부', hub)
         assert_only_approved_public_amounts(self, public_copy)
 
         self.assertNotIn('영구 올림픽공원', public_copy)
@@ -173,6 +175,13 @@ class CorporateBuildingsTest(unittest.TestCase):
         css = (REPO / 'css' / 'corporate-buildings.css').read_text(encoding='utf-8')
         self.assertIn(':focus-visible', css)
         self.assertIn('outline: 3px solid', css)
+        self.assertRegex(css, r'\.hq-hero\s*\{[^}]*min-height:\s*580px')
+        self.assertIn('font-size: clamp(2.8rem, 4.8vw, 3.6rem)', css)
+        self.assertIn('min-height: 520px', css)
+        self.assertIn('font-size: clamp(2.4rem, 4vw, 4.2rem)', css)
+        self.assertIn('@media (max-width: 1100px)', css)
+        self.assertNotIn('font-size: clamp(3rem, 6.2vw, 6.7rem)', css)
+        self.assertNotIn('font-size: clamp(2.7rem,14vw,4rem)', css)
 
     def test_large_commercial_price_uses_eok_not_raw_manwon(self):
         import subprocess
