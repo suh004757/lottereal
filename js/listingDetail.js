@@ -6,6 +6,8 @@
 import { getListingById } from './services/backendAdapter.js';
 import { buildAbsoluteUrl, renderJsonLd, updateSeoMeta } from './utils/seo.js';
 import { SAFE_CONTACT_TEL, getPublicContactPhone } from './utils/contactPhone.mjs';
+import { formatManwonAmount } from './utils/propertyPrice.mjs';
+import { getListingDetailUrl } from './utils/listingRoutes.mjs';
 import {
   getListingFreshness,
   getListingFreshnessCopy,
@@ -15,6 +17,10 @@ import {
 // URL 파라미터에서 리스팅 ID 가져오기
 const params = new URLSearchParams(window.location.search);
 const id = params.get('id');
+const dedicatedDetailUrl = getListingDetailUrl({ id });
+if (id && !dedicatedDetailUrl.startsWith('listing-detail.html?')) {
+  window.location.replace(dedicatedDetailUrl);
+}
 
 // DOM 요소 참조
 const titleEl = document.querySelector('[data-detail-title]');
@@ -190,7 +196,7 @@ function formatPrice(price, deposit, type) {
   }
 
   // 전세 또는 매매
-  return `${p.toLocaleString()} 만원`;
+  return formatManwonAmount(p);
 }
 
 /**
@@ -230,5 +236,5 @@ function bindInquiryButtons(listing) {
   });
 }
 
-// 초기화 실행
-init();
+// 일반 상세일 때만 초기화 실행
+if (!id || dedicatedDetailUrl.startsWith('listing-detail.html?')) init();

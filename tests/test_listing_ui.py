@@ -65,13 +65,14 @@ class ListingUiTest(unittest.TestCase):
         self.assertIn('<a href="EN.html">ENGLISH</a>', home[home.index('<footer'):])
 
     def test_korean_primary_navigation_is_consistent_and_bounded(self):
-        expected = ('현재 관심', '매물 찾기', '시장·정책', '계약 사례', '자료 찾기', '문의·방문')
+        expected = ('기업 사옥', '매물 찾기', '시장·정책', '계약 사례', '자료 찾기', '문의·방문')
         for path in korean_pages():
             html = path.read_text(encoding='utf-8')
             nav = primary_navigation(html)
             self.assertEqual(nav.count('<a '), 6, path.name)
             for label in expected:
                 self.assertIn(f'>{label}</a>', nav, path.name)
+            self.assertIn('href="corporate-buildings.html"', nav, path.name)
             self.assertNotIn('>홈</a>', nav, path.name)
             self.assertNotIn('>찾아오는 길</a>', nav, path.name)
 
@@ -89,6 +90,9 @@ class ListingUiTest(unittest.TestCase):
         positions = [home.index(marker) for marker in ordered]
         self.assertEqual(positions, sorted(positions))
         self.assertIn('어떤 매물을 찾고 계신가요?', home)
+        hero = home[home.index('<section class="lr-hero"'):home.index('</section>', home.index('<section class="lr-hero"'))]
+        self.assertIn('href="corporate-buildings.html"', hero)
+        self.assertIn('기업 사옥 350억', hero)
         self.assertNotIn('지금 바로 만날 수 있는 매물들', home)
 
     def test_listing_cards_and_actions_use_non_overlapping_responsive_layout(self):

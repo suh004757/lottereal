@@ -5,6 +5,8 @@
 
 import { listListingsPublic } from './services/backendAdapter.js';
 import { SAFE_CONTACT_TEL, getPublicContactPhone } from './utils/contactPhone.mjs';
+import { formatListingPrice } from './utils/propertyPrice.mjs';
+import { getListingDetailUrl } from './utils/listingRoutes.mjs';
 import {
   getListingFreshness,
   getListingFreshnessCopy,
@@ -121,9 +123,10 @@ function buildListingCard(item) {
     ? details.filter((detail) => detail.label !== '입주')
     : details;
   const price = formatPrice(item);
+  const detailUrl = getListingDetailUrl(item);
 
   card.innerHTML = `
-    <a class="lr-card__thumb lr-listing-thumb" href="listing-detail.html?id=${encodeURIComponent(item.id)}" style="background-image:url('${escapeAttribute(image)}');" aria-label="${escapeAttribute(item.title || '매물 상세 보기')}">
+    <a class="lr-card__thumb lr-listing-thumb" href="${detailUrl}" style="background-image:url('${escapeAttribute(image)}');" aria-label="${escapeAttribute(item.title || '매물 상세 보기')}">
       <span>${escapeHtml(badge)}</span>
     </a>
     <div class="lr-card__body">
@@ -143,7 +146,7 @@ function buildListingCard(item) {
       </div>
       <p class="lr-text">${escapeHtml(buildShortDescription(item, freshness))}</p>
       <div class="lr-card__actions lr-listing-actions">
-        <a class="lr-btn lr-btn--ghost lr-btn--block" href="listing-detail.html?id=${encodeURIComponent(item.id)}">사진·상세 보기</a>
+        <a class="lr-btn lr-btn--ghost lr-btn--block" href="${detailUrl}">사진·상세 보기</a>
         <a class="lr-btn lr-btn--primary lr-btn--block contact-btn" href="${telLink}" data-phone="${escapeAttribute(formatPhone(contactPhone))}">전화 문의</a>
       </div>
     </div>
@@ -189,9 +192,9 @@ function formatPrice(item) {
     return '월세 문의';
   }
 
-  if (type.includes('전세')) return price ? `전세 ${price.toLocaleString()}만원` : '전세가 문의';
-  if (type.includes('매매')) return price ? `매매 ${price.toLocaleString()}만원` : '매매가 문의';
-  return price ? `${price.toLocaleString()}만원` : '가격 문의';
+  if (type.includes('전세')) return price ? formatListingPrice(price, '전세') : '전세가 문의';
+  if (type.includes('매매')) return price ? formatListingPrice(price, '매매') : '매매가 문의';
+  return price ? formatListingPrice(price) : '가격 문의';
 }
 
 function extractDetails(item) {
