@@ -37,6 +37,22 @@
     <priority>0.90</priority>
   </url>
 
+  <!-- 기업 사옥·빌딩 허브 -->
+  <url>
+    <loc>https://lottes.co.kr/corporate-buildings.html</loc>
+    <lastmod>2026-09-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.92</priority>
+  </url>
+
+  <!-- 송파 올림픽공원 삼공빌딩 -->
+  <url>
+    <loc>https://lottes.co.kr/songpa-samgong-building.html</loc>
+    <lastmod>2026-09-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.90</priority>
+  </url>
+
   <!-- 계약·분쟁 사례 -->
   <url>
     <loc>https://lottes.co.kr/disputes.html</loc>
