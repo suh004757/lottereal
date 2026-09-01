@@ -92,7 +92,8 @@ class ListingUiTest(unittest.TestCase):
         self.assertIn('어떤 매물을 찾고 계신가요?', home)
         hero = home[home.index('<section class="lr-hero"'):home.index('</section>', home.index('<section class="lr-hero"'))]
         self.assertIn('href="corporate-buildings.html"', hero)
-        self.assertIn('기업 사옥 350억', hero)
+        self.assertIn('기업 사옥·빌딩 보기', hero)
+        self.assertNotIn('기업 사옥 350억', hero)
         self.assertNotIn('지금 바로 만날 수 있는 매물들', home)
 
     def test_listing_cards_and_actions_use_non_overlapping_responsive_layout(self):
