@@ -88,15 +88,34 @@ def detect_secret_leak(body: str, env_values: dict[str, str]) -> list[str]:
     return leaks
 
 
-def run_local_verification() -> list[dict[str, str | int]]:
-    failures: list[dict[str, str | int]] = []
-    commands = [
+def local_verification_commands() -> list[tuple[list[str], int, str]]:
+    if os.environ.get("LOTTEREAL_PUBLIC_CONTENT_ONLY") == "1":
+        unittest_command = [
+            sys.executable,
+            "-m",
+            "unittest",
+            "tests.test_public_content_maintenance_scope",
+            "tests.test_lease_opposability_current_form_update",
+        ]
+        return [
+            (unittest_command, 180, "unittest"),
+            ([sys.executable, "-m", "py_compile", "scripts/maintenance_check.py", "scripts/post_push_guard.py"], 120, "py_compile"),
+            (["node", "--check", "js/reportPage.js"], 60, "node_check_report_page"),
+            (["node", "--check", "js/reportLandingPage.js"], 60, "node_check_report_landing"),
+            ([sys.executable, "scripts/maintenance_check.py"], 180, "maintenance_check"),
+        ]
+    return [
         ([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"], 180, "unittest"),
         ([sys.executable, "-m", "py_compile", "scripts/lottereal_supabase.py", "scripts/maintenance_check.py", "scripts/post_push_guard.py"], 120, "py_compile"),
         (["node", "--check", "js/config/appConfig.js"], 60, "node_check_app_config"),
         (["node", "--check", "js/active.js"], 60, "node_check_active"),
         ([sys.executable, "scripts/maintenance_check.py"], 180, "maintenance_check"),
     ]
+
+
+def run_local_verification() -> list[dict[str, str | int]]:
+    failures: list[dict[str, str | int]] = []
+    commands = local_verification_commands()
     for cmd, timeout, name in commands:
         code, output = run(cmd, timeout=timeout)
         if code != 0:
