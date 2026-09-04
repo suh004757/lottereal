@@ -183,6 +183,21 @@ class CorporateBuildingsTest(unittest.TestCase):
         self.assertNotIn('font-size: clamp(3rem, 6.2vw, 6.7rem)', css)
         self.assertNotIn('font-size: clamp(2.7rem,14vw,4rem)', css)
 
+    def test_corporate_mobile_hero_keeps_korean_words_and_uses_compact_type(self):
+        hub = (REPO / 'corporate-buildings.html').read_text(encoding='utf-8')
+        css = (REPO / 'css' / 'corporate-buildings.css').read_text(encoding='utf-8')
+
+        self.assertIn('class="hq-headline-line"', hub)
+        mobile = css[css.index('@media (max-width: 640px)'):]
+        hero_rule = re.search(r'\.hq-hero__copy h1\s*\{([^}]*)\}', mobile)
+        if hero_rule is None:
+            self.fail('모바일 기업 사옥 제목 규칙이 필요합니다')
+        declarations = hero_rule.group(1)
+        self.assertIn('font-size: clamp(2rem, 8.8vw, 2.35rem)', declarations)
+        self.assertIn('line-height: 1.15', declarations)
+        self.assertIn('word-break: keep-all', declarations)
+        self.assertIn('overflow-wrap: normal', declarations)
+
     def test_large_commercial_price_uses_eok_not_raw_manwon(self):
         import subprocess
         script = """
