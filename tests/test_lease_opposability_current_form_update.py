@@ -23,7 +23,7 @@ class LeaseOpposabilityCurrentFormUpdateTests(unittest.TestCase):
         entry = 'https://lottes.co.kr/report.html?slug=' + ORIGINAL_SLUG
         self.assertIn(entry, sitemap)
         start = sitemap.index(entry)
-        self.assertIn('<lastmod>2026-09-01</lastmod>', sitemap[start:start + 250])
+        self.assertIn('<lastmod>2026-09-08</lastmod>', sitemap[start:start + 250])
 
     def test_current_form_update_is_source_grounded_and_practical(self):
         body = self.report['report_md']
