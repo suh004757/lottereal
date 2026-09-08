@@ -1,4 +1,4 @@
-const UNSAFE_URL_CHARACTERS = /[\u0000-\u0020"'`<>]/;
+const UNSAFE_URL_CHARACTERS = /[\u0000-\u0020"'`<>\\]/;
 const ABSOLUTE_SCHEME = /^[A-Za-z][A-Za-z\d+.-]*:/;
 
 export function escapeHtml(value = '') {

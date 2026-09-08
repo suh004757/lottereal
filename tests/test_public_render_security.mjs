@@ -36,4 +36,6 @@ test('safeImageUrl allows local paths and HTTP images but rejects executable sch
   assert.equal(safeImageUrl('javascript:alert(1)'), '');
   assert.equal(safeImageUrl('data:image/svg+xml,<svg onload=alert(1)>'), '');
   assert.equal(safeImageUrl('x\" onerror=\"alert(1)'), '');
+  assert.equal(safeImageUrl('\\\\evil.example/path'), '');
+  assert.equal(safeImageUrl('/\\evil.example/path'), '');
 });

@@ -5,6 +5,7 @@ import {
   listPublishedReports
 } from './services/reportAdapter.js';
 import { buildSanitizedReportHtml } from './reportRenderSecurity.mjs';
+import { safeExternalHttpUrl } from './publicRenderSecurity.mjs';
 import { findMatchingLandingConfigs } from './config/reportLandingConfig.js';
 import { buildAbsoluteUrl, renderJsonLd, updateSeoMeta } from './utils/seo.js';
 import {
@@ -307,14 +308,20 @@ function extractKeywords(report) {
 
 window.openEvidence = function openEvidence() {
   const evidence = currentReport?.evidence_json || [];
-  const sourcesHtml = evidence.map((source) => `
+  const sourcesHtml = evidence.map((source) => {
+    const safeUrl = safeExternalHttpUrl(source.url);
+    const sourceLink = safeUrl
+      ? `<a href="${escapeHtml(safeUrl)}" target="_blank" rel="noopener noreferrer" style="color: #3b82f6; font-size: 0.875rem;">${escapeHtml(safeUrl)}</a><br>`
+      : '';
+    return `
     <div style="padding: 1rem; background: #f9fafb; border-radius: 0.5rem; margin-bottom: 1rem;">
       <strong style="color: #111827;">${escapeHtml(source.name)}</strong><br>
-      <a href="${escapeHtml(source.url)}" target="_blank" rel="noopener noreferrer" style="color: #3b82f6; font-size: 0.875rem;">${escapeHtml(source.url)}</a><br>
+      ${sourceLink}
       <span style="color: #6b7280; font-size: 0.875rem;">수집일: ${escapeHtml(source.fetchedAt || '')}</span><br>
       <span style="color: #6b7280; font-size: 0.875rem;">범위: ${escapeHtml(source.coverage || '')}</span>
     </div>
-  `).join('');
+  `;
+  }).join('');
 
   const content = document.getElementById('evidence-content');
   const modal = document.getElementById('evidence-modal');

@@ -264,7 +264,7 @@ async function createListingSupabase(payload) {
   const { data, error } = await supabase
     .from('property_listings')
     .insert([dbPayload])
-    .select();
+    .select(PUBLIC_LISTING_SELECT_QUERY);
 
   if (error) {
     console.error('Supabase Error:', error);
@@ -405,10 +405,10 @@ async function getDashboardStatsSupabase() {
   try {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     const queries = [
-      supabase.from('property_listings').select('*', { count: 'exact', head: true }),
+      supabase.from('property_listings').select('id', { count: 'exact', head: true }),
       supabase
         .from('property_listings')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .gte('created_at', sevenDaysAgo),
       supabase.from('inquiries').select('*', { count: 'exact', head: true }),
       supabase.from('inquiries').select('*', { count: 'exact', head: true }).eq('status', 'unread')
@@ -455,8 +455,7 @@ async function listListingsAdminSupabase({ page, pageSize, sort, direction }) {
   const to = from + pageSize - 1;
   try {
     const { data, error, count } = await supabase
-      .from('property_listings')
-      .select('*', { count: 'exact' })
+      .rpc('admin_list_property_listings', {}, { count: 'exact' })
       .order(sort, { ascending: direction === 'asc' })
       .range(from, to);
     if (error) {
@@ -489,7 +488,12 @@ async function updateListingSupabase(id, patch) {
     contact_phone: SAFE_CONTACT_PHONE,
     contact_email: patch.contact?.email || patch.contact_email
   };
-  const { data, error } = await supabase.from('property_listings').update(dbPatch).eq('id', id).select().single();
+  const { data, error } = await supabase
+    .from('property_listings')
+    .update(dbPatch)
+    .eq('id', id)
+    .select(PUBLIC_LISTING_SELECT_QUERY)
+    .single();
   if (error) {
     console.error('Supabase updateListing error', error);
     throw error;
