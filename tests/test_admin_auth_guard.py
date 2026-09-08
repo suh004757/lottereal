@@ -1,4 +1,5 @@
 from pathlib import Path
+import hashlib
 import unittest
 
 REPO = Path(__file__).resolve().parents[1]
@@ -67,12 +68,16 @@ class AdminAuthGuardTest(unittest.TestCase):
         self.assertNotIn('inquiryFields.status.innerHTML', source)
         self.assertIn('.textContent =', source)
 
-    def test_admin_preview_pins_a_patched_dompurify_with_sri(self):
+    def test_admin_preview_pins_a_self_hosted_patched_dompurify(self):
+        vendor = REPO / 'js' / 'vendor' / 'dompurify-3.4.15.min.js'
+        self.assertEqual(
+            hashlib.sha256(vendor.read_bytes()).hexdigest(),
+            'f263b05369e050fa175d4ecb9c9358eb4253602d510297adfb31df48b2f1c4d5'
+        )
         for relative in ('admin/dashboard.html', 'admin/report-editor.html'):
             html = (REPO / relative).read_text(encoding='utf-8')
-            self.assertIn('dompurify@3.4.14/dist/purify.min.js', html)
-            self.assertIn('integrity="sha384-', html)
-            self.assertIn('crossorigin="anonymous"', html)
+            self.assertIn('../js/vendor/dompurify-3.4.15.min.js', html)
+            self.assertNotIn('cdn.jsdelivr.net/npm/dompurify', html)
             self.assertNotIn('dompurify@3.0.6', html)
 
     def test_database_policies_require_admin_and_keep_admin_chat_private(self):

@@ -992,6 +992,12 @@ textarea {
     resize: vertical;
 }
 
+.admin-report-editor-form .report-markdown-input {
+    min-height: 420px;
+    font-family: "JetBrains Mono", Consolas, monospace;
+    line-height: 1.6;
+}
+
 .admin-report-editor-form .editor-actions {
     display: flex;
     justify-content: flex-end;

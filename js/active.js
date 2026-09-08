@@ -44,9 +44,6 @@
         $('body').removeClass('menu-open');
     });
 
-    // :: Tooltip Active Code - 툴팁 활성화
-    $('[data-toggle="tooltip"]').tooltip()
-
     // :: Nicescroll Active Code - 커스텀 스크롤바
     if ($.fn.niceScroll) {
         $("body, textarea").niceScroll({
@@ -215,7 +212,7 @@
     });
 
     // :: wow Active Code
-    if ($window.width() > 767) {
+    if ($window.width() > 767 && typeof WOW === 'function') {
         new WOW().init();
     }
 

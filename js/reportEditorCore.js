@@ -37,7 +37,6 @@ export function initializeReportEditor({
   onCancel,
   previewTitleRenderer
 }) {
-  let simplemde = null;
   let evidenceSources = cloneValue(DEFAULT_EVIDENCE);
   let editingReport = null;
 
@@ -76,41 +75,12 @@ export function initializeReportEditor({
         closePreview();
       }
     });
-    initializeSimpleMde();
+    initializeMarkdownTextarea();
     renderEvidenceSources();
   }
 
-  function initializeSimpleMde() {
+  function initializeMarkdownTextarea() {
     if (!refs.contentInput) return;
-    if (window.SimpleMDE) {
-      simplemde = new window.SimpleMDE({
-        element: refs.contentInput,
-        spellChecker: false,
-        placeholder: `마크다운 형식으로 리포트를 작성하세요.\n\n${SAMPLE_TEMPLATE}`,
-        minHeight: '420px',
-        toolbar: [
-          'bold',
-          'italic',
-          'heading',
-          '|',
-          'quote',
-          'unordered-list',
-          'ordered-list',
-          '|',
-          'link',
-          'image',
-          '|',
-          'preview',
-          'side-by-side',
-          'fullscreen',
-          '|',
-          'guide'
-        ]
-      });
-      simplemde.value(SAMPLE_TEMPLATE);
-      return;
-    }
-
     refs.contentInput.value = SAMPLE_TEMPLATE;
     refs.contentInput.placeholder = '마크다운 형식으로 리포트를 작성하세요.';
   }
@@ -320,15 +290,10 @@ export function initializeReportEditor({
   }
 
   function getEditorContent() {
-    if (simplemde) return simplemde.value();
     return refs.contentInput?.value || '';
   }
 
   function setEditorContent(value) {
-    if (simplemde) {
-      simplemde.value(value);
-      return;
-    }
     if (refs.contentInput) {
       refs.contentInput.value = value;
     }

@@ -5,6 +5,7 @@
 
 import { listExternalFeeds } from './services/backendAdapter.js';
 import { filterContentForLanguage } from './localizedHomeContent.mjs';
+import { escapeHtml, safeExternalHttpUrl } from './publicRenderSecurity.mjs';
 
 // DOM 요소 참조
 const feedContainer = document.querySelector('[data-feed-list]');
@@ -42,14 +43,19 @@ function renderFeeds(feeds) {
   feedContainer.innerHTML = '';
   feeds.forEach((item) => {
     const card = document.createElement('article');
+    const safeUrl = safeExternalHttpUrl(item.url);
+    const safeTitle = escapeHtml(item.title);
+    const titleMarkup = safeUrl
+      ? `<a href="${escapeHtml(safeUrl)}" target="_blank" rel="noopener noreferrer">${safeTitle}</a>`
+      : safeTitle;
     card.className = 'lr-card lr-card--listing';
     card.innerHTML = `
       <div class="lr-card__body">
-        <p class="lr-badge">${mapSource(item.source)}</p>
-        <h3><a href="${item.url}" target="_blank" rel="noreferrer">${item.title || ''}</a></h3>
-        <p class="lr-text">${item.summary || ''}</p>
+        <p class="lr-badge">${escapeHtml(mapSource(item.source))}</p>
+        <h3>${titleMarkup}</h3>
+        <p class="lr-text">${escapeHtml(item.summary || '')}</p>
         <div class="lr-card__meta">
-          <span>${formatDate(item.published_at)}</span>
+          <span>${escapeHtml(formatDate(item.published_at))}</span>
         </div>
       </div>
     `;
