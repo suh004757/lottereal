@@ -4,6 +4,7 @@ import {
   incrementReportViews,
   listPublishedReports
 } from './services/reportAdapter.js';
+import { buildSanitizedReportHtml } from './reportRenderSecurity.mjs';
 import { findMatchingLandingConfigs } from './config/reportLandingConfig.js';
 import { buildAbsoluteUrl, renderJsonLd, updateSeoMeta } from './utils/seo.js';
 import {
@@ -19,7 +20,7 @@ const reportSlug = urlParams.get('slug');
 let currentReport = null;
 let publishedReports = [];
 
-document.addEventListener('DOMContentLoaded', () => {
+function initReportPage() {
   loadReport();
 
   const modal = document.getElementById('evidence-modal');
@@ -30,7 +31,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initReportPage, { once: true });
+} else {
+  initReportPage();
+}
 
 async function loadReport() {
   try {
@@ -82,17 +89,14 @@ function renderReport() {
   if (!contentDiv) return;
 
   try {
-    marked.setOptions({
-      breaks: true,
-      gfm: true
+    contentDiv.innerHTML = buildSanitizedReportHtml({
+      markdown: currentReport.report_md,
+      marked: window.marked,
+      purifier: window.DOMPurify
     });
-
-    const rawHtml = marked.parse(currentReport.report_md || '');
-    const safeHtml = window.DOMPurify ? window.DOMPurify.sanitize(rawHtml) : rawHtml;
-    contentDiv.innerHTML = safeHtml;
   } catch (error) {
     console.error('Error rendering markdown:', error);
-    contentDiv.innerHTML = '<p>리포트를 렌더링하지 못했습니다.</p>';
+    contentDiv.textContent = '리포트를 안전하게 렌더링하지 못했습니다.';
   }
 }
 

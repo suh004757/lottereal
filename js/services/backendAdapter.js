@@ -5,6 +5,7 @@
 
 import { APP_CONFIG } from '../config/appConfig.js';
 import { getSupabaseClient } from '../config/supabaseConfig.js';
+import { PUBLIC_LISTING_SELECT_QUERY } from '../publicListingFields.mjs';
 import { SAFE_CONTACT_PHONE } from '../utils/contactPhone.mjs';
 
 // 리스팅 페이로드 스키마 정의
@@ -358,7 +359,11 @@ async function listListingsPublicSupabase({ query, page, pageSize, propertyType,
   if (!supabase) return listListingsMock();
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
-  let req = supabase.from('property_listings').select('*').order('created_at', { ascending: false }).range(from, to);
+  let req = supabase
+    .from('property_listings')
+    .select(PUBLIC_LISTING_SELECT_QUERY)
+    .order('created_at', { ascending: false })
+    .range(from, to);
   if (query) {
     const q = `%${query}%`;
     req = req.or(`title.ilike.${q},description.ilike.${q},address.ilike.${q},city.ilike.${q},district.ilike.${q}`);
@@ -379,7 +384,11 @@ async function listListingsPublicSupabase({ query, page, pageSize, propertyType,
 async function getListingByIdSupabase(id) {
   const supabase = getSupabaseClient();
   if (!supabase) return null;
-  const { data, error } = await supabase.from('property_listings').select('*').eq('id', id).single();
+  const { data, error } = await supabase
+    .from('property_listings')
+    .select(PUBLIC_LISTING_SELECT_QUERY)
+    .eq('id', id)
+    .single();
   if (error) {
     console.error('Supabase getListingById error', error);
     return null;
