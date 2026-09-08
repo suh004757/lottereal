@@ -21,5 +21,7 @@ Do NOT include the `.git/` folder or `.gitignore`, `.gitattributes` files in you
 - Use `admin@lottes.co.kr` for all public inquiries.
 
 ## Updates
-- jQuery has been upgraded to v3.7.1 for better security.
-- Please verify all interactive elements (sliders, maps, popups) function correctly.
+- Removed the unused jQuery, `active.js`, and `plugins.js` runtime chain.
+- Application pages enforce public/admin-specific meta CSP and referrer policies.
+- `scripts/maintenance_check.py` verifies CSP placement, inline-script/event-handler bans, pinned vendor hashes, and the approved Supabase CDN URL.
+- Run the full Python/Node suites, maintenance check, and browser smoke tests before publishing.

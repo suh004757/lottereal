@@ -3,7 +3,7 @@
  * Supabase를 사용하여 관리자 로그인, 세션 관리, 로그 기록을 처리합니다.
  */
 
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm';
+import { getSupabaseClient } from '../config/supabaseConfig.js';
 import { APP_CONFIG } from '../config/appConfig.js';
 
 // 세션 타임아웃 설정 (분 단위)
@@ -26,13 +26,10 @@ function ensureClient() {
   if (!APP_CONFIG.SUPABASE_URL || !APP_CONFIG.SUPABASE_KEY) {
     throw new Error('Supabase URL/KEY are not configured');
   }
-  supabaseClient = createClient(APP_CONFIG.SUPABASE_URL, APP_CONFIG.SUPABASE_KEY, {
-    auth: {
-      autoRefreshToken: true,
-      persistSession: true,
-      detectSessionInUrl: true
-    }
-  });
+  supabaseClient = getSupabaseClient();
+  if (!supabaseClient) {
+    throw new Error('Supabase client is unavailable');
+  }
 
   // 인증 상태 변경 이벤트 리스너
   supabaseClient.auth.onAuthStateChange((event, session) => {

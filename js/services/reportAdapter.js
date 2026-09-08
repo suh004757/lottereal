@@ -93,7 +93,8 @@ const MOCK_REPORTS = [
 
 export async function getLatestReport() {
   const reports = await listPublishedReports({ limit: 1 });
-  return reports[0] || null;
+  const latest = reports[0];
+  return latest?.slug ? getReportBySlug(latest.slug) : null;
 }
 
 export async function getReportBySlug(slug) {

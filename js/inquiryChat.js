@@ -122,8 +122,9 @@ export function mountInquiryChat(container) {
   function handleListingContext(event) {
     const listingId = String(event.detail?.listingId || '').trim().slice(0, 80);
     const listingTitle = String(event.detail?.listingTitle || '롯데부동산 매물').trim().slice(0, 160);
+    const inquiryDraft = String(event.detail?.inquiryDraft || '').trim().slice(0, 1000);
     Object.assign(state, freshState());
-    if (listingId) applyListingContext({ listingId, listingTitle });
+    if (listingId) applyListingContext({ listingId, listingTitle, inquiryDraft });
     render();
   }
 
@@ -131,6 +132,7 @@ export function mountInquiryChat(container) {
     state.listingContext = context;
     state.values.inquiryType = 'listing';
     state.values.sourceChannel = 'website';
+    state.values.message = context.inquiryDraft || '';
     state.step = 'name';
     state.history = [
       { question: questionFor('inquiryType'), answer: '매물 문의' },
@@ -286,7 +288,7 @@ function renderControls(state) {
   }
   if (state.step === 'name') return renderTextForm('name', 'text', '선택 입력', true);
   if (state.step === 'phone') return renderTextForm('phone', 'tel', '010-1234-5678', false, 'tel');
-  if (state.step === 'message') return renderMessageForm();
+  if (state.step === 'message') return renderMessageForm(state.values.message);
   if (state.step === 'privacyConsent') return renderConsentForm();
   return renderReview(state);
 }
@@ -306,10 +308,10 @@ function renderTextForm(field, type, placeholder, allowSkip, inputMode = '') {
   `;
 }
 
-function renderMessageForm() {
+function renderMessageForm(initialValue = '') {
   return `
     <form data-chat-form data-field="message" class="lr-inquiry-chat__form">
-      <textarea name="message" maxlength="1000" rows="3" aria-label="추가 문의 내용" placeholder="예산, 지역, 입주일 등 필요한 내용만 적어주세요."></textarea>
+      <textarea name="message" maxlength="1000" rows="5" aria-label="추가 문의 내용" placeholder="예산, 입주일, 필요 면적, 요청 자료 등 필요한 내용만 적어주세요.">${escapeHtml(initialValue)}</textarea>
       <div><button type="submit">다음</button><button type="submit" class="is-secondary" name="message" value="">건너뛰기</button></div>
     </form>
   `;
@@ -335,6 +337,7 @@ function renderReview(state) {
         ${values.externalListingRef ? `<div><dt>매물번호</dt><dd>${escapeHtml(values.externalListingRef)}</dd></div>` : ''}
         <div><dt>연락처</dt><dd>${escapeHtml(maskPhoneForReview(values.phone))}</dd></div>
         <div><dt>연락시간</dt><dd>${escapeHtml(LABELS.callbackTime[values.callbackTime] || '-')}</dd></div>
+        ${values.message ? `<div><dt>요청조건</dt><dd>${escapeHtml(values.message)}</dd></div>` : ''}
       </dl>
       <input name="website" type="text" tabindex="-1" autocomplete="off" class="lr-inquiry-chat__honeypot" aria-hidden="true">
       <button type="submit" ${state.submitting ? 'disabled' : ''}>${state.submitting ? '접수 중…' : '이 내용으로 문의 접수'}</button>

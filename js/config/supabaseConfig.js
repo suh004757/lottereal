@@ -3,8 +3,10 @@
  * Supabase 클라이언트를 생성하고 관리합니다.
  */
 
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm';
+import '../vendor/supabase-2.45.4.min.js';
 import { APP_CONFIG } from './appConfig.js';
+
+const createClient = globalThis.supabase?.createClient;
 
 // Supabase 클라이언트 인스턴스 (싱글톤)
 let supabaseClient = null;
@@ -17,6 +19,10 @@ export function getSupabaseClient() {
   if (supabaseClient) return supabaseClient;
   const url = APP_CONFIG.SUPABASE_URL;
   const key = APP_CONFIG.SUPABASE_KEY;
+  if (typeof createClient !== 'function') {
+    console.warn('The self-hosted Supabase runtime is unavailable.');
+    return null;
+  }
   if (!url || !key) {
     console.warn('Supabase URL/KEY are not configured. Set env vars VITE_SUPABASE_URL/VITE_SUPABASE_KEY.');
     return null;

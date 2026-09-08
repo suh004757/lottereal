@@ -2,8 +2,11 @@
 <html lang="ko">
 
 <head>
-  <script src="js/privacyAnalytics.js"></script>
 <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'none'; script-src 'self' https://www.googletagmanager.com; script-src-attr 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://itcztvceelfvppjwhmvl.supabase.co https://www.google-analytics.com https://region1.google-analytics.com; form-action 'self'; upgrade-insecure-requests">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <script src="js/privacyAnalytics.js"></script>
+
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="롯데부동산 전화 요청, 직방·다방 매물번호 문의, 일반 상담과 찾아오는 길 안내.">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -59,7 +62,7 @@
             </div>
             <button class="lr-hamburger" aria-label="메뉴" aria-expanded="false">☰</button>
       <nav class="lr-nav" aria-label="주요 메뉴">
-        <a href="./#inquiry-receipts">현재 관심</a>
+        <a href="corporate-buildings.html">기업 사옥</a>
         <a href="listings.html">매물 찾기</a>
         <a href="report.html">시장·정책</a>
         <a href="disputes.html">계약 사례</a>
@@ -233,7 +236,7 @@
             </div>
         </div>
         <p class="lr-footer__copy">©
-            <script>document.write(new Date().getFullYear());</script> Lotte Real Estate. All rights reserved.
+            <span data-current-year></span> Lotte Real Estate. All rights reserved.
         </p>
     </footer>
 
@@ -242,18 +245,13 @@
     <span class="lr-fab__icon">📞</span>
     <span>지금 전화</span>
   </a>
-
-  <script src="js/jquery/jquery-3.7.1.min.js"></script>
-    <script src="js/popper.min.js"></script>
-    <script src="js/bootstrap.min.js"></script>
-    <script src="js/plugins.js"></script>
-    <script src="js/active.js"></script>
     <script type="module" src="js/app.js"></script>
     <script type="module" src="js/contactInquiry.js"></script>
     <script src="js/languageSuggestion.js"></script>
     <script type="module" src="js/knowledgeWidget.js"></script>
   <script src="js/analyticsEvents.js"></script>
   <script src="js/mobileNav.js"></script>
+  <script src="js/currentYear.js"></script>
 </body>
 
 </html>

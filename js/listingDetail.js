@@ -4,8 +4,11 @@
  */
 
 import { getListingById } from './services/backendAdapter.js';
+import { escapeHtml, safeImageUrl } from './publicRenderSecurity.mjs';
 import { buildAbsoluteUrl, renderJsonLd, updateSeoMeta } from './utils/seo.js';
 import { SAFE_CONTACT_TEL, getPublicContactPhone } from './utils/contactPhone.mjs';
+import { formatManwonAmount } from './utils/propertyPrice.mjs';
+import { getListingDetailUrl } from './utils/listingRoutes.mjs';
 import {
   getListingFreshness,
   getListingFreshnessCopy,
@@ -15,6 +18,10 @@ import {
 // URL 파라미터에서 리스팅 ID 가져오기
 const params = new URLSearchParams(window.location.search);
 const id = params.get('id');
+const dedicatedDetailUrl = getListingDetailUrl({ id });
+if (id && !dedicatedDetailUrl.startsWith('listing-detail.html?')) {
+  window.location.replace(dedicatedDetailUrl);
+}
 
 // DOM 요소 참조
 const titleEl = document.querySelector('[data-detail-title]');
@@ -55,8 +62,8 @@ function renderDetail(listing) {
     listing.property_type || ''
   ].filter(Boolean);
   if (infoEl) infoEl.textContent = infoParts.join(' · ');
-  if (tagsEl) tagsEl.innerHTML = (listing.tags || []).map((t) => `<span>${t}</span>`).join('');
-  if (featuresEl) featuresEl.innerHTML = (listing.features || []).map((f) => `<li>${f}</li>`).join('');
+  if (tagsEl) tagsEl.innerHTML = (listing.tags || []).map((t) => `<span>${escapeHtml(t)}</span>`).join('');
+  if (featuresEl) featuresEl.innerHTML = (listing.features || []).map((f) => `<li>${escapeHtml(f)}</li>`).join('');
   if (descEl) {
     if (freshnessCopy) {
       descEl.insertAdjacentHTML('beforebegin', `
@@ -84,24 +91,25 @@ function renderImageGallery(listing) {
 
   if (!mainImageEl || !thumbnailsEl) return;
 
-  // Get all images (support both 'images' array and single 'image' field)
-  let images = [];
+  // Get and validate every image URL (support both 'images' array and single 'image' field)
+  let safeImages = [];
   if (listing.images && Array.isArray(listing.images) && listing.images.length > 0) {
-    images = listing.images;
+    safeImages = listing.images.map((image) => safeImageUrl(image)).filter(Boolean);
   } else if (listing.image) {
-    images = [listing.image];
+    const safeImage = safeImageUrl(listing.image);
+    if (safeImage) safeImages = [safeImage];
   }
 
-  // Set the first image as the main image
-  if (images.length > 0) {
-    mainImageEl.src = images[0];
+  // Set the first safe image as the main image
+  if (safeImages.length > 0) {
+    mainImageEl.src = safeImages[0];
     mainImageEl.alt = listing.title || 'Listing image';
   }
 
-  // Create thumbnails
-  thumbnailsEl.innerHTML = images.map((img, index) => `
+  // Create thumbnails from validated URLs only
+  thumbnailsEl.innerHTML = safeImages.map((image, index) => `
     <div class="lr-detail__thumbnail ${index === 0 ? 'lr-detail__thumbnail--active' : ''}" data-image-index="${index}">
-      <img src="${img}" alt="매물 이미지 ${index + 1}">
+      <img src="${escapeHtml(image)}" alt="매물 이미지 ${index + 1}">
     </div>
   `).join('');
 
@@ -109,8 +117,8 @@ function renderImageGallery(listing) {
   const thumbnails = thumbnailsEl.querySelectorAll('.lr-detail__thumbnail');
   thumbnails.forEach((thumbnail, index) => {
     thumbnail.addEventListener('click', () => {
-      // Update main image
-      mainImageEl.src = images[index];
+      // Update main image from the validated URL list
+      mainImageEl.src = safeImages[index];
 
       // Update active state
       thumbnails.forEach(t => t.classList.remove('lr-detail__thumbnail--active'));
@@ -131,7 +139,8 @@ function applySeo(listing, formattedPrice, freshness) {
     getSafeListingDescription(listing, freshness, 'ko') || listing.property_type || '송파·강남 부동산 상세 정보'
   ].filter(Boolean).join(' | ').slice(0, 160);
   const canonical = buildAbsoluteUrl(`listing-detail.html?id=${encodeURIComponent(listing.id || '')}`);
-  const image = listing.images?.[0] || listing.image || buildAbsoluteUrl('img/bg-img/lotte_street_view.png');
+  const image = safeImageUrl(listing.images?.[0] || listing.image)
+    || buildAbsoluteUrl('img/bg-img/lotte_street_view.png');
 
   updateSeoMeta({
     title,
@@ -190,7 +199,7 @@ function formatPrice(price, deposit, type) {
   }
 
   // 전세 또는 매매
-  return `${p.toLocaleString()} 만원`;
+  return formatManwonAmount(p);
 }
 
 /**
@@ -230,5 +239,5 @@ function bindInquiryButtons(listing) {
   });
 }
 
-// 초기화 실행
-init();
+// 일반 상세일 때만 초기화 실행
+if (!id || dedicatedDetailUrl.startsWith('listing-detail.html?')) init();

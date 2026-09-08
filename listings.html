@@ -2,8 +2,11 @@
 <html lang="ko">
 
 <head>
-  <script src="js/privacyAnalytics.js"></script>
 <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'none'; script-src 'self' https://www.googletagmanager.com; script-src-attr 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://itcztvceelfvppjwhmvl.supabase.co https://www.google-analytics.com https://region1.google-analytics.com; form-action 'self'; upgrade-insecure-requests">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <script src="js/privacyAnalytics.js"></script>
+
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <title>송파·강남 매물 리스트 | 아파트·사무실·상가 | 롯데부동산</title>
   <meta name="description" content="송파구·강남 아파트, 사무실, 상가, 오피스텔 매물 리스트. 잠실·삼전동·석촌동 거래 전문 롯데부동산에서 조건에 맞는 매물을 바로 찾아보세요.">
@@ -40,7 +43,7 @@
       <div class="lr-brand"><a href="./#hero">롯데부동산</a></div>
       <button class="lr-hamburger" aria-label="메뉴" aria-expanded="false">☰</button>
       <nav class="lr-nav" aria-label="주요 메뉴">
-        <a href="./#inquiry-receipts">현재 관심</a>
+        <a href="corporate-buildings.html">기업 사옥</a>
         <a href="listings.html" class="active" aria-current="page">매물 찾기</a>
         <a href="report.html">시장·정책</a>
         <a href="disputes.html">계약 사례</a>
@@ -59,6 +62,7 @@
           <p class="lr-lead">사진보다 먼저 확인해야 할 보증금, 월세, 위치, 평형, 입주 가능 여부를 보기 쉽게 정리했습니다. 원하는 조건이 없으면 바로 전화로 찾아드립니다.</p>
           <div class="lr-actions lr-hero-actions">
             <a class="lr-btn lr-btn--primary" href="tel:050714025055">전화로 조건 말하기</a>
+            <a class="lr-btn lr-btn--ghost" href="corporate-buildings.html">기업 사옥·빌딩</a>
             <a class="lr-btn lr-btn--ghost" href="contact.html">방문 상담 안내</a>
           </div>
         </div>
@@ -72,6 +76,7 @@
             <option value="아파트">아파트</option>
             <option value="오피스텔">오피스텔</option>
             <option value="사무실">사무실</option>
+            <option value="사옥 매매">사옥 매매</option>
             <option value="상가">상가/점포</option>
           </select>
           <div class="lr-filter-row">
@@ -128,7 +133,7 @@
       </div>
     </div>
     <p class="lr-footer__copy">©
-      <script>document.write(new Date().getFullYear());</script> 롯데부동산. All rights reserved.
+      <span data-current-year></span> 롯데부동산. All rights reserved.
     </p>
   </footer>
 
@@ -137,17 +142,12 @@
     <a href="tel:050714025055"><span>📞</span><strong>전화상담</strong></a>
     <a href="contact.html"><span>📍</span><strong>오시는 길</strong></a>
   </div>
-
-  <script src="js/jquery/jquery-3.7.1.min.js"></script>
-  <script src="js/popper.min.js"></script>
-  <script src="js/bootstrap.min.js"></script>
-  <script src="js/plugins.js"></script>
-  <script src="js/active.js"></script>
   <script type="module" src="js/listingsPage.js"></script>
   <script src="js/languageSuggestion.js"></script>
   <script type="module" src="js/knowledgeWidget.js"></script>
   <script src="js/analyticsEvents.js"></script>
   <script src="js/mobileNav.js"></script>
+  <script src="js/currentYear.js"></script>
 </body>
 
 </html>
