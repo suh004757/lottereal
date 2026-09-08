@@ -108,7 +108,7 @@ def local_verification_commands() -> list[tuple[list[str], int, str]]:
         ([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"], 180, "unittest"),
         ([sys.executable, "-m", "py_compile", "scripts/lottereal_supabase.py", "scripts/maintenance_check.py", "scripts/post_push_guard.py"], 120, "py_compile"),
         (["node", "--check", "js/config/appConfig.js"], 60, "node_check_app_config"),
-        (["node", "--check", "js/active.js"], 60, "node_check_active"),
+        (["node", "--check", "js/currentYear.js"], 60, "node_check_current_year"),
         ([sys.executable, "scripts/maintenance_check.py"], 180, "maintenance_check"),
     ]
 

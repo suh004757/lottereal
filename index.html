@@ -2,6 +2,8 @@
 <html lang="ko">
 
 <head>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'none'; script-src 'self' https://cdn.jsdelivr.net/npm/@supabase/auth-js@2.65.0/+esm https://cdn.jsdelivr.net/npm/@supabase/functions-js@2.4.1/+esm https://cdn.jsdelivr.net/npm/@supabase/node-fetch@2.6.15/+esm https://cdn.jsdelivr.net/npm/@supabase/postgrest-js@1.16.1/+esm https://cdn.jsdelivr.net/npm/@supabase/realtime-js@2.10.2/+esm https://cdn.jsdelivr.net/npm/@supabase/storage-js@2.7.0/+esm https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm https://cdn.jsdelivr.net/npm/ws@8.17.1/+esm https://www.googletagmanager.com; script-src-attr 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://itcztvceelfvppjwhmvl.supabase.co https://www.google-analytics.com https://region1.google-analytics.com; form-action 'self'; upgrade-insecure-requests">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <script src="js/privacyAnalytics.js"></script>
 <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -51,15 +53,6 @@
     rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="css/mobile.css">
-<!-- Import map for Three.js modules -->
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-      }
-    }
-  </script>
 </head>
 
 <body>
@@ -327,7 +320,7 @@
       </div>
     </div>
     <p class="lr-footer__copy">©
-      <script>document.write(new Date().getFullYear());</script> 롯데부동산. All rights reserved.
+      <span data-current-year></span> 롯데부동산. All rights reserved.
     </p>
   </footer>
 
@@ -338,10 +331,6 @@
     <a href="listings.html"><span>🏠</span><strong>매물보기</strong></a>
     <a href="contact.html"><span>📍</span><strong>오시는 길</strong></a>
   </div>
-
-  <script src="js/jquery/jquery-3.7.1.min.js"></script>
-  <script src="js/plugins.js"></script>
-  <script src="js/active.js"></script>
   <script type="module" src="js/knowledgeWidget.js"></script>
   <script src="js/analyticsEvents.js"></script>
   <script src="js/mobileNav.js"></script>
@@ -349,6 +338,7 @@
   <script type="module" src="js/homeReportPreview.js"></script>
   <script type="module" src="js/homeInquiryReceipts.js"></script>
   <script src="js/languageSuggestion.js"></script>
+  <script src="js/currentYear.js"></script>
 </body>
 
 </html>

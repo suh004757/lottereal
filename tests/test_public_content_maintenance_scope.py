@@ -40,7 +40,7 @@ class PublicContentMaintenanceScopeTests(unittest.TestCase):
         self.assertIn('discover', commands[0][0])
         self.assertIn('scripts/lottereal_supabase.py', commands[1][0])
         self.assertEqual(commands[2][0][-1], 'js/config/appConfig.js')
-        self.assertEqual(commands[3][0][-1], 'js/active.js')
+        self.assertEqual(commands[3][0][-1], 'js/currentYear.js')
         self.assertEqual(commands[4][0][-1], 'scripts/maintenance_check.py')
 
 

@@ -24,6 +24,16 @@ let publishedReports = [];
 function initReportPage() {
   loadReport();
 
+  document.querySelector('[data-report-open-evidence]')?.addEventListener('click', () => {
+    window.openEvidence();
+  });
+  document.querySelector('[data-report-copy-summary]')?.addEventListener('click', () => {
+    window.copySummary();
+  });
+  document.querySelector('[data-report-close-evidence]')?.addEventListener('click', () => {
+    window.closeEvidence();
+  });
+
   const modal = document.getElementById('evidence-modal');
   if (modal) {
     modal.addEventListener('click', (event) => {
