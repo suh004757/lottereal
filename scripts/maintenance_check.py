@@ -190,6 +190,14 @@ def check_html_security_policy() -> list[str]:
             continue
         relative = html.relative_to(REPO)
         source = html.read_text(encoding="utf-8", errors="ignore")
+        charset = re.search(r"<meta\s+charset=[\"'][^\"']+[\"']\s*/?>", source, re.IGNORECASE)
+        document_head = re.search(r"<head\b[^>]*>.*?</head\s*>", source, re.IGNORECASE | re.DOTALL)
+        if not charset:
+            errors.append(f"charset declaration missing: {relative}")
+        elif len(source[:charset.start()].encode("utf-8")) >= 1024:
+            errors.append(f"charset declaration is too late: {relative}")
+        elif not document_head or charset.group(0) not in document_head.group(0):
+            errors.append(f"charset declaration must be inside head: {relative}")
         if html == redirect_file:
             if "default-src 'none'; script-src 'self'; base-uri 'none'; form-action 'none'" not in source:
                 errors.append(f"redirect CSP missing or weakened: {relative}")

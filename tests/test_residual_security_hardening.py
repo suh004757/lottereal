@@ -89,6 +89,11 @@ class ResidualSecurityHardeningTest(unittest.TestCase):
                 source,
                 str(html.relative_to(ROOT)),
             )
+            charset_at = source.lower().find('<meta charset=')
+            csp_at = source.find(f'<meta http-equiv="Content-Security-Policy" content="{expected_csp}">')
+            self.assertGreater(charset_at, 0, str(html.relative_to(ROOT)))
+            self.assertLess(len(source[:charset_at].encode('utf-8')), 1024, str(html.relative_to(ROOT)))
+            self.assertLess(charset_at, csp_at, str(html.relative_to(ROOT)))
 
     def test_no_executable_inline_scripts_importmaps_or_event_handlers_remain(self):
         for html in deployed_html():
@@ -156,6 +161,10 @@ class ResidualSecurityHardeningTest(unittest.TestCase):
         for relative in unused_styles:
             self.assertNotIn(f'@import url({relative})', style)
             self.assertFalse((ROOT / relative).exists(), relative)
+        scss = (ROOT / 'scss' / 'style.scss').read_text(encoding='utf-8')
+        self.assertNotIn('fonts.googleapis.com', scss)
+        for relative in unused_styles:
+            self.assertNotIn(relative, scss)
 
     def test_vendor_gate_rejects_protocol_relative_jsdelivr_urls(self):
         module = load_maintenance_module()
@@ -230,6 +239,18 @@ class ResidualSecurityHardeningTest(unittest.TestCase):
                 errors = module.check_html_security_policy()
         self.assertTrue(any('CSP appears after an external resource' in error for error in errors), errors)
         self.assertTrue(any('referrer policy appears after an external resource' in error for error in errors), errors)
+
+    def test_policy_gate_rejects_late_charset(self):
+        module = load_maintenance_module()
+        with tempfile.TemporaryDirectory() as directory:
+            temp_root = Path(directory)
+            csp = f'<meta http-equiv="Content-Security-Policy" content="{module.PUBLIC_CSP}">'
+            referrer = '<meta name="referrer" content="strict-origin-when-cross-origin">'
+            source = '<html><head>' + (' ' * 1100) + '<meta charset="UTF-8">' + csp + referrer + '</head></html>'
+            (temp_root / 'probe.html').write_text(source, encoding='utf-8')
+            with patch.object(module, 'REPO', temp_root):
+                errors = module.check_html_security_policy()
+        self.assertTrue(any('charset declaration is too late' in error for error in errors), errors)
 
 
 if __name__ == '__main__':
