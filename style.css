@@ -145,15 +145,8 @@
 
 /* Variables */
 /* mixin */
-/* :: Import Fonts */
-@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css");
 /* :: Import All CSS */
 @import url(css/bootstrap.min.css);
-@import url(css/animate.css);
-@import url(css/owl.carousel.css);
-@import url(css/magnific-popup.css);
-@import url(css/font-awesome.min.css);
-@import url(css/themify-icons.css);
 
 /* :: Base CSS */
 * {

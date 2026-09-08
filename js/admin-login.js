@@ -1,147 +1,87 @@
 import { APP_CONFIG } from './config/appConfig.js';
 import {
-  signInAdmin,
   signInAdminWithGoogle,
   isGoogleSignInAvailable,
   signOutAdmin,
-  getSessionRemainingMs,
   getCurrentSessionUser
 } from './services/authService.js';
 
-// DOM refs
-const form = document.getElementById('adminLoginForm');
-const logoutButton = document.getElementById('logoutButton');
-const messageEl = document.getElementById('loginMessage');
-const geoButton = document.getElementById('geoButton');
-const geoStatus = document.getElementById('geoStatus');
-const sessionStatus = document.getElementById('sessionStatus');
 const googleLoginButton = document.getElementById('googleLoginButton');
-const googleLoginDivider = document.getElementById('googleLoginDivider');
+const googleLoginButtonText = document.getElementById('googleLoginButtonText');
+const messageEl = document.getElementById('loginMessage');
 
-let geoData = null;
-let authUnavailable = false;
+let authUnavailable = true;
 
 async function init() {
   bindEvents();
-  updateSessionStatus();
-  setInterval(updateSessionStatus, 1000);
 
   if (!APP_CONFIG.SUPABASE_URL || !APP_CONFIG.SUPABASE_KEY) {
-    authUnavailable = true;
-    setMessage('Supabase credentials are missing. Contact an administrator.', 'error');
-    toggleFormDisabled(true);
+    setButtonUnavailable();
+    setMessage('로그인 서비스를 불러오지 못했습니다. 관리자에게 문의해 주세요.', 'error');
     return;
   }
 
   try {
-    if (googleLoginButton && await isGoogleSignInAvailable()) {
-      googleLoginButton.hidden = false;
-      if (googleLoginDivider) googleLoginDivider.hidden = false;
-    }
     const existingUser = await getCurrentSessionUser();
     if (existingUser?.app_metadata?.role === 'admin') {
-      setMessage('관리자 확인 완료. 초안 접수 화면으로 이동합니다.', 'success');
+      setMessage('관리자 확인 완료. 관리 화면으로 이동합니다.', 'success');
       window.location.href = './intake.html';
-    } else if (existingUser) {
+      return;
+    }
+    if (existingUser) {
       await signOutAdmin();
       setMessage('관리자 권한이 없는 계정입니다.', 'error');
     }
+
+    const googleAvailable = await isGoogleSignInAvailable();
+    if (!googleAvailable) {
+      setButtonUnavailable();
+      setMessage('현재 Google 로그인을 사용할 수 없습니다. 관리자에게 문의해 주세요.', 'error');
+      return;
+    }
+
+    authUnavailable = false;
+    googleLoginButton.disabled = false;
+    googleLoginButtonText.textContent = 'Google 계정으로 계속';
   } catch (error) {
-    console.error('[Admin] Failed to resolve current session:', error);
-    setMessage('Failed to verify the current session.', 'error');
+    console.error('[Admin] Failed to initialize Google login:', error);
+    setButtonUnavailable();
+    setMessage('로그인 상태를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.', 'error');
   }
 }
 
 function bindEvents() {
   googleLoginButton?.addEventListener('click', async () => {
-    if (authUnavailable) return;
+    if (authUnavailable || googleLoginButton.disabled) return;
+
     setMessage('Google 로그인 화면으로 이동합니다.', 'info');
-    toggleFormDisabled(true);
+    googleLoginButton.disabled = true;
+    googleLoginButtonText.textContent = 'Google로 이동 중';
+
     try {
       const result = await signInAdminWithGoogle();
       if (!result.success) {
         setMessage(result.error || 'Google 로그인을 시작하지 못했습니다.', 'error');
-        toggleFormDisabled(false);
+        restoreGoogleButton();
       }
     } catch (error) {
       console.error('[Admin] Google login error:', error);
-      setMessage('Google 로그인을 시작하지 못했습니다.', 'error');
-      toggleFormDisabled(false);
+      setMessage('Google 로그인을 시작하지 못했습니다. 다시 시도해 주세요.', 'error');
+      restoreGoogleButton();
     }
   });
+}
 
-  if (form) {
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      if (authUnavailable) {
-        setMessage('Supabase authentication is disabled.', 'error');
-        return;
-      }
+function restoreGoogleButton() {
+  if (authUnavailable || !googleLoginButton) return;
+  googleLoginButton.disabled = false;
+  googleLoginButtonText.textContent = 'Google 계정으로 계속';
+}
 
-      const formData = new FormData(form);
-      const email = formData.get('email');
-      const password = formData.get('password');
-
-      setMessage('Signing in...', 'info');
-      toggleFormDisabled(true);
-
-      try {
-        const result = await signInAdmin(email, password, {
-          geolocation: geoData,
-          userAgent: navigator?.userAgent || '',
-          ipAddressHint: null
-        });
-
-        if (result.success && result.user?.app_metadata?.role === 'admin') {
-          setMessage('로그인 완료. 초안 접수 화면으로 이동합니다.', 'success');
-          window.location.href = './intake.html';
-        } else if (result.success) {
-          await signOutAdmin();
-          setMessage('관리자 권한이 없는 계정입니다.', 'error');
-        } else {
-          setMessage(result.error || 'Login failed. Check your credentials.', 'error');
-        }
-      } catch (error) {
-        console.error('[Admin] Login error:', error);
-        setMessage(error.message || 'Login failed.', 'error');
-      } finally {
-        toggleFormDisabled(false);
-      }
-    });
-  }
-
-  if (logoutButton) {
-    logoutButton.addEventListener('click', async () => {
-      try {
-        await signOutAdmin();
-        setMessage('Logged out.', 'info');
-      } catch (error) {
-        console.error('[Admin] Logout error:', error);
-        setMessage('Logout failed. See console for details.', 'error');
-      }
-    });
-  }
-
-  if (geoButton) {
-    geoButton.addEventListener('click', () => {
-      if (!navigator.geolocation) {
-        geoStatus.textContent = 'Geolocation is not supported.';
-        return;
-      }
-      geoStatus.textContent = 'Requesting location...';
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          geoData = position;
-          geoStatus.textContent = 'Location attached';
-        },
-        (error) => {
-          console.warn('[Admin] Geolocation error:', error);
-          geoStatus.textContent = 'Location denied';
-        },
-        { enableHighAccuracy: true, timeout: 8000 }
-      );
-    });
-  }
+function setButtonUnavailable() {
+  authUnavailable = true;
+  if (googleLoginButton) googleLoginButton.disabled = true;
+  if (googleLoginButtonText) googleLoginButtonText.textContent = 'Google 로그인 사용 불가';
 }
 
 function setMessage(text, status = 'info') {
@@ -150,40 +90,8 @@ function setMessage(text, status = 'info') {
   messageEl.dataset.status = status;
 }
 
-function toggleFormDisabled(isDisabled) {
-  const submit = form?.querySelector('button[type="submit"]');
-  if (submit) submit.disabled = isDisabled;
-  if (geoButton) geoButton.disabled = isDisabled;
-  if (googleLoginButton) googleLoginButton.disabled = isDisabled;
-}
-
-function updateSessionStatus() {
-  if (!sessionStatus) return;
-  const remaining = typeof getSessionRemainingMs === 'function' ? getSessionRemainingMs() : null;
-  if (remaining === null) {
-    sessionStatus.textContent = 'Session idle';
-    sessionStatus.classList.remove('expiring');
-    return;
-  }
-  if (remaining <= 0) {
-    sessionStatus.textContent = 'Session expired - sign in again';
-    sessionStatus.classList.add('expiring');
-    return;
-  }
-  const mins = Math.floor(remaining / 60000);
-  const secs = Math.floor((remaining % 60000) / 1000)
-    .toString()
-    .padStart(2, '0');
-  sessionStatus.textContent = `Time left ${mins}:${secs}`;
-  if (remaining < 5 * 60 * 1000) {
-    sessionStatus.classList.add('expiring');
-  } else {
-    sessionStatus.classList.remove('expiring');
-  }
-}
-
 init().catch((error) => {
   console.error('[Admin] Login bootstrap error:', error);
-  setMessage('Failed to initialize login view.', 'error');
-  toggleFormDisabled(true);
+  setButtonUnavailable();
+  setMessage('로그인 화면을 준비하지 못했습니다. 잠시 후 다시 시도해 주세요.', 'error');
 });

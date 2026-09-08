@@ -2,7 +2,10 @@
 <html lang="ko">
 
 <head>
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'none'; script-src 'self'; script-src-attr 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://itcztvceelfvppjwhmvl.supabase.co; form-action 'self'; upgrade-insecure-requests">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>리포트 편집기 | 롯데부동산 관리자</title>
     <link rel="icon" href="../img/core-img/favicon.ico">
@@ -13,8 +16,6 @@
         rel="stylesheet">
     <link rel="stylesheet" href="../style.css">
     <link rel="stylesheet" href="../css/insights.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
-    <script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
     <style>
         .admin-editor {
             max-width: 1400px;
@@ -66,6 +67,12 @@
             min-height: 100px;
             resize: vertical;
             font-family: inherit;
+        }
+
+        .report-markdown-input {
+            min-height: 420px;
+            font-family: "JetBrains Mono", Consolas, monospace;
+            line-height: 1.6;
         }
 
         .editor-actions {
@@ -253,7 +260,7 @@
             </div>
             <div class="form-group">
                 <label class="form-label" for="report-content">리포트 본문 (Markdown) *</label>
-                <textarea id="report-content"></textarea>
+                <textarea id="report-content" class="form-input form-textarea report-markdown-input" rows="24"></textarea>
                 <small style="color:#6b7280;font-size:0.875rem;"><strong>권장 구조:</strong> 거시 환경 → 수요 및 공급 → 가격 동향 → 리스크
                     관찰 → 주목할 신호</small>
             </div>
@@ -287,10 +294,8 @@
             <div id="preview-body"></div>
         </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.4.14/dist/purify.min.js"
-        integrity="sha384-46dPGH1XlTmj7bc50bqLjTdORXs/3EP2QpA/6EWbelYWOY9VGp+87RT61S3Mcslb"
-        crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+    <script src="../js/vendor/dompurify-3.4.15.min.js"></script>
+    <script src="../js/vendor/marked-18.0.11.min.js"></script>
     <script type="module" src="../js/reportEditor.js"></script>
 </body>
 

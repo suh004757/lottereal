@@ -2,8 +2,11 @@
 <html lang="ko">
 
 <head>
+<meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'none'; script-src 'self' https://www.googletagmanager.com; script-src-attr 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://itcztvceelfvppjwhmvl.supabase.co https://www.google-analytics.com https://region1.google-analytics.com; form-action 'self'; upgrade-insecure-requests">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <script src="js/privacyAnalytics.js"></script>
-    <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>송파·잠실 부동산 시장 리포트와 매물 상담 | 롯데부동산</title>
     <meta name="description" content="송파·잠실·삼전·석촌 생활권 부동산 시장 리포트. 전세·월세·매매·상가 매물을 보기 전 가격 흐름과 상담 준비사항을 쉽게 확인하세요.">
@@ -30,9 +33,9 @@
   <link rel="stylesheet" href="css/mobile.css">
     <link rel="stylesheet" href="css/insights.css">
 
-    <!-- Markdown rendering -->
-    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+    <!-- Pinned, self-hosted Markdown parser and sanitizer -->
+    <script src="js/vendor/dompurify-3.4.15.min.js"></script>
+    <script src="js/vendor/marked-18.0.11.min.js"></script>
 </head>
 
 <body>
@@ -41,7 +44,7 @@
             <div class="lr-brand"><a href="./">롯데부동산</a></div>
             <button class="lr-hamburger" aria-label="메뉴" aria-expanded="false">☰</button>
       <nav class="lr-nav" aria-label="주요 메뉴">
-        <a href="./#inquiry-receipts">현재 관심</a>
+        <a href="corporate-buildings.html">기업 사옥</a>
         <a href="listings.html">매물 찾기</a>
         <a href="report.html" class="active" aria-current="page">시장·정책</a>
         <a href="disputes.html">계약 사례</a>
@@ -77,10 +80,10 @@
 
                 <!-- Action Buttons -->
                 <div class="lr-report-actions">
-                    <button class="lr-btn lr-btn--primary" onclick="openEvidence()">
+                    <button class="lr-btn lr-btn--primary" data-report-open-evidence>
                         📋 데이터 근거 및 출처
                     </button>
-                    <button class="lr-btn lr-btn--ghost" onclick="copySummary()">
+                    <button class="lr-btn lr-btn--ghost" data-report-copy-summary>
                         🔗 요약 복사하기
                     </button>
                     <a class="lr-btn lr-btn--ghost" href="#revision-history">
@@ -233,7 +236,7 @@
             </div>
         </div>
         <p class="lr-footer__copy">©
-            <script>document.write(new Date().getFullYear());</script> 롯데부동산. All rights reserved.
+            <span data-current-year></span> 롯데부동산. All rights reserved.
         </p>
         <p class="lr-footer__disclaimer"
             style="font-size: 0.75rem; color: rgba(255,255,255,0.5); text-align: center; margin-top: 0.5rem;">
@@ -246,7 +249,7 @@
         <div class="lr-modal__content">
             <div class="lr-modal__header">
                 <h3>데이터 근거 및 출처</h3>
-                <button class="lr-modal__close" onclick="closeEvidence()">&times;</button>
+                <button class="lr-modal__close" data-report-close-evidence>&times;</button>
             </div>
             <div class="lr-modal__body" id="evidence-content">
                 <!-- Populated by JS -->
@@ -264,16 +267,11 @@
     <span class="lr-fab__icon">📞</span>
     <span>지금 전화</span>
   </a>
-
-  <script src="js/jquery/jquery-3.7.1.min.js"></script>
-    <script src="js/popper.min.js"></script>
-    <script src="js/bootstrap.min.js"></script>
-    <script src="js/plugins.js"></script>
-    <script src="js/active.js"></script>
     <script type="module" src="js/reportPage.js"></script>
     <script type="module" src="js/knowledgeWidget.js"></script>
   <script src="js/analyticsEvents.js"></script>
   <script src="js/mobileNav.js"></script>
+  <script src="js/currentYear.js"></script>
 </body>
 
 </html>

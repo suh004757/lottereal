@@ -5,6 +5,7 @@
 
 import { APP_CONFIG } from '../config/appConfig.js';
 import { getSupabaseClient } from '../config/supabaseConfig.js';
+import { PUBLIC_LISTING_SELECT_QUERY } from '../publicListingFields.mjs';
 import { SAFE_CONTACT_PHONE } from '../utils/contactPhone.mjs';
 
 // 리스팅 페이로드 스키마 정의
@@ -263,7 +264,7 @@ async function createListingSupabase(payload) {
   const { data, error } = await supabase
     .from('property_listings')
     .insert([dbPayload])
-    .select();
+    .select(PUBLIC_LISTING_SELECT_QUERY);
 
   if (error) {
     console.error('Supabase Error:', error);
@@ -358,7 +359,11 @@ async function listListingsPublicSupabase({ query, page, pageSize, propertyType,
   if (!supabase) return listListingsMock();
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
-  let req = supabase.from('property_listings').select('*').order('created_at', { ascending: false }).range(from, to);
+  let req = supabase
+    .from('property_listings')
+    .select(PUBLIC_LISTING_SELECT_QUERY)
+    .order('created_at', { ascending: false })
+    .range(from, to);
   if (query) {
     const q = `%${query}%`;
     req = req.or(`title.ilike.${q},description.ilike.${q},address.ilike.${q},city.ilike.${q},district.ilike.${q}`);
@@ -379,7 +384,11 @@ async function listListingsPublicSupabase({ query, page, pageSize, propertyType,
 async function getListingByIdSupabase(id) {
   const supabase = getSupabaseClient();
   if (!supabase) return null;
-  const { data, error } = await supabase.from('property_listings').select('*').eq('id', id).single();
+  const { data, error } = await supabase
+    .from('property_listings')
+    .select(PUBLIC_LISTING_SELECT_QUERY)
+    .eq('id', id)
+    .single();
   if (error) {
     console.error('Supabase getListingById error', error);
     return null;
@@ -396,10 +405,10 @@ async function getDashboardStatsSupabase() {
   try {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     const queries = [
-      supabase.from('property_listings').select('*', { count: 'exact', head: true }),
+      supabase.from('property_listings').select('id', { count: 'exact', head: true }),
       supabase
         .from('property_listings')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .gte('created_at', sevenDaysAgo),
       supabase.from('inquiries').select('*', { count: 'exact', head: true }),
       supabase.from('inquiries').select('*', { count: 'exact', head: true }).eq('status', 'unread')
@@ -446,8 +455,7 @@ async function listListingsAdminSupabase({ page, pageSize, sort, direction }) {
   const to = from + pageSize - 1;
   try {
     const { data, error, count } = await supabase
-      .from('property_listings')
-      .select('*', { count: 'exact' })
+      .rpc('admin_list_property_listings', {}, { count: 'exact' })
       .order(sort, { ascending: direction === 'asc' })
       .range(from, to);
     if (error) {
@@ -480,7 +488,12 @@ async function updateListingSupabase(id, patch) {
     contact_phone: SAFE_CONTACT_PHONE,
     contact_email: patch.contact?.email || patch.contact_email
   };
-  const { data, error } = await supabase.from('property_listings').update(dbPatch).eq('id', id).select().single();
+  const { data, error } = await supabase
+    .from('property_listings')
+    .update(dbPatch)
+    .eq('id', id)
+    .select(PUBLIC_LISTING_SELECT_QUERY)
+    .single();
   if (error) {
     console.error('Supabase updateListing error', error);
     throw error;

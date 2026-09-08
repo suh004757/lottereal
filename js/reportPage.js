@@ -4,6 +4,8 @@ import {
   incrementReportViews,
   listPublishedReports
 } from './services/reportAdapter.js';
+import { buildSanitizedReportHtml } from './reportRenderSecurity.mjs';
+import { safeExternalHttpUrl } from './publicRenderSecurity.mjs';
 import { findMatchingLandingConfigs } from './config/reportLandingConfig.js';
 import { buildAbsoluteUrl, renderJsonLd, updateSeoMeta } from './utils/seo.js';
 import {
@@ -19,8 +21,18 @@ const reportSlug = urlParams.get('slug');
 let currentReport = null;
 let publishedReports = [];
 
-document.addEventListener('DOMContentLoaded', () => {
+function initReportPage() {
   loadReport();
+
+  document.querySelector('[data-report-open-evidence]')?.addEventListener('click', () => {
+    window.openEvidence();
+  });
+  document.querySelector('[data-report-copy-summary]')?.addEventListener('click', () => {
+    window.copySummary();
+  });
+  document.querySelector('[data-report-close-evidence]')?.addEventListener('click', () => {
+    window.closeEvidence();
+  });
 
   const modal = document.getElementById('evidence-modal');
   if (modal) {
@@ -30,7 +42,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initReportPage, { once: true });
+} else {
+  initReportPage();
+}
 
 async function loadReport() {
   try {
@@ -82,17 +100,14 @@ function renderReport() {
   if (!contentDiv) return;
 
   try {
-    marked.setOptions({
-      breaks: true,
-      gfm: true
+    contentDiv.innerHTML = buildSanitizedReportHtml({
+      markdown: currentReport.report_md,
+      marked: window.marked,
+      purifier: window.DOMPurify
     });
-
-    const rawHtml = marked.parse(currentReport.report_md || '');
-    const safeHtml = window.DOMPurify ? window.DOMPurify.sanitize(rawHtml) : rawHtml;
-    contentDiv.innerHTML = safeHtml;
   } catch (error) {
     console.error('Error rendering markdown:', error);
-    contentDiv.innerHTML = '<p>리포트를 렌더링하지 못했습니다.</p>';
+    contentDiv.textContent = '리포트를 안전하게 렌더링하지 못했습니다.';
   }
 }
 
@@ -303,14 +318,20 @@ function extractKeywords(report) {
 
 window.openEvidence = function openEvidence() {
   const evidence = currentReport?.evidence_json || [];
-  const sourcesHtml = evidence.map((source) => `
+  const sourcesHtml = evidence.map((source) => {
+    const safeUrl = safeExternalHttpUrl(source.url);
+    const sourceLink = safeUrl
+      ? `<a href="${escapeHtml(safeUrl)}" target="_blank" rel="noopener noreferrer" style="color: #3b82f6; font-size: 0.875rem;">${escapeHtml(safeUrl)}</a><br>`
+      : '';
+    return `
     <div style="padding: 1rem; background: #f9fafb; border-radius: 0.5rem; margin-bottom: 1rem;">
       <strong style="color: #111827;">${escapeHtml(source.name)}</strong><br>
-      <a href="${escapeHtml(source.url)}" target="_blank" rel="noopener noreferrer" style="color: #3b82f6; font-size: 0.875rem;">${escapeHtml(source.url)}</a><br>
+      ${sourceLink}
       <span style="color: #6b7280; font-size: 0.875rem;">수집일: ${escapeHtml(source.fetchedAt || '')}</span><br>
       <span style="color: #6b7280; font-size: 0.875rem;">범위: ${escapeHtml(source.coverage || '')}</span>
     </div>
-  `).join('');
+  `;
+  }).join('');
 
   const content = document.getElementById('evidence-content');
   const modal = document.getElementById('evidence-modal');
