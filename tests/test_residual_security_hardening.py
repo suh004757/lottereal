@@ -6,23 +6,13 @@ from pathlib import Path
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
-ALLOWED_JSDELIVR_URLS = {
-    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm',
-    'https://cdn.jsdelivr.net/npm/@supabase/auth-js@2.65.0/+esm',
-    'https://cdn.jsdelivr.net/npm/@supabase/functions-js@2.4.1/+esm',
-    'https://cdn.jsdelivr.net/npm/@supabase/node-fetch@2.6.15/+esm',
-    'https://cdn.jsdelivr.net/npm/@supabase/postgrest-js@1.16.1/+esm',
-    'https://cdn.jsdelivr.net/npm/@supabase/realtime-js@2.10.2/+esm',
-    'https://cdn.jsdelivr.net/npm/@supabase/storage-js@2.7.0/+esm',
-    'https://cdn.jsdelivr.net/npm/ws@8.17.1/+esm',
-}
-JSDELIVR_CSP_SOURCES = ' '.join(sorted(ALLOWED_JSDELIVR_URLS))
+ALLOWED_JSDELIVR_URLS = set()
 STANDARD_CSP = (
     "default-src 'self'; "
     "base-uri 'self'; "
     "object-src 'none'; "
     "frame-src 'none'; "
-    f"script-src 'self' {JSDELIVR_CSP_SOURCES} https://www.googletagmanager.com; "
+    "script-src 'self' https://www.googletagmanager.com; "
     "script-src-attr 'none'; "
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
     "font-src 'self' data: https://fonts.gstatic.com; "
@@ -36,7 +26,7 @@ ADMIN_CSP = (
     "base-uri 'self'; "
     "object-src 'none'; "
     "frame-src 'none'; "
-    f"script-src 'self' {JSDELIVR_CSP_SOURCES}; "
+    "script-src 'self'; "
     "script-src-attr 'none'; "
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
     "font-src 'self' data: https://fonts.gstatic.com; "
@@ -132,6 +122,7 @@ class ResidualSecurityHardeningTest(unittest.TestCase):
         expected = {
             'js/vendor/dompurify-3.4.15.min.js': 'f263b05369e050fa175d4ecb9c9358eb4253602d510297adfb31df48b2f1c4d5',
             'js/vendor/marked-18.0.11.min.js': '69451c8541c9c1e7a4bf3ffc6f73c4d89633de92bfbe3e484dfe182ef8091f88',
+            'js/vendor/supabase-2.45.4.min.js': '96277ec00e19df476d7396a8a2586b41ed1033dcf680f5aa79b0c556059792b8',
         }
         self.assertEqual(module.VENDOR_SHA256, expected)
         self.assertEqual(module.ALLOWED_JSDELIVR_URLS, ALLOWED_JSDELIVR_URLS)
@@ -147,6 +138,17 @@ class ResidualSecurityHardeningTest(unittest.TestCase):
         self.assertIn('"security_policy_errors": security_policy_errors[:50]', maintenance_source)
         self.assertIn('not vendor_errors', maintenance_source)
         self.assertIn('not security_policy_errors', maintenance_source)
+
+    def test_supabase_runtime_is_self_hosted_and_cdn_execution_is_disallowed(self):
+        source = (ROOT / 'js' / 'config' / 'supabaseConfig.js').read_text(encoding='utf-8')
+        self.assertIn("import '../vendor/supabase-2.45.4.min.js';", source)
+        self.assertIn('globalThis.supabase', source)
+        self.assertNotIn('cdn.jsdelivr.net', source)
+        for html in deployed_html():
+            if html in EXCLUDED_HTML:
+                continue
+            policy = html.read_text(encoding='utf-8', errors='replace')
+            self.assertNotIn('cdn.jsdelivr.net', policy, str(html.relative_to(ROOT)))
 
     def test_no_unapproved_remote_stylesheet_dependency_remains(self):
         style = (ROOT / 'style.css').read_text(encoding='utf-8')
