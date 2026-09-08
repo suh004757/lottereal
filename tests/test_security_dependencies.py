@@ -30,10 +30,11 @@ class SecurityDependencyTest(unittest.TestCase):
             if "js/bootstrap.min.js" in html or "js/popper.min.js" in html:
                 offenders.append(str(path.relative_to(ROOT)))
         self.assertEqual(offenders, [])
-        active_js = (ROOT / "js/active.js").read_text(encoding="utf-8-sig")
-        self.assertNotIn(".tooltip()", active_js)
         self.assertFalse((ROOT / "js/bootstrap.min.js").exists())
         self.assertFalse((ROOT / "js/popper.min.js").exists())
+        self.assertFalse((ROOT / "js/active.js").exists())
+        self.assertFalse((ROOT / "js/plugins.js").exists())
+        self.assertFalse((ROOT / "js/jquery/jquery-3.7.1.min.js").exists())
 
 
 if __name__ == "__main__":

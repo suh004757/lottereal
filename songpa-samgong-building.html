@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'none'; script-src 'self' https://cdn.jsdelivr.net/npm/@supabase/auth-js@2.65.0/+esm https://cdn.jsdelivr.net/npm/@supabase/functions-js@2.4.1/+esm https://cdn.jsdelivr.net/npm/@supabase/node-fetch@2.6.15/+esm https://cdn.jsdelivr.net/npm/@supabase/postgrest-js@1.16.1/+esm https://cdn.jsdelivr.net/npm/@supabase/realtime-js@2.10.2/+esm https://cdn.jsdelivr.net/npm/@supabase/storage-js@2.7.0/+esm https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm https://cdn.jsdelivr.net/npm/ws@8.17.1/+esm https://www.googletagmanager.com; script-src-attr 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://itcztvceelfvppjwhmvl.supabase.co https://www.google-analytics.com https://region1.google-analytics.com; form-action 'self'; upgrade-insecure-requests">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <script src="js/privacyAnalytics.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -241,7 +243,7 @@
       </div>
       <div class="lr-footer__links"><a href="corporate-buildings.html">기업 사옥</a><a href="listings.html">전체 매물</a><a href="contact.html">문의·방문</a></div>
     </div>
-    <p class="lr-footer__copy">© <script>document.write(new Date().getFullYear());</script> 롯데부동산. All rights reserved.</p>
+    <p class="lr-footer__copy">© <span data-current-year></span> 롯데부동산. All rights reserved.</p>
   </footer>
 
   <div class="lr-mobile-actionbar lr-corporate-actionbar" aria-label="삼공빌딩 빠른 상담">
@@ -249,13 +251,11 @@
     <a href="tel:050714025055"><span aria-hidden="true">📞</span><strong>전화 상담</strong></a>
     <a href="https://map.naver.com/p/search/%EC%84%9C%EC%9A%B8%20%EC%86%A1%ED%8C%8C%EA%B5%AC%20%EC%9C%84%EB%A1%80%EC%84%B1%EB%8C%80%EB%A1%9C%2098" target="_blank" rel="noreferrer"><span aria-hidden="true">📍</span><strong>위치</strong></a>
   </div>
-
-  <script src="js/jquery/jquery-3.7.1.min.js"></script>
-  <script src="js/active.js"></script>
   <script src="js/languageSuggestion.js"></script>
   <script type="module" src="js/knowledgeWidget.js"></script>
   <script type="module" src="js/corporateBuildingFit.js"></script>
   <script src="js/analyticsEvents.js"></script>
   <script src="js/mobileNav.js"></script>
+  <script src="js/currentYear.js"></script>
 </body>
 </html>
