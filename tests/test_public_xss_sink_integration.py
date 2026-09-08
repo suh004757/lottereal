@@ -33,6 +33,14 @@ class PublicXssSinkIntegrationTest(unittest.TestCase):
         source = (ROOT / "js" / "services" / "reportAdapter.js").read_text(encoding="utf-8")
         self.assertIn("latest?.slug ? getReportBySlug(latest.slug) : null", source)
 
+    def test_report_evidence_links_and_listing_seo_images_use_url_allowlists(self):
+        report = (ROOT / "js" / "reportPage.js").read_text(encoding="utf-8")
+        listing = (ROOT / "js" / "listingDetail.js").read_text(encoding="utf-8")
+        self.assertIn("safeExternalHttpUrl(source.url)", report)
+        self.assertNotIn('href="${escapeHtml(source.url)}"', report)
+        self.assertIn("safeImageUrl", listing)
+        self.assertIn("const image = safeImageUrl", listing)
+
 
 if __name__ == "__main__":
     unittest.main()

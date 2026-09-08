@@ -139,7 +139,8 @@ function applySeo(listing, formattedPrice, freshness) {
     getSafeListingDescription(listing, freshness, 'ko') || listing.property_type || '송파·강남 부동산 상세 정보'
   ].filter(Boolean).join(' | ').slice(0, 160);
   const canonical = buildAbsoluteUrl(`listing-detail.html?id=${encodeURIComponent(listing.id || '')}`);
-  const image = listing.images?.[0] || listing.image || buildAbsoluteUrl('img/bg-img/lotte_street_view.png');
+  const image = safeImageUrl(listing.images?.[0] || listing.image)
+    || buildAbsoluteUrl('img/bg-img/lotte_street_view.png');
 
   updateSeoMeta({
     title,
