@@ -27,18 +27,9 @@ PUBLIC_CONTENT_JS = (
 VENDOR_SHA256 = {
     "js/vendor/dompurify-3.4.15.min.js": "f263b05369e050fa175d4ecb9c9358eb4253602d510297adfb31df48b2f1c4d5",
     "js/vendor/marked-18.0.11.min.js": "69451c8541c9c1e7a4bf3ffc6f73c4d89633de92bfbe3e484dfe182ef8091f88",
+    "js/vendor/supabase-2.45.4.min.js": "96277ec00e19df476d7396a8a2586b41ed1033dcf680f5aa79b0c556059792b8",
 }
-ALLOWED_JSDELIVR_URLS = {
-    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm",
-    "https://cdn.jsdelivr.net/npm/@supabase/auth-js@2.65.0/+esm",
-    "https://cdn.jsdelivr.net/npm/@supabase/functions-js@2.4.1/+esm",
-    "https://cdn.jsdelivr.net/npm/@supabase/node-fetch@2.6.15/+esm",
-    "https://cdn.jsdelivr.net/npm/@supabase/postgrest-js@1.16.1/+esm",
-    "https://cdn.jsdelivr.net/npm/@supabase/realtime-js@2.10.2/+esm",
-    "https://cdn.jsdelivr.net/npm/@supabase/storage-js@2.7.0/+esm",
-    "https://cdn.jsdelivr.net/npm/ws@8.17.1/+esm",
-}
-JSDELIVR_CSP_SOURCES = " ".join(sorted(ALLOWED_JSDELIVR_URLS))
+ALLOWED_JSDELIVR_URLS = set()
 FORBIDDEN_DEPENDENCY_FILES = (
     "js/plugins.js",
     "js/active.js",
@@ -64,14 +55,14 @@ FORBIDDEN_DEPENDENCY_REFS = (
 )
 PUBLIC_CSP = (
     "default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'none'; "
-    f"script-src 'self' {JSDELIVR_CSP_SOURCES} https://www.googletagmanager.com; script-src-attr 'none'; "
+    "script-src 'self' https://www.googletagmanager.com; script-src-attr 'none'; "
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; "
     "img-src 'self' data: blob: https:; connect-src 'self' https://itcztvceelfvppjwhmvl.supabase.co "
     "https://www.google-analytics.com https://region1.google-analytics.com; form-action 'self'; upgrade-insecure-requests"
 )
 ADMIN_CSP = (
     "default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'none'; "
-    f"script-src 'self' {JSDELIVR_CSP_SOURCES}; script-src-attr 'none'; "
+    "script-src 'self'; script-src-attr 'none'; "
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; "
     "img-src 'self' data: blob: https:; connect-src 'self' https://itcztvceelfvppjwhmvl.supabase.co; "
     "form-action 'self'; upgrade-insecure-requests"
