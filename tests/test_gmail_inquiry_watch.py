@@ -149,6 +149,35 @@ class GmailInquiryWatchTest(unittest.TestCase):
             self.assertNotIn('RFC822', request)
             self.assertNotIn('BODY[]', request)
 
+    def test_main_retries_initial_imap_timeout_once(self):
+        with tempfile.TemporaryDirectory() as directory:
+            env_path = Path(directory) / '.env'
+            state_path = Path(directory) / 'state.json'
+            heartbeat_path = Path(directory) / 'heartbeat.json'
+            env_path.write_text(
+                'LOTTEREAL_GMAIL_ADDRESS=owner@example.com\n'
+                'LOTTEREAL_GMAIL_APP_PASSWORD=secret\n',
+                encoding='utf-8',
+            )
+            with (
+                mock.patch.dict(os.environ, {
+                    'LOTTEREAL_ENV_PATH': str(env_path),
+                    'LOTTEREAL_GMAIL_WATCH_STATE': str(state_path),
+                    'LOTTEREAL_GMAIL_WATCH_HEARTBEAT': str(heartbeat_path),
+                }),
+                mock.patch.object(
+                    gmail_watch,
+                    'fetch_verified_messages',
+                    side_effect=[TimeoutError('temporary IMAP timeout'), []],
+                ) as fetch,
+                mock.patch.object(gmail_watch.time, 'sleep') as sleep,
+            ):
+                self.assertEqual(gmail_watch.main(), 0)
+            self.assertEqual(fetch.call_count, 2)
+            sleep.assert_called_once_with(2)
+            heartbeat = json.loads(heartbeat_path.read_text(encoding='utf-8'))
+            self.assertEqual(heartbeat['last_attempt_at'], heartbeat['last_success_at'])
+
     def test_first_run_baselines_and_only_later_new_key_alerts_once(self):
         first = {'key': 'a' * 64, 'platform': '직방'}
         second = {'key': 'b' * 64, 'platform': '직방'}
