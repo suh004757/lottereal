@@ -210,6 +210,18 @@
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
+  <url>
+    <loc>https://lottes.co.kr/report.html?slug=2026-09-10-songpa-building-register-check</loc>
+    <lastmod>2026-09-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://lottes.co.kr/report.html?slug=2026-09-11-songpa-shared-management-fee-check</loc>
+    <lastmod>2026-09-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
 
   <!-- 송파 리포트 허브 -->
   <url>
