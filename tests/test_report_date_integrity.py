@@ -20,6 +20,7 @@ class ReportDateIntegritySurfaceTest(unittest.TestCase):
         landing = (ROOT / 'js/reportLandingPage.js').read_text(encoding='utf-8')
         self.assertIn('compareReportsByPublication', report_page)
         self.assertIn('compareReportsByPublication', landing)
+        self.assertIn("timeZone: 'Asia/Seoul'", report_page)
 
     def test_detail_page_labels_publication_and_revision_honestly(self):
         html = (ROOT / 'report.html').read_text(encoding='utf-8')

@@ -388,7 +388,8 @@ function formatDate(value) {
   return new Date(value).toLocaleDateString('ko-KR', {
     year: 'numeric',
     month: 'long',
-    day: 'numeric'
+    day: 'numeric',
+    timeZone: 'Asia/Seoul'
   });
 }
 
