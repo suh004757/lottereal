@@ -15,6 +15,17 @@ test('calculates the Seoul housing sale ceiling for a 100 million won transactio
   assert.equal(result.ceilingFee, 500_000);
   assert.equal(result.cap, 800_000);
   assert.equal(result.monthlyMultiplier, null);
+  assert.equal(result.vatAtTenPercent, 50_000);
+  assert.equal(result.totalWithVatAtTenPercent, 550_000);
+});
+
+test('rounds the 10% VAT assumption down to a whole won', () => {
+  const result = calculateBrokerageFee({
+    propertyType: 'housing', transactionType: 'sale', price: 33_333_333,
+  });
+  assert.equal(result.ceilingFee, 199_999);
+  assert.equal(result.vatAtTenPercent, 19_999);
+  assert.equal(result.totalWithVatAtTenPercent, 219_998);
 });
 
 test('uses every Seoul housing sale boundary and statutory cap correctly', () => {

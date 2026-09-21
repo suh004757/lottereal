@@ -83,6 +83,8 @@ function init() {
       }
       const result = calculateBrokerageFee(input);
       document.querySelector('[data-result-fee]').textContent = won.format(result.ceilingFee);
+      document.querySelector('[data-result-vat]').textContent = won.format(result.vatAtTenPercent);
+      document.querySelector('[data-result-total-with-vat]').textContent = won.format(result.totalWithVatAtTenPercent);
       document.querySelector('[data-result-amount]').textContent = won.format(result.transactionAmount);
       document.querySelector('[data-result-rate]').textContent = `${(result.rate * 100).toFixed(1)}%`;
       document.querySelector('[data-result-cap]').textContent = result.cap === null ? '별도 한도 없음' : won.format(result.cap);

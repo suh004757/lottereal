@@ -22,11 +22,15 @@ function selectBand(bands, amount) {
 
 function feeResult(transactionAmount, band, extra = {}) {
   const rawFee = Math.floor(transactionAmount * band.rate);
+  const ceilingFee = band.cap === null ? rawFee : Math.min(rawFee, band.cap);
+  const vatAtTenPercent = Math.floor(ceilingFee * 0.1);
   return {
     transactionAmount,
     rate: band.rate,
     cap: band.cap,
-    ceilingFee: band.cap === null ? rawFee : Math.min(rawFee, band.cap),
+    ceilingFee,
+    vatAtTenPercent,
+    totalWithVatAtTenPercent: ceilingFee + vatAtTenPercent,
     ...extra,
   };
 }

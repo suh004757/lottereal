@@ -17,6 +17,10 @@ class BrokerageFeeCalculatorPageTests(unittest.TestCase):
         self.assertIn('id="deposit"', page)
         self.assertIn('id="monthly-rent"', page)
         self.assertIn('id="fee-result"', page)
+        self.assertIn('data-result-vat', page)
+        self.assertIn('data-result-total-with-vat', page)
+        self.assertIn('부가세 10% 가정액', page)
+        self.assertIn('10% 포함 예상 합계', page)
         self.assertIn('aria-live="polite"', page)
         self.assertIn('src="js/brokerageFeePage.mjs"', page)
         self.assertNotIn('<form action=', page)
@@ -55,6 +59,16 @@ class BrokerageFeeCalculatorPageTests(unittest.TestCase):
             self.assertIn(f'id="{hint}"', page)
         self.assertIn('id="fee-result" class="fee-result" tabindex="-1"', page)
         self.assertIn('id="fee-form-error" class="fee-form__error" role="alert" tabindex="-1"', page)
+
+    def test_dark_result_card_keeps_all_primary_copy_readable(self):
+        css = (ROOT / "css" / "brokerage-fee-calculator.css").read_text(encoding="utf-8")
+        self.assertRegex(css, r"\.fee-result__empty h2\s*\{[^}]*color:\s*#fff")
+        self.assertRegex(css, r"\.fee-result__empty > p:last-child\s*\{[^}]*color:\s*rgba\(255,255,255,")
+
+    def test_printed_result_resets_total_to_high_contrast_black(self):
+        css = (ROOT / "css" / "brokerage-fee-calculator.css").read_text(encoding="utf-8")
+        print_css = css[css.index("@media print") :]
+        self.assertRegex(print_css, r"\.fee-breakdown__total dd[^}]*\{[^}]*color:\s*#000")
 
     def test_page_is_discoverable_without_crowding_primary_navigation(self):
         index = (ROOT / "index.html").read_text(encoding="utf-8")
