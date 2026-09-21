@@ -35,6 +35,26 @@ class BrokerageFeeCalculatorPageTests(unittest.TestCase):
             self.assertIn(phrase, page)
         self.assertIn('href="contact.html"', page)
         self.assertIn('href="https://land.seoul.go.kr:444/land/broker/brokerageCommission.do"', page)
+        self.assertIn("서울특별시에 중개사무소를 둔", page)
+        self.assertNotIn("서울 소재 거래의", page)
+
+    def test_mobile_consent_notice_cannot_cover_a_fixed_calculator_cta(self):
+        page = PAGE.read_text(encoding="utf-8")
+        self.assertNotIn('class="lr-fab"', page)
+
+    def test_amount_inputs_and_live_targets_expose_units_hints_and_focus(self):
+        page = PAGE.read_text(encoding="utf-8")
+        for field, hint, label in (
+            ("sale-price", "sale-price-hint", "매매가격 (만원)"),
+            ("deposit", "deposit-hint", "보증금 (만원)"),
+            ("monthly-rent", "monthly-rent-hint", "월세 (만원)"),
+        ):
+            self.assertIn(f'id="{field}"', page)
+            self.assertIn(f'aria-label="{label}"', page)
+            self.assertIn(f'aria-describedby="{hint} fee-form-error"', page)
+            self.assertIn(f'id="{hint}"', page)
+        self.assertIn('id="fee-result" class="fee-result" tabindex="-1"', page)
+        self.assertIn('id="fee-form-error" class="fee-form__error" role="alert" tabindex="-1"', page)
 
     def test_page_is_discoverable_without_crowding_primary_navigation(self):
         index = (ROOT / "index.html").read_text(encoding="utf-8")

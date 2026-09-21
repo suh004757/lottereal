@@ -66,7 +66,7 @@
         <a href="listings.html">매물 찾기</a>
         <a href="report.html">시장·정책</a>
         <a href="disputes.html">계약 사례</a>
-        <a href="knowledge.html" class="active">자료 찾기</a>
+        <a href="knowledge.html">자료 찾기</a>
         <a href="contact.html" class="lr-nav-cta">문의·방문</a>
       </nav>
     </div>
@@ -78,7 +78,7 @@
         <div>
           <p class="lr-kicker">SEOUL BROKERAGE FEE DESK</p>
           <h1>계약 전에<br><em>상한액부터</em> 확인하세요</h1>
-          <p class="lr-lead">서울 기준 매매·전세·월세 중개보수 상한을 계산합니다. 숫자를 넣으면 거래금액 환산부터 적용 요율까지 한 번에 보여드립니다.</p>
+          <p class="lr-lead">서울특별시에 중개사무소를 둔 경우의 매매·전세·월세 중개보수 상한을 계산합니다. 숫자를 넣으면 거래금액 환산부터 적용 요율까지 한 번에 보여드립니다.</p>
           <div class="fee-privacy-note">
             <span aria-hidden="true">✓</span>
             <p><strong>브라우저 안에서만 계산</strong><br>입력한 금액은 저장하거나 전송하지 않습니다.</p>
@@ -121,26 +121,26 @@
           <div class="fee-money-fields">
             <div class="fee-money-field" data-sale-fields>
               <label for="sale-price">매매가격</label>
-              <div class="fee-input-wrap"><input id="sale-price" name="salePrice" type="number" min="1" step="1" inputmode="numeric" placeholder="예: 80000" required><span>만원</span></div>
-              <p data-korean-amount="sale-price">금액을 입력해 주세요.</p>
+              <div class="fee-input-wrap"><input id="sale-price" name="salePrice" type="number" min="1" step="1" inputmode="numeric" placeholder="예: 80000" aria-label="매매가격 (만원)" aria-describedby="sale-price-hint fee-form-error" required><span>만원</span></div>
+              <p id="sale-price-hint" data-korean-amount="sale-price">금액을 입력해 주세요.</p>
             </div>
             <div class="fee-money-field" data-rent-fields hidden>
               <label for="deposit">보증금</label>
-              <div class="fee-input-wrap"><input id="deposit" name="deposit" type="number" min="0" step="1" inputmode="numeric" placeholder="예: 10000"><span>만원</span></div>
-              <p data-korean-amount="deposit">전세라면 전세보증금을 입력하세요.</p>
+              <div class="fee-input-wrap"><input id="deposit" name="deposit" type="number" min="0" step="1" inputmode="numeric" placeholder="예: 10000" aria-label="보증금 (만원)" aria-describedby="deposit-hint fee-form-error"><span>만원</span></div>
+              <p id="deposit-hint" data-korean-amount="deposit">전세라면 전세보증금을 입력하세요.</p>
             </div>
             <div class="fee-money-field" data-rent-fields hidden>
               <label for="monthly-rent">월세</label>
-              <div class="fee-input-wrap"><input id="monthly-rent" name="monthlyRent" type="number" min="0" step="1" inputmode="numeric" placeholder="예: 150"><span>만원</span></div>
-              <p data-korean-amount="monthly-rent">전세라면 0원으로 두세요.</p>
+              <div class="fee-input-wrap"><input id="monthly-rent" name="monthlyRent" type="number" min="0" step="1" inputmode="numeric" placeholder="예: 150" aria-label="월세 (만원)" aria-describedby="monthly-rent-hint fee-form-error"><span>만원</span></div>
+              <p id="monthly-rent-hint" data-korean-amount="monthly-rent">전세라면 0원으로 두세요.</p>
             </div>
           </div>
 
-          <p id="fee-form-error" class="fee-form__error" role="alert" hidden></p>
+          <p id="fee-form-error" class="fee-form__error" role="alert" tabindex="-1" hidden></p>
           <button class="fee-calculate" type="submit">중개보수 상한 계산하기 <span aria-hidden="true">→</span></button>
         </form>
 
-        <aside id="fee-result" class="fee-result" aria-live="polite" aria-atomic="true">
+        <aside id="fee-result" class="fee-result" tabindex="-1" aria-live="polite" aria-atomic="true">
           <div class="fee-result__empty" data-result-empty>
             <p class="fee-step">02 · 계산 결과</p>
             <div class="fee-result__mark" aria-hidden="true">₩</div>
@@ -189,7 +189,7 @@
           <li><a href="https://land.seoul.go.kr:444/land/broker/brokerageCommission.do" target="_blank" rel="noopener noreferrer">서울부동산정보광장 · 부동산 중개보수</a><span>서울 주택 요율표, 오피스텔·비주택 요율, 월세 환산식</span></li>
           <li><a href="https://www.law.go.kr/법령/공인중개사법시행규칙/제20조" target="_blank" rel="noopener noreferrer">국가법령정보센터 · 공인중개사법 시행규칙 제20조</a><span>중개보수 한도와 거래금액 계산 기준</span></li>
         </ul>
-        <div class="lr-disclaimer"><strong>참고 안내</strong><br>이 계산기는 서울 소재 거래의 일반적인 중개보수 상한을 확인하는 도구입니다. 물건의 법적 분류, 실제 협의 내용, 부가가치세와 개별 계약 조건에 따라 최종 금액이 달라질 수 있습니다. 최신 공식 요율과 중개사무소 설명을 함께 확인하세요.</div>
+        <div class="lr-disclaimer"><strong>참고 안내</strong><br>이 계산기는 서울특별시에 중개사무소를 둔 개업공인중개사가 중개하는 일반 거래의 중개보수 상한을 확인하는 도구입니다. 물건과 중개사무소의 소재지가 다른 경우 적용 조례를 중개사무소에 확인하세요. 물건의 법적 분류, 실제 협의 내용, 부가가치세와 개별 계약 조건에 따라 최종 금액이 달라질 수 있습니다.</div>
       </div>
     </section>
 
@@ -206,7 +206,6 @@
       <div class="lr-footer__links"><a href="brokerage-fee-calculator.html">중개보수 계산기</a><a href="knowledge.html">자료 찾기</a><a href="privacy.html">개인정보처리방침</a><a href="contact.html">문의</a></div>
     </div>
   </footer>
-  <a class="lr-fab" href="tel:050714025055" aria-label="전화 상담"><span class="lr-fab__icon">📞</span><span>지금 전화</span></a>
   <script src="js/analyticsEvents.js"></script>
   <script src="js/mobileNav.js"></script>
   <script type="module" src="js/brokerageFeePage.mjs"></script>

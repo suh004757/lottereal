@@ -93,7 +93,7 @@ function init() {
       }
       resultEmpty.hidden = true;
       resultContent.hidden = false;
-      resultContent.focus?.();
+      document.querySelector('#fee-result')?.focus();
       track('brokerage_fee_calculator_complete');
     } catch (_) {
       error.textContent = '거래금액을 확인해 주세요. 전세는 보증금만, 월세는 보증금과 월세를 입력하면 됩니다.';
