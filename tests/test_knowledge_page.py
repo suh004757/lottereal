@@ -56,6 +56,13 @@ class KnowledgeSearchPageTest(unittest.TestCase):
         self.assertNotIn('AI가 답변', text)
         self.assertNotIn('법률 상담 챗봇', text)
 
+    def test_community_pulse_precedes_secondary_calculator_promotion(self):
+        text = (REPO / 'knowledge.html').read_text(encoding='utf-8-sig')
+        self.assertLess(
+            text.index('lr-community-pulse-section'),
+            text.index('knowledge-fee-calculator-title'),
+        )
+
     def test_community_pulse_has_visible_focus_and_reduced_motion_styles(self):
         css = (REPO / 'css/knowledge.css').read_text(encoding='utf-8')
         self.assertIn('.lr-community-pulse__card a:focus-visible', css)
