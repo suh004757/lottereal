@@ -55,6 +55,16 @@
 7. push 뒤 새 정적 URL의 HTTP 200, self-canonical, 제목·본문을 운영 사이트에서 확인한다.
 8. 법적 판단이 필요한 경우 Legal Bot에 자문 요청용 질문만 작성한다. 자격/계약/광고규정 해석을 default profile이 단정하지 않는다.
 
+## Token/Resource Efficiency Findings (2026-09-26 independent audit)
+
+`usage_audit.jsonl`과 delegation 로그 기준으로 확인된 사실. 다음 실행부터 참고할 것.
+
+- Daily content stack job이 lottereal 전체 job 토큰 사용량의 약 73%(최근 21회 실행, 합계 약 1.06억 토큰, 평균 506만 토큰/19분)를 차지한다. 실행별로 300만~922만 토큰 사이에서 편차가 크고 뚜렷한 증가 추세는 없었지만(정체), 매번 트래픽 성과 정체 상태로 이만큼 쓰고 있다는 점은 인지하고 있어야 한다.
+- Governance scanner(plan-only)에서 정상 실행 평균(177만 토큰)의 5배(882만 토큰, 1회, 2026-08-28)에 달하는 이상 급증이 관측된 적 있다. 원인은 로그 미보존으로 특정 못함. 특정 실행이 job의 정상 범위를 몇 배 벗어나면, 원인(예: 비정상적으로 넓은 레포 스캔 범위)을 usage_audit.jsonl에서 즉시 짚어보는 습관을 들인다.
+- 시각적 검증 도구(예: lighthouse)를 쓰는 단계가 있다면 `CHROME_PATH`/`PLAYWRIGHT_BROWSERS_PATH` 미설정으로 1차 실패 후 재시도하는 패턴이 최소 1건 관측됐다(약 27초 낭비). 이런 도구를 쓰는 검증 단계에서는 필요한 환경변수를 실행 시작 시점에 먼저 확인/고정한다.
+- 매 실행마다 `search_files`류 전체 레포 그렙을 14~28회 반복 호출하는 경향이 있다. 매번 같은 패턴을 여러 번 개별 검색하는 대신, 반복 조회가 필요한 경우 `scripts/maintenance_check.py` 같은 기존 스크립트에 통합하거나 결과를 해당 실행 내에서 재사용해 호출 수를 줄인다.
+- 1분/5분 간격으로 도는 상시 폴링 job(ADMIN draft DM notifier, Gmail→Kakao watcher, family listing parser 등)은 확인된 범위 내에서는 가벼운 편(예: family listing parser 평균 2.6만 토큰/회)으로 보인다. 이 구조를 유지하고, 폴링 job에 무거운 전체 컨텍스트 재로딩을 추가하지 않는다.
+
 ## Supabase Tables Observed
 - `market_reports`: published/draft market report CMS
 - `property_listings`: listing data
