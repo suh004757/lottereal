@@ -8,6 +8,7 @@ import { buildSanitizedReportHtml } from './reportRenderSecurity.mjs';
 import { safeExternalHttpUrl } from './publicRenderSecurity.mjs';
 import { findMatchingLandingConfigs } from './config/reportLandingConfig.js';
 import { buildAbsoluteUrl, renderJsonLd, updateSeoMeta } from './utils/seo.js';
+import { reportStaticHref, reportStaticUrl } from './utils/reportUrls.mjs';
 import {
   compareReportsByPublication,
   formatReportDateMeta,
@@ -220,7 +221,7 @@ function renderNeighborCard(label, report) {
   }
 
   return `
-    <a class="lr-report-neighbor" href="report.html?slug=${encodeURIComponent(report.slug)}">
+    <a class="lr-report-neighbor" href="${reportStaticHref(report.slug)}">
       <p class="lr-kicker">${escapeHtml(label)}</p>
       <h3>${escapeHtml(report.title || '')}</h3>
       <p>${escapeHtml(report.summary || '')}</p>
@@ -245,7 +246,7 @@ function renderReportCards(container, reports, emptyMessage) {
         <span>조회수 ${Number(report.view_count || 0).toLocaleString()}회</span>
       </div>
       <div class="lr-actions">
-        <a class="lr-btn lr-btn--primary" href="report.html?slug=${encodeURIComponent(report.slug)}">상세보기</a>
+        <a class="lr-btn lr-btn--primary" href="${reportStaticHref(report.slug)}">상세보기</a>
       </div>
     </article>
   `).join('');
@@ -354,7 +355,7 @@ window.closeEvidence = function closeEvidence() {
 };
 
 window.copySummary = function copySummary() {
-  const summary = `${currentReport.title}\n\n${currentReport.summary}\n\n자세한 내용: https://lottes.co.kr/report.html?slug=${currentReport.slug}`;
+  const summary = `${currentReport.title}\n\n${currentReport.summary}\n\n자세한 내용: ${reportStaticUrl(currentReport.slug)}`;
 
   navigator.clipboard.writeText(summary).then(() => {
     showNotification('요약을 클립보드에 복사했습니다.');
@@ -403,7 +404,7 @@ function escapeHtml(value = '') {
 }
 
 function applySeo() {
-  const canonical = buildAbsoluteUrl(`report.html?slug=${encodeURIComponent(currentReport.slug || '')}`);
+  const canonical = reportStaticUrl(currentReport.slug || '');
   const title = currentReport.title
     ? `${currentReport.title} | Lotte Real Estate`
     : 'Market Report | Lotte Real Estate';

@@ -26,6 +26,7 @@ import {
 } from './services/backendAdapter.js';
 import { getSupabaseClient } from './config/supabaseConfig.js';
 import { SAFE_CONTACT_PHONE } from './utils/contactPhone.mjs';
+import { reportStaticHref } from './utils/reportUrls.mjs';
 import { initializeReportEditor } from './reportEditorCore.js';
 import { listReports } from './services/reportAdapter.js';
 import { signOutAdmin, getCurrentSessionUser } from './services/authService.js';
@@ -1066,7 +1067,7 @@ async function loadReportsAdmin() {
     reportsTbody.querySelectorAll('[data-view-report]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const slug = btn.getAttribute('data-view-report');
-        window.open(`../report.html?slug=${slug}`, '_blank');
+        window.open(reportStaticHref(slug), '_blank');
       });
     });
   } catch (err) {

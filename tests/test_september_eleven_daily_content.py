@@ -34,7 +34,7 @@ class SeptemberElevenDailyContentTests(unittest.TestCase):
 
     def test_daily_report_is_discoverable_in_sitemap(self):
         sitemap = (ROOT / 'Sitemap.xml').read_text(encoding='utf-8')
-        self.assertIn('report.html?slug=' + self.report['slug'], sitemap)
+        self.assertIn('reports/' + self.report['slug'] + '.html', sitemap)
 
 
 if __name__ == '__main__':

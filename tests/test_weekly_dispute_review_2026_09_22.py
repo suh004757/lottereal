@@ -23,7 +23,7 @@ class WeeklyDisputeReviewSeptemberTwentyTwoTests(unittest.TestCase):
 
     def test_adds_current_renewal_guide_without_new_dispute_url(self):
         copy = self.report["report_md"]
-        self.assertIn(f"report.html?slug={TODAY_SLUG}", copy)
+        self.assertIn(f"reports/{TODAY_SLUG}.html", copy)
         self.assertIn("묵시적 갱신과 계약갱신요구권의 차이", copy)
         self.assertEqual(self.report["metadata"]["last_reviewed"], "2026-09-22")
         self.assertIn("내부 링크", self.report["metadata"]["revision"])

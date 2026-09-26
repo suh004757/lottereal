@@ -1,6 +1,7 @@
 import { listPublishedReports } from './services/reportAdapter.js';
 import { filterContentForLanguage } from './localizedHomeContent.mjs';
 import { formatReportDateMeta } from './utils/reportDates.mjs';
+import { reportStaticHref } from './utils/reportUrls.mjs';
 
 const section = document.querySelector('[data-report-section]');
 
@@ -196,7 +197,7 @@ if (section) {
   }
 
   function getReportHref(slug) {
-    return slug ? `report.html?slug=${slug}` : 'report.html';
+    return reportStaticHref(slug);
   }
 
   function escapeHtml(value = '') {

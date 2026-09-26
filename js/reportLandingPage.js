@@ -2,6 +2,7 @@ import { getLatestReport, listPublishedReports } from './services/reportAdapter.
 import { buildAbsoluteUrl, renderJsonLd, updateSeoMeta } from './utils/seo.js';
 import { getReportLandingConfigByKey } from './config/reportLandingConfig.js';
 import { compareReportsByPublication, formatReportDateMeta } from './utils/reportDates.mjs';
+import { reportStaticHref, reportStaticUrl } from './utils/reportUrls.mjs';
 
 const landingKey = document.body.dataset.reportLanding;
 const config = getReportLandingConfigByKey(landingKey);
@@ -83,7 +84,7 @@ function renderFeaturedReport(report) {
           <span>${config.key === 'dispute-cases' ? '판례·법령 검증' : '시장·정책 자료'}</span>
         </div>
         <div class="lr-actions">
-          <a class="lr-btn lr-btn--primary" href="report.html?slug=${encodeURIComponent(report.slug)}">최신 리포트 보기</a>
+          <a class="lr-btn lr-btn--primary" href="${reportStaticHref(report.slug)}">최신 리포트 보기</a>
         </div>
       </div>
     </article>
@@ -108,7 +109,7 @@ function renderReportList(reports) {
         <span>${formatReportDateMeta(report)}</span>
         <span>${config.key === 'dispute-cases' ? '판례·법령 검증' : '시장·정책 자료'}</span>
       </div>
-      <a class="lr-btn lr-btn--ghost" href="report.html?slug=${encodeURIComponent(report.slug)}">리포트 읽기</a>
+      <a class="lr-btn lr-btn--ghost" href="${reportStaticHref(report.slug)}">리포트 읽기</a>
     </article>
   `).join('');
 }
@@ -189,7 +190,7 @@ function applySeo(featuredReport, reports) {
           .map((report, index) => ({
           '@type': 'ListItem',
           position: index + 1,
-          url: buildAbsoluteUrl(`report.html?slug=${encodeURIComponent(report.slug)}`),
+          url: reportStaticUrl(report.slug),
           name: report.title
           }))
       },

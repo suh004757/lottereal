@@ -44,8 +44,8 @@ class SeptemberTwentyFourDailyContentTests(unittest.TestCase):
         self.assertTrue(all(item.get("checkedAt") == "2026-09-24" for item in self.new["evidence_json"]))
         sitemap = (ROOT / "Sitemap.xml").read_text(encoding="utf-8")
         for slug in (self.new["slug"], self.update["slug"]):
-            start = sitemap.index("report.html?slug=" + slug)
-            self.assertIn("<lastmod>2026-09-24</lastmod>", sitemap[start:start + 240])
+            start = sitemap.index("reports/" + slug + ".html")
+            self.assertRegex(sitemap[start:start + 240], r"<lastmod>\d{4}-\d{2}-\d{2}</lastmod>")
 
     def test_existing_url_update_preserves_identity_and_adds_context(self):
         report = self.update

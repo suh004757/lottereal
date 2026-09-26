@@ -5,6 +5,7 @@ import {
   searchKnowledge,
   selectCommunityPulse
 } from './knowledgeSearch.mjs';
+import { reportStaticHref } from './utils/reportUrls.mjs';
 
 const state = {
   index: null,
@@ -90,7 +91,7 @@ function renderCommunityPulse(items) {
         <h3>${escapeHtml(item.title)}</h3>
         <span>${formatDate(item.createdAt)}</span>
       </div>
-      <a href="report.html?slug=${encodeURIComponent(item.slug)}" data-community-pulse data-result-type="report" data-result-position="${index + 1}">함께 확인하기</a>
+      <a href="${reportStaticHref(item.slug)}" data-community-pulse data-result-type="report" data-result-position="${index + 1}">함께 확인하기</a>
     </article>
   `).join('');
 }
@@ -170,7 +171,7 @@ function renderSearchResult(result) {
               <p class="lr-knowledge-passage__source">${escapeHtml(match.title)}</p>
               <h4>${escapeHtml(heading)}</h4>
               <p>${escapeHtml(text)}</p>
-              <a href="report.html?slug=${encodeURIComponent(match.slug)}" data-knowledge-result data-result-type="passage" data-result-position="${matchIndex + 1}">원문에서 확인하기</a>
+              <a href="${reportStaticHref(match.slug)}" data-knowledge-result data-result-type="passage" data-result-position="${matchIndex + 1}">원문에서 확인하기</a>
             </blockquote>
           `).join('')}
         </div>
@@ -220,7 +221,7 @@ function renderReportMatch(match, index) {
         <p>${escapeHtml(match.summary)}</p>
         <small>${formatDate(match.updatedAt)}</small>
       </div>
-      <a href="report.html?slug=${encodeURIComponent(match.slug)}" data-knowledge-result data-result-type="report" data-result-position="${index + 1}">자세히 보기</a>
+      <a href="${reportStaticHref(match.slug)}" data-knowledge-result data-result-type="report" data-result-position="${index + 1}">자세히 보기</a>
     </article>
   `;
 }

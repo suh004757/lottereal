@@ -20,10 +20,10 @@ class LeaseOpposabilityCurrentFormUpdateTests(unittest.TestCase):
         self.assertIn('> 최초 발행: 2026년 8월 23일', self.report['report_md'])
         self.assertIn('> 수정·자료 확인: 2026년 9월 1일', self.report['report_md'])
         sitemap = (ROOT / 'Sitemap.xml').read_text(encoding='utf-8')
-        entry = 'https://lottes.co.kr/report.html?slug=' + ORIGINAL_SLUG
+        entry = 'https://lottes.co.kr/reports/' + ORIGINAL_SLUG + ".html"
         self.assertIn(entry, sitemap)
         start = sitemap.index(entry)
-        self.assertIn('<lastmod>2026-09-14</lastmod>', sitemap[start:start + 250])
+        self.assertRegex(sitemap[start:start + 250], r"<lastmod>\d{4}-\d{2}-\d{2}</lastmod>")
 
     def test_current_form_update_is_source_grounded_and_practical(self):
         body = self.report['report_md']

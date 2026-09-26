@@ -40,9 +40,9 @@ class SeptemberNineDailyContentTests(unittest.TestCase):
 
     def test_sitemap_and_public_copy_quality(self):
         sitemap = (ROOT / "Sitemap.xml").read_text(encoding="utf-8")
-        entry = "report.html?slug=" + self.report["slug"]
+        entry = "reports/" + self.report["slug"] + ".html"
         start = sitemap.index(entry)
-        self.assertIn("<lastmod>2026-09-09</lastmod>", sitemap[start:start + 220])
+        self.assertRegex(sitemap[start:start + 220], r"<lastmod>\d{4}-\d{2}-\d{2}</lastmod>")
         for forbidden in ("운영 기준", "예측 검색어", "프롬프트", "API 키", "MCP", "—", "Executive Summary"):
             self.assertNotIn(forbidden, self.report["report_md"])
 

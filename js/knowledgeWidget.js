@@ -1,6 +1,7 @@
 import { listPublishedKnowledgeReports } from './services/reportAdapter.js';
 import { buildKnowledgeIndex, getOntologySuggestions, searchKnowledge } from './knowledgeSearch.mjs';
 import { createInputModalityTracker, INQUIRY_FOCUSABLE_SELECTOR, mountInquiryChat } from './inquiryChat.js';
+import { reportStaticHref } from './utils/reportUrls.mjs';
 
 const WIDGET_STYLESHEET = 'css/knowledge-widget.css';
 const state = { index: null, loading: false, lastFocused: null, currentMode: 'knowledge' };
@@ -247,7 +248,7 @@ function renderMatches(matches) {
         <span>${escapeHtml(type)}</span>
         <h3>${escapeHtml(match.title)}</h3>
         ${passage ? `<p><strong>${escapeHtml(passage.heading)}</strong> ${escapeHtml(passage.text)}</p>` : `<p>${escapeHtml(match.summary)}</p>`}
-        <a href="report.html?slug=${encodeURIComponent(match.slug)}" data-widget-result data-position="${index + 1}" data-type="report">원문과 출처 보기</a>
+        <a href="${reportStaticHref(match.slug)}" data-widget-result data-position="${index + 1}" data-type="report">원문과 출처 보기</a>
       </article>
     `;
   }).join('')}</div>`;

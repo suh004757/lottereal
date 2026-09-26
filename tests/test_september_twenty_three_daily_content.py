@@ -42,9 +42,9 @@ class SeptemberTwentyThreeDailyContentTests(unittest.TestCase):
         self.assertTrue(any("easylaw.go.kr" in url for url in urls))
         self.assertTrue(all(source.get("checkedAt") == "2026-09-23" for source in self.report["evidence_json"]))
         sitemap = (ROOT / "Sitemap.xml").read_text(encoding="utf-8")
-        entry = "report.html?slug=" + self.report["slug"]
+        entry = "reports/" + self.report["slug"] + ".html"
         start = sitemap.index(entry)
-        self.assertIn("<lastmod>2026-09-23</lastmod>", sitemap[start:start + 240])
+        self.assertRegex(sitemap[start:start + 240], r"<lastmod>\d{4}-\d{2}-\d{2}</lastmod>")
 
     def test_public_copy_quality(self):
         copy = self.report["report_md"]

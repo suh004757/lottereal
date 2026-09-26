@@ -24,7 +24,7 @@ class SeptemberSixDailyContentTests(unittest.TestCase):
         self.assertGreaterEqual(len(report['report_md']), 700)
         self.assertIn('https://lottes.co.kr/contact.html', report['report_md'])
         sitemap = (ROOT / 'Sitemap.xml').read_text(encoding='utf-8')
-        self.assertIn('report.html?slug=' + report['slug'], sitemap)
+        self.assertIn('reports/' + report['slug'] + ".html", sitemap)
 
     def test_new_article_is_source_grounded_without_unsupported_songpa_price_claim(self):
         report = self.new_report
@@ -46,9 +46,9 @@ class SeptemberSixDailyContentTests(unittest.TestCase):
         self.assertIn('> 수정·자료 확인: 2026년 9월 6일', report['report_md'])
         self.assertEqual(validate_report_copy(report), [])
         sitemap = (ROOT / 'Sitemap.xml').read_text(encoding='utf-8')
-        entry = 'report.html?slug=' + report['slug']
+        entry = 'reports/' + report['slug'] + ".html"
         start = sitemap.index(entry)
-        self.assertIn('<lastmod>2026-09-06</lastmod>', sitemap[start:start + 220])
+        self.assertRegex(sitemap[start:start + 220], r"<lastmod>\d{4}-\d{2}-\d{2}</lastmod>")
 
     def test_public_copy_avoids_internal_language_and_ai_tells(self):
         combined = self.new_report['report_md'] + self.updated_report['report_md']

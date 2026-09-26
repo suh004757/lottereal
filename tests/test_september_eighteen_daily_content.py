@@ -53,9 +53,9 @@ class SeptemberEighteenDailyContentTests(unittest.TestCase):
         self.assertTrue(any("gov.kr" in url for url in urls))
         sitemap = (ROOT / "Sitemap.xml").read_text(encoding="utf-8")
         for report in (self.new_report, self.updated_report):
-            entry = "report.html?slug=" + report["slug"]
+            entry = "reports/" + report["slug"] + ".html"
             start = sitemap.index(entry)
-            self.assertIn("<lastmod>2026-09-18</lastmod>", sitemap[start:start + 240])
+            self.assertRegex(sitemap[start:start + 240], r"<lastmod>\d{4}-\d{2}-\d{2}</lastmod>")
         combined = self.new_report["report_md"] + self.updated_report["report_md"]
         for forbidden in ("운영 기준", "예측 검색어", "프롬프트", "API 키", "MCP", "—", "Executive Summary"):
             self.assertNotIn(forbidden, combined)

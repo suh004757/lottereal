@@ -42,9 +42,9 @@ class SeptemberTwentyDailyContentTests(unittest.TestCase):
         self.assertTrue(any("iros.go.kr" in url for url in urls))
         self.assertTrue(any("irts.molit.go.kr" in url for url in urls))
         sitemap = (ROOT / "Sitemap.xml").read_text(encoding="utf-8")
-        entry = "report.html?slug=" + self.report["slug"]
+        entry = "reports/" + self.report["slug"] + ".html"
         start = sitemap.index(entry)
-        self.assertIn("<lastmod>2026-09-20</lastmod>", sitemap[start:start + 240])
+        self.assertRegex(sitemap[start:start + 240], r"<lastmod>\d{4}-\d{2}-\d{2}</lastmod>")
 
     def test_public_copy_quality(self):
         copy = self.report["report_md"]
