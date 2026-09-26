@@ -11,3 +11,7 @@ content/daily/*.json
 .hermes/
 __pycache__/
 *.py[cod]
+
+# Internal LotteReal operating guidance must never ship through GitHub Pages.
+docs/LOTTEREAL_AUTONOMY.md
+docs/traffic-growth-plan-2026-10-31.md
