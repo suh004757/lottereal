@@ -143,6 +143,62 @@ Rules:
 
 This avoids telling crawlers and users that content changed when only internal metadata was touched.
 
+## Where a semantic fingerprint should live
+
+A semantic fingerprint is publisher state, not an SEO signal. Its storage location is therefore an architectural choice rather than a search-ranking feature.
+
+### Embedded in generated HTML
+
+Advantages:
+
+- the generated page is self-describing;
+- there is no second durable state file that can drift from the page;
+- a checkout containing only the generated output can preserve modification-date semantics;
+- migration and debugging require one artifact.
+
+Costs:
+
+- the fingerprint is publicly observable;
+- it adds a small amount of markup with no reader or crawler benefit;
+- it reveals that a semantic publication pipeline exists;
+- an HTML parser or narrowly specified extraction rule becomes part of the publisher contract.
+
+The fingerprint should be computed only from already-public rendered fields. Never embed a hash of secrets, customer data, unpublished drafts, or low-entropy confidential values: a public digest can still enable guessing attacks.
+
+### Private sidecar or CMS state
+
+Advantages:
+
+- publisher-only state remains outside the public page;
+- page markup contains only interoperable metadata;
+- state can have a versioned schema independent of HTML formatting.
+
+Costs:
+
+- the sidecar and generated pages become a consistency set;
+- missing, stale, or manually edited state needs an explicit recovery rule;
+- the state must be excluded from the public deployment artifact;
+- a root-based static deployment can accidentally publish a repository sidecar unless the build boundary is explicit.
+
+A transaction journal can commit the sidecar and pages together, but it does not eliminate migration, manual-edit, or source-of-truth decisions. The journal is temporary recovery state; the sidecar is durable semantic state.
+
+### HTTP `ETag` is not a direct substitute
+
+An origin or CDN `ETag` normally fingerprints complete response bytes for cache revalidation. A semantic publication fingerprint intentionally covers selected public fields so that non-semantic metadata changes do not advance `dateModified`. Hosting-controlled ETags may also be unavailable to an offline exporter. Use ETags for HTTP caching, not as the sole source of semantic modification history.
+
+### Decision rule
+
+Default to a private, versioned sidecar or CMS field when there is a clearly separated private source/build environment and public output directory. Embedding a digest is acceptable when generated HTML is the only durable artifact and the digest covers public data only.
+
+Do not migrate merely to hide a harmless digest. Migrate when a private build boundary already exists, public-surface minimization is a stated requirement, or HTML-format coupling causes observed maintenance failures. A migration PR must define:
+
+- the authoritative state and versioned schema;
+- missing, corrupt, and stale-sidecar behavior;
+- transaction and rollback treatment;
+- exclusion from public deployment;
+- legacy-page migration without false modification dates;
+- tests proving exactly one source of durable semantic state.
+
 ## Complexity gate
 
 Reliability work should stop for an explicit owner decision when any of the following appears:
