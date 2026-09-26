@@ -59,7 +59,7 @@
 
 `usage_audit.jsonl`과 delegation 로그 기준으로 확인된 사실. 다음 실행부터 참고할 것.
 
-- Daily content stack job이 lottereal 전체 job 토큰 사용량의 약 73%(최근 21회 실행, 합계 약 1.06억 토큰, 평균 506만 토큰/19분)를 차지한다. 실행별로 300만~922만 토큰 사이에서 편차가 크고 뚜렷한 증가 추세는 없었지만(정체), 매번 트래픽 성과 정체 상태로 이만큼 쓰고 있다는 점은 인지하고 있어야 한다.
+- Daily content stack job이 lottereal 전체 job(13개 job_id 기준, 합계 약 1.868억 토큰) 토큰 사용량의 **약 56.9%**(1.063억 토큰, 21회 실행, 평균 506만 토큰/19분)를 차지한다. 실행별로 300만~922만 토큰 사이에서 편차가 크고 뚜렷한 증가 추세는 없었지만(정체), 매번 트래픽 성과 정체 상태로 이만큼 쓰고 있다는 점은 인지하고 있어야 한다. (2026-09-26 최초 감사는 12개 job만 집계해 73%로 과대 계산됐다 — 이름에 "LotteReal"이 없는 한글 job명 `9b174b453fd6`(롯데부동산 주간 계약·분쟁 사례, 전체의 21.7%)이 빠졌던 게 원인. lottereal job 전체 목록을 셀 때는 job 이름이 아니라 `workdir=='/opt/data/projects/lottereal'` 또는 이름에 "LotteReal"/"롯데부동산"이 포함되는지 둘 다 확인해서 합집합을 써야 한다.)
 - Governance scanner(plan-only)에서 정상 실행 평균(177만 토큰)의 5배(882만 토큰, 1회, 2026-08-28)에 달하는 이상 급증이 관측된 적 있다. 원인은 로그 미보존으로 특정 못함. 특정 실행이 job의 정상 범위를 몇 배 벗어나면, 원인(예: 비정상적으로 넓은 레포 스캔 범위)을 usage_audit.jsonl에서 즉시 짚어보는 습관을 들인다.
 - 시각적 검증 도구(예: lighthouse)를 쓰는 단계가 있다면 `CHROME_PATH`/`PLAYWRIGHT_BROWSERS_PATH` 미설정으로 1차 실패 후 재시도하는 패턴이 최소 1건 관측됐다(약 27초 낭비). 이런 도구를 쓰는 검증 단계에서는 필요한 환경변수를 실행 시작 시점에 먼저 확인/고정한다.
 - 매 실행마다 `search_files`류 전체 레포 그렙을 14~28회 반복 호출하는 경향이 있다. 매번 같은 패턴을 여러 번 개별 검색하는 대신, 반복 조회가 필요한 경우 `scripts/maintenance_check.py` 같은 기존 스크립트에 통합하거나 결과를 해당 실행 내에서 재사용해 호출 수를 줄인다.
@@ -68,10 +68,11 @@
 ## Usage Budget (owner guidance, 2026-09-26)
 
 - 이 계정은 Codex 구독(`billing_mode=subscription_included`, plan `Prolite`)으로 과금되며 토큰 단가가 아니라 **주간 quota 사용률(%)**로 소진 여부가 결정된다. 사용률은 `python3 -c "from agent.account_usage import fetch_account_usage; print(fetch_account_usage('openai-codex'))"`(`/opt/hermes` 내부)로 조회 가능하며, 리셋 시각과 "banked resets"(수동 리셋 적립분) 여부도 함께 나온다.
+  - 주의: 이 명령의 출력 레이블은 "Session"이지만, 실제 API 원본(`rate_limit.primary_window`)의 `limit_window_seconds`는 `604800`(=7일)이다 — 즉 "Session"이라는 이름과 무관하게 이게 실질적인 주간(weekly) 윈도우다. `rate_limit.secondary_window`("Weekly"로 표시될 필드)는 이 Prolite 플랜에서 관측 시점 기준 `null`이라 나타나지 않는다. 오너가 언급하는 "화요일 리셋"은 이 `primary_window`("Session" 표시)의 리셋을 가리키는 것으로 보면 된다. `used_percent`가 100%로 보이는 것은 정상적인 순간 상태이며 플랜/과금 구조 자체가 바뀐 게 아니다.
 - 오너가 전체(업무용) 계정 예산 중 **주간 30~40%를 lottereal 관련 job들의 평상시 상한**으로 지정했다. 이 범위 안에서는 daily job, M/W/F 실험, governance scanner 등 정상 운영을 그대로 수행한다.
 - 40%를 초과할 것으로 예상되면, 그날은 "정말 중요한 작업"만 상황에 맞춰 선별 진행한다 (예: 트래픽에 실질 영향이 예상되는 수정, 장애 대응). 일상적인 콘텐츠 1건 발행처럼 지연 가능한 작업은 다음 리셋 이후로 미룬다.
 - 리셋 시점이 임박했는데 그 주 사용률이 상한에 못 미쳤다면, 남은 quota를 그 주 안에 소진하는 것은 문제 없다(오너 승인됨). 즉 이 규칙은 "절대 상한"이 아니라 "평상시 절제 기준 + 리셋 주기 내 유연한 소진"으로 이해한다.
-- Daily content stack job 하나가 lottereal 토큰의 약 73%를 쓰는데(위 섹션 참고) 트래픽 성과는 정체 상태이므로, 예산이 빠듯해지면 이 job의 실행 방식(테스트 재실행 범위, `search_files` 반복 호출 등)부터 최적화 대상으로 우선 검토한다.
+- Daily content stack job 하나가 lottereal 토큰의 약 56.9%를 쓰는데(위 섹션 참고) 트래픽 성과는 정체 상태이므로, 예산이 빠듯해지면 이 job의 실행 방식(테스트 재실행 범위, `search_files` 반복 호출 등)부터 최적화 대상으로 우선 검토한다.
 
 ## Supabase Tables Observed
 - `market_reports`: published/draft market report CMS
