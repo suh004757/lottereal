@@ -75,6 +75,10 @@ An outside review compared this plan against actual GA4/GSC data and the publish
 2. Do not count a report as "done" based on `export_static_reports.mjs` success and HTTP 200 alone. Track, in the weekly review, whether reports published 7+ days ago have started appearing in GSC impressions/clicks (`python3 scripts/lottereal_google_analytics.py gsc-query`, filtered to `/reports/` pages). Report this explicitly, even if the answer is "still zero."
 3. If GA4 activeUsers stays flat (within noise of baseline) for 3 consecutive weekly reviews, stop increasing publish volume and instead spend a cycle investigating why existing pages aren't indexed/clicked (technical SEO, internal linking, actual search demand for the chosen topics) before publishing more.
 
+### 3.6 Resource/budget pointer
+
+See `docs/LOTTEREAL_AUTONOMY.md` ("Token/Resource Efficiency Findings" and "Usage Budget" sections) for the current Codex-quota usage share, the owner weekly spending cap for lottereal jobs, and known efficiency issues (repeated `search_files` calls, occasional governance-scanner spikes). This job prompt only names this plan file, so explicitly open that doc when checking budget or efficiency before a run.
+
 ### 4. Review weekly and reallocate effort
 
 Every Sunday compare the most recent complete 7 days with the preceding 7 days:
