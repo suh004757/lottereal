@@ -80,7 +80,7 @@
   <!-- 시장 리포트 -->
   <url>
     <loc>https://lottes.co.kr/report.html</loc>
-    <lastmod>2026-09-25</lastmod>
+    <lastmod>2026-09-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.85</priority>
   </url>
@@ -317,6 +317,12 @@
   <url>
     <loc>https://lottes.co.kr/report.html?slug=2026-09-25-electronic-lease-contract-auto-filing-check</loc>
     <lastmod>2026-09-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://lottes.co.kr/report.html?slug=2026-09-26-songpa-land-use-plan-check</loc>
+    <lastmod>2026-09-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
