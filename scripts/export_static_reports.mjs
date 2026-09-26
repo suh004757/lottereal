@@ -208,14 +208,21 @@ async function fetchPublishedReports(envFile) {
   const key = env.SUPABASE_ANON_KEY || env.SUPABASE_PUBLISHABLE_KEY;
   if (!base || !key) throw new Error('SUPABASE_URL and browser-safe key are required');
   const fields = 'slug,title,summary,report_md,evidence_json,metadata,created_at,updated_at,status';
-  const url = `${base}/rest/v1/market_reports?select=${fields}&status=eq.published&order=created_at.desc&limit=1000`;
-  const response = await fetch(url, { headers: { apikey: key, Authorization: `Bearer ${key}` } });
-  if (!response.ok) throw new Error(`published report fetch failed: HTTP ${response.status}`);
-  return response.json();
+  const pageSize = 1000;
+  const reports = [];
+  for (let offset = 0; ; offset += pageSize) {
+    const url = `${base}/rest/v1/market_reports?select=${fields}&status=eq.published&order=created_at.desc,slug.asc&limit=${pageSize}&offset=${offset}`;
+    const response = await fetch(url, { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+    if (!response.ok) throw new Error(`published report fetch failed: HTTP ${response.status}`);
+    const page = await response.json();
+    if (!Array.isArray(page)) throw new Error('published report fetch returned a non-array response');
+    reports.push(...page);
+    if (page.length < pageSize) return reports;
+  }
 }
 
 function parseArgs(argv) {
-  const args = { outputDir: path.join(REPO, 'reports'), sitemap: path.join(REPO, 'Sitemap.xml'), siteUrl: 'https://lottes.co.kr', env: '/opt/data/.env' };
+  const args = { outputDir: path.join(REPO, 'reports'), sitemap: path.join(REPO, 'Sitemap.xml'), siteUrl: 'https://lottes.co.kr', env: '/opt/data/.env', allowShrink: false };
   for (let index = 0; index < argv.length; index += 1) {
     const value = argv[index];
     if (value === '--input') args.input = argv[++index];
@@ -223,6 +230,7 @@ function parseArgs(argv) {
     else if (value === '--sitemap') args.sitemap = argv[++index];
     else if (value === '--site-url') args.siteUrl = argv[++index];
     else if (value === '--env') args.env = argv[++index];
+    else if (value === '--allow-shrink') args.allowShrink = true;
     else throw new Error(`unknown argument: ${value}`);
   }
   return args;
@@ -234,19 +242,34 @@ async function main() {
     ? JSON.parse(fs.readFileSync(args.input, 'utf8'))
     : await fetchPublishedReports(args.env);
   if (!Array.isArray(reports)) throw new Error('report input must be an array');
-  fs.mkdirSync(args.outputDir, { recursive: true });
   const expected = new Set();
+  const rendered = new Map();
   for (const report of reports) {
     if (!SAFE_SLUG.test(String(report?.slug || ''))) throw new Error(`unsafe report slug: ${report?.slug || ''}`);
     const filename = `${report.slug}.html`;
+    if (expected.has(filename)) throw new Error(`duplicate report slug: ${report.slug}`);
     expected.add(filename);
-    fs.writeFileSync(path.join(args.outputDir, filename), renderStaticReport(report, args.siteUrl), 'utf8');
+    rendered.set(filename, renderStaticReport(report, args.siteUrl));
   }
-  for (const filename of fs.readdirSync(args.outputDir)) {
-    if (filename.endsWith('.html') && !expected.has(filename)) fs.rmSync(path.join(args.outputDir, filename));
+  const existing = fs.existsSync(args.outputDir)
+    ? fs.readdirSync(args.outputDir).filter((filename) => filename.endsWith('.html'))
+    : [];
+  const missing = existing.filter((filename) => !expected.has(filename));
+  if ((reports.length === 0 || missing.length > 0) && !args.allowShrink) {
+    const detail = missing.length ? `: ${missing.join(', ')}` : '';
+    throw new Error(`refusing to remove published report snapshots without --allow-shrink${detail}`);
   }
   const sitemap = fs.readFileSync(args.sitemap, 'utf8');
-  fs.writeFileSync(args.sitemap, updateSitemap(sitemap, reports, args.siteUrl), 'utf8');
+  const nextSitemap = updateSitemap(sitemap, reports, args.siteUrl);
+
+  fs.mkdirSync(args.outputDir, { recursive: true });
+  for (const [filename, html] of rendered) {
+    fs.writeFileSync(path.join(args.outputDir, filename), html, 'utf8');
+  }
+  for (const filename of existing) {
+    if (filename.endsWith('.html') && !expected.has(filename)) fs.rmSync(path.join(args.outputDir, filename));
+  }
+  fs.writeFileSync(args.sitemap, nextSitemap, 'utf8');
   process.stdout.write(JSON.stringify({ ok: true, reports: reports.length, outputDir: args.outputDir }) + '\n');
 }
 

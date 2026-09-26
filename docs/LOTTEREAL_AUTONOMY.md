@@ -49,8 +49,11 @@
 1. 공식/공공 source를 먼저 확인한다.
 2. 오늘 바뀐 데이터가 없으면 `no material change`로 쓰고, 억지 기사 요약을 하지 않는다.
 3. 글은 `market_reports`에 `published`로 upsert하고, markdown 사본을 `content/daily/`와 Obsidian 기록 폴더에 저장한다.
-4. 유지보수 체크를 실행하고 오류가 있으면 사이트 개선 TODO를 남긴다.
-5. 법적 판단이 필요한 경우 Legal Bot에 자문 요청용 질문만 작성한다. 자격/계약/광고규정 해석을 default profile이 단정하지 않는다.
+4. CMS upsert 직후 `node scripts/export_static_reports.mjs`를 실행해 모든 공개 리포트의 `/reports/<slug>.html`과 `Sitemap.xml`을 동기화한다.
+5. 정상 일일 발행에서는 `--allow-shrink`를 사용하지 않는다. 실제 비공개·삭제가 승인된 경우에만 누락 slug를 확인한 뒤 명시적으로 사용한다.
+6. 전체 Python·Node 테스트, `python3 scripts/maintenance_check.py`, `git diff --check`를 실행한다. 오류가 있으면 commit/push하지 않는다.
+7. push 뒤 새 정적 URL의 HTTP 200, self-canonical, 제목·본문을 운영 사이트에서 확인한다.
+8. 법적 판단이 필요한 경우 Legal Bot에 자문 요청용 질문만 작성한다. 자격/계약/광고규정 해석을 default profile이 단정하지 않는다.
 
 ## Supabase Tables Observed
 - `market_reports`: published/draft market report CMS

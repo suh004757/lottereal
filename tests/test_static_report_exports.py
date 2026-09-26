@@ -88,6 +88,7 @@ class StaticReportExportTests(unittest.TestCase):
         self.assertNotIn("javascript:alert", html)
         sitemap = self.sitemap.read_text(encoding="utf-8")
         self.assertIn(f"<loc>{canonical}</loc>", sitemap)
+        self.assertIn("<lastmod>2026-09-26</lastmod>", sitemap)
         self.assertNotIn(f"report.html?slug={self.report['slug']}", sitemap)
 
     def test_rejects_unsafe_slug_without_writing_outside_output(self):
@@ -95,6 +96,28 @@ class StaticReportExportTests(unittest.TestCase):
         result = self.run_export([report])
         self.assertNotEqual(result.returncode, 0)
         self.assertFalse((self.base / "escape.html").exists())
+
+    def test_rejects_unexpected_report_set_shrink_before_writing(self):
+        old_slug = "2026-09-25-existing-report"
+        old_page = self.output_dir / f"{old_slug}.html"
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        old_page.write_text("existing", encoding="utf-8")
+        original_sitemap = (
+            '<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+            f'  <url><loc>https://lottes.co.kr/reports/{old_slug}.html</loc></url>\n'
+            '</urlset>\n'
+        )
+        self.sitemap.write_text(original_sitemap, encoding="utf-8")
+        replacement = dict(self.report)
+        replacement["slug"] = "2026-09-26-replacement-report"
+        result = self.run_export([replacement])
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("refusing to remove published report snapshots", result.stderr)
+        self.assertTrue(old_page.exists())
+        self.assertFalse((self.output_dir / f'{replacement["slug"]}.html').exists())
+        self.assertEqual(self.sitemap.read_text(encoding="utf-8"), original_sitemap)
 
 
 if __name__ == "__main__":
