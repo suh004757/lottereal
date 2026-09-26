@@ -60,6 +60,21 @@ Each run may make one evidence-backed improvement, such as:
 
 Do not publish another daily article or overlap with the daily publisher's ownership.
 
+### 3.5 Independent audit findings (2026-09-26) — read before every daily/M-W-F run
+
+An outside review compared this plan against actual GA4/GSC data and the publish history. Findings:
+
+- **Traffic is flat, not growing.** GA4 last 28 days: 11 active users, 14 sessions — statistically indistinguishable from the 2026-09-26 baseline (10/27 days). Three-plus weeks of daily publishing have not moved the GA4 number.
+- **New reports are not reaching Search Console at all.** GSC clicks for 2026-09-01–09-26 are concentrated on `/`, `/EN.html`, `/listing-detail.html`, `/contact.html`. None of the ~20+ `/reports/2026-09-*.html` pages published in that window appear in GSC impressions or clicks. The static-export/indexability work is necessary but is not yet producing search visibility — treat "exported successfully, HTTP 200" as necessary, not sufficient, evidence of progress.
+- **Topic/format diversity collapsed.** From 2026-09-06 through 2026-09-26 (21 consecutive publishing days), nearly every new article used the same `songpa-*-check` checklist format (registry, management fee, tax invoice, trust registration, co-mortgage, lease reporting, etc.), despite this plan's Section 2 instruction to prioritize varied Songpa/Jamsil/Samjeon/Seokchon transaction questions, calculators, and local business-property needs. This looks like the daily job defaulting to "the next checklist topic that's easy to write" rather than a diversified, evidence-driven topic choice — worsened by the fact that none of this output is visible in GSC to correct course.
+- **No independent check on strategy exists.** Verification currently covers structural integrity only (unit tests, `maintenance_check.py`, link/security checks). Nothing in the pipeline checks SEO performance or topic-format diversity, and the same single model that writes and publishes also grades its own success. The M/W/F "governance scanner" and weekly "governance proposal batch" are plan-only/proposal jobs — neither has an observed history of blocking or overriding a daily publish decision.
+
+**New required rules (apply starting the next daily or M/W/F run):**
+
+1. Before publishing, check the last 14 days of published slugs (`git log --oneline -- 'reports/*'` or equivalent). If 3 or more of the last 5 published articles share the same format/topic pattern (e.g. all `*-check` checklists, all the same neighborhood), do not publish another one in that pattern — pick a different format or neighborhood from Section 2's list, or skip publishing and only do the existing-URL improvement instead.
+2. Do not count a report as "done" based on `export_static_reports.mjs` success and HTTP 200 alone. Track, in the weekly review, whether reports published 7+ days ago have started appearing in GSC impressions/clicks (`python3 scripts/lottereal_google_analytics.py gsc-query`, filtered to `/reports/` pages). Report this explicitly, even if the answer is "still zero."
+3. If GA4 activeUsers stays flat (within noise of baseline) for 3 consecutive weekly reviews, stop increasing publish volume and instead spend a cycle investigating why existing pages aren't indexed/clicked (technical SEO, internal linking, actual search demand for the chosen topics) before publishing more.
+
 ### 4. Review weekly and reallocate effort
 
 Every Sunday compare the most recent complete 7 days with the preceding 7 days:
