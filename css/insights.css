@@ -975,11 +975,18 @@
 
 .lr-report-archive-all__list a {
     color: #4b5563;
-    text-decoration: none;
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
 }
 
 .lr-report-archive-all__list a:hover {
-    text-decoration: underline;
+    text-decoration-thickness: 2px;
+}
+
+.lr-report-archive-all__list a:focus-visible {
+    outline: 3px solid #8a5b28;
+    outline-offset: 3px;
+    border-radius: 0.2rem;
 }
 
 .lr-report-header--hub {
