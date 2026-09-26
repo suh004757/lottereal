@@ -959,6 +959,29 @@
     color: #64748b;
 }
 
+.lr-report-archive-all__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 0.5rem 1.5rem;
+    list-style: none;
+    margin: 1rem 0 0;
+    padding: 0;
+}
+
+.lr-report-archive-all__list li {
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+}
+
+.lr-report-archive-all__list a {
+    color: #4b5563;
+    text-decoration: none;
+}
+
+.lr-report-archive-all__list a:hover {
+    text-decoration: underline;
+}
+
 .lr-report-header--hub {
     padding-bottom: 2.5rem;
 }
