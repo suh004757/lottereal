@@ -65,6 +65,14 @@
 - 매 실행마다 `search_files`류 전체 레포 그렙을 14~28회 반복 호출하는 경향이 있다. 매번 같은 패턴을 여러 번 개별 검색하는 대신, 반복 조회가 필요한 경우 `scripts/maintenance_check.py` 같은 기존 스크립트에 통합하거나 결과를 해당 실행 내에서 재사용해 호출 수를 줄인다.
 - 1분/5분 간격으로 도는 상시 폴링 job(ADMIN draft DM notifier, Gmail→Kakao watcher, family listing parser 등)은 확인된 범위 내에서는 가벼운 편(예: family listing parser 평균 2.6만 토큰/회)으로 보인다. 이 구조를 유지하고, 폴링 job에 무거운 전체 컨텍스트 재로딩을 추가하지 않는다.
 
+## Usage Budget (owner guidance, 2026-09-26)
+
+- 이 계정은 Codex 구독(`billing_mode=subscription_included`, plan `Prolite`)으로 과금되며 토큰 단가가 아니라 **주간 quota 사용률(%)**로 소진 여부가 결정된다. 사용률은 `python3 -c "from agent.account_usage import fetch_account_usage; print(fetch_account_usage('openai-codex'))"`(`/opt/hermes` 내부)로 조회 가능하며, 리셋 시각과 "banked resets"(수동 리셋 적립분) 여부도 함께 나온다.
+- 오너가 전체(업무용) 계정 예산 중 **주간 30~40%를 lottereal 관련 job들의 평상시 상한**으로 지정했다. 이 범위 안에서는 daily job, M/W/F 실험, governance scanner 등 정상 운영을 그대로 수행한다.
+- 40%를 초과할 것으로 예상되면, 그날은 "정말 중요한 작업"만 상황에 맞춰 선별 진행한다 (예: 트래픽에 실질 영향이 예상되는 수정, 장애 대응). 일상적인 콘텐츠 1건 발행처럼 지연 가능한 작업은 다음 리셋 이후로 미룬다.
+- 리셋 시점이 임박했는데 그 주 사용률이 상한에 못 미쳤다면, 남은 quota를 그 주 안에 소진하는 것은 문제 없다(오너 승인됨). 즉 이 규칙은 "절대 상한"이 아니라 "평상시 절제 기준 + 리셋 주기 내 유연한 소진"으로 이해한다.
+- Daily content stack job 하나가 lottereal 토큰의 약 73%를 쓰는데(위 섹션 참고) 트래픽 성과는 정체 상태이므로, 예산이 빠듯해지면 이 job의 실행 방식(테스트 재실행 범위, `search_files` 반복 호출 등)부터 최적화 대상으로 우선 검토한다.
+
 ## Supabase Tables Observed
 - `market_reports`: published/draft market report CMS
 - `property_listings`: listing data
