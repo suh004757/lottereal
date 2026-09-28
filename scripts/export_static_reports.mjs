@@ -85,6 +85,16 @@ function dateOnly(value) {
   return /^\d{4}-\d{2}-\d{2}/.test(raw) ? raw.slice(0, 10) : '';
 }
 
+function publishedDate(report) {
+  return dateOnly(report?.metadata?.published_at) || dateOnly(report?.created_at);
+}
+
+function sourceModifiedDate(report) {
+  return dateOnly(report?.metadata?.modified_at)
+    || dateOnly(report?.updated_at)
+    || publishedDate(report);
+}
+
 function isCalendarDate(value) {
   const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!match) return false;
@@ -142,7 +152,7 @@ function publicContentHash(report) {
   const publicFields = {
     title: String(report?.title || '').trim(),
     summary: String(report?.summary || '').trim(),
-    published: dateOnly(report?.created_at),
+    published: publishedDate(report),
     body_html: markdown.parse(withoutLeadingMarkdownH1(report?.report_md || '')),
     evidence_html: renderEvidence(report?.evidence_json),
   };
@@ -167,9 +177,9 @@ export function renderStaticReport(report, siteUrl = 'https://lottes.co.kr', opt
   const title = String(report?.title || '').trim();
   const summary = String(report?.summary || '').trim();
   if (!title || !summary) throw new Error(`missing title or summary: ${slug}`);
-  const published = dateOnly(report?.created_at);
+  const published = publishedDate(report);
   const contentHash = options.contentHash || publicContentHash(report);
-  const modified = dateOnly(options.modifiedDate) || dateOnly(report?.updated_at) || published;
+  const modified = dateOnly(options.modifiedDate) || sourceModifiedDate(report);
   const body = markdown.parse(withoutLeadingMarkdownH1(report?.report_md || ''));
   const schema = {
     '@context': 'https://schema.org',
@@ -238,10 +248,10 @@ export function renderStaticReport(report, siteUrl = 'https://lottes.co.kr', opt
 }
 
 function resolveModifiedDate(report, existingHtml, siteUrl) {
-  const sourceModified = dateOnly(report?.updated_at) || dateOnly(report?.created_at);
+  const sourceModified = sourceModifiedDate(report);
   if (!existingHtml) return sourceModified;
   const previous = previousExportState(existingHtml);
-  const published = dateOnly(report?.created_at);
+  const published = publishedDate(report);
   if (!isCalendarDate(previous.modifiedDate) || previous.modifiedDate < published) return sourceModified;
   const contentHash = publicContentHash(report);
   if (previous.contentHash === contentHash) return previous.modifiedDate;
@@ -261,7 +271,7 @@ function updateSitemap(sitemapText, reports, siteUrl, modifiedDates = new Map())
   const entries = reports.map((report) => {
     const slug = String(report.slug || '');
     if (!SAFE_SLUG.test(slug)) throw new Error(`unsafe report slug: ${slug}`);
-    const modified = modifiedDates.get(slug) || dateOnly(report.updated_at) || dateOnly(report.created_at);
+    const modified = modifiedDates.get(slug) || sourceModifiedDate(report);
     return `  <url>\n    <loc>${base}/reports/${slug}.html</loc>\n    <lastmod>${modified}</lastmod>\n    <changefreq>monthly</changefreq>\n  </url>`;
   }).join('\n');
   if (!next.includes('</urlset>')) throw new Error('invalid sitemap: missing </urlset>');

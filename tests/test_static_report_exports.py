@@ -121,6 +121,28 @@ class StaticReportExportTests(unittest.TestCase):
         self.assertIn("<lastmod>2026-09-26</lastmod>", sitemap)
         self.assertNotIn(f"report.html?slug={self.report['slug']}", sitemap)
 
+    def test_explicit_semantic_dates_override_technical_write_timestamps(self):
+        report = dict(
+            self.report,
+            slug="2026-09-28-semantic-date-check",
+            created_at="2026-09-27T23:45:00+00:00",
+            updated_at="2026-09-27T23:50:00+00:00",
+            metadata={
+                **self.report["metadata"],
+                "published_at": "2026-09-28",
+                "modified_at": "2026-09-28",
+            },
+        )
+
+        result = self.run_export([report])
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        html = (self.output_dir / f"{report['slug']}.html").read_text(encoding="utf-8")
+        self.assertIn('"datePublished":"2026-09-28"', html)
+        self.assertIn('"dateModified":"2026-09-28"', html)
+        self.assertIn("발행 2026-09-28 · 수정 2026-09-28", html)
+        self.assertIn("<lastmod>2026-09-28</lastmod>", self.sitemap.read_text(encoding="utf-8"))
+
     def test_regenerates_complete_server_rendered_archive_in_publication_order(self):
         older = dict(
             self.report,
