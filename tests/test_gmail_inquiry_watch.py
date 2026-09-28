@@ -474,6 +474,38 @@ class GmailInquiryWatchTest(unittest.TestCase):
             self.assertEqual(attempted.tzinfo, timezone.utc)
             self.assertEqual(heartbeat_path.stat().st_mode & 0o777, 0o600)
 
+    def test_repeated_transient_mailbox_timeout_defers_alert_to_watchdog(self):
+        with tempfile.TemporaryDirectory() as directory:
+            env_path = Path(directory) / '.env'
+            state_path = Path(directory) / 'state.json'
+            heartbeat_path = Path(directory) / 'heartbeat.json'
+            env_path.write_text(
+                'LOTTEREAL_GMAIL_ADDRESS=owner@example.com\n'
+                'LOTTEREAL_GMAIL_APP_PASSWORD=secret\n',
+                encoding='utf-8',
+            )
+            with (
+                mock.patch.dict(os.environ, {
+                    'LOTTEREAL_ENV_PATH': str(env_path),
+                    'LOTTEREAL_GMAIL_WATCH_STATE': str(state_path),
+                    'LOTTEREAL_GMAIL_WATCH_HEARTBEAT': str(heartbeat_path),
+                }),
+                mock.patch.object(
+                    gmail_watch,
+                    'fetch_verified_messages',
+                    side_effect=[
+                        TimeoutError('temporary IMAP timeout'),
+                        TimeoutError('temporary IMAP timeout'),
+                    ],
+                ) as fetch,
+                mock.patch.object(gmail_watch.time, 'sleep') as sleep,
+            ):
+                self.assertEqual(gmail_watch.main(), 0)
+            self.assertEqual(fetch.call_count, 2)
+            sleep.assert_called_once_with(2)
+            heartbeat = json.loads(heartbeat_path.read_text(encoding='utf-8'))
+            self.assertEqual(set(heartbeat), {'last_attempt_at'})
+
     def test_runtime_failure_stderr_is_fixed_and_contains_no_secret_path(self):
         script = Path(__file__).parents[1] / 'scripts' / 'lottereal_gmail_inquiry_watch.py'
         environment = {
