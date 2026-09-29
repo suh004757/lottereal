@@ -30,6 +30,15 @@ from scripts.lottereal_gmail_inquiry_watch import (
 
 
 class GmailInquiryWatchTest(unittest.TestCase):
+    def setUp(self):
+        clock = mock.patch.object(
+            gmail_watch,
+            '_utc_now',
+            return_value=datetime(2026, 8, 30, 12, 0, tzinfo=timezone.utc),
+        )
+        clock.start()
+        self.addCleanup(clock.stop)
+
     def test_accepts_only_verified_zigbang_sender_and_subject(self):
         self.assertEqual(
             classify_inquiry('시스템 자동발송 <cs@zigbang.com>', '직방에서 고객 문의가 들어왔습니다.'),

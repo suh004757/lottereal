@@ -35,6 +35,10 @@ SONGPA_LEGAL_DONGS = frozenset({
 })
 
 
+def _utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
 def classify_inquiry(sender: str, subject: str) -> str | None:
     address = parseaddr(str(sender or ''))[1].strip().lower()
     normalized_subject = ' '.join(str(subject or '').split())
@@ -373,7 +377,7 @@ def build_public_receipt_payload(item: dict) -> dict | None:
             second=0,
             microsecond=0,
         )
-        now_utc = datetime.now(timezone.utc)
+        now_utc = _utc_now()
         received_utc = received.astimezone(timezone.utc)
         if received_utc > now_utc + timedelta(minutes=5):
             return None
@@ -476,7 +480,7 @@ def publish_public_receipt(
         received = datetime.fromisoformat(str(payload['received_hour']))
     except (KeyError, TypeError, ValueError) as error:
         raise ValueError('invalid public receipt payload') from error
-    now_utc = datetime.now(timezone.utc)
+    now_utc = _utc_now()
     received_utc = received.astimezone(timezone.utc) if received.tzinfo else None
     if (
         set(payload) != allowed_keys
@@ -696,7 +700,7 @@ def write_heartbeat(
     success: bool = True,
     now: datetime | None = None,
 ) -> None:
-    instant = now or datetime.now(timezone.utc)
+    instant = now or _utc_now()
     if instant.tzinfo is None:
         raise ValueError('heartbeat time must be timezone-aware')
     timestamp = instant.astimezone(timezone.utc).isoformat().replace('+00:00', 'Z')
