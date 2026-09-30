@@ -866,7 +866,10 @@ def main() -> int:
             items = fetch_verified_messages(address, password)
         except (OSError, imaplib.IMAP4.abort):
             time.sleep(2)
-            items = fetch_verified_messages(address, password)
+            try:
+                items = fetch_verified_messages(address, password)
+            except (OSError, imaplib.IMAP4.abort):
+                return 0
         state = load_state(state_path)
         if not state['initialized']:
             process_items(items, state_path)

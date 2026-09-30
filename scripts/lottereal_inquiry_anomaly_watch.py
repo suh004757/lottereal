@@ -106,7 +106,7 @@ def run_once(
     if heartbeat_path.exists():
         try:
             payload = json.loads(heartbeat_path.read_text(encoding='utf-8'))
-            raw_recorded = payload.get('last_attempt_at', payload.get('last_success_at'))
+            raw_recorded = payload.get('last_success_at', payload.get('last_attempt_at'))
             if not isinstance(raw_recorded, str):
                 raise ValueError('invalid heartbeat time')
             recorded = datetime.fromisoformat(raw_recorded.replace('Z', '+00:00'))
@@ -161,7 +161,7 @@ def run_once(
         messages.append(
             '⚠️ LotteReal 문의 알림 점검 필요\n'
             '유형: Gmail watcher 실행 지연\n'
-            '마지막 실행 시도: 7분 이상 전\n'
+            '마지막 정상 확인: 7분 이상 전\n'
             '고객정보·메일 본문·직방 링크는 포함하지 않았습니다.'
         )
     elif not stale and previous_stale:

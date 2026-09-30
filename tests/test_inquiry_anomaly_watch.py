@@ -45,7 +45,7 @@ class InquiryAnomalyWatchTest(unittest.TestCase):
             self.assertEqual(first, (
                 '⚠️ LotteReal 문의 알림 점검 필요\n'
                 '유형: Gmail watcher 실행 지연\n'
-                '마지막 실행 시도: 7분 이상 전\n'
+                '마지막 정상 확인: 7분 이상 전\n'
                 '고객정보·메일 본문·직방 링크는 포함하지 않았습니다.'
             ))
             self.assertEqual(second, '')
@@ -283,7 +283,7 @@ class InquiryAnomalyWatchTest(unittest.TestCase):
         self.assertEqual(output.getvalue(), 'LotteReal 운영 감시 실행 실패\n')
         self.assertNotIn('fixture-secret', output.getvalue())
         self.assertNotIn('/opt/data/.env', output.getvalue())
-    def test_recent_attempt_prevents_duplicate_stale_alert_after_failed_run(self):
+    def test_recent_failed_attempt_does_not_mask_stale_last_success(self):
         from scripts.lottereal_inquiry_anomaly_watch import run_once
 
         with tempfile.TemporaryDirectory() as directory:
@@ -296,10 +296,15 @@ class InquiryAnomalyWatchTest(unittest.TestCase):
                 'last_success_at': (now - timedelta(minutes=30)).isoformat().replace('+00:00', 'Z'),
             }), encoding='utf-8')
 
-            self.assertEqual(run_once(heartbeat_path, state_path, now=now), '')
+            self.assertEqual(run_once(heartbeat_path, state_path, now=now), (
+                '⚠️ LotteReal 문의 알림 점검 필요\n'
+                '유형: Gmail watcher 실행 지연\n'
+                '마지막 정상 확인: 7분 이상 전\n'
+                '고객정보·메일 본문·직방 링크는 포함하지 않았습니다.'
+            ))
             self.assertEqual(
                 json.loads(state_path.read_text(encoding='utf-8')),
-                {'stale_alerted': False},
+                {'stale_alerted': True},
             )
     def test_future_heartbeat_fails_closed_as_stale(self):
         from scripts.lottereal_inquiry_anomaly_watch import run_once
