@@ -121,6 +121,16 @@ class StaticReportExportTests(unittest.TestCase):
         self.assertIn("<lastmod>2026-09-26</lastmod>", sitemap)
         self.assertNotIn(f"report.html?slug={self.report['slug']}", sitemap)
 
+    def test_static_report_preparation_cta_links_to_fee_calculator(self):
+        result = self.run_export([self.report])
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+        html = (self.output_dir / f"{self.report['slug']}.html").read_text(encoding="utf-8")
+        self.assertIn(
+            '<a class="lr-btn lr-btn--ghost" href="../brokerage-fee-calculator.html">중개보수 계산하기</a>',
+            html,
+        )
+
     def test_explicit_semantic_dates_override_technical_write_timestamps(self):
         report = dict(
             self.report,
