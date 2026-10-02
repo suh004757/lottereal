@@ -69,6 +69,14 @@
     <priority>0.90</priority>
   </url>
 
+  <!-- 송파 동네 선택 도우미 -->
+  <url>
+    <loc>https://lottes.co.kr/songpa-neighborhood-guide.html</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.92</priority>
+  </url>
+
   <!-- 서울 중개보수 계산기 -->
   <url>
     <loc>https://lottes.co.kr/brokerage-fee-calculator.html</loc>
