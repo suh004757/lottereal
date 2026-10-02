@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'none'; script-src 'self' https://www.googletagmanager.com; script-src-attr 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://itcztvceelfvppjwhmvl.supabase.co https://www.google-analytics.com https://region1.google-analytics.com; form-action 'self'; upgrade-insecure-requests">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <script src="js/privacyAnalytics.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>송파 동네 선택 도우미 | 잠실·삼전·석촌 등 생활권 비교 | 롯데부동산</title>
+  <meta name="description" content="거주 목적과 생활 우선순위를 선택하면 잠실동·삼전동·석촌동·송파동·방이동·가락동·문정동 중 먼저 둘러볼 동네 두 곳을 안내합니다.">
+  <link rel="canonical" href="https://lottes.co.kr/songpa-neighborhood-guide.html">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ko_KR">
+  <meta property="og:title" content="송파 어디가 나와 맞을까? | 롯데부동산">
+  <meta property="og:description" content="가격 순위가 아닌 생활 선호 기반 송파 동네 탐색 도우미입니다.">
+  <meta property="og:url" content="https://lottes.co.kr/songpa-neighborhood-guide.html">
+  <meta property="og:image" content="https://lottes.co.kr/img/bg-img/lotte_street_view.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="img/core-img/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="css/mobile.css">
+  <link rel="stylesheet" href="css/songpa-neighborhood-guide.css">
+</head>
+<body>
+  <header class="lr-header">
+    <div class="lr-container">
+      <div class="lr-brand"><a href="./">롯데부동산</a></div>
+      <button class="lr-hamburger" aria-label="메뉴" aria-expanded="false">☰</button>
+      <nav class="lr-nav" aria-label="주요 메뉴">
+        <a href="corporate-buildings.html">기업 사옥</a>
+        <a href="listings.html">매물 찾기</a>
+        <a href="report.html">시장·정책</a>
+        <a href="disputes.html">계약 사례</a>
+        <a href="knowledge.html">자료 찾기</a>
+        <a href="contact.html" class="lr-nav-cta">문의·방문</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="nh-hero">
+      <div class="lr-container nh-hero__grid">
+        <div>
+          <p class="lr-kicker">SONGPA NEIGHBORHOOD MATCH</p>
+          <h1>송파 어디가<br>나와 <em>맞을까?</em></h1>
+          <p class="lr-lead">정답 대신 출발점을 드립니다. 거주 목적과 생활 우선순위를 고르면 잠실동·삼전동·석촌동 등 일곱 곳 중 먼저 걸어볼 두 동네를 이유와 함께 보여드립니다.</p>
+          <div class="nh-privacy-note">
+            <span aria-hidden="true">✓</span>
+            <p><strong>브라우저 안에서만 추천</strong><br>입력한 선택은 저장하거나 전송하지 않습니다.</p>
+          </div>
+        </div>
+        <aside class="nh-route-card" aria-label="도우미 이용 순서">
+          <span>3 STOP ROUTE</span>
+          <ol class="nh-route">
+            <li><strong>목적</strong>을 하나 고릅니다</li>
+            <li><strong>우선순위</strong>를 하나에서 세 개 고릅니다</li>
+            <li><strong>두 동네</strong>를 직접 비교합니다</li>
+          </ol>
+        </aside>
+      </div>
+    </section>
+
+    <section class="nh-workspace" aria-labelledby="neighborhood-helper-title">
+      <div class="lr-container nh-workspace__grid">
+        <form id="neighborhood-helper-form" class="nh-form" novalidate>
+          <div class="nh-form__head">
+            <p class="nh-step">01 · 생활 조건 선택</p>
+            <h2 id="neighborhood-helper-title">이번에 찾는 공간의 목적은?</h2>
+            <p>가격이나 투자수익이 아니라 실제 생활·업무 선호를 기준으로 비교합니다.</p>
+          </div>
+
+          <fieldset class="nh-fieldset">
+            <legend><span>주요 목적</span><small>하나 선택</small></legend>
+            <div class="nh-choice-grid">
+              <label class="nh-choice"><input type="radio" name="purpose" value="solo" required><span><strong>1인 거주</strong><small>이동과 생활편의</small></span></label>
+              <label class="nh-choice"><input type="radio" name="purpose" value="couple"><span><strong>신혼·커플</strong><small>생활 균형과 주거 선택지</small></span></label>
+              <label class="nh-choice"><input type="radio" name="purpose" value="family"><span><strong>가족 거주</strong><small>생활 동선과 주거환경</small></span></label>
+              <label class="nh-choice"><input type="radio" name="purpose" value="commute"><span><strong>출퇴근 중심</strong><small>여러 방향의 이동 동선</small></span></label>
+              <label class="nh-choice"><input type="radio" name="purpose" value="quiet"><span><strong>차분한 주거</strong><small>주거 골목의 분위기</small></span></label>
+              <label class="nh-choice"><input type="radio" name="purpose" value="business"><span><strong>사무실·사옥</strong><small>업무와 고객 방문</small></span></label>
+            </div>
+          </fieldset>
+
+          <fieldset class="nh-fieldset">
+            <legend><span>중요 조건</span><small>1~3개 선택</small></legend>
+            <div class="nh-choice-grid">
+              <label class="nh-choice"><input type="checkbox" name="priority" value="transit"><span><strong>지하철 접근</strong><small>역과 노선 동선</small></span></label>
+              <label class="nh-choice"><input type="checkbox" name="priority" value="jamsil"><span><strong>잠실 생활권</strong><small>잠실 중심지 연결</small></span></label>
+              <label class="nh-choice"><input type="checkbox" name="priority" value="quiet"><span><strong>차분한 골목</strong><small>상권보다 주거 분위기</small></span></label>
+              <label class="nh-choice"><input type="checkbox" name="priority" value="amenities"><span><strong>상권·생활편의</strong><small>식사·장보기·일상</small></span></label>
+              <label class="nh-choice"><input type="checkbox" name="priority" value="parking"><span><strong>주차 확인</strong><small>개별 건물 조건 우선</small></span></label>
+              <label class="nh-choice"><input type="checkbox" name="priority" value="housing"><span><strong>다양한 주택 유형</strong><small>빌라·오피스텔도 비교</small></span></label>
+              <label class="nh-choice"><input type="checkbox" name="priority" value="newer"><span><strong>정비된 공간</strong><small>관리상태와 설비</small></span></label>
+              <label class="nh-choice"><input type="checkbox" name="priority" value="business"><span><strong>업무·고객 방문</strong><small>업무시설과 외부 동선</small></span></label>
+            </div>
+            <p class="nh-selection-meta"><span>선택한 조건</span><output data-priority-count aria-live="polite">0 / 3</output></p>
+          </fieldset>
+
+          <p id="neighborhood-helper-error" class="nh-form__error" role="alert" tabindex="-1" hidden></p>
+          <div class="nh-form__actions">
+            <button class="nh-submit" type="submit" disabled>나와 맞는 동네 보기 <span aria-hidden="true">→</span></button>
+            <button class="nh-reset" type="reset">다시 선택</button>
+          </div>
+        </form>
+
+        <aside id="neighborhood-helper-result" class="nh-result" tabindex="-1" aria-live="polite" aria-atomic="false">
+          <p class="nh-step">02 · 탐색 결과</p>
+          <div class="nh-result__empty" data-neighborhood-empty>
+            <div class="nh-result__mark" aria-hidden="true">SP</div>
+            <h2>두 동네와<br>현장 확인점을 보여드려요</h2>
+            <p>결과는 가격 순위가 아닙니다. 선택한 생활 조건과 미리 정리한 지역 특성을 대조한 탐색 보조 결과입니다.</p>
+          </div>
+          <div class="nh-results" data-neighborhood-results hidden></div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="nh-method">
+      <div class="lr-container">
+        <div class="nh-method__head">
+          <p class="lr-kicker">HOW IT WORKS</p>
+          <h2>점수를 앞세우지 않고<br>결과보다 이유를 보여줍니다</h2>
+        </div>
+        <div class="nh-method__grid">
+          <article><span>01</span><h3>생활 선호 매칭</h3><p>선택한 목적과 우선순위를 정적 기준에 대조합니다. 이름·연락처·예산은 받지 않습니다.</p></article>
+          <article><span>02</span><h3>두 곳만 제안</h3><p>일곱 곳을 줄 세우지 않고 먼저 비교할 후보 두 곳과 맞는 이유를 보여줍니다.</p></article>
+          <article><span>03</span><h3>현장에서 재확인</h3><p>역까지의 실제 보행, 소음, 주차, 건축물 용도와 관리상태는 방문과 최신 서류로 다시 확인합니다.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="lr-section" aria-labelledby="neighborhood-scope-title">
+      <div class="lr-container">
+        <div class="lr-section__head"><div><p class="lr-kicker">첫 비교 범위</p><h2 id="neighborhood-scope-title">송파구 일곱 동을 먼저 비교합니다</h2><p class="lr-lead">표시 단위는 법정동 명칭입니다. 행정동 경계, 역세권 범위와 실제 생활권은 서로 다를 수 있습니다.</p></div></div>
+        <div class="nh-neighborhoods" aria-label="비교 대상 법정동"><span>잠실동</span><span>삼전동</span><span>석촌동</span><span>송파동</span><span>방이동</span><span>가락동</span><span>문정동</span></div>
+        <div class="lr-disclaimer" style="margin-top:1.8rem;"><strong>추천 범위 안내</strong><br>이 도구는 실시간 매물 수, 실거래가, 학교 배정, 안전도, 통근시간 또는 투자수익을 계산하지 않습니다. 결과만으로 계약하지 말고 개별 물건의 현장과 최신 공적자료를 다시 확인하세요.</div>
+      </div>
+    </section>
+
+    <section class="lr-section lr-section--muted nh-sources">
+      <div class="lr-container">
+        <div class="lr-section__head"><div><p class="lr-kicker">자료 기준</p><h2>2026년 10월 1일 확인한 공개정보입니다</h2><p class="lr-lead">초기 동네 설명은 공식 포털의 행정구역·노선·공공시설 정보를 바탕으로 보수적으로 정리했습니다. 개별 물건 정보는 결과에 포함하지 않습니다.</p></div></div>
+        <ul>
+          <li><a href="https://www.songpa.go.kr/www/index.do" target="_blank" rel="noopener noreferrer">송파구청</a><span>행정구역·생활권·공공시설 기본 확인</span></li>
+          <li><a href="https://www.seoulmetro.co.kr/kr/cyberStation.do" target="_blank" rel="noopener noreferrer">서울교통공사 사이버스테이션</a><span>노선과 역 위치 확인</span></li>
+          <li><a href="https://data.seoul.go.kr/" target="_blank" rel="noopener noreferrer">서울 열린데이터광장</a><span>서울시 공개 교통·생활 데이터 출처 확인</span></li>
+          <li><a href="https://land.seoul.go.kr/land/" target="_blank" rel="noopener noreferrer">서울부동산정보광장</a><span>계약 전 최신 공적자료 재확인 경로</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="lr-section">
+      <div class="lr-container lr-cta">
+        <div><p class="lr-kicker">다음 단계</p><h2>결과보다 중요한 건 실제 물건입니다</h2><p class="lr-lead">원하는 동네와 입주 시기만 알려주시면 현재 확인 가능한 매물을 추려드립니다. 주소·계약서 원문은 공개 입력창에 올리지 마세요.</p><div class="lr-actions"><a class="lr-btn lr-btn--primary" href="listings.html">현재 매물 보기</a><a class="lr-btn lr-btn--ghost" href="contact.html#inquiry-options">동네 조건 상담</a></div></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="lr-footer">
+    <div class="lr-container lr-footer__content">
+      <div><p class="lr-kicker">롯데부동산</p><p class="lr-text">서울시 송파구 백제고분로27길 27 1층</p><p class="lr-text">문의전화 0507-1402-5055</p></div>
+      <div class="lr-footer__links"><a href="songpa-neighborhood-guide.html">송파 동네 선택</a><a href="brokerage-fee-calculator.html">중개보수 계산기</a><a href="knowledge.html">자료 찾기</a><a href="privacy.html">개인정보처리방침</a><a href="contact.html">문의</a></div>
+    </div>
+  </footer>
+  <script src="js/analyticsEvents.js"></script>
+  <script src="js/mobileNav.js"></script>
+  <script type="module" src="js/songpaNeighborhoodPage.mjs"></script>
+</body>
+</html>
