@@ -103,7 +103,11 @@ def check_local_links(paths=None) -> list[str]:
             path_part = ref.split("?", 1)[0].split("#", 1)[0]
             if not path_part or not is_local_ref(path_part):
                 continue
-            target = (html.parent / path_part).resolve()
+            if path_part.startswith("/"):
+                target = PUBLIC / (path_part.lstrip("/") or "index.html")
+            else:
+                target = html.parent / path_part
+            target = target.resolve()
             try:
                 target.relative_to(REPO.resolve())
             except ValueError:
@@ -177,6 +181,7 @@ def check_html_security_policy() -> list[str]:
     errors: list[str] = []
     verification_file = "naver8cf28dd9c8569f7f73da84b1adf5a2fb.html"
     redirect_file = PUBLIC / "redirect" / "zigbang-inquiry.html"
+    not_found_file = PUBLIC / "404.html"
     for html in sorted(REPO.glob("**/*.html")):
         if ".git" in html.parts or html.name == verification_file:
             continue
@@ -190,7 +195,12 @@ def check_html_security_policy() -> list[str]:
             errors.append(f"charset declaration is too late: {relative}")
         elif not document_head or charset.group(0) not in document_head.group(0):
             errors.append(f"charset declaration must be inside head: {relative}")
-        if html == redirect_file:
+        if html == not_found_file:
+            if "script-src 'none'" not in source or "form-action 'none'" not in source:
+                errors.append(f"404 CSP missing or weakened: {relative}")
+            if '<meta name="referrer" content="no-referrer">' not in source:
+                errors.append(f"404 referrer policy missing: {relative}")
+        elif html == redirect_file:
             if "default-src 'none'; script-src 'self'; base-uri 'none'; form-action 'none'" not in source:
                 errors.append(f"redirect CSP missing or weakened: {relative}")
             if '<meta name="referrer" content="no-referrer">' not in source:

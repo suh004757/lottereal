@@ -40,17 +40,27 @@ def collect_public_sources() -> list[Path]:
             raise RuntimeError(f"public source symlink is not allowed: {path.relative_to(PUBLIC)}")
         if path.is_file():
             sources.append(path)
-    for required in ("index.html", "CNAME", "Sitemap.xml", "robots.txt", "style.css", "404.md"):
+    for required in ("index.html", "CNAME", "Sitemap.xml", "robots.txt", "style.css", "404.html"):
         if not (PUBLIC / required).is_file():
             raise RuntimeError(f"required public file missing: {required}")
     return sources
 
 
 def build(output: Path, manifest_path: Path) -> dict[str, object]:
-    output = output.resolve()
-    manifest_path = manifest_path.resolve()
-    if output == ROOT or ROOT in output.parents:
+    output = Path(os.path.abspath(output.expanduser()))
+    manifest_path = Path(os.path.abspath(manifest_path.expanduser()))
+    if output.is_symlink():
+        raise RuntimeError(f"artifact output must not be a symlink: {output}")
+    resolved_output = output.resolve(strict=False)
+    if resolved_output == ROOT or ROOT in resolved_output.parents:
         raise RuntimeError("artifact output must be outside the repository source tree")
+    if output.exists():
+        raise RuntimeError(f"artifact output already exists; refusing to delete it: {output}")
+    if manifest_path.is_symlink():
+        raise RuntimeError(f"manifest path must not be a symlink: {manifest_path}")
+    resolved_manifest = manifest_path.resolve(strict=False)
+    if resolved_manifest == resolved_output or resolved_output in resolved_manifest.parents:
+        raise RuntimeError("manifest must be outside the artifact output")
     output.parent.mkdir(parents=True, exist_ok=True)
     stage = Path(tempfile.mkdtemp(prefix=f".{output.name}.stage-", dir=output.parent))
     try:
@@ -62,10 +72,6 @@ def build(output: Path, manifest_path: Path) -> dict[str, object]:
             relative = path.relative_to(stage).as_posix()
             files[relative] = {"bytes": path.stat().st_size, "sha256": sha256(path)}
         manifest = {"schema": 1, "files": files}
-        if output.exists():
-            if output.is_symlink() or not output.is_dir():
-                raise RuntimeError(f"refusing to replace unsafe artifact output: {output}")
-            shutil.rmtree(output)
         os.replace(stage, output)
         stage = None
         manifest_path.parent.mkdir(parents=True, exist_ok=True)

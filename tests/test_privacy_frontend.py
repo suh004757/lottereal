@@ -8,7 +8,7 @@ PUBLIC = ROOT / "public"
 def public_html_files():
     for path in PUBLIC.glob('*.html'):
         text = path.read_text(encoding='utf-8', errors='ignore')
-        if '<html' in text.lower():
+        if path.name != '404.html' and '<html' in text.lower():
             yield path, text
 
 
