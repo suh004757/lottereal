@@ -4,7 +4,7 @@
 
 ## GitHub Pages deployment boundary
 
-현재 GitHub Pages는 **`main /`**를 그대로 배포하는 legacy 방식입니다. 따라서 저장소 root의 HTML 파일명은 곧 운영 URL입니다.
+GitHub Pages는 **GitHub Actions workflow artifact**만 배포합니다. `scripts/build_pages_artifact.py`가 allowlist에 있는 공개 route와 asset을 원래 상대경로 그대로 복사하므로, 저장소 source 구조와 production 공개 경계가 분리됩니다.
 
 - `index.html` → `https://lottes.co.kr/`
 - `listings.html` → `https://lottes.co.kr/listings.html`
@@ -13,7 +13,9 @@
 
 ### Public URL compatibility
 
-폴더가 평평해 보이더라도 root HTML을 단순히 `pages/`나 `src/`로 이동하면 기존 URL, canonical, sitemap, 외부 링크와 검색 색인이 깨집니다. 배포 artifact를 분리하기 전에는 공개 route 파일을 이동하지 않습니다.
+source 파일을 이동하더라도 artifact의 상대경로, canonical, sitemap, 외부 링크와 검색 색인은 그대로 유지해야 합니다. route-equivalence test 없이 공개 경로를 바꾸지 않습니다.
+
+`scripts/`, `tests/`, `supabase/`, `content/`, `scss/`는 source·검증·운영 영역이며 Pages artifact에 포함하지 않습니다.
 
 Phase 1은 연결된 HTML/application route와 배포 설정을 바꾸지 않습니다. 다만 참조되지 않는 Office 작업 원본은 공개 site artifact가 아니므로, 기존 `Data/부동산 시장 데이터 마크다운 및 SQL 업데이트.docx` 직접 다운로드 URL을 의도적으로 종료합니다. 필요하면 Git history에서 복원할 수 있습니다.
 
@@ -59,13 +61,13 @@ Phase 1은 연결된 HTML/application route와 배포 설정을 바꾸지 않습
 - source/generated ownership marker와 asset inventory 추가
 - rename이 필요하면 old URL compatibility와 browser cache 전환을 함께 설계
 
-### Phase 3 — build boundary
+### Phase 3 — build boundary (completed)
 
-- GitHub Pages를 legacy `main /` 배포에서 검증된 workflow artifact 배포로 전환
+- GitHub Actions가 검증된 allowlist artifact만 GitHub Pages에 배포
 - source page·style·data를 `src/` 등으로 정리하되, artifact에는 기존 public URL을 그대로 생성
 - canonical, sitemap, redirects/compatibility pages, rollback을 production 전 검증
 
-Phase 3 이전에는 GitHub 화면을 깔끔하게 보이게 하려는 목적만으로 root public pages를 이동하지 않습니다.
+source 이동은 artifact route-equivalence와 production smoke test를 함께 통과하는 작은 PR로 진행합니다.
 
 ## Verification
 

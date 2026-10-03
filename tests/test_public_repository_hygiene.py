@@ -88,7 +88,7 @@ class PublicRepositoryHygieneTests(unittest.TestCase):
 
         phase_positions = [content.index(f"### Phase {number}") for number in (1, 2, 3)]
         self.assertEqual(sorted(phase_positions), phase_positions)
-        self.assertIn("legacy `main /` 배포", content)
+        self.assertIn("GitHub Actions workflow artifact", content)
         self.assertIn("DOCX 직접 다운로드 URL은 의도적으로 종료", content)
         self.assertIn("PR 완료 댓글과 독립 review 결과", content)
 
