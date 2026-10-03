@@ -1,5 +1,10 @@
 import { createInquiry } from './services/backendAdapter.js';
-import { buildInquiryPayload, buildInquiryAnalyticsEvent, inquiryValuesFromFormData } from './inquiryMvp.js';
+import {
+  buildInquiryPayload,
+  buildInquiryAnalyticsEvent,
+  inquiryValuesFromFormData,
+  normalizeInquiryIntent
+} from './inquiryMvp.js';
 
 const form = document.querySelector('[data-inquiry-mvp-form]');
 const status = document.querySelector('[data-inquiry-status]');
@@ -34,6 +39,11 @@ function applyQueryPrefill() {
   const params = new URLSearchParams(window.location.search);
   const source = params.get('source');
   const listing = params.get('listing');
+  const intent = normalizeInquiryIntent(params.get('intent'));
+  if (intent) {
+    const intentOption = form.querySelector(`input[name="inquiryType"][value="${intent}"]`);
+    if (intentOption) intentOption.checked = true;
+  }
   if (source && form.elements.sourceChannel?.querySelector(`option[value="${CSS.escape(source)}"]`)) {
     form.elements.sourceChannel.value = source;
   }

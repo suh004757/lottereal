@@ -121,6 +121,34 @@ class StaticReportExportTests(unittest.TestCase):
         self.assertIn("<lastmod>2026-09-26</lastmod>", sitemap)
         self.assertNotIn(f"report.html?slug={self.report['slug']}", sitemap)
 
+    def test_contract_guides_use_situation_aware_consultation_handoff(self):
+        result = self.run_export([self.report])
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+        html = (self.output_dir / f"{self.report['slug']}.html").read_text(encoding="utf-8")
+        self.assertIn("내 상황에서 먼저 확인할 순서를 정리하세요", html)
+        self.assertIn(
+            '<a class="lr-btn lr-btn--primary" href="../contact.html?intent=consultation#inquiry-options">상황 문의 남기기</a>',
+            html,
+        )
+        self.assertIn("중개 실무 범위", html)
+        self.assertIn("법률 판단이 필요한 사안은 전문가 확인이 필요합니다", html)
+        self.assertNotIn("내 조건에 맞는 매물을 함께 확인하세요", html)
+
+    def test_market_reports_keep_listing_cta_and_forward_consultation_intent(self):
+        report = dict(self.report, metadata={"content_type": "market_report"})
+        result = self.run_export([report])
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+        html = (self.output_dir / f"{report['slug']}.html").read_text(encoding="utf-8")
+        self.assertIn("내 조건에 맞는 매물을 함께 확인하세요", html)
+        self.assertIn('href="../listings.html">매물 보기</a>', html)
+        self.assertIn(
+            '<a class="lr-btn lr-btn--ghost" href="../contact.html?intent=consultation#inquiry-options">문의 남기기</a>',
+            html,
+        )
+        self.assertNotIn("내 상황에서 먼저 확인할 순서를 정리하세요", html)
+
     def test_static_report_preparation_cta_links_to_fee_calculator(self):
         result = self.run_export([self.report])
         self.assertEqual(result.returncode, 0, result.stderr)
