@@ -3,6 +3,7 @@ import unittest
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
+PUBLIC = REPO / "public"
 ENV_PATH = Path('/opt/data/.env')
 
 
@@ -37,7 +38,7 @@ class FrontendSupabaseConfigTest(unittest.TestCase):
     def test_static_frontend_uses_current_anon_key_not_rotated_publishable_or_secret(self):
         """Static hosting has no Vite env injection; fallback key must be current anon JWT."""
         env = load_env()
-        app_config = (REPO / 'js/config/appConfig.js').read_text(encoding='utf-8')
+        app_config = (PUBLIC / 'js/config/appConfig.js').read_text(encoding='utf-8')
 
         self.assertTrue(contains_secret(app_config, env['SUPABASE_URL']), 'current Supabase URL missing from appConfig')
         self.assertTrue(

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { normalizeActivitySummary, normalizePublicReceipts, renderPublicReceipts } from '../js/externalInquiryReceipts.mjs';
+import { normalizeActivitySummary, normalizePublicReceipts, renderPublicReceipts } from '../public/js/externalInquiryReceipts.mjs';
 
 const now = new Date('2026-08-29T05:30:00Z'); // 14:30 KST
 const rows = [

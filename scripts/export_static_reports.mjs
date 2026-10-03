@@ -6,7 +6,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
 const require = createRequire(import.meta.url);
-const { Marked, Renderer } = require('../js/vendor/marked-18.0.11.min.js');
+const { Marked, Renderer } = require('../public/js/vendor/marked-18.0.11.min.js');
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(__dirname, '..');
 const SAFE_SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -366,7 +366,7 @@ async function fetchPublishedReports(envFile) {
 }
 
 function parseArgs(argv) {
-  const args = { outputDir: path.join(REPO, 'reports'), sitemap: path.join(REPO, 'Sitemap.xml'), reportPage: path.join(REPO, 'report.html'), siteUrl: 'https://lottes.co.kr', env: '/opt/data/.env', allowShrink: false };
+  const args = { outputDir: path.join(REPO, 'public', 'reports'), sitemap: path.join(REPO, 'public', 'Sitemap.xml'), reportPage: path.join(REPO, 'public', 'report.html'), siteUrl: 'https://lottes.co.kr', env: '/opt/data/.env', allowShrink: false };
   for (let index = 0; index < argv.length; index += 1) {
     const value = argv[index];
     if (value === '--input') args.input = argv[++index];

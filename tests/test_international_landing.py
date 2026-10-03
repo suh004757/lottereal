@@ -2,6 +2,7 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+PUBLIC = ROOT / "public"
 
 
 class InternationalLandingTests(unittest.TestCase):
@@ -34,7 +35,7 @@ class InternationalLandingTests(unittest.TestCase):
         )
 
         for filename, expected in pages.items():
-            html = (ROOT / filename).read_text(encoding='utf-8')
+            html = (PUBLIC / filename).read_text(encoding='utf-8')
             self.assertIn(f'<html lang="{expected["lang"]}">', html, filename)
             self.assertIn(expected['scope'], html, filename)
             self.assertIn(expected['translation'], html, filename)
@@ -45,7 +46,7 @@ class InternationalLandingTests(unittest.TestCase):
             for marker in forbidden:
                 self.assertNotIn(marker, html, f'{filename}: {marker}')
 
-        japanese = (ROOT / 'JP.html').read_text(encoding='utf-8')
+        japanese = (PUBLIC / 'JP.html').read_text(encoding='utf-8')
         for unsupported_claim in ('日本語スタッフ', '日本語対応スタッフ', 'ネイティブスタッフ'):
             self.assertNotIn(unsupported_claim, japanese)
 
@@ -66,7 +67,7 @@ class InternationalLandingTests(unittest.TestCase):
         )
 
         for filename in legacy_pages:
-            html = (ROOT / filename).read_text(encoding='utf-8')
+            html = (PUBLIC / filename).read_text(encoding='utf-8')
             self.assertIn('<meta name="robots" content="noindex,follow">', html, filename)
             self.assertIn('<link rel="canonical" href="https://lottes.co.kr/EN.html">', html, filename)
             self.assertIn('<meta http-equiv="refresh" content="0; url=EN.html">', html, filename)
@@ -75,20 +76,20 @@ class InternationalLandingTests(unittest.TestCase):
             for marker in forbidden:
                 self.assertNotIn(marker, html, f'{filename}: {marker}')
     def test_language_discovery_only_indexes_two_international_guides(self):
-        home = (ROOT / 'index.html').read_text(encoding='utf-8')
-        sitemap = (ROOT / 'Sitemap.xml').read_text(encoding='utf-8')
+        home = (PUBLIC / 'index.html').read_text(encoding='utf-8')
+        sitemap = (PUBLIC / 'Sitemap.xml').read_text(encoding='utf-8')
 
         for html in (
             home,
-            (ROOT / 'EN.html').read_text(encoding='utf-8'),
-            (ROOT / 'JP.html').read_text(encoding='utf-8'),
+            (PUBLIC / 'EN.html').read_text(encoding='utf-8'),
+            (PUBLIC / 'JP.html').read_text(encoding='utf-8'),
         ):
             self.assertIn('hreflang="en" href="https://lottes.co.kr/EN.html"', html)
             self.assertIn('hreflang="ja" href="https://lottes.co.kr/JP.html"', html)
             self.assertIn('hreflang="ko-KR" href="https://lottes.co.kr/"', html)
 
         for filename in ('contact.html', 'listings.html', 'listing-detail.html'):
-            html = (ROOT / filename).read_text(encoding='utf-8')
+            html = (PUBLIC / filename).read_text(encoding='utf-8')
             self.assertIn('hreflang="en" href="https://lottes.co.kr/EN.html"', html, filename)
             self.assertIn('hreflang="ja" href="https://lottes.co.kr/JP.html"', html, filename)
             self.assertNotIn('hreflang="en" href="https://lottes.co.kr/contact_EN.html"', html, filename)
@@ -110,7 +111,7 @@ class InternationalLandingTests(unittest.TestCase):
             self.assertNotIn(legacy, sitemap)
 
     def test_language_suggestion_routes_only_to_single_international_guides(self):
-        source = (ROOT / 'js/languageSuggestion.js').read_text(encoding='utf-8')
+        source = (PUBLIC / 'js/languageSuggestion.js').read_text(encoding='utf-8')
         self.assertIn("startsWith('ja')", source)
         self.assertIn("target: 'JP.html'", source)
         self.assertIn("target: 'EN.html'", source)
@@ -120,7 +121,7 @@ class InternationalLandingTests(unittest.TestCase):
             self.assertNotIn(legacy, source)
 
     def test_analytics_consent_has_japanese_copy_and_local_privacy_anchor(self):
-        source = (ROOT / 'js/privacyAnalytics.js').read_text(encoding='utf-8')
+        source = (PUBLIC / 'js/privacyAnalytics.js').read_text(encoding='utf-8')
         self.assertIn("startsWith('ja')", source)
         self.assertIn('JP.html#privacy', source)
         self.assertIn('アクセス解析', source)

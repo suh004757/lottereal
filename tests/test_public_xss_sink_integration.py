@@ -2,11 +2,12 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+PUBLIC = ROOT / "public"
 
 
 class PublicXssSinkIntegrationTest(unittest.TestCase):
     def test_listing_detail_escapes_text_lists_and_validates_every_image_url(self):
-        source = (ROOT / "js" / "listingDetail.js").read_text(encoding="utf-8")
+        source = (PUBLIC / "js" / "listingDetail.js").read_text(encoding="utf-8")
         self.assertIn("from './publicRenderSecurity.mjs'", source)
         self.assertIn("escapeHtml(t)", source)
         self.assertIn("escapeHtml(f)", source)
@@ -15,7 +16,7 @@ class PublicXssSinkIntegrationTest(unittest.TestCase):
         self.assertNotIn("src=\"${image}\"", source)
 
     def test_feed_widget_escapes_db_text_and_allows_only_http_links(self):
-        source = (ROOT / "js" / "feedsWidget.js").read_text(encoding="utf-8")
+        source = (PUBLIC / "js" / "feedsWidget.js").read_text(encoding="utf-8")
         self.assertIn("from './publicRenderSecurity.mjs'", source)
         self.assertIn("safeExternalHttpUrl(item.url)", source)
         self.assertIn("escapeHtml(mapSource(item.source))", source)
@@ -24,18 +25,18 @@ class PublicXssSinkIntegrationTest(unittest.TestCase):
         self.assertNotIn('href="${item.url}"', source)
 
     def test_report_page_initializes_even_when_module_loads_after_dom_content_loaded(self):
-        source = (ROOT / "js" / "reportPage.js").read_text(encoding="utf-8")
+        source = (PUBLIC / "js" / "reportPage.js").read_text(encoding="utf-8")
         self.assertIn("document.readyState === 'loading'", source)
         self.assertIn("initReportPage", source)
         self.assertIn("DOMContentLoaded", source)
 
     def test_latest_report_refetches_full_body_by_slug(self):
-        source = (ROOT / "js" / "services" / "reportAdapter.js").read_text(encoding="utf-8")
+        source = (PUBLIC / "js" / "services" / "reportAdapter.js").read_text(encoding="utf-8")
         self.assertIn("latest?.slug ? getReportBySlug(latest.slug) : null", source)
 
     def test_report_evidence_links_and_listing_seo_images_use_url_allowlists(self):
-        report = (ROOT / "js" / "reportPage.js").read_text(encoding="utf-8")
-        listing = (ROOT / "js" / "listingDetail.js").read_text(encoding="utf-8")
+        report = (PUBLIC / "js" / "reportPage.js").read_text(encoding="utf-8")
+        listing = (PUBLIC / "js" / "listingDetail.js").read_text(encoding="utf-8")
         self.assertIn("safeExternalHttpUrl(source.url)", report)
         self.assertNotIn('href="${escapeHtml(source.url)}"', report)
         self.assertIn("safeImageUrl", listing)

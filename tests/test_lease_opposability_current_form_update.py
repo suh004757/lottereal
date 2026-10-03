@@ -3,6 +3,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+PUBLIC = ROOT / "public"
 PAYLOAD = ROOT / 'content' / 'curated' / '2026-09-01-lease-opposability-current-form-update.json'
 ORIGINAL_SLUG = '2026-08-23-lease-opposability-checklist'
 
@@ -19,7 +20,7 @@ class LeaseOpposabilityCurrentFormUpdateTests(unittest.TestCase):
         self.assertEqual(metadata['last_reviewed'], '2026-09-01')
         self.assertIn('> 최초 발행: 2026년 8월 23일', self.report['report_md'])
         self.assertIn('> 수정·자료 확인: 2026년 9월 1일', self.report['report_md'])
-        sitemap = (ROOT / 'Sitemap.xml').read_text(encoding='utf-8')
+        sitemap = (PUBLIC / 'Sitemap.xml').read_text(encoding='utf-8')
         entry = 'https://lottes.co.kr/reports/' + ORIGINAL_SLUG + ".html"
         self.assertIn(entry, sitemap)
         start = sitemap.index(entry)

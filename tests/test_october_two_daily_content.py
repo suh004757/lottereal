@@ -6,6 +6,7 @@ from scripts.lottereal_supabase import validate_report_copy
 
 
 ROOT = Path(__file__).resolve().parents[1]
+PUBLIC = ROOT / "public"
 PAYLOAD = ROOT / "content/daily/2026-10-02-jamsil-office-business-registration-address.json"
 SLUG = "2026-10-02-jamsil-office-business-registration-address"
 
@@ -46,9 +47,9 @@ class OctoberTwoDailyContentTests(unittest.TestCase):
         self.assertTrue(any("nts.go.kr" in url for url in urls))
         self.assertTrue(any("gov.kr" in url for url in urls))
         self.assertTrue(all(item.get("checkedAt") == "2026-10-02" for item in sources))
-        sitemap = (ROOT / "Sitemap.xml").read_text(encoding="utf-8")
+        sitemap = (PUBLIC / "Sitemap.xml").read_text(encoding="utf-8")
         self.assertIn(f"https://lottes.co.kr/reports/{SLUG}.html", sitemap)
-        html = (ROOT / "reports" / f"{SLUG}.html").read_text(encoding="utf-8")
+        html = (PUBLIC / "reports" / f"{SLUG}.html").read_text(encoding="utf-8")
         self.assertIn(f'<link rel="canonical" href="https://lottes.co.kr/reports/{SLUG}.html">', html)
         self.assertIn(self.report["title"], html)
         self.assertIn("잠실 사무실 관리비 확인법", html)

@@ -5,7 +5,7 @@ import {
   formatReportDateMeta,
   getPublicationDate,
   getRevisionDate
-} from '../js/utils/reportDates.mjs';
+} from '../public/js/utils/reportDates.mjs';
 
 const oldEdited = {
   id: 1,

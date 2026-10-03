@@ -4,6 +4,7 @@ import unittest
 
 
 REPO = Path(__file__).resolve().parents[1]
+PUBLIC = REPO / "public"
 PUBLIC_FILES = (
     'corporate-buildings.html',
     'songpa-samgong-building.html',
@@ -24,10 +25,10 @@ def assert_only_approved_public_amounts(testcase, text):
 
 class CorporateBuildingsTest(unittest.TestCase):
     def test_public_hub_and_detail_expose_only_approved_listing_facts(self):
-        hub_path = REPO / 'corporate-buildings.html'
-        detail_path = REPO / 'songpa-samgong-building.html'
-        image_path = REPO / 'img' / 'properties' / 'samgong-building-fact-card.jpg'
-        restricted_source_image = REPO / 'img' / 'properties' / 'samgong-building-front.jpg'
+        hub_path = PUBLIC / 'corporate-buildings.html'
+        detail_path = PUBLIC / 'songpa-samgong-building.html'
+        image_path = PUBLIC / 'img' / 'properties' / 'samgong-building-fact-card.jpg'
+        restricted_source_image = PUBLIC / 'img' / 'properties' / 'samgong-building-front.jpg'
 
         self.assertTrue(hub_path.exists(), '기업 사옥 허브가 필요합니다')
         self.assertTrue(detail_path.exists(), '삼공빌딩 정적 상세페이지가 필요합니다')
@@ -88,9 +89,9 @@ class CorporateBuildingsTest(unittest.TestCase):
             self.assertIn(summary, hub_hero)
 
     def test_fit_tool_is_local_private_and_flags_hard_constraints(self):
-        detail = (REPO / 'songpa-samgong-building.html').read_text(encoding='utf-8')
-        page_js_path = REPO / 'js' / 'corporateBuildingFit.js'
-        evaluator_path = REPO / 'js' / 'utils' / 'corporateBuildingFit.mjs'
+        detail = (PUBLIC / 'songpa-samgong-building.html').read_text(encoding='utf-8')
+        page_js_path = PUBLIC / 'js' / 'corporateBuildingFit.js'
+        evaluator_path = PUBLIC / 'js' / 'utils' / 'corporateBuildingFit.mjs'
 
         self.assertIn('적합성 확인만으로 저장하거나 전송하지 않습니다', detail)
         self.assertIn('검토하고 동의해 접수할 때만', detail)
@@ -100,7 +101,7 @@ class CorporateBuildingsTest(unittest.TestCase):
         self.assertIn('aria-live="polite"', detail)
         self.assertIn('js/corporateBuildingFit.js', detail)
         self.assertIn('data-corporate-inquiry', detail)
-        hub = (REPO / 'corporate-buildings.html').read_text(encoding='utf-8')
+        hub = (PUBLIC / 'corporate-buildings.html').read_text(encoding='utf-8')
         self.assertIn('js/corporateBuildingFit.js', hub)
         self.assertIn('data-corporate-inquiry', hub)
         self.assertTrue(page_js_path.exists())
@@ -116,7 +117,7 @@ class CorporateBuildingsTest(unittest.TestCase):
         self.assertIn('삼공빌딩 문의하기', page_js)
         self.assertNotIn('이 조건으로 문의하기', page_js)
         self.assertIn('inquiryDraft:', page_js)
-        inquiry_chat = (REPO / 'js' / 'inquiryChat.js').read_text(encoding='utf-8')
+        inquiry_chat = (PUBLIC / 'js' / 'inquiryChat.js').read_text(encoding='utf-8')
         self.assertIn('event.detail?.inquiryDraft', inquiry_chat)
         self.assertIn('renderMessageForm(state.values.message)', inquiry_chat)
         self.assertIn('escapeHtml(initialValue)', inquiry_chat)
@@ -125,7 +126,7 @@ class CorporateBuildingsTest(unittest.TestCase):
 
         import subprocess
         script = """
-          import { assessCorporateFit } from './js/utils/corporateBuildingFit.mjs';
+          import { assessCorporateFit } from './public/js/utils/corporateBuildingFit.mjs';
           const elevator = assessCorporateFit({ useType: 'hq', parkingNeed: 10, elevatorRequired: true });
           const showroom = assessCorporateFit({ useType: 'showroom', parkingNeed: 10, elevatorRequired: false });
           const parking = assessCorporateFit({ useType: 'hq', parkingNeed: 20, elevatorRequired: false });
@@ -145,9 +146,9 @@ class CorporateBuildingsTest(unittest.TestCase):
         self.assertEqual(data['parking']['status'], '추가 확인')
 
     def test_corporate_listing_uses_dedicated_routes_mobile_cta_and_visible_focus(self):
-        listings_js = (REPO / 'js' / 'listingsPage.js').read_text(encoding='utf-8')
-        detail_js = (REPO / 'js' / 'listingDetail.js').read_text(encoding='utf-8')
-        route_util = REPO / 'js' / 'utils' / 'listingRoutes.mjs'
+        listings_js = (PUBLIC / 'js' / 'listingsPage.js').read_text(encoding='utf-8')
+        detail_js = (PUBLIC / 'js' / 'listingDetail.js').read_text(encoding='utf-8')
+        route_util = PUBLIC / 'js' / 'utils' / 'listingRoutes.mjs'
         self.assertTrue(route_util.exists())
         self.assertIn('getListingDetailUrl(item)', listings_js)
         self.assertIn('getListingDetailUrl({ id })', detail_js)
@@ -155,7 +156,7 @@ class CorporateBuildingsTest(unittest.TestCase):
         import subprocess, json
         result = subprocess.run(
             ['node', '--input-type=module', '--eval', """
-              import { getListingDetailUrl } from './js/utils/listingRoutes.mjs';
+              import { getListingDetailUrl } from './public/js/utils/listingRoutes.mjs';
               console.log(JSON.stringify({
                 corporate: getListingDetailUrl({ id: '4b2080fa-ebc5-4363-a801-ca1be33add3e' }),
                 normal: getListingDetailUrl({ id: 'abc 123' })
@@ -168,11 +169,11 @@ class CorporateBuildingsTest(unittest.TestCase):
         self.assertEqual(routes['normal'], 'listing-detail.html?id=abc%20123')
 
         for page_name in ('corporate-buildings.html', 'songpa-samgong-building.html'):
-            page = (REPO / page_name).read_text(encoding='utf-8')
+            page = (PUBLIC / page_name).read_text(encoding='utf-8')
             self.assertIn('class="lr-mobile-actionbar lr-corporate-actionbar"', page)
             self.assertIn('data-corporate-inquiry', page)
             self.assertIn('href="tel:050714025055"', page)
-        css = (REPO / 'css' / 'corporate-buildings.css').read_text(encoding='utf-8')
+        css = (PUBLIC / 'css' / 'corporate-buildings.css').read_text(encoding='utf-8')
         self.assertIn(':focus-visible', css)
         self.assertIn('outline: 3px solid', css)
         self.assertRegex(css, r'\.hq-hero\s*\{[^}]*min-height:\s*580px')
@@ -184,8 +185,8 @@ class CorporateBuildingsTest(unittest.TestCase):
         self.assertNotIn('font-size: clamp(2.7rem,14vw,4rem)', css)
 
     def test_corporate_mobile_hero_keeps_korean_words_and_uses_compact_type(self):
-        hub = (REPO / 'corporate-buildings.html').read_text(encoding='utf-8')
-        css = (REPO / 'css' / 'corporate-buildings.css').read_text(encoding='utf-8')
+        hub = (PUBLIC / 'corporate-buildings.html').read_text(encoding='utf-8')
+        css = (PUBLIC / 'css' / 'corporate-buildings.css').read_text(encoding='utf-8')
 
         self.assertIn('class="hq-headline-line"', hub)
         self.assertIn('<em>독립 사옥</em>을 제안합니다', hub)
@@ -203,7 +204,7 @@ class CorporateBuildingsTest(unittest.TestCase):
     def test_large_commercial_price_uses_eok_not_raw_manwon(self):
         import subprocess
         script = """
-          import { formatListingPrice } from './js/utils/propertyPrice.mjs';
+          import { formatListingPrice } from './public/js/utils/propertyPrice.mjs';
           console.log(JSON.stringify({
             sale: formatListingPrice(3500000, '사옥 매매'),
             plain: formatListingPrice(3500000, ''),
@@ -238,11 +239,11 @@ class CorporateBuildingsTest(unittest.TestCase):
         self.assertEqual(payload['contact_phone'], '050714025055')
         self.assertIsNone(payload['contact_email'])
 
-        detail = (REPO / 'songpa-samgong-building.html').read_text(encoding='utf-8')
-        hub = (REPO / 'corporate-buildings.html').read_text(encoding='utf-8')
-        home = (REPO / 'index.html').read_text(encoding='utf-8')
-        listings = (REPO / 'listings.html').read_text(encoding='utf-8')
-        sitemap = (REPO / 'Sitemap.xml').read_text(encoding='utf-8')
+        detail = (PUBLIC / 'songpa-samgong-building.html').read_text(encoding='utf-8')
+        hub = (PUBLIC / 'corporate-buildings.html').read_text(encoding='utf-8')
+        home = (PUBLIC / 'index.html').read_text(encoding='utf-8')
+        listings = (PUBLIC / 'listings.html').read_text(encoding='utf-8')
+        sitemap = (PUBLIC / 'Sitemap.xml').read_text(encoding='utf-8')
 
         self.assertIn('"price": "35000000000"', detail)
         for broker_fact in (

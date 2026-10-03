@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
+PUBLIC = ROOT / "public"
 ALLOWED_JSDELIVR_URLS = set()
 STANDARD_CSP = (
     "default-src 'self'; "
@@ -36,8 +37,8 @@ ADMIN_CSP = (
     "upgrade-insecure-requests"
 )
 EXCLUDED_HTML = {
-    ROOT / 'naver8cf28dd9c8569f7f73da84b1adf5a2fb.html',
-    ROOT / 'redirect' / 'zigbang-inquiry.html',
+    PUBLIC / 'naver8cf28dd9c8569f7f73da84b1adf5a2fb.html',
+    PUBLIC / 'redirect' / 'zigbang-inquiry.html',
 }
 
 
@@ -68,7 +69,7 @@ class ResidualSecurityHardeningTest(unittest.TestCase):
             if html in EXCLUDED_HTML:
                 continue
             source = html.read_text(encoding='utf-8', errors='replace')
-            expected_csp = ADMIN_CSP if html.parent == ROOT / 'admin' else STANDARD_CSP
+            expected_csp = ADMIN_CSP if html.parent == PUBLIC / 'admin' else STANDARD_CSP
             self.assertIn(
                 f'<meta http-equiv="Content-Security-Policy" content="{expected_csp}">',
                 source,
@@ -111,7 +112,7 @@ class ResidualSecurityHardeningTest(unittest.TestCase):
                 prefix = '../' if html.parent.name == 'admin' else ''
                 self.assertIn(f'<script src="{prefix}js/currentYear.js"></script>', source, rel)
         self.assertTrue(year_pages)
-        current_year = (ROOT / 'js' / 'currentYear.js').read_text(encoding='utf-8')
+        current_year = (PUBLIC / 'js' / 'currentYear.js').read_text(encoding='utf-8')
         self.assertIn("querySelectorAll('[data-current-year]')", current_year)
         self.assertIn('new Date().getFullYear()', current_year)
 
@@ -140,7 +141,7 @@ class ResidualSecurityHardeningTest(unittest.TestCase):
         self.assertIn('not security_policy_errors', maintenance_source)
 
     def test_supabase_runtime_is_self_hosted_and_cdn_execution_is_disallowed(self):
-        source = (ROOT / 'js' / 'config' / 'supabaseConfig.js').read_text(encoding='utf-8')
+        source = (PUBLIC / 'js' / 'config' / 'supabaseConfig.js').read_text(encoding='utf-8')
         self.assertIn("import '../vendor/supabase-2.45.4.min.js';", source)
         self.assertIn('globalThis.supabase', source)
         self.assertNotIn('cdn.jsdelivr.net', source)
@@ -151,7 +152,7 @@ class ResidualSecurityHardeningTest(unittest.TestCase):
             self.assertNotIn('cdn.jsdelivr.net', policy, str(html.relative_to(ROOT)))
 
     def test_no_unapproved_remote_stylesheet_dependency_remains(self):
-        style = (ROOT / 'style.css').read_text(encoding='utf-8')
+        style = (PUBLIC / 'style.css').read_text(encoding='utf-8')
         self.assertNotIn('cdn.jsdelivr.net', style)
         unused_styles = (
             'css/animate.css',
@@ -162,7 +163,7 @@ class ResidualSecurityHardeningTest(unittest.TestCase):
         )
         for relative in unused_styles:
             self.assertNotIn(f'@import url({relative})', style)
-            self.assertFalse((ROOT / relative).exists(), relative)
+            self.assertFalse((PUBLIC / relative).exists(), relative)
         scss = (ROOT / 'scss' / 'style.scss').read_text(encoding='utf-8')
         self.assertNotIn('fonts.googleapis.com', scss)
         for relative in unused_styles:
@@ -177,7 +178,7 @@ class ResidualSecurityHardeningTest(unittest.TestCase):
                 "import '//cdn.jsdelivr.net/npm/unapproved@1/index.js';",
                 encoding='utf-8',
             )
-            with patch.object(module, 'REPO', temp_root), patch.object(module, 'VENDOR_SHA256', {}):
+            with patch.object(module, 'REPO', temp_root), patch.object(module, 'PUBLIC', temp_root), patch.object(module, 'VENDOR_SHA256', {}):
                 errors = module.check_vendor_integrity()
         self.assertTrue(any('jsDelivr' in error for error in errors), errors)
 
@@ -220,7 +221,7 @@ class ResidualSecurityHardeningTest(unittest.TestCase):
                 "import './plugins.js'; const cdn = 'https://cdn.' + 'jsdelivr.net/npm/unapproved@1/x.js';",
                 encoding='utf-8',
             )
-            with patch.object(module, 'REPO', temp_root), patch.object(module, 'VENDOR_SHA256', {}):
+            with patch.object(module, 'REPO', temp_root), patch.object(module, 'PUBLIC', temp_root), patch.object(module, 'VENDOR_SHA256', {}):
                 errors = module.check_vendor_integrity()
         self.assertTrue(any('forbidden dependency file' in error for error in errors), errors)
         self.assertTrue(any('forbidden dependency reference' in error for error in errors), errors)

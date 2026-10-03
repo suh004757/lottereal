@@ -13,8 +13,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-PUBLIC_DIRECTORIES = ("Data", "admin", "css", "fonts", "img", "js", "redirect", "reports")
-PUBLIC_ROOT_FILES = ("CNAME", "Sitemap.xml", "robots.txt", "style.css", "style.css.map", "404.md")
+PUBLIC = ROOT / "public"
 
 
 def sha256(path: Path) -> str:
@@ -27,37 +26,24 @@ def sha256(path: Path) -> str:
 
 def copy_file(source: Path, destination: Path) -> None:
     if source.is_symlink() or not source.is_file():
-        raise RuntimeError(f"public source must be a regular file: {source.relative_to(ROOT)}")
+        raise RuntimeError(f"public source must be a regular file: {source.relative_to(PUBLIC)}")
     destination.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(source, destination)
 
 
 def collect_public_sources() -> list[Path]:
-    sources = sorted(ROOT.glob("*.html"), key=lambda path: path.name)
-    for name in PUBLIC_ROOT_FILES:
-        path = ROOT / name
-        if not path.is_file() or path.is_symlink():
-            raise RuntimeError(f"required public file missing or unsafe: {name}")
-        sources.append(path)
-    for directory_name in PUBLIC_DIRECTORIES:
-        directory = ROOT / directory_name
-        if not directory.is_dir() or directory.is_symlink():
-            raise RuntimeError(f"required public directory missing or unsafe: {directory_name}")
-        for path in sorted(directory.rglob("*")):
-            if path.is_symlink():
-                raise RuntimeError(f"public source symlink is not allowed: {path.relative_to(ROOT)}")
-            if path.is_file():
-                sources.append(path)
-    downloads = ROOT / "downloads"
-    if downloads.exists():
-        if not downloads.is_dir() or downloads.is_symlink():
-            raise RuntimeError("downloads must be a regular directory")
-        for path in sorted(downloads.rglob("*")):
-            if path.is_symlink():
-                raise RuntimeError(f"public download symlink is not allowed: {path.relative_to(ROOT)}")
-            if path.is_file():
-                sources.append(path)
-    return sorted(set(sources), key=lambda path: path.relative_to(ROOT).as_posix())
+    if not PUBLIC.is_dir() or PUBLIC.is_symlink():
+        raise RuntimeError("public must be a regular directory")
+    sources = []
+    for path in sorted(PUBLIC.rglob("*")):
+        if path.is_symlink():
+            raise RuntimeError(f"public source symlink is not allowed: {path.relative_to(PUBLIC)}")
+        if path.is_file():
+            sources.append(path)
+    for required in ("index.html", "CNAME", "Sitemap.xml", "robots.txt", "style.css", "404.md"):
+        if not (PUBLIC / required).is_file():
+            raise RuntimeError(f"required public file missing: {required}")
+    return sources
 
 
 def build(output: Path, manifest_path: Path) -> dict[str, object]:
@@ -69,7 +55,7 @@ def build(output: Path, manifest_path: Path) -> dict[str, object]:
     stage = Path(tempfile.mkdtemp(prefix=f".{output.name}.stage-", dir=output.parent))
     try:
         for source in collect_public_sources():
-            copy_file(source, stage / source.relative_to(ROOT))
+            copy_file(source, stage / source.relative_to(PUBLIC))
         (stage / ".nojekyll").write_bytes(b"")
         files = {}
         for path in sorted(p for p in stage.rglob("*") if p.is_file()):

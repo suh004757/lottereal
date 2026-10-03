@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { isSafeReportSlug, trackStaticReportView } from '../js/staticReportPage.mjs';
+import { isSafeReportSlug, trackStaticReportView } from '../public/js/staticReportPage.mjs';
 
 assert.equal(isSafeReportSlug('2026-09-26-songpa-safe-check'), true);
 assert.equal(isSafeReportSlug('../escape'), false);

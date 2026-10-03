@@ -2,6 +2,7 @@ from pathlib import Path
 import unittest
 
 REPO = Path(__file__).resolve().parents[1]
+PUBLIC = REPO / "public"
 
 
 class InquiryMvpPageTest(unittest.TestCase):
@@ -20,12 +21,12 @@ class InquiryMvpPageTest(unittest.TestCase):
         self.assertIn('octet_length(metadata::text) <= 4000', migration)
 
     def test_home_inquiry_links_open_the_real_form_instead_of_scrolling(self):
-        html = (REPO / 'index.html').read_text(encoding='utf-8')
+        html = (PUBLIC / 'index.html').read_text(encoding='utf-8')
         self.assertNotIn('<a href="#contact">문의</a>', html)
         self.assertGreaterEqual(html.count('href="contact.html#inquiry-options"'), 2)
 
     def test_contact_page_has_simple_no_login_inquiry_flow(self):
-        html = (REPO / 'contact.html').read_text(encoding='utf-8')
+        html = (PUBLIC / 'contact.html').read_text(encoding='utf-8')
         self.assertIn('id="inquiry-options"', html)
         self.assertIn('data-inquiry-mvp-form', html)
         self.assertIn('name="inquiryType"', html)
@@ -43,7 +44,7 @@ class InquiryMvpPageTest(unittest.TestCase):
         self.assertIn('css/inquiry-mvp.css', html)
 
     def test_public_inquiry_insert_does_not_request_customer_row_back(self):
-        adapter = (REPO / 'js/services/backendAdapter.js').read_text(encoding='utf-8')
+        adapter = (PUBLIC / 'js/services/backendAdapter.js').read_text(encoding='utf-8')
         start = adapter.index('async function createInquirySupabase')
         end = adapter.index('async function createInquiryMock', start)
         inquiry_insert = adapter[start:end]
@@ -58,7 +59,7 @@ class InquiryMvpPageTest(unittest.TestCase):
         self.assertNotIn("console.log('[Mock Backend] createInquiry payload', payload)", adapter[mock_start:mock_end])
 
     def test_contact_controller_saves_first_then_emits_non_pii_event(self):
-        script = (REPO / 'js/contactInquiry.js').read_text(encoding='utf-8')
+        script = (PUBLIC / 'js/contactInquiry.js').read_text(encoding='utf-8')
         self.assertIn("createInquiry(payload)", script)
         self.assertIn('buildInquiryPayload', script)
         self.assertIn('inquiryValuesFromFormData', script)
@@ -73,7 +74,7 @@ class InquiryMvpPageTest(unittest.TestCase):
         self.assertNotIn('external_listing_ref', analytics_call)
 
     def test_privacy_policy_matches_minimal_inquiry_collection(self):
-        policy = (REPO / 'privacy.html').read_text(encoding='utf-8')
+        policy = (PUBLIC / 'privacy.html').read_text(encoding='utf-8')
         self.assertIn('전화 요청·매물 문의·일반 상담', policy)
         self.assertIn('전화번호, 문의 유형, 유입 경로, 희망 연락시간, 수집·이용 동의', policy)
         self.assertIn('이름, 외부 매물번호 또는 사이트 내 매물, 문의 내용', policy)
@@ -81,16 +82,16 @@ class InquiryMvpPageTest(unittest.TestCase):
         self.assertIn('광고 발송이나 AI 학습 목적으로 이용하지 않습니다', policy)
 
     def test_home_mobile_actionbar_includes_direct_inquiry_action(self):
-        html = (REPO / 'index.html').read_text(encoding='utf-8')
-        css = (REPO / 'style.css').read_text(encoding='utf-8')
+        html = (PUBLIC / 'index.html').read_text(encoding='utf-8')
+        css = (PUBLIC / 'style.css').read_text(encoding='utf-8')
         self.assertIn('<a href="contact.html#inquiry-options"><span>💬</span><strong>문의하기</strong></a>', html)
         self.assertIn('grid-auto-columns: minmax(0, 1fr);', css)
 
     def test_listing_detail_uses_guided_chat_with_automatic_listing_context(self):
-        html = (REPO / 'listing-detail.html').read_text(encoding='utf-8')
-        detail = (REPO / 'js/listingDetail.js').read_text(encoding='utf-8')
-        widget = (REPO / 'js/knowledgeWidget.js').read_text(encoding='utf-8')
-        chat = (REPO / 'js/inquiryChat.js').read_text(encoding='utf-8')
+        html = (PUBLIC / 'listing-detail.html').read_text(encoding='utf-8')
+        detail = (PUBLIC / 'js/listingDetail.js').read_text(encoding='utf-8')
+        widget = (PUBLIC / 'js/knowledgeWidget.js').read_text(encoding='utf-8')
+        chat = (PUBLIC / 'js/inquiryChat.js').read_text(encoding='utf-8')
         self.assertNotIn('data-inquiry-form', html)
         self.assertGreaterEqual(html.count('data-listing-chat-open'), 2)
         self.assertNotIn('createInquiry', detail)
@@ -109,8 +110,8 @@ class InquiryMvpPageTest(unittest.TestCase):
         self.assertNotIn('listingTitle', analytics_call)
 
     def test_mobile_actions_keep_phone_and_offer_inquiry_without_covering_search(self):
-        html = (REPO / 'contact.html').read_text(encoding='utf-8')
-        css = (REPO / 'css/inquiry-mvp.css').read_text(encoding='utf-8')
+        html = (PUBLIC / 'contact.html').read_text(encoding='utf-8')
+        css = (PUBLIC / 'css/inquiry-mvp.css').read_text(encoding='utf-8')
         self.assertIn('href="tel:050714025055"', html)
         self.assertIn('href="#inquiry-options"', html)
         self.assertIn('.lr-inquiry-actions', css)

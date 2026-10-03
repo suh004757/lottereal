@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { buildZigbangInquiryTarget } from '../js/zigbangInquiryRedirect.mjs';
+import { buildZigbangInquiryTarget } from '../public/js/zigbangInquiryRedirect.mjs';
 
 const token = '123e4567-e89b-12d3-a456-426614174000';
 assert.equal(

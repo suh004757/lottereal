@@ -2,6 +2,7 @@ from pathlib import Path
 import unittest
 
 REPO = Path(__file__).resolve().parents[1]
+PUBLIC = REPO / "public"
 
 
 class FamilyListingUiTest(unittest.TestCase):
@@ -10,8 +11,8 @@ class FamilyListingUiTest(unittest.TestCase):
             path.read_text(encoding='utf-8')
             for path in sorted((REPO / 'supabase' / 'migrations').glob('*.sql'))
         ).lower()
-        page = (REPO / 'js' / 'family-listings-page.js').read_text(encoding='utf-8')
-        adapter = (REPO / 'js' / 'services' / 'familyListingAdapter.js').read_text(encoding='utf-8')
+        page = (PUBLIC / 'js' / 'family-listings-page.js').read_text(encoding='utf-8')
+        adapter = (PUBLIC / 'js' / 'services' / 'familyListingAdapter.js').read_text(encoding='utf-8')
         self.assertNotIn('on public.family_listing_records\nfor delete', migrations)
         self.assertIn('archive_family_listing_as_owner', migrations)
         self.assertIn("family_role = 'owner'", migrations)
@@ -44,8 +45,8 @@ class FamilyListingUiTest(unittest.TestCase):
         self.assertIn('if actor_id is null then', actor_migration)
 
     def test_family_board_is_admin_only_and_explains_korean_alias_date_code(self):
-        html = (REPO / 'admin' / 'family-listings.html').read_text(encoding='utf-8')
-        page = (REPO / 'js' / 'family-listings-page.js').read_text(encoding='utf-8')
+        html = (PUBLIC / 'admin' / 'family-listings.html').read_text(encoding='utf-8')
+        page = (PUBLIC / 'js' / 'family-listings-page.js').read_text(encoding='utf-8')
         self.assertIn('우리 매물', html)
         self.assertIn('2026년 8월', html)
         self.assertIn('2608', html)
@@ -78,9 +79,9 @@ class FamilyListingUiTest(unittest.TestCase):
         self.assertNotIn('employeeLogin', html)
 
     def test_family_board_keeps_older_users_actions_large_and_obvious(self):
-        html = (REPO / 'admin' / 'family-listings.html').read_text(encoding='utf-8')
-        css = (REPO / 'css' / 'family-listings.css').read_text(encoding='utf-8')
-        page = (REPO / 'js' / 'family-listings-page.js').read_text(encoding='utf-8')
+        html = (PUBLIC / 'admin' / 'family-listings.html').read_text(encoding='utf-8')
+        css = (PUBLIC / 'css' / 'family-listings.css').read_text(encoding='utf-8')
+        page = (PUBLIC / 'js' / 'family-listings-page.js').read_text(encoding='utf-8')
         self.assertIn('글과 사진 같이 올리기', html)
         self.assertNotIn('id="requestFamilyParse"', html)
         self.assertNotIn('내용 정리하기</button>', html)
@@ -111,10 +112,10 @@ class FamilyListingUiTest(unittest.TestCase):
         self.assertIn('.form-actions .primary-action { order: -1; }', css)
 
     def test_quick_post_keeps_each_photo_attached_to_one_listing(self):
-        html = (REPO / 'admin' / 'family-listings.html').read_text(encoding='utf-8')
-        page = (REPO / 'js' / 'family-listings-page.js').read_text(encoding='utf-8')
-        adapter = (REPO / 'js' / 'services' / 'familyListingAdapter.js').read_text(encoding='utf-8')
-        image_adapter = (REPO / 'js' / 'services' / 'adminIntakeImageAdapter.js').read_text(encoding='utf-8')
+        html = (PUBLIC / 'admin' / 'family-listings.html').read_text(encoding='utf-8')
+        page = (PUBLIC / 'js' / 'family-listings-page.js').read_text(encoding='utf-8')
+        adapter = (PUBLIC / 'js' / 'services' / 'familyListingAdapter.js').read_text(encoding='utf-8')
+        image_adapter = (PUBLIC / 'js' / 'services' / 'adminIntakeImageAdapter.js').read_text(encoding='utf-8')
         migration = (REPO / 'supabase' / 'migrations' / '017_family_listing_photo_access.sql').read_text(encoding='utf-8').lower()
         original_migration = (REPO / 'supabase' / 'migrations' / '018_family_listing_original_images.sql').read_text(encoding='utf-8').lower()
         immutable_migration = (REPO / 'supabase' / 'migrations' / '019_lock_finalized_admin_intake_images.sql').read_text(encoding='utf-8').lower()
@@ -175,8 +176,8 @@ class FamilyListingUiTest(unittest.TestCase):
         self.assertNotIn('public = true', migration)
 
     def test_cards_offer_field_photo_completion_and_kakao_style_share(self):
-        html = (REPO / 'admin' / 'family-listings.html').read_text(encoding='utf-8')
-        page = (REPO / 'js' / 'family-listings-page.js').read_text(encoding='utf-8')
+        html = (PUBLIC / 'admin' / 'family-listings.html').read_text(encoding='utf-8')
+        page = (PUBLIC / 'js' / 'family-listings-page.js').read_text(encoding='utf-8')
         self.assertIn("photoButton.textContent = '사진 추가'", page)
         self.assertIn('record.alias_code', page)
         self.assertIn("shareButton.textContent = '공유하기'", page)
@@ -201,8 +202,8 @@ class FamilyListingUiTest(unittest.TestCase):
         self.assertNotIn('await Promise.all([loadPhotoMap(), loadParseDraftMap()])', page)
 
     def test_private_contact_and_access_notes_are_allowed_but_hidden_on_cards(self):
-        html = (REPO / 'admin' / 'family-listings.html').read_text(encoding='utf-8')
-        page = (REPO / 'js' / 'family-listings-page.js').read_text(encoding='utf-8')
+        html = (PUBLIC / 'admin' / 'family-listings.html').read_text(encoding='utf-8')
+        page = (PUBLIC / 'js' / 'family-listings-page.js').read_text(encoding='utf-8')
         self.assertIn('연락처·출입정보 메모', html)
         self.assertIn('직원방용 복사에는 들어가지 않습니다', html)
         self.assertNotIn('전화번호, 출입 비밀번호, 계좌번호는 여기 적지 마세요', html)
@@ -210,14 +211,14 @@ class FamilyListingUiTest(unittest.TestCase):
         self.assertIn("summary.textContent = '내부 메모 보기'", page)
 
     def test_family_card_uses_clear_admin_advertising_link_instead_of_ambiguous_draft(self):
-        html = (REPO / 'admin' / 'family-listings.html').read_text(encoding='utf-8')
-        page = (REPO / 'js' / 'family-listings-page.js').read_text(encoding='utf-8')
+        html = (PUBLIC / 'admin' / 'family-listings.html').read_text(encoding='utf-8')
+        page = (PUBLIC / 'js' / 'family-listings-page.js').read_text(encoding='utf-8')
         self.assertIn('href="dashboard.html#properties"', html)
         self.assertNotIn("advertise.textContent = '광고 준비'", page)
         self.assertNotIn('createAdvertisingDraft(record, advertise)', page)
 
     def test_family_board_uses_private_adapter_without_delete_or_public_publish(self):
-        adapter = (REPO / 'js' / 'services' / 'familyListingAdapter.js').read_text(encoding='utf-8')
+        adapter = (PUBLIC / 'js' / 'services' / 'familyListingAdapter.js').read_text(encoding='utf-8')
         self.assertIn(".from('family_listing_records')", adapter)
         self.assertIn(".from('family_listing_events')", adapter)
         self.assertIn('.insert(', adapter)
@@ -264,15 +265,15 @@ class FamilyListingUiTest(unittest.TestCase):
         self.assertNotIn('delete from public.family_listing_members', migration)
 
     def test_page_loads_immutable_history_on_demand(self):
-        page = (REPO / 'js' / 'family-listings-page.js').read_text(encoding='utf-8')
+        page = (PUBLIC / 'js' / 'family-listings-page.js').read_text(encoding='utf-8')
         self.assertIn('listFamilyListingEvents', page)
         self.assertIn('dataset.history', page)
         self.assertIn('변경 이력', page)
 
     def test_free_text_is_preserved_while_backend_auto_applies_basic_fields(self):
-        html = (REPO / 'admin' / 'family-listings.html').read_text(encoding='utf-8')
-        page = (REPO / 'js' / 'family-listings-page.js').read_text(encoding='utf-8')
-        adapter = (REPO / 'js' / 'services' / 'familyListingAdapter.js').read_text(encoding='utf-8')
+        html = (PUBLIC / 'admin' / 'family-listings.html').read_text(encoding='utf-8')
+        page = (PUBLIC / 'js' / 'family-listings-page.js').read_text(encoding='utf-8')
+        adapter = (PUBLIC / 'js' / 'services' / 'familyListingAdapter.js').read_text(encoding='utf-8')
         migration = (REPO / 'supabase' / 'migrations' / '016_family_listing_parse_reviews.sql').read_text(encoding='utf-8').lower()
         auto_migration = (REPO / 'supabase' / 'migrations' / '020_auto_apply_family_listing_parse.sql').read_text(encoding='utf-8').lower()
         self.assertIn('id="familySourceText"', html)
@@ -294,8 +295,8 @@ class FamilyListingUiTest(unittest.TestCase):
         self.assertNotIn('for delete', migration)
 
     def test_existing_admin_surfaces_link_to_family_board(self):
-        intake = (REPO / 'admin' / 'intake.html').read_text(encoding='utf-8')
-        dashboard = (REPO / 'admin' / 'dashboard.html').read_text(encoding='utf-8')
+        intake = (PUBLIC / 'admin' / 'intake.html').read_text(encoding='utf-8')
+        dashboard = (PUBLIC / 'admin' / 'dashboard.html').read_text(encoding='utf-8')
         self.assertIn('href="family-listings.html"', intake)
         self.assertIn('href="family-listings.html"', dashboard)
 

@@ -4,7 +4,7 @@ import test from 'node:test';
 import {
   PUBLIC_LISTING_SELECT_FIELDS,
   PUBLIC_LISTING_SELECT_QUERY
-} from '../js/publicListingFields.mjs';
+} from '../public/js/publicListingFields.mjs';
 
 test('public listing projection excludes private contact and owner fields', () => {
   const forbidden = ['contact_name', 'contact_phone', 'contact_email', 'user_id'];

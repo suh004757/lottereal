@@ -4,8 +4,9 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+PUBLIC = ROOT / "public"
 PUBLIC_HTML = tuple(
-    path for path in ROOT.glob("*.html")
+    path for path in PUBLIC.glob("*.html")
     if not path.name.startswith("naver")
 )
 

@@ -4,9 +4,10 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+PUBLIC = ROOT / "public"
 README = ROOT / "README.md"
 OFFICE_SOURCE_SUFFIXES = {".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx"}
-PUBLIC_OFFICE_PREFIXES = ("downloads/",)
+PUBLIC_OFFICE_PREFIXES = ("public/downloads/",)
 MAX_TRACKED_FILE_BYTES = 2_000_000
 
 
@@ -72,10 +73,10 @@ class PublicRepositoryHygieneTests(unittest.TestCase):
             "report.html": "https://lottes.co.kr/report.html",
         }
         for path, url in expected_routes.items():
-            self.assertTrue((ROOT / path).is_file(), path)
+            self.assertTrue((PUBLIC / path).is_file(), path)
             self.assertIn(f"`{path}` → `{url}`", content)
 
-        for directory in ("reports", "content", "scripts", "tests", "supabase"):
+        for directory in ("public/reports", "content", "scripts", "tests", "supabase"):
             self.assertTrue((ROOT / directory).is_dir(), directory)
             self.assertIn(f"| `{directory}/` |", content)
 
@@ -84,7 +85,7 @@ class PublicRepositoryHygieneTests(unittest.TestCase):
         )
         for output_name in ("reports", "Sitemap.xml", "report.html"):
             self.assertIn(output_name, exporter)
-            self.assertIn(f"`{output_name}", content)
+            self.assertIn(f"`public/{output_name}", content)
 
         phase_positions = [content.index(f"### Phase {number}") for number in (1, 2, 3)]
         self.assertEqual(sorted(phase_positions), phase_positions)

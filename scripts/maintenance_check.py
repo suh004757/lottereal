@@ -14,15 +14,16 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 REPO = Path(__file__).resolve().parents[1]
+PUBLIC = REPO / "public"
 
 PUBLIC_CONTENT_HTML = (
-    REPO / "report.html",
-    REPO / "disputes.html",
+    PUBLIC / "report.html",
+    PUBLIC / "disputes.html",
 )
 PUBLIC_CONTENT_JS = (
-    REPO / "js" / "reportPage.js",
-    REPO / "js" / "reportLandingPage.js",
-    REPO / "js" / "utils" / "reportDates.mjs",
+    PUBLIC / "js" / "reportPage.js",
+    PUBLIC / "js" / "reportLandingPage.js",
+    PUBLIC / "js" / "utils" / "reportDates.mjs",
 )
 VENDOR_SHA256 = {
     "js/vendor/dompurify-3.4.15.min.js": "f263b05369e050fa175d4ecb9c9358eb4253602d510297adfb31df48b2f1c4d5",
@@ -118,7 +119,7 @@ def check_js_syntax(paths=None) -> list[str]:
     node = subprocess.run(["bash", "-lc", "command -v node"], text=True, capture_output=True)
     if node.returncode != 0:
         return ["node not available; skipped JS syntax check"]
-    js_paths = paths if paths is not None else (REPO / "js").glob("**/*.js")
+    js_paths = paths if paths is not None else (PUBLIC / "js").glob("**/*.js")
     for js in sorted(js_paths):
         result = subprocess.run(["node", "--check", str(js)], text=True, capture_output=True, timeout=20)
         if result.returncode != 0:
@@ -129,7 +130,7 @@ def check_js_syntax(paths=None) -> list[str]:
 def check_vendor_integrity() -> list[str]:
     errors: list[str] = []
     for relative, expected_hash in VENDOR_SHA256.items():
-        path = REPO / relative
+        path = PUBLIC / relative
         if not path.is_file():
             errors.append(f"missing pinned vendor asset: {relative}")
             continue
@@ -138,14 +139,14 @@ def check_vendor_integrity() -> list[str]:
             errors.append(f"vendor hash mismatch: {relative}")
 
     for relative in FORBIDDEN_DEPENDENCY_FILES:
-        if (REPO / relative).exists():
+        if (PUBLIC / relative).exists():
             errors.append(f"forbidden dependency file: {relative}")
 
     authored_sources = sorted(
-        list(REPO.glob("**/*.html"))
-        + list((REPO / "js").glob("**/*.js"))
-        + list((REPO / "js").glob("**/*.mjs"))
-        + list(REPO.glob("**/*.css"))
+        list(PUBLIC.glob("**/*.html"))
+        + list((PUBLIC / "js").glob("**/*.js"))
+        + list((PUBLIC / "js").glob("**/*.mjs"))
+        + list(PUBLIC.glob("**/*.css"))
     )
     for source_path in authored_sources:
         if ".git" in source_path.parts or "vendor" in source_path.parts:
@@ -175,7 +176,7 @@ def check_vendor_integrity() -> list[str]:
 def check_html_security_policy() -> list[str]:
     errors: list[str] = []
     verification_file = "naver8cf28dd9c8569f7f73da84b1adf5a2fb.html"
-    redirect_file = REPO / "redirect" / "zigbang-inquiry.html"
+    redirect_file = PUBLIC / "redirect" / "zigbang-inquiry.html"
     for html in sorted(REPO.glob("**/*.html")):
         if ".git" in html.parts or html.name == verification_file:
             continue
@@ -195,7 +196,7 @@ def check_html_security_policy() -> list[str]:
             if '<meta name="referrer" content="no-referrer">' not in source:
                 errors.append(f"redirect referrer policy missing: {relative}")
         else:
-            expected = ADMIN_CSP if html.parent == REPO / "admin" else PUBLIC_CSP
+            expected = ADMIN_CSP if html.parent == PUBLIC / "admin" else PUBLIC_CSP
             marker = f'<meta http-equiv="Content-Security-Policy" content="{expected}">'
             referrer_marker = '<meta name="referrer" content="strict-origin-when-cross-origin">'
             first_script = re.search(r"<script\b", source, re.IGNORECASE)

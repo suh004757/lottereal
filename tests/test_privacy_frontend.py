@@ -2,10 +2,11 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+PUBLIC = ROOT / "public"
 
 
 def public_html_files():
-    for path in ROOT.glob('*.html'):
+    for path in PUBLIC.glob('*.html'):
         text = path.read_text(encoding='utf-8', errors='ignore')
         if '<html' in text.lower():
             yield path, text
@@ -21,7 +22,7 @@ class PrivacyFrontendTests(unittest.TestCase):
             self.assertIn('js/privacyAnalytics.js', text, path.name)
 
     def test_analytics_loader_minimizes_tracking_and_respects_control(self):
-        path = ROOT / 'js/privacyAnalytics.js'
+        path = PUBLIC / 'js/privacyAnalytics.js'
         self.assertTrue(path.exists())
         text = path.read_text(encoding='utf-8')
         self.assertIn('lr_analytics_choice', text)
@@ -43,33 +44,33 @@ class PrivacyFrontendTests(unittest.TestCase):
         self.assertIn('data-analytics-notice', text)
 
     def test_custom_analytics_never_send_full_url_or_phone_link(self):
-        text = (ROOT / 'js/analyticsEvents.js').read_text(encoding='utf-8')
+        text = (PUBLIC / 'js/analyticsEvents.js').read_text(encoding='utf-8')
         self.assertNotIn('window.location.href', text)
         self.assertNotIn('link_url: href', text)
         self.assertNotIn('target.search', text)
 
     def test_international_guides_do_not_collect_inquiries_directly(self):
         for filename in ('EN.html', 'JP.html'):
-            html = (ROOT / filename).read_text(encoding='utf-8')
+            html = (PUBLIC / filename).read_text(encoding='utf-8')
             self.assertNotIn('<form', html, filename)
             self.assertIn('href="contact.html#inquiry-options"', html, filename)
             self.assertIn('data-analytics-disable', html, filename)
             self.assertIn('data-analytics-enable', html, filename)
-        english = (ROOT / 'EN.html').read_text(encoding='utf-8')
-        japanese = (ROOT / 'JP.html').read_text(encoding='utf-8')
+        english = (PUBLIC / 'EN.html').read_text(encoding='utf-8')
+        japanese = (PUBLIC / 'JP.html').read_text(encoding='utf-8')
         self.assertIn('Do not send ID documents, bank details', english)
         self.assertIn('身分証明書、口座情報', japanese)
 
     def test_admin_pages_do_not_load_public_analytics(self):
-        for path in (ROOT / 'admin').glob('*.html'):
+        for path in (PUBLIC / 'admin').glob('*.html'):
             text = path.read_text(encoding='utf-8', errors='ignore')
             self.assertNotIn('googletagmanager.com', text, path.name)
             self.assertNotIn('privacyAnalytics.js', text, path.name)
 
     def test_policy_describes_current_processing_and_international_summary_links_to_it(self):
-        ko = (ROOT / 'privacy.html').read_text(encoding='utf-8')
-        english = (ROOT / 'EN.html').read_text(encoding='utf-8')
-        japanese = (ROOT / 'JP.html').read_text(encoding='utf-8')
+        ko = (PUBLIC / 'privacy.html').read_text(encoding='utf-8')
+        english = (PUBLIC / 'EN.html').read_text(encoding='utf-8')
+        japanese = (PUBLIC / 'JP.html').read_text(encoding='utf-8')
         for forbidden in ('회원 가입 및 관리', '마케팅 정보 수신', '매물 등록 서비스'):
             self.assertNotIn(forbidden, ko)
         self.assertIn('id="analytics-control"', ko)
@@ -93,9 +94,9 @@ class PrivacyFrontendTests(unittest.TestCase):
             self.assertNotIn('<form', guide)
 
     def test_policy_names_the_confirmed_privacy_officer(self):
-        ko = (ROOT / 'privacy.html').read_text(encoding='utf-8')
-        english = (ROOT / 'EN.html').read_text(encoding='utf-8')
-        japanese = (ROOT / 'JP.html').read_text(encoding='utf-8')
+        ko = (PUBLIC / 'privacy.html').read_text(encoding='utf-8')
+        english = (PUBLIC / 'EN.html').read_text(encoding='utf-8')
+        japanese = (PUBLIC / 'JP.html').read_text(encoding='utf-8')
 
         self.assertNotIn('개인정보 보호책임자: 서봉현', ko)
         self.assertIn('개인정보 보호 문의: 대표전화 0507-1402-5055', ko)
@@ -112,12 +113,12 @@ class PrivacyFrontendTests(unittest.TestCase):
         self.assertIn('lr-footer__privacy-contact', en_footer)
         self.assertIn('lr-footer__privacy-contact', jp_footer)
 
-        ko_home_footer = (ROOT / 'index.html').read_text(encoding='utf-8').split('<footer class="lr-footer">', 1)[1]
+        ko_home_footer = (PUBLIC / 'index.html').read_text(encoding='utf-8').split('<footer class="lr-footer">', 1)[1]
         self.assertIn('개인정보 보호 문의 0507-1402-5055', ko_home_footer)
-        self.assertIn('.lr-footer__privacy-contact', (ROOT / 'style.css').read_text(encoding='utf-8'))
+        self.assertIn('.lr-footer__privacy-contact', (PUBLIC / 'style.css').read_text(encoding='utf-8'))
 
     def test_widget_claim_is_limited_to_search_query_transmission(self):
-        text = (ROOT / 'js/knowledgeWidget.js').read_text(encoding='utf-8')
+        text = (PUBLIC / 'js/knowledgeWidget.js').read_text(encoding='utf-8')
         self.assertIn('검색 문장은 분석 도구로 보내지 않음', text)
         self.assertNotIn('자료 질문은 저장 안 함', text)
 

@@ -2,10 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-import { rankNeighborhoods } from '../js/songpaNeighborhoodMatcher.mjs';
+import { rankNeighborhoods } from '../public/js/songpaNeighborhoodMatcher.mjs';
 
 const config = JSON.parse(fs.readFileSync(
-  new URL('../Data/songpa-neighborhood-guide.v1.json', import.meta.url),
+  new URL('../public/Data/songpa-neighborhood-guide.v1.json', import.meta.url),
   'utf8',
 ));
 

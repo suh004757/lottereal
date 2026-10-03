@@ -6,6 +6,7 @@ from scripts.lottereal_supabase import validate_report_copy
 
 
 ROOT = Path(__file__).resolve().parents[1]
+PUBLIC = ROOT / "public"
 NEW_REPORT_PATH = ROOT / "content/daily/2026-09-27-jamsil-office-management-fee-details.json"
 UPDATE_PATH = ROOT / "content/daily/2026-09-27-existing-jamsil-office-management-fee-update.json"
 NEW_SLUG = "2026-09-27-jamsil-office-management-fee-details"
@@ -46,9 +47,9 @@ class SeptemberTwentySevenDailyContentTests(unittest.TestCase):
         self.assertTrue(any("law.go.kr" in url for url in urls))
         self.assertTrue(any("gov.kr" in url for url in urls))
         self.assertTrue(all(item.get("checkedAt") == "2026-09-27" for item in self.new_report["evidence_json"]))
-        sitemap = (ROOT / "Sitemap.xml").read_text(encoding="utf-8")
+        sitemap = (PUBLIC / "Sitemap.xml").read_text(encoding="utf-8")
         self.assertIn(f"https://lottes.co.kr/reports/{NEW_SLUG}.html", sitemap)
-        html = (ROOT / "reports" / f"{NEW_SLUG}.html").read_text(encoding="utf-8")
+        html = (PUBLIC / "reports" / f"{NEW_SLUG}.html").read_text(encoding="utf-8")
         self.assertIn(f'<link rel="canonical" href="https://lottes.co.kr/reports/{NEW_SLUG}.html">', html)
         self.assertIn(self.new_report["title"], html)
 

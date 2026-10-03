@@ -6,6 +6,7 @@ from scripts.lottereal_supabase import validate_report_copy
 
 
 ROOT = Path(__file__).resolve().parents[1]
+PUBLIC = ROOT / "public"
 PAYLOAD = ROOT / "content" / "daily" / "2026-09-07-songpa-rental-contract-reporting-deadline.json"
 
 
@@ -43,7 +44,7 @@ class SeptemberSevenDailyContentTests(unittest.TestCase):
             self.assertIn(citation, report["report_md"])
 
     def test_sitemap_and_public_copy_quality(self):
-        sitemap = (ROOT / "Sitemap.xml").read_text(encoding="utf-8")
+        sitemap = (PUBLIC / "Sitemap.xml").read_text(encoding="utf-8")
         self.assertIn("reports/" + self.report["slug"] + ".html", sitemap)
         combined = self.report["title"] + self.report["summary"] + self.report["report_md"]
         for forbidden in ("운영 기준", "예측 검색어", "프롬프트", "API 키", "MCP", "—", "Executive Summary"):

@@ -25,5 +25,5 @@ docs/traffic-growth-plan-2026-10-31.md
 *.pptx
 
 # Explicit reviewed-public-artifact boundary for intentional downloads.
-!downloads/
-!downloads/**
+!public/downloads/
+!public/downloads/**

@@ -8,6 +8,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+PUBLIC = ROOT / "public"
 BUILD_SCRIPT = ROOT / "scripts" / "build_pages_artifact.py"
 WORKFLOW = ROOT / ".github" / "workflows" / "deploy-pages.yml"
 PUBLIC_DIRECTORIES = ("Data", "admin", "css", "fonts", "img", "js", "redirect", "reports")
@@ -48,17 +49,19 @@ class PagesArtifactTests(unittest.TestCase):
             result = self.build(output, manifest)
             self.assertEqual(0, result.returncode, result.stderr)
 
-            for source in ROOT.glob("*.html"):
-                self.assertTrue((output / source.name).is_file(), source.name)
-                self.assertEqual(digest(source), digest(output / source.name), source.name)
+            source_files = sorted(
+                path.relative_to(PUBLIC) for path in PUBLIC.rglob("*") if path.is_file()
+            )
+            artifact_files = sorted(
+                path.relative_to(output)
+                for path in output.rglob("*")
+                if path.is_file() and path.name != ".nojekyll"
+            )
+            self.assertEqual(source_files, artifact_files)
+            for relative in source_files:
+                self.assertEqual(digest(PUBLIC / relative), digest(output / relative), relative)
             for name in REQUIRED_ROOT_FILES:
-                self.assertEqual(digest(ROOT / name), digest(output / name), name)
-            for directory in PUBLIC_DIRECTORIES:
-                source_files = sorted(p.relative_to(ROOT / directory) for p in (ROOT / directory).rglob("*") if p.is_file())
-                artifact_files = sorted(p.relative_to(output / directory) for p in (output / directory).rglob("*") if p.is_file())
-                self.assertEqual(source_files, artifact_files, directory)
-                for relative in source_files:
-                    self.assertEqual(digest(ROOT / directory / relative), digest(output / directory / relative))
+                self.assertEqual(digest(PUBLIC / name), digest(output / name), name)
             for directory in EXCLUDED_DIRECTORIES:
                 self.assertFalse((output / directory).exists(), directory)
             for name in ("README.md", "DEPLOY.md", "AGENTS.md", ".env.example"):

@@ -2,11 +2,12 @@ from pathlib import Path
 import unittest
 
 REPO = Path(__file__).resolve().parents[1]
+PUBLIC = REPO / "public"
 
 
 def korean_pages():
     return [
-        path for path in REPO.glob('*.html')
+        path for path in PUBLIC.glob('*.html')
         if '<html lang="ko"' in path.read_text(encoding='utf-8')
     ]
 
@@ -19,14 +20,14 @@ def primary_navigation(html):
 
 class ListingUiTest(unittest.TestCase):
     def test_english_home_is_an_international_scope_guide_not_live_inventory(self):
-        html = (REPO / 'EN.html').read_text(encoding='utf-8')
+        html = (PUBLIC / 'EN.html').read_text(encoding='utf-8')
         self.assertIn('What we can help you ask about', html)
         self.assertIn('Availability, viewing schedules', html)
         self.assertNotIn('listings-en.html', html)
         self.assertNotIn('data-listing', html)
 
     def test_legacy_english_listings_moves_to_the_single_guide(self):
-        html = (REPO / 'listings-en.html').read_text(encoding='utf-8')
+        html = (PUBLIC / 'listings-en.html').read_text(encoding='utf-8')
         self.assertIn('<meta name="robots" content="noindex,follow">', html)
         self.assertIn('<meta http-equiv="refresh" content="0; url=EN.html">', html)
         self.assertNotIn('listingsPage.en.js', html)
@@ -36,12 +37,12 @@ class ListingUiTest(unittest.TestCase):
             'js/listingsPage.js',
             'js/listingDetail.js',
         ):
-            source = (REPO / relative).read_text(encoding='utf-8')
+            source = (PUBLIC / relative).read_text(encoding='utf-8')
             self.assertIn("from './utils/contactPhone.mjs'", source, relative)
             self.assertNotIn('listing.contact_phone', source, relative)
             self.assertNotIn('item.contact_phone', source, relative)
 
-        adapter = (REPO / 'js/services/backendAdapter.js').read_text(encoding='utf-8')
+        adapter = (PUBLIC / 'js/services/backendAdapter.js').read_text(encoding='utf-8')
         self.assertIn("from '../utils/contactPhone.mjs'", adapter)
         self.assertIn('contact_phone: SAFE_CONTACT_PHONE', adapter)
 
@@ -49,8 +50,8 @@ class ListingUiTest(unittest.TestCase):
         for path in korean_pages():
             html = path.read_text(encoding='utf-8')
             self.assertNotIn('>추천매물</a>', primary_navigation(html), path.name)
-        home = (REPO / 'index.html').read_text(encoding='utf-8')
-        listings = (REPO / 'listings.html').read_text(encoding='utf-8')
+        home = (PUBLIC / 'index.html').read_text(encoding='utf-8')
+        listings = (PUBLIC / 'listings.html').read_text(encoding='utf-8')
         self.assertIn('<p class="lr-kicker">매물 유형 찾기</p>', home)
         self.assertNotIn('<strong>추천매물</strong>', listings)
 
@@ -61,7 +62,7 @@ class ListingUiTest(unittest.TestCase):
             self.assertNotIn('>진행</a>', nav, path.name)
             self.assertNotIn('>ENGLISH</a>', nav, path.name)
 
-        home = (REPO / 'index.html').read_text(encoding='utf-8')
+        home = (PUBLIC / 'index.html').read_text(encoding='utf-8')
         self.assertIn('<a href="EN.html">ENGLISH</a>', home[home.index('<footer'):])
 
     def test_korean_primary_navigation_is_consistent_and_bounded(self):
@@ -77,7 +78,7 @@ class ListingUiTest(unittest.TestCase):
             self.assertNotIn('>찾아오는 길</a>', nav, path.name)
 
     def test_home_prioritizes_live_interest_and_property_search_before_editorial_sections(self):
-        home = (REPO / 'index.html').read_text(encoding='utf-8')
+        home = (PUBLIC / 'index.html').read_text(encoding='utf-8')
         ordered = (
             'id="inquiry-receipts"',
             'id="listings"',
@@ -97,7 +98,7 @@ class ListingUiTest(unittest.TestCase):
         self.assertNotIn('지금 바로 만날 수 있는 매물들', home)
 
     def test_listing_cards_and_actions_use_non_overlapping_responsive_layout(self):
-        css = (REPO / 'style.css').read_text(encoding='utf-8')
+        css = (PUBLIC / 'style.css').read_text(encoding='utf-8')
         grid_start = css.index('.lr-listing-grid {')
         grid_end = css.index('}', grid_start)
         grid = css[grid_start:grid_end]
@@ -113,7 +114,7 @@ class ListingUiTest(unittest.TestCase):
         self.assertIn('white-space: nowrap;', actions)
 
     def test_mobile_actionbar_auto_fits_remaining_actions(self):
-        css = (REPO / 'style.css').read_text(encoding='utf-8')
+        css = (PUBLIC / 'style.css').read_text(encoding='utf-8')
         media_start = css.rindex('@media (max-width: 720px)')
         start = css.index('.lr-mobile-actionbar {', media_start)
         end = css.index('}', start)
@@ -121,7 +122,7 @@ class ListingUiTest(unittest.TestCase):
         self.assertIn('grid-template-columns: none;', block)
         self.assertIn('grid-auto-flow: column;', block)
         self.assertIn('grid-auto-columns: minmax(0, 1fr);', block)
-        widget_css = (REPO / 'css' / 'knowledge-widget.css').read_text(encoding='utf-8')
+        widget_css = (PUBLIC / 'css' / 'knowledge-widget.css').read_text(encoding='utf-8')
         widget_start = widget_css.index('.has-knowledge-widget .lr-mobile-actionbar--with-knowledge {')
         widget_end = widget_css.index('}', widget_start)
         widget_block = widget_css[widget_start:widget_end]

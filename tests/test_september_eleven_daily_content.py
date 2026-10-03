@@ -5,6 +5,7 @@ from pathlib import Path
 from scripts.lottereal_supabase import validate_report_copy
 
 ROOT = Path(__file__).resolve().parents[1]
+PUBLIC = ROOT / "public"
 PAYLOAD = ROOT / 'content' / 'daily' / '2026-09-11-songpa-shared-management-fee-check.json'
 
 
@@ -33,7 +34,7 @@ class SeptemberElevenDailyContentTests(unittest.TestCase):
             self.assertNotIn(unsupported, report['report_md'])
 
     def test_daily_report_is_discoverable_in_sitemap(self):
-        sitemap = (ROOT / 'Sitemap.xml').read_text(encoding='utf-8')
+        sitemap = (PUBLIC / 'Sitemap.xml').read_text(encoding='utf-8')
         self.assertIn('reports/' + self.report['slug'] + '.html', sitemap)
 
 

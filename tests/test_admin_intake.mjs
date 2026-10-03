@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {
   buildAdminIntakePayload,
   detectSensitiveDetails
-} from '../js/adminIntake.mjs';
+} from '../public/js/adminIntake.mjs';
 
 const now = new Date('2026-08-29T00:00:00.000Z');
 const listing = buildAdminIntakePayload({

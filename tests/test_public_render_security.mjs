@@ -5,7 +5,7 @@ import {
   escapeHtml,
   safeExternalHttpUrl,
   safeImageUrl
-} from '../js/publicRenderSecurity.mjs';
+} from '../public/js/publicRenderSecurity.mjs';
 
 test('escapeHtml neutralizes tags, quotes, and event-handler attribute breakout', () => {
   const payload = '<img src=x onerror="alert(1)">\'&';

@@ -3,6 +3,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+PUBLIC = ROOT / "public"
 
 
 class TextExtractor(HTMLParser):
@@ -26,7 +27,7 @@ class TextExtractor(HTMLParser):
 
 def visible_text(name):
     parser = TextExtractor()
-    parser.feed((ROOT / name).read_text(encoding='utf-8'))
+    parser.feed((PUBLIC / name).read_text(encoding='utf-8'))
     return ' '.join(' '.join(parser.parts).split())
 
 
