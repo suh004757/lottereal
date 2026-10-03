@@ -15,3 +15,15 @@ __pycache__/
 # Internal LotteReal operating guidance must never ship through GitHub Pages.
 docs/LOTTEREAL_AUTONOMY.md
 docs/traffic-growth-plan-2026-10-31.md
+
+# Office working files are not public-site source artifacts.
+*.doc
+*.docx
+*.xls
+*.xlsx
+*.ppt
+*.pptx
+
+# Explicit reviewed-public-artifact boundary for intentional downloads.
+!downloads/
+!downloads/**
