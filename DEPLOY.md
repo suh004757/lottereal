@@ -1,5 +1,11 @@
 # Deployment Guidelines
 
+## GitHub Pages deployment boundary
+
+Production is deployed by GitHub Actions from the allowlisted artifact built with `scripts/build_pages_artifact.py`. The workflow preserves existing public relative paths while excluding repository-only source and operations directories: `scripts/`, `tests/`, `supabase/`, `content/`, `scss/`.
+
+The deployment workflow runs the Python and Node regression suites, builds the artifact outside the checkout, and uploads only that artifact. It does not use repository secrets. Roll back the deployment mechanism by reverting the workflow commit and changing the Pages build type back to the `main /` legacy source.
+
 ## Security Checklist
 Before deploying or zipping this project for distribution, please ensure the following:
 
