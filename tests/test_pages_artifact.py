@@ -1,6 +1,6 @@
 import hashlib
 import json
-import shutil
+
 import subprocess
 import tempfile
 import unittest
@@ -19,7 +19,7 @@ REQUIRED_ROOT_FILES = (
     "robots.txt",
     "style.css",
     "style.css.map",
-    "404.md",
+    "404.html",
 )
 PINNED_ACTIONS = {
     "actions/checkout": "11d5960a326750d5838078e36cf38b85af677262",
@@ -68,22 +68,50 @@ class PagesArtifactTests(unittest.TestCase):
                 self.assertFalse((output / name).exists(), name)
             self.assertTrue((output / ".nojekyll").is_file())
 
-    def test_build_replaces_stale_output_and_manifest_is_deterministic(self):
+    def test_manifest_is_deterministic_across_fresh_outputs(self):
         with tempfile.TemporaryDirectory() as tmp:
-            output = Path(tmp) / "site"
-            manifest = Path(tmp) / "manifest.json"
-            output.mkdir()
-            (output / "stale-secret.txt").write_text("must disappear")
-            first = self.build(output, manifest)
+            first_output = Path(tmp) / "site-one"
+            second_output = Path(tmp) / "site-two"
+            first_manifest = Path(tmp) / "manifest-one.json"
+            second_manifest = Path(tmp) / "manifest-two.json"
+            first = self.build(first_output, first_manifest)
             self.assertEqual(0, first.returncode, first.stderr)
-            self.assertFalse((output / "stale-secret.txt").exists())
-            first_manifest = manifest.read_bytes()
-            second = self.build(output, manifest)
+            second = self.build(second_output, second_manifest)
             self.assertEqual(0, second.returncode, second.stderr)
-            self.assertEqual(first_manifest, manifest.read_bytes())
-            data = json.loads(first_manifest)
+            self.assertEqual(first_manifest.read_bytes(), second_manifest.read_bytes())
+            data = json.loads(first_manifest.read_bytes())
             self.assertEqual(sorted(data["files"]), list(data["files"]))
             self.assertNotIn("generated_at", data)
+
+    def test_existing_output_is_rejected_without_deleting_contents(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "site"
+            output.mkdir()
+            marker = output / "keep.txt"
+            marker.write_text("keep", encoding="utf-8")
+            result = self.build(output, Path(tmp) / "manifest.json")
+            self.assertNotEqual(0, result.returncode)
+            self.assertEqual("keep", marker.read_text(encoding="utf-8"))
+
+    def test_symlink_output_is_rejected_without_touching_target(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "target"
+            target.mkdir()
+            marker = target / "keep.txt"
+            marker.write_text("keep", encoding="utf-8")
+            output = Path(tmp) / "site"
+            output.symlink_to(target, target_is_directory=True)
+            result = self.build(output, Path(tmp) / "manifest.json")
+            self.assertNotEqual(0, result.returncode)
+            self.assertTrue(output.is_symlink())
+            self.assertEqual("keep", marker.read_text(encoding="utf-8"))
+
+    def test_custom_404_is_static_and_noindex(self):
+        page = (PUBLIC / "404.html").read_text(encoding="utf-8")
+        self.assertIn("페이지를 찾을 수 없습니다", page)
+        self.assertIn('content="noindex,follow"', page)
+        self.assertIn("script-src 'none'", page)
+        self.assertFalse((PUBLIC / "404.md").exists())
 
     def test_readme_documents_workflow_artifact_as_the_deployment_boundary(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
