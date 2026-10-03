@@ -90,7 +90,10 @@ class PublicRepositoryHygieneTests(unittest.TestCase):
         portfolio_markers = (
             "An AI-Operated Real Estate Web Platform",
             "harness engineering",
+            "operated end to end by goal-directed AI agents",
+            "Humans do not manually edit application code",
             "self-improving SDLC",
+            "the AI receives and triages real inbound inquiries",
             "Human authority remains explicit",
             "Production claims require evidence",
             "Validation is proportional to risk",
