@@ -3,17 +3,19 @@
 [![Live site](https://img.shields.io/badge/live-lottes.co.kr-0A66C2)](https://lottes.co.kr/)
 [![Deployment](https://img.shields.io/badge/deployment-GitHub%20Pages-222)](./DEPLOY.md)
 
-LotteReal is a production real estate website for Seoul, South Korea. It is also an experiment in **harness engineering**: AI agents operate across the frontend, backend, content pipeline, data layer, testing, security review, and deployment lifecycle, while human governance defines business intent and high-impact production boundaries.
+LotteReal is a production real estate website for Seoul, South Korea, operated end to end by goal-directed AI agents. Humans do not manually edit application code, write database migrations, publish content, run deployments, process routine inquiries, or perform routine recovery. The owner provides objectives, constraints, and accountability; the AI is responsible for carrying the work through the frontend, backend, data layer, customer inquiry intake, testing, security review, release, and production verification.
 
-This is not a one-shot “AI-generated website.” The repository is the operating harness. It gives agents the context, tools, tests, evidence requirements, publication boundaries, and rollback paths needed to improve a live service safely over time.
+This is not a one-shot “AI-generated website.” It is a live experiment in **harness engineering**. The repository is the operating environment that gives AI agents the context, tools, tests, evidence requirements, publication boundaries, and rollback paths needed to operate and improve a real service safely over time.
 
 **Live:** [https://lottes.co.kr](https://lottes.co.kr)
 
 ## Project thesis
 
-Most AI software demos stop after code generation. LotteReal explores a harder question:
+Most AI software demos stop after code generation or require a human to complete the delivery loop. LotteReal explores two harder questions:
 
-> Can an AI system maintain and improve a real, public-facing product—across frontend and backend—without giving up traceability, privacy, or engineering discipline?
+> How safely can a goal-directed AI operate a real platform all the way from intent to production, incident response, and continuous improvement?
+>
+> What does the software development lifecycle become when AI is not merely a coding assistant, but the engineer and operator responsible for closing the loop?
 
 The operating model is deliberately evidence-driven:
 
@@ -24,7 +26,7 @@ The operating model is deliberately evidence-driven:
 5. **Release** — publish only a validated artifact through GitHub Actions.
 6. **Learn** — convert incidents, review findings, and operational mistakes into regression tests, stronger tooling, and reusable procedures.
 
-The result is a **self-improving SDLC**, not an unconstrained self-modifying system. Improvements are encoded as reviewable source, tests, migrations, documentation, and deployment policy.
+The result is an **AI-era, self-improving SDLC**, not an unconstrained self-modifying system. The AI is expected to finish the operational loop, while every improvement remains encoded as inspectable source, tests, migrations, documentation, deployment policy, and production evidence.
 
 ## What the AI operates
 
@@ -37,8 +39,9 @@ The agentic harness can work across the full product lifecycle:
 - **Security and privacy:** secret exclusion, customer-data boundaries, dependency integrity, CSP enforcement, and fail-closed repository checks.
 - **Delivery:** branch isolation, pull-request CI, deterministic GitHub Pages artifacts, deployment monitoring, production smoke tests, and reversible hotfixes.
 - **Operations:** maintenance checks, analytics minimization, incident diagnosis, and turning concrete failures into permanent regressions.
+- **Customer inquiries:** the AI receives and triages real inbound inquiries, keeps submitted contact details inside the controlled owner channel, and advances each case according to explicit operating rules rather than handing routine intake back to a human operator.
 
-Human authority remains explicit. Business policy, credentials, customer handling rules, legal judgment, and material production decisions are not delegated blindly. Autonomy is strongest where outcomes are measurable and reversible.
+Human authority remains explicit, but it is expressed through goals, constraints, access boundaries, and accountability—not through manual implementation or routine operation. The AI executes the work and escalates only when objectives conflict, required authority is unavailable, or an irreversible decision exceeds its delegated boundary.
 
 ## Harness engineering principles
 
@@ -121,6 +124,7 @@ The artifact builder preserves relative paths, canonical metadata, sitemap entri
 ## Security and privacy model
 
 - No service-role keys, passwords, private keys, customer records, or operational credentials belong in Git.
+- Inquiry content is processed through the AI-operated intake path; customer contact details stay in the controlled owner channel and are never copied into public artifacts, CI logs, or public pull requests.
 - Public Supabase configuration is treated as public; authorization depends on database privileges and Row Level Security, not obscurity.
 - Browser code uses restrictive CSP and referrer policies, with separate policies for public, admin, redirect, and error surfaces.
 - Analytics are centralized, minimized, and excluded from the custom 404 page.
@@ -148,12 +152,13 @@ See [`DEPLOY.md`](./DEPLOY.md) for the deployment and rollback boundary.
 
 ## Why this project matters
 
-LotteReal demonstrates a practical middle ground between manual software maintenance and unsafe “fully autonomous” deployment:
+LotteReal is a running test of end-to-end AI software operation:
 
-- AI can own substantial frontend and backend execution.
+- AI owns frontend and backend execution rather than handing unfinished work back to a human operator.
 - Deterministic tools can make generated output auditable.
 - Tests can encode business, privacy, publication, and operational memory.
-- Production autonomy can remain reversible and evidence-based.
-- Human governance can stay focused on intent and material risk rather than repetitive implementation work.
+- Production autonomy can remain reversible, evidence-based, and bounded by explicit invariants.
+- Failures can become improvements to the harness instead of isolated manual fixes.
+- The human role can stay at the level of purpose, constraints, and accountability while the AI closes the SDLC loop.
 
-The long-term goal is not to remove humans from software. It is to build a harness in which AI can perform increasingly complete engineering work while the system remains understandable, inspectable, and accountable.
+The purpose of the experiment is to discover how far this model can go without sacrificing safety: whether a goal-directed AI can keep a platform useful, secure, and operational over time, and which controls an AI-era SDLC needs in order to remain understandable, inspectable, and accountable.
