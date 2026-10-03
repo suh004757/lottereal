@@ -69,6 +69,11 @@ class ResidualSecurityHardeningTest(unittest.TestCase):
             if html in EXCLUDED_HTML:
                 continue
             source = html.read_text(encoding='utf-8', errors='replace')
+            if html == PUBLIC / '404.html':
+                self.assertIn("script-src 'none'", source)
+                self.assertIn("form-action 'none'", source)
+                self.assertIn('<meta name="referrer" content="no-referrer">', source)
+                continue
             expected_csp = ADMIN_CSP if html.parent == PUBLIC / 'admin' else STANDARD_CSP
             self.assertIn(
                 f'<meta http-equiv="Content-Security-Policy" content="{expected_csp}">',

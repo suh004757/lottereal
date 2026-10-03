@@ -8,7 +8,7 @@ PUBLIC = REPO / "public"
 def korean_pages():
     return [
         path for path in PUBLIC.glob('*.html')
-        if '<html lang="ko"' in path.read_text(encoding='utf-8')
+        if path.name != '404.html' and '<html lang="ko"' in path.read_text(encoding='utf-8')
     ]
 
 

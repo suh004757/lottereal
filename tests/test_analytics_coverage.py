@@ -11,7 +11,7 @@ class AnalyticsCoverageTest(unittest.TestCase):
         direct_tracking = []
         for path in sorted(PUBLIC.glob('*.html')):
             text = path.read_text(encoding='utf-8', errors='ignore')
-            if path.name.startswith('naver') and text.startswith('naver-site-verification:'):
+            if path.name == '404.html' or (path.name.startswith('naver') and text.startswith('naver-site-verification:')):
                 continue
             if 'js/privacyAnalytics.js' not in text:
                 missing.append(path.name)
