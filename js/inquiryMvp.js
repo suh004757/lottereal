@@ -31,6 +31,11 @@ function cleanText(value, maxLength) {
   return String(value || '').trim().replace(/\s+/g, ' ').slice(0, maxLength);
 }
 
+export function normalizeInquiryIntent(value) {
+  const candidate = String(value || '').trim();
+  return Object.hasOwn(TYPE_LABELS, candidate) ? candidate : '';
+}
+
 export function normalizePhone(value) {
   const digits = String(value || '').replace(/\D/g, '');
   if (digits.length < 9 || digits.length > 11) {

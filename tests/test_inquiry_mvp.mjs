@@ -3,6 +3,7 @@ import {
   buildInquiryPayload,
   buildInquiryAnalyticsEvent,
   inquiryValuesFromFormData,
+  normalizeInquiryIntent,
   normalizePhone
 } from '../js/inquiryMvp.js';
 
@@ -19,6 +20,12 @@ const formValues = {
 
 assert.equal(normalizePhone(formValues.phone), '01012345678');
 assert.throws(() => normalizePhone('02-123'), /연락처/);
+assert.equal(normalizeInquiryIntent('consultation'), 'consultation');
+assert.equal(normalizeInquiryIntent('listing'), 'listing');
+assert.equal(normalizeInquiryIntent('callback'), 'callback');
+assert.equal(normalizeInquiryIntent('consultation<script>'), '');
+assert.equal(normalizeInquiryIntent('../listing'), '');
+assert.equal(normalizeInquiryIntent(''), '');
 
 const payload = buildInquiryPayload(formValues);
 assert.equal(payload.listingId, null);
