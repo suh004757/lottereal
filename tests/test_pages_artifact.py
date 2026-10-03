@@ -96,6 +96,7 @@ class PagesArtifactTests(unittest.TestCase):
 
     def test_pages_workflow_is_minimal_pinned_and_deploys_only_the_artifact(self):
         text = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("pull_request:", text)
         self.assertIn("push:\n    branches: [main]", text)
         self.assertIn("workflow_dispatch:", text)
         self.assertIn("permissions: {}", text)
@@ -104,6 +105,7 @@ class PagesArtifactTests(unittest.TestCase):
         self.assertIn("id-token: write", text)
         build = text.split("  build:", 1)[1].split("  deploy:", 1)[0]
         deploy = text.split("  deploy:", 1)[1]
+        self.assertIn("if: github.event_name != 'pull_request'", deploy)
         self.assertNotIn("pages: write", build)
         self.assertNotIn("id-token: write", build)
         self.assertNotIn("actions/checkout", deploy)
