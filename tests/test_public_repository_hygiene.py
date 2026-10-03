@@ -87,11 +87,23 @@ class PublicRepositoryHygieneTests(unittest.TestCase):
             self.assertIn(output_name, exporter)
             self.assertIn(f"`public/{output_name}", content)
 
-        phase_positions = [content.index(f"### Phase {number}") for number in (1, 2, 3)]
-        self.assertEqual(sorted(phase_positions), phase_positions)
-        self.assertIn("GitHub Actions workflow artifact", content)
-        self.assertIn("DOCX 직접 다운로드 URL은 의도적으로 종료", content)
-        self.assertIn("PR 완료 댓글과 독립 review 결과", content)
+        portfolio_markers = (
+            "An AI-Operated Real Estate Web Platform",
+            "harness engineering",
+            "self-improving SDLC",
+            "Human authority remains explicit",
+            "Production claims require evidence",
+            "Validation is proportional to risk",
+            "Every incident should improve the harness",
+            "GitHub Actions",
+            "scripts/build_pages_artifact.py",
+        )
+        for marker in portfolio_markers:
+            self.assertIn(marker, content)
+
+        self.assertNotIn("### Phase 1", content)
+        self.assertNotIn("DOCX 직접 다운로드 URL은 의도적으로 종료", content)
+        self.assertNotIn("PR 완료 댓글과 독립 review 결과", content)
 
 
 if __name__ == "__main__":
