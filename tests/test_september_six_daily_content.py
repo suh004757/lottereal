@@ -5,6 +5,7 @@ from pathlib import Path
 from scripts.lottereal_supabase import validate_report_copy
 
 ROOT = Path(__file__).resolve().parents[1]
+PUBLIC = ROOT / "public"
 NEW_PAYLOAD = ROOT / 'content' / 'daily' / '2026-09-06-songpa-apartment-real-trade-cancellation-check.json'
 UPDATE_PAYLOAD = ROOT / 'content' / 'curated' / '2026-09-06-seoul-real-estate-funding-and-data-check-update.json'
 
@@ -23,7 +24,7 @@ class SeptemberSixDailyContentTests(unittest.TestCase):
         self.assertEqual(validate_report_copy(report), [])
         self.assertGreaterEqual(len(report['report_md']), 700)
         self.assertIn('https://lottes.co.kr/contact.html', report['report_md'])
-        sitemap = (ROOT / 'Sitemap.xml').read_text(encoding='utf-8')
+        sitemap = (PUBLIC / 'Sitemap.xml').read_text(encoding='utf-8')
         self.assertIn('reports/' + report['slug'] + ".html", sitemap)
 
     def test_new_article_is_source_grounded_without_unsupported_songpa_price_claim(self):
@@ -45,7 +46,7 @@ class SeptemberSixDailyContentTests(unittest.TestCase):
         self.assertIn('> 최초 발행: 2026년 8월 23일', report['report_md'])
         self.assertIn('> 수정·자료 확인: 2026년 9월 6일', report['report_md'])
         self.assertEqual(validate_report_copy(report), [])
-        sitemap = (ROOT / 'Sitemap.xml').read_text(encoding='utf-8')
+        sitemap = (PUBLIC / 'Sitemap.xml').read_text(encoding='utf-8')
         entry = 'reports/' + report['slug'] + ".html"
         start = sitemap.index(entry)
         self.assertRegex(sitemap[start:start + 220], r"<lastmod>\d{4}-\d{2}-\d{2}</lastmod>")

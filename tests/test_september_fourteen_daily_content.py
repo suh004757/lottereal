@@ -6,6 +6,7 @@ from scripts.lottereal_supabase import validate_report_copy
 
 
 ROOT = Path(__file__).resolve().parents[1]
+PUBLIC = ROOT / "public"
 NEW_PAYLOAD = ROOT / "content" / "daily" / "2026-09-14-songpa-trust-registration-lease-check.json"
 UPDATE_PAYLOAD = ROOT / "content" / "daily" / "2026-09-14-existing-lease-rights-update.json"
 
@@ -52,7 +53,7 @@ class SeptemberFourteenDailyContentTests(unittest.TestCase):
         self.assertEqual(validate_report_copy(report), [])
 
     def test_sitemap_and_public_copy_quality(self):
-        sitemap = (ROOT / "Sitemap.xml").read_text(encoding="utf-8")
+        sitemap = (PUBLIC / "Sitemap.xml").read_text(encoding="utf-8")
         for report in (self.new_report, self.updated_report):
             entry = "reports/" + report["slug"] + ".html"
             start = sitemap.index(entry)

@@ -5,7 +5,7 @@ import {
   inquiryValuesFromFormData,
   normalizeInquiryIntent,
   normalizePhone
-} from '../js/inquiryMvp.js';
+} from '../public/js/inquiryMvp.js';
 
 const formValues = {
   inquiryType: 'listing',

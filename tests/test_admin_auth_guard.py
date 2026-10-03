@@ -3,20 +3,21 @@ import hashlib
 import unittest
 
 REPO = Path(__file__).resolve().parents[1]
+PUBLIC = REPO / "public"
 
 
 class AdminAuthGuardTest(unittest.TestCase):
     def test_login_redirects_admin_to_chat_intake_and_rejects_non_admin(self):
-        source = (REPO / 'js' / 'admin-login.js').read_text(encoding='utf-8')
+        source = (PUBLIC / 'js' / 'admin-login.js').read_text(encoding='utf-8')
         self.assertIn("app_metadata?.role === 'admin'", source)
         self.assertIn("./intake.html", source)
         self.assertNotIn("window.location.href = './dashboard.html'", source)
 
     def test_google_only_login_is_minimal_and_keeps_runtime_admin_guard(self):
-        html = (REPO / 'admin' / 'login.html').read_text(encoding='utf-8')
-        login = (REPO / 'js' / 'admin-login.js').read_text(encoding='utf-8')
-        auth = (REPO / 'js' / 'services' / 'authService.js').read_text(encoding='utf-8')
-        css_path = REPO / 'css' / 'admin-login.css'
+        html = (PUBLIC / 'admin' / 'login.html').read_text(encoding='utf-8')
+        login = (PUBLIC / 'js' / 'admin-login.js').read_text(encoding='utf-8')
+        auth = (PUBLIC / 'js' / 'services' / 'authService.js').read_text(encoding='utf-8')
+        css_path = PUBLIC / 'css' / 'admin-login.css'
         self.assertTrue(css_path.exists(), 'Google-only login stylesheet is missing')
         css = css_path.read_text(encoding='utf-8')
 
@@ -53,29 +54,29 @@ class AdminAuthGuardTest(unittest.TestCase):
         self.assertIn('max-width: 460px', css)
 
     def test_intake_page_checks_server_managed_admin_role(self):
-        source = (REPO / 'js' / 'admin-intake-page.js').read_text(encoding='utf-8')
+        source = (PUBLIC / 'js' / 'admin-intake-page.js').read_text(encoding='utf-8')
         self.assertIn("user.app_metadata?.role !== 'admin'", source)
         self.assertIn("signOutAdmin", source)
 
     def test_advanced_dashboard_rejects_authenticated_non_admin(self):
-        source = (REPO / 'js' / 'admin-dashboard.js').read_text(encoding='utf-8')
+        source = (PUBLIC / 'js' / 'admin-dashboard.js').read_text(encoding='utf-8')
         self.assertIn("currentAdmin.app_metadata?.role !== 'admin'", source)
         self.assertIn('await signOutAdmin()', source)
 
     def test_advanced_dashboard_does_not_interpolate_database_values_into_html(self):
-        source = (REPO / 'js' / 'admin-dashboard.js').read_text(encoding='utf-8')
+        source = (PUBLIC / 'js' / 'admin-dashboard.js').read_text(encoding='utf-8')
         self.assertNotIn('tr.innerHTML = `', source)
         self.assertNotIn('inquiryFields.status.innerHTML', source)
         self.assertIn('.textContent =', source)
 
     def test_admin_preview_pins_a_self_hosted_patched_dompurify(self):
-        vendor = REPO / 'js' / 'vendor' / 'dompurify-3.4.15.min.js'
+        vendor = PUBLIC / 'js' / 'vendor' / 'dompurify-3.4.15.min.js'
         self.assertEqual(
             hashlib.sha256(vendor.read_bytes()).hexdigest(),
             'f263b05369e050fa175d4ecb9c9358eb4253602d510297adfb31df48b2f1c4d5'
         )
         for relative in ('admin/dashboard.html', 'admin/report-editor.html'):
-            html = (REPO / relative).read_text(encoding='utf-8')
+            html = (PUBLIC / relative).read_text(encoding='utf-8')
             self.assertIn('../js/vendor/dompurify-3.4.15.min.js', html)
             self.assertNotIn('cdn.jsdelivr.net/npm/dompurify', html)
             self.assertNotIn('dompurify@3.0.6', html)

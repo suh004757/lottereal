@@ -6,6 +6,7 @@ from scripts.lottereal_supabase import validate_report_copy
 
 
 ROOT = Path(__file__).resolve().parents[1]
+PUBLIC = ROOT / "public"
 REPORT_PATH = ROOT / "content/daily/2026-09-25-electronic-lease-contract-auto-filing-check.json"
 
 
@@ -39,7 +40,7 @@ class SeptemberTwentyFiveDailyContentTests(unittest.TestCase):
         self.assertTrue(any("irts.molit.go.kr" in url for url in urls))
         self.assertTrue(any("gov.kr" in url for url in urls))
         self.assertTrue(all(item.get("checkedAt") == "2026-09-25" for item in self.report["evidence_json"]))
-        sitemap = (ROOT / "Sitemap.xml").read_text(encoding="utf-8")
+        sitemap = (PUBLIC / "Sitemap.xml").read_text(encoding="utf-8")
         start = sitemap.index("reports/" + self.report["slug"] + ".html")
         self.assertRegex(sitemap[start:start + 240], r"<lastmod>\d{4}-\d{2}-\d{2}</lastmod>")
 

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { collectPaginatedReports } from '../js/services/knowledgeReportPager.mjs';
+import { collectPaginatedReports } from '../public/js/services/knowledgeReportPager.mjs';
 
 test('report pager rejects a first-page failure instead of returning an honest empty result', async () => {
   await assert.rejects(

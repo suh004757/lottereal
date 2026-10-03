@@ -2,11 +2,12 @@ import unittest
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
+PUBLIC = REPO / "public"
 
 
 class KnowledgeSearchPageTest(unittest.TestCase):
     def test_knowledge_page_has_source_grounded_question_search(self):
-        text = (REPO / 'knowledge.html').read_text(encoding='utf-8')
+        text = (PUBLIC / 'knowledge.html').read_text(encoding='utf-8')
         required = (
             'id="knowledge-search-form"',
             'id="knowledge-search-input"',
@@ -26,45 +27,45 @@ class KnowledgeSearchPageTest(unittest.TestCase):
     def test_core_korean_navigation_links_to_knowledge_search(self):
         missing = []
         for name in ('index.html', 'listings.html', 'report.html', 'disputes.html', 'contact.html'):
-            text = (REPO / name).read_text(encoding='utf-8', errors='ignore')
+            text = (PUBLIC / name).read_text(encoding='utf-8', errors='ignore')
             if 'href="knowledge.html"' not in text:
                 missing.append(name)
         self.assertEqual(missing, [])
 
     def test_adapter_pages_through_all_published_content(self):
-        text = (REPO / 'js/services/reportAdapter.js').read_text(encoding='utf-8')
+        text = (PUBLIC / 'js/services/reportAdapter.js').read_text(encoding='utf-8')
         self.assertIn('listPublishedKnowledgeReports', text)
         self.assertIn(".select('id, slug, title, summary, report_md, evidence_json", text)
         self.assertIn('.range(from, to)', text)
         self.assertIn('collectPaginatedReports', text)
-        pager = (REPO / 'js/services/knowledgeReportPager.mjs').read_text(encoding='utf-8')
+        pager = (PUBLIC / 'js/services/knowledgeReportPager.mjs').read_text(encoding='utf-8')
         self.assertIn('while (true)', pager)
         self.assertIn('if (error) throw error', pager)
 
     def test_adapter_has_full_content_reader_for_live_auto_updates(self):
-        text = (REPO / 'js/services/reportAdapter.js').read_text(encoding='utf-8')
+        text = (PUBLIC / 'js/services/reportAdapter.js').read_text(encoding='utf-8')
         self.assertIn('listPublishedKnowledgeReports', text)
         self.assertIn('report_md', text)
         self.assertIn('evidence_json', text)
 
     def test_knowledge_page_is_in_sitemap(self):
-        text = (REPO / 'Sitemap.xml').read_text(encoding='utf-8')
+        text = (PUBLIC / 'Sitemap.xml').read_text(encoding='utf-8')
         self.assertIn('<loc>https://lottes.co.kr/knowledge.html</loc>', text)
 
     def test_public_page_does_not_claim_a_live_ai_answer(self):
-        text = (REPO / 'knowledge.html').read_text(encoding='utf-8')
+        text = (PUBLIC / 'knowledge.html').read_text(encoding='utf-8')
         self.assertNotIn('AI가 답변', text)
         self.assertNotIn('법률 상담 챗봇', text)
 
     def test_community_pulse_precedes_secondary_calculator_promotion(self):
-        text = (REPO / 'knowledge.html').read_text(encoding='utf-8-sig')
+        text = (PUBLIC / 'knowledge.html').read_text(encoding='utf-8-sig')
         self.assertLess(
             text.index('lr-community-pulse-section'),
             text.index('knowledge-fee-calculator-title'),
         )
 
     def test_community_pulse_has_visible_focus_and_reduced_motion_styles(self):
-        css = (REPO / 'css/knowledge.css').read_text(encoding='utf-8')
+        css = (PUBLIC / 'css/knowledge.css').read_text(encoding='utf-8')
         self.assertIn('.lr-community-pulse__card a:focus-visible', css)
         self.assertIn('color: #756e64;', css)
         self.assertIn('outline: 3px solid #8a5b28;', css)

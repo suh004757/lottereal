@@ -4,6 +4,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+PUBLIC = ROOT / "public"
 LEGACY_PAGES = ('insights.html', 'insight-detail.html')
 
 
@@ -14,7 +15,7 @@ class HistoricalInsightsPreservationTest(unittest.TestCase):
             'insight-detail.html': 'https://lottes.co.kr/insight-detail.html',
         }
         for filename, canonical in expected_canonicals.items():
-            html = (ROOT / filename).read_text(encoding='utf-8')
+            html = (PUBLIC / filename).read_text(encoding='utf-8')
             with self.subTest(filename=filename):
                 self.assertNotRegex(html, re.compile(r'http-equiv="refresh"', re.I))
                 self.assertNotIn('noindex', html.lower())
@@ -26,7 +27,7 @@ class HistoricalInsightsPreservationTest(unittest.TestCase):
 
     def test_historical_market_pages_publish_only_verified_snapshot_metrics(self):
         combined = '\n'.join(
-            (ROOT / filename).read_text(encoding='utf-8') for filename in LEGACY_PAGES
+            (PUBLIC / filename).read_text(encoding='utf-8') for filename in LEGACY_PAGES
         )
         for marker in ('최종 업데이트: 최신', '최신 업데이트', '+2.3%', '-4.7%', '+1.8%', '-3.2%'):
             with self.subTest(marker=marker):
@@ -36,17 +37,17 @@ class HistoricalInsightsPreservationTest(unittest.TestCase):
             with self.subTest(verified_marker=verified_marker):
                 self.assertIn(verified_marker, combined)
 
-        controller = (ROOT / 'js' / 'insightsPage.js').read_text(encoding='utf-8')
+        controller = (PUBLIC / 'js' / 'insightsPage.js').read_text(encoding='utf-8')
         self.assertNotIn('MOCK_INSIGHTS', controller)
         self.assertNotIn('Mock Data Version', controller)
 
     def test_historical_routes_remain_in_sitemap_and_internal_links(self):
-        sitemap = (ROOT / 'Sitemap.xml').read_text(encoding='utf-8')
+        sitemap = (PUBLIC / 'Sitemap.xml').read_text(encoding='utf-8')
         self.assertIn('https://lottes.co.kr/insights.html', sitemap)
         self.assertIn('https://lottes.co.kr/insight-detail.html', sitemap)
 
         internal_links = 0
-        for path in ROOT.glob('*.html'):
+        for path in PUBLIC.glob('*.html'):
             if path.name in LEGACY_PAGES:
                 continue
             html = path.read_text(encoding='utf-8')

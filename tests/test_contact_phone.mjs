@@ -5,7 +5,7 @@ import {
   SAFE_CONTACT_PHONE,
   SAFE_CONTACT_TEL,
   getPublicContactPhone
-} from '../js/utils/contactPhone.mjs';
+} from '../public/js/utils/contactPhone.mjs';
 
 test('public contact phone is the approved safe number', () => {
   assert.equal(SAFE_CONTACT_PHONE, '0507-1402-5055');

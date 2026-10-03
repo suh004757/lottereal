@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { filterContentForLanguage } from '../js/localizedHomeContent.mjs';
+import { filterContentForLanguage } from '../public/js/localizedHomeContent.mjs';
 
 test('English home keeps only explicitly English reports and feeds', () => {
   const rows = [

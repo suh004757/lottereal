@@ -9,9 +9,9 @@ import {
   attachPendingImageManifest,
   isFinalizedImageManifest,
   isCompatibleImageManifest
-} from '../js/adminIntakeImageRules.mjs';
-import { runAdminIntakeUploadQueue } from '../js/adminIntakeUploadQueue.mjs';
-import { readImageDimensions, getOrientedDimensions } from '../js/adminIntakeImageDimensions.mjs';
+} from '../public/js/adminIntakeImageRules.mjs';
+import { runAdminIntakeUploadQueue } from '../public/js/adminIntakeUploadQueue.mjs';
+import { readImageDimensions, getOrientedDimensions } from '../public/js/adminIntakeImageDimensions.mjs';
 
 const image = (name, type = 'image/jpeg', size = 2_000_000) => ({ name, type, size });
 

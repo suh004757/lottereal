@@ -7,7 +7,7 @@ import {
   nextInquiryChatStep,
   shouldAutofocusInquiryControl,
   submittedChatValue
-} from '../js/inquiryChat.js';
+} from '../public/js/inquiryChat.js';
 
 test('listing inquiries ask for a listing reference while callback requests skip it', () => {
   assert.equal(nextInquiryChatStep('inquiryType', { inquiryType: 'listing' }), 'sourceChannel');

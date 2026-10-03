@@ -3,7 +3,7 @@ import test from 'node:test';
 import {
   mergeReportMetadata,
   buildSanitizedPreview
-} from '../js/reportEditorSecurity.mjs';
+} from '../public/js/reportEditorSecurity.mjs';
 
 test('ADMIN chat metadata is preserved and cannot be published by the report editor', () => {
   const original = {

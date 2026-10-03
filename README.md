@@ -4,7 +4,7 @@
 
 ## GitHub Pages deployment boundary
 
-GitHub Pages는 **GitHub Actions workflow artifact**만 배포합니다. `scripts/build_pages_artifact.py`가 allowlist에 있는 공개 route와 asset을 원래 상대경로 그대로 복사하므로, 저장소 source 구조와 production 공개 경계가 분리됩니다.
+GitHub Pages는 **GitHub Actions workflow artifact**만 배포합니다. `scripts/build_pages_artifact.py`가 `public/` 아래의 공개 route와 asset을 원래 상대경로 그대로 복사하므로, 저장소 source 구조와 production 공개 경계가 분리됩니다.
 
 - `index.html` → `https://lottes.co.kr/`
 - `listings.html` → `https://lottes.co.kr/listings.html`
@@ -23,24 +23,24 @@ Phase 1은 연결된 HTML/application route와 배포 설정을 바꾸지 않습
 
 | 경로 | 역할 | 변경 시 주의점 |
 |---|---|---|
-| `*.html` | 현재 운영되는 공개 route 및 호환 route | 파일 이동·이름 변경은 URL migration으로 취급 |
-| `reports/` | exporter가 만든 indexable 정적 리포트 | 수동 수정하지 않고 exporter로 재생성 |
-| `js/` | 공개 브라우저 application 및 module | CSP, 개인정보, accessibility test 필요 |
-| `css/`, `scss/`, `style.css` | 공개 style source와 현재 root stylesheet | 경로 변경 시 모든 route와 generated page 영향 |
-| `img/`, `fonts/` | 공개 asset | 미사용·중복 여부 확인 후 제거 |
-| `Data/` | 브라우저가 읽는 versioned public data | Office 원본이나 내부 운영 문서 저장 금지 |
+| `public/*.html` | 현재 운영되는 공개 route 및 호환 route | 파일 이동·이름 변경은 URL migration으로 취급 |
+| `public/reports/` | exporter가 만든 indexable 정적 리포트 | 수동 수정하지 않고 exporter로 재생성 |
+| `public/js/` | 공개 브라우저 application 및 module | CSP, 개인정보, accessibility test 필요 |
+| `public/css/`, `public/style.css`, `scss/` | 공개 style과 SCSS source | 경로 변경 시 모든 route와 generated page 영향 |
+| `public/img/`, `public/fonts/` | 공개 asset | 미사용·중복 여부 확인 후 제거 |
+| `public/Data/` | 브라우저가 읽는 versioned public data | Office 원본이나 내부 운영 문서 저장 금지 |
 | `content/` | 리포트 작성·발행용 versioned source data | public evidence와 private 운영정보 분리 |
 | `scripts/` | exporter, maintenance, analytics 및 운영 도구 | browser bundle에 포함하지 않음 |
 | `tests/` | Python·Node regression tests | route 및 publication 계약을 fail closed로 보호 |
 | `supabase/` | versioned schema/RPC/migration source | secret, 고객정보, service key 커밋 금지 |
-| `admin/` | 관리자 전용 browser surface | public page와 권한·CSP 경계를 분리 |
+| `public/admin/` | 관리자 전용 browser surface | public page와 권한·CSP 경계를 분리 |
 | `docs/` | 공개 가능한 architecture/change-control 문서 | private 운영 문서는 `.gitignore` 경계 유지 |
-| `downloads/` | owner가 검토한 공개 다운로드 artifact | Office 파일 예외는 이 경로에서만 허용 |
+| `public/downloads/` | owner가 검토한 공개 다운로드 artifact | Office 파일 예외는 이 경로에서만 허용 |
 
 ## Generated and source boundaries
 
-- `reports/*.html`은 `scripts/export_static_reports.mjs`의 산출물입니다.
-- `Sitemap.xml`과 `report.html`의 정적 archive도 publication transaction에 포함됩니다.
+- `public/reports/*.html`은 `scripts/export_static_reports.mjs`의 산출물입니다.
+- `public/Sitemap.xml`과 `public/report.html`의 정적 archive도 publication transaction에 포함됩니다.
 - generated output을 바꿀 때는 source renderer와 test를 먼저 바꾸고 전체 export를 재실행합니다.
 - 고객정보, credential, 내부 운영 원문, Office 작업 원본은 GitHub Pages tree에 두지 않습니다.
 - tracked 파일은 기본적으로 2MB 이하를 유지합니다. 더 큰 공개 asset이 꼭 필요하면 최적화·외부 저장·명시적 allowlist를 먼저 검토합니다.
@@ -57,7 +57,7 @@ Phase 1은 연결된 HTML/application route와 배포 설정을 바꾸지 않습
 
 ### Phase 2 — naming and ownership normalization
 
-- `Data/` 같은 legacy naming을 lowercase convention으로 바꿀지 검토
+- `public/Data/` 같은 legacy naming을 lowercase convention으로 바꿀지 검토
 - source/generated ownership marker와 asset inventory 추가
 - rename이 필요하면 old URL compatibility와 browser cache 전환을 함께 설계
 

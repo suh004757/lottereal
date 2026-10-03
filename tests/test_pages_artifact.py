@@ -8,6 +8,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+PUBLIC = ROOT / "public"
 BUILD_SCRIPT = ROOT / "scripts" / "build_pages_artifact.py"
 WORKFLOW = ROOT / ".github" / "workflows" / "deploy-pages.yml"
 PUBLIC_DIRECTORIES = ("Data", "admin", "css", "fonts", "img", "js", "redirect", "reports")
@@ -48,17 +49,19 @@ class PagesArtifactTests(unittest.TestCase):
             result = self.build(output, manifest)
             self.assertEqual(0, result.returncode, result.stderr)
 
-            for source in ROOT.glob("*.html"):
-                self.assertTrue((output / source.name).is_file(), source.name)
-                self.assertEqual(digest(source), digest(output / source.name), source.name)
+            source_files = sorted(
+                path.relative_to(PUBLIC) for path in PUBLIC.rglob("*") if path.is_file()
+            )
+            artifact_files = sorted(
+                path.relative_to(output)
+                for path in output.rglob("*")
+                if path.is_file() and path.name != ".nojekyll"
+            )
+            self.assertEqual(source_files, artifact_files)
+            for relative in source_files:
+                self.assertEqual(digest(PUBLIC / relative), digest(output / relative), relative)
             for name in REQUIRED_ROOT_FILES:
-                self.assertEqual(digest(ROOT / name), digest(output / name), name)
-            for directory in PUBLIC_DIRECTORIES:
-                source_files = sorted(p.relative_to(ROOT / directory) for p in (ROOT / directory).rglob("*") if p.is_file())
-                artifact_files = sorted(p.relative_to(output / directory) for p in (output / directory).rglob("*") if p.is_file())
-                self.assertEqual(source_files, artifact_files, directory)
-                for relative in source_files:
-                    self.assertEqual(digest(ROOT / directory / relative), digest(output / directory / relative))
+                self.assertEqual(digest(PUBLIC / name), digest(output / name), name)
             for directory in EXCLUDED_DIRECTORIES:
                 self.assertFalse((output / directory).exists(), directory)
             for name in ("README.md", "DEPLOY.md", "AGENTS.md", ".env.example"):
@@ -93,6 +96,7 @@ class PagesArtifactTests(unittest.TestCase):
 
     def test_pages_workflow_is_minimal_pinned_and_deploys_only_the_artifact(self):
         text = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("pull_request:", text)
         self.assertIn("push:\n    branches: [main]", text)
         self.assertIn("workflow_dispatch:", text)
         self.assertIn("permissions: {}", text)
@@ -101,6 +105,7 @@ class PagesArtifactTests(unittest.TestCase):
         self.assertIn("id-token: write", text)
         build = text.split("  build:", 1)[1].split("  deploy:", 1)[0]
         deploy = text.split("  deploy:", 1)[1]
+        self.assertIn("if: github.event_name != 'pull_request'", deploy)
         self.assertNotIn("pages: write", build)
         self.assertNotIn("id-token: write", build)
         self.assertNotIn("actions/checkout", deploy)

@@ -3,12 +3,13 @@ import unittest
 
 
 ROOT = Path(__file__).parents[1]
+PUBLIC = ROOT / "public"
 
 
 class ZigbangInquiryRedirectSurfaceTest(unittest.TestCase):
     def test_redirect_surface_is_noindex_noanalytics_and_fragment_only(self):
-        html = (ROOT / 'redirect' / 'zigbang-inquiry.html').read_text(encoding='utf-8')
-        script = (ROOT / 'js' / 'zigbangInquiryRedirect.mjs').read_text(encoding='utf-8')
+        html = (PUBLIC / 'redirect' / 'zigbang-inquiry.html').read_text(encoding='utf-8')
+        script = (PUBLIC / 'js' / 'zigbangInquiryRedirect.mjs').read_text(encoding='utf-8')
         self.assertIn('noindex,nofollow,noarchive', html)
         self.assertIn('no-referrer', html)
         self.assertIn("default-src 'none'; script-src 'self'", html)

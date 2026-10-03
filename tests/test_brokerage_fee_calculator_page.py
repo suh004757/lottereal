@@ -2,7 +2,8 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-PAGE = ROOT / "brokerage-fee-calculator.html"
+PUBLIC = ROOT / "public"
+PAGE = PUBLIC / "brokerage-fee-calculator.html"
 
 
 class BrokerageFeeCalculatorPageTests(unittest.TestCase):
@@ -61,19 +62,19 @@ class BrokerageFeeCalculatorPageTests(unittest.TestCase):
         self.assertIn('id="fee-form-error" class="fee-form__error" role="alert" tabindex="-1"', page)
 
     def test_dark_result_card_keeps_all_primary_copy_readable(self):
-        css = (ROOT / "css" / "brokerage-fee-calculator.css").read_text(encoding="utf-8")
+        css = (PUBLIC / "css" / "brokerage-fee-calculator.css").read_text(encoding="utf-8")
         self.assertRegex(css, r"\.fee-result__empty h2\s*\{[^}]*color:\s*#fff")
         self.assertRegex(css, r"\.fee-result__empty > p:last-child\s*\{[^}]*color:\s*rgba\(255,255,255,")
 
     def test_printed_result_resets_total_to_high_contrast_black(self):
-        css = (ROOT / "css" / "brokerage-fee-calculator.css").read_text(encoding="utf-8")
+        css = (PUBLIC / "css" / "brokerage-fee-calculator.css").read_text(encoding="utf-8")
         print_css = css[css.index("@media print") :]
         self.assertRegex(print_css, r"\.fee-breakdown__total dd[^}]*\{[^}]*color:\s*#000")
 
     def test_page_is_discoverable_without_crowding_primary_navigation(self):
-        index = (ROOT / "index.html").read_text(encoding="utf-8")
-        knowledge = (ROOT / "knowledge.html").read_text(encoding="utf-8")
-        sitemap = (ROOT / "Sitemap.xml").read_text(encoding="utf-8")
+        index = (PUBLIC / "index.html").read_text(encoding="utf-8")
+        knowledge = (PUBLIC / "knowledge.html").read_text(encoding="utf-8")
+        sitemap = (PUBLIC / "Sitemap.xml").read_text(encoding="utf-8")
         self.assertIn('href="brokerage-fee-calculator.html"', index)
         self.assertIn('href="brokerage-fee-calculator.html"', knowledge)
         self.assertIn("https://lottes.co.kr/brokerage-fee-calculator.html", sitemap)

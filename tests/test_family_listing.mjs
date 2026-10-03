@@ -14,7 +14,7 @@ import {
   normalizeFamilyListingInput,
   shouldQueueFamilySourceDraft,
   statusLabel
-} from '../js/familyListing.mjs';
+} from '../public/js/familyListing.mjs';
 
 assert.equal(shouldQueueFamilySourceDraft(' 새 원문 ', ''), true);
 assert.equal(shouldQueueFamilySourceDraft('같은 원문', ' 같은 원문 '), false);

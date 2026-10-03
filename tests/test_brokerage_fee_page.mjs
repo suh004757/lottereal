@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { formatKoreanAmount, manWonToWon } from '../js/brokerageFeePage.mjs';
+import { formatKoreanAmount, manWonToWon } from '../public/js/brokerageFeePage.mjs';
 
 test('converts ten-thousand-won inputs to won without ambiguity', () => {
   assert.equal(manWonToWon('12345'), 123_450_000);

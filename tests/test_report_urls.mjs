@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { reportStaticHref, reportStaticUrl } from '../js/utils/reportUrls.mjs';
+import { reportStaticHref, reportStaticUrl } from '../public/js/utils/reportUrls.mjs';
 
 assert.equal(
   reportStaticHref('2026-09-26-songpa-safe-check'),

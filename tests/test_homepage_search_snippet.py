@@ -5,7 +5,8 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-HOME = ROOT / "index.html"
+PUBLIC = ROOT / "public"
+HOME = PUBLIC / "index.html"
 EXPECTED_TITLE = "송파·강남 부동산 매물·계약 상담 | 롯데부동산"
 EXPECTED_DESCRIPTION = (
     "송파·강남의 아파트·빌라·사무실·상가 매물을 확인하고, "

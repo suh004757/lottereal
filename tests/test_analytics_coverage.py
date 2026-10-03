@@ -2,13 +2,14 @@ import unittest
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
+PUBLIC = REPO / "public"
 
 
 class AnalyticsCoverageTest(unittest.TestCase):
     def test_every_public_html_page_uses_the_privacy_analytics_loader(self):
         missing = []
         direct_tracking = []
-        for path in sorted(REPO.glob('*.html')):
+        for path in sorted(PUBLIC.glob('*.html')):
             text = path.read_text(encoding='utf-8', errors='ignore')
             if path.name.startswith('naver') and text.startswith('naver-site-verification:'):
                 continue
@@ -20,7 +21,7 @@ class AnalyticsCoverageTest(unittest.TestCase):
         self.assertEqual(direct_tracking, [], f'direct tracking bypasses privacy control: {direct_tracking}')
 
     def test_single_analytics_provider_is_privacy_minimized(self):
-        loader = (REPO / 'js/privacyAnalytics.js').read_text(encoding='utf-8')
+        loader = (PUBLIC / 'js/privacyAnalytics.js').read_text(encoding='utf-8')
         self.assertIn('googletagmanager.com/gtag/js', loader)
         self.assertNotIn('wcs.pstatic.net', loader)
         self.assertIn('allow_google_signals: false', loader)

@@ -15,6 +15,7 @@ from pathlib import Path
 from lottereal_supabase import load_env
 
 REPO = Path(__file__).resolve().parents[1]
+PUBLIC = REPO / "public"
 MENTION = load_env().get("LOTTEREAL_INQUIRY_MENTION", "")
 LIVE_URL = "https://lottes.co.kr/"
 
@@ -39,7 +40,7 @@ def public_copy_issues() -> list[str]:
         "고지의무",
         "분쟁을 부추기는",
     ]
-    public_paths = [REPO / "index.html", REPO / "listings.html"]
+    public_paths = [PUBLIC / "index.html", PUBLIC / "listings.html"]
     content_dir = REPO / "content" / "daily"
     if content_dir.exists():
         public_paths.extend(content_dir.glob("*.json"))

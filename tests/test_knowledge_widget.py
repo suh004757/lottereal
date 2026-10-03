@@ -2,6 +2,7 @@ import unittest
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
+PUBLIC = REPO / "public"
 CORE_KOREAN_PAGES = (
     'index.html',
     'listings.html',
@@ -21,13 +22,13 @@ class KnowledgeWidgetTest(unittest.TestCase):
     def test_core_korean_pages_load_the_source_search_widget(self):
         missing = []
         for name in CORE_KOREAN_PAGES:
-            text = (REPO / name).read_text(encoding='utf-8', errors='ignore')
+            text = (PUBLIC / name).read_text(encoding='utf-8', errors='ignore')
             if 'js/knowledgeWidget.js' not in text:
                 missing.append(name)
         self.assertEqual(missing, [])
 
     def test_widget_is_an_accessible_source_search_drawer(self):
-        text = (REPO / 'js/knowledgeWidget.js').read_text(encoding='utf-8')
+        text = (PUBLIC / 'js/knowledgeWidget.js').read_text(encoding='utf-8')
         for marker in (
             'listPublishedKnowledgeReports',
             "from './knowledgeSearch.mjs'",
@@ -47,8 +48,8 @@ class KnowledgeWidgetTest(unittest.TestCase):
         self.assertNotIn('raw_query', text)
 
     def test_widget_offers_guided_inquiry_using_the_existing_secure_pipeline(self):
-        widget = (REPO / 'js/knowledgeWidget.js').read_text(encoding='utf-8')
-        chat = (REPO / 'js/inquiryChat.js').read_text(encoding='utf-8')
+        widget = (PUBLIC / 'js/knowledgeWidget.js').read_text(encoding='utf-8')
+        chat = (PUBLIC / 'js/inquiryChat.js').read_text(encoding='utf-8')
         self.assertIn("from './inquiryChat.js'", widget)
         self.assertIn('data-widget-mode="knowledge"', widget)
         self.assertIn('data-widget-mode="inquiry"', widget)
@@ -72,7 +73,7 @@ class KnowledgeWidgetTest(unittest.TestCase):
         self.assertNotIn('payload.message', analytics_call)
 
     def test_widget_styles_support_desktop_drawer_and_mobile_bottom_sheet(self):
-        text = (REPO / 'css/knowledge-widget.css').read_text(encoding='utf-8')
+        text = (PUBLIC / 'css/knowledge-widget.css').read_text(encoding='utf-8')
         for marker in (
             '.lr-knowledge-widget__launcher',
             '.lr-knowledge-widget__panel',
@@ -86,8 +87,8 @@ class KnowledgeWidgetTest(unittest.TestCase):
         self.assertIn('min-height: 44px;', text[start:end])
 
     def test_mobile_listing_inquiry_keeps_the_current_question_stable(self):
-        chat = (REPO / 'js/inquiryChat.js').read_text(encoding='utf-8')
-        styles = (REPO / 'css/knowledge-widget.css').read_text(encoding='utf-8')
+        chat = (PUBLIC / 'js/inquiryChat.js').read_text(encoding='utf-8')
+        styles = (PUBLIC / 'css/knowledge-widget.css').read_text(encoding='utf-8')
         self.assertIn('lr-inquiry-chat__listing-context', chat)
         self.assertIn('class="lr-inquiry-chat__prompt" aria-live="polite" tabindex="-1"', chat)
         mobile_start = styles.index('@media (max-width: 640px)')
@@ -101,15 +102,15 @@ class KnowledgeWidgetTest(unittest.TestCase):
         self.assertIn('box-sizing: border-box;', mobile_block)
         self.assertIn('flex: 1 1 auto;', mobile_block)
         self.assertIn('min-height: 0;', mobile_block)
-        widget = (REPO / 'js/knowledgeWidget.js').read_text(encoding='utf-8')
+        widget = (PUBLIC / 'js/knowledgeWidget.js').read_text(encoding='utf-8')
         self.assertIn('window.visualViewport', widget)
         self.assertIn("visualViewport.addEventListener('resize'", widget)
         self.assertIn('!panel.contains(document.activeElement)', widget)
         self.assertIn('closeButton', widget)
 
     def test_homepage_keeps_only_two_representative_content_cards(self):
-        html = (REPO / 'index.html').read_text(encoding='utf-8')
-        script = (REPO / 'js/homeReportPreview.js').read_text(encoding='utf-8')
+        html = (PUBLIC / 'index.html').read_text(encoding='utf-8')
+        script = (PUBLIC / 'js/homeReportPreview.js').read_text(encoding='utf-8')
         self.assertIn('오늘 확인할 두 가지', html)
         self.assertNotIn('lr-section--report-hubs', html)
         self.assertNotIn('id="legal-updates"', html)

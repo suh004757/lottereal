@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { buildSanitizedReportHtml } from '../js/reportRenderSecurity.mjs';
+import { buildSanitizedReportHtml } from '../public/js/reportRenderSecurity.mjs';
 
 test('public report rendering fails closed when parser or sanitizer is unavailable', () => {
   assert.throws(

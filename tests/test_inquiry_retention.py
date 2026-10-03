@@ -2,13 +2,14 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+PUBLIC = ROOT / "public"
 
 
 class InquiryRetentionTest(unittest.TestCase):
     def test_policy_uses_a_measurable_collection_based_retention_period(self):
-        ko = (ROOT / 'privacy.html').read_text(encoding='utf-8')
-        english = (ROOT / 'EN.html').read_text(encoding='utf-8')
-        japanese = (ROOT / 'JP.html').read_text(encoding='utf-8')
+        ko = (PUBLIC / 'privacy.html').read_text(encoding='utf-8')
+        english = (PUBLIC / 'EN.html').read_text(encoding='utf-8')
+        japanese = (PUBLIC / 'JP.html').read_text(encoding='utf-8')
         self.assertIn('수집일로부터 1년', ko)
         self.assertNotIn('상담 완료 후 1년', ko)
         for guide in (english, japanese):

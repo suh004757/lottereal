@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { calculateBrokerageFee } from '../js/brokerageFeeCalculator.mjs';
+import { calculateBrokerageFee } from '../public/js/brokerageFeeCalculator.mjs';
 
 test('calculates the Seoul housing sale ceiling for a 100 million won transaction', () => {
   const result = calculateBrokerageFee({

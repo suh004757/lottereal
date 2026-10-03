@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-const source = fs.readFileSync(new URL('../js/analyticsEvents.js', import.meta.url), 'utf8');
+const source = fs.readFileSync(new URL('../public/js/analyticsEvents.js', import.meta.url), 'utf8');
 
 function loadAnalytics(pathname = '/', href = `https://lottes.co.kr${pathname}`) {
   const events = [];

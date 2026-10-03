@@ -5,8 +5,9 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-PAGE = ROOT / "songpa-neighborhood-guide.html"
-CONFIG = ROOT / "Data" / "songpa-neighborhood-guide.v1.json"
+PUBLIC = ROOT / "public"
+PAGE = PUBLIC / "songpa-neighborhood-guide.html"
+CONFIG = PUBLIC / "Data" / "songpa-neighborhood-guide.v1.json"
 
 
 class SongpaNeighborhoodGuideSurfaceTests(unittest.TestCase):
@@ -71,7 +72,7 @@ class SongpaNeighborhoodGuideSurfaceTests(unittest.TestCase):
 
     def test_page_exposes_keyboard_and_live_region_accessibility(self):
         page = PAGE.read_text(encoding="utf-8")
-        css = (ROOT / "css" / "songpa-neighborhood-guide.css").read_text(encoding="utf-8")
+        css = (PUBLIC / "css" / "songpa-neighborhood-guide.css").read_text(encoding="utf-8")
         self.assertGreaterEqual(page.count("<fieldset"), 2)
         self.assertGreaterEqual(page.count("<legend"), 2)
         self.assertIn('id="neighborhood-helper-error" class="nh-form__error" role="alert" tabindex="-1"', page)
@@ -79,12 +80,12 @@ class SongpaNeighborhoodGuideSurfaceTests(unittest.TestCase):
         self.assertIn("min-height: 48px", css)
         self.assertIn("@media (prefers-reduced-motion: reduce)", css)
         self.assertIn("input:focus-visible + span", css)
-        runtime = (ROOT / "js" / "songpaNeighborhoodPage.mjs").read_text(encoding="utf-8")
+        runtime = (PUBLIC / "js" / "songpaNeighborhoodPage.mjs").read_text(encoding="utf-8")
         self.assertIn("matchMedia?.('(prefers-reduced-motion: reduce)').matches", runtime)
         self.assertIn("reduceMotion ? 'auto' : 'smooth'", runtime)
 
     def test_runtime_keeps_answers_local_and_analytics_aggregate(self):
-        script = (ROOT / "js" / "songpaNeighborhoodPage.mjs").read_text(encoding="utf-8")
+        script = (PUBLIC / "js" / "songpaNeighborhoodPage.mjs").read_text(encoding="utf-8")
         self.assertIn("fetch(CONFIG_URL", script)
         self.assertEqual(script.count("fetch("), 1)
         for forbidden in ("localStorage", "sessionStorage", "URLSearchParams", "formData"):
@@ -93,9 +94,9 @@ class SongpaNeighborhoodGuideSurfaceTests(unittest.TestCase):
         self.assertNotIn("purpose, priorities", script[script.index("function track"):script.index("async function loadConfig")])
 
     def test_page_is_discoverable_without_crowding_primary_navigation(self):
-        index = (ROOT / "index.html").read_text(encoding="utf-8")
-        knowledge = (ROOT / "knowledge.html").read_text(encoding="utf-8")
-        sitemap = (ROOT / "Sitemap.xml").read_text(encoding="utf-8")
+        index = (PUBLIC / "index.html").read_text(encoding="utf-8")
+        knowledge = (PUBLIC / "knowledge.html").read_text(encoding="utf-8")
+        sitemap = (PUBLIC / "Sitemap.xml").read_text(encoding="utf-8")
         self.assertIn('href="songpa-neighborhood-guide.html"', index)
         self.assertIn('href="songpa-neighborhood-guide.html"', knowledge)
         self.assertIn("https://lottes.co.kr/songpa-neighborhood-guide.html", sitemap)

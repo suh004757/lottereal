@@ -5,7 +5,7 @@ import {
   getListingFreshness,
   getListingFreshnessCopy,
   getSafeListingDescription
-} from '../js/utils/listingFreshness.mjs';
+} from '../public/js/utils/listingFreshness.mjs';
 
 const NOW = new Date('2026-08-28T00:00:00Z');
 

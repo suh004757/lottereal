@@ -5,7 +5,7 @@ import {
   searchKnowledge,
   getOntologySuggestions,
   selectCommunityPulse
-} from '../js/knowledgeSearch.mjs';
+} from '../public/js/knowledgeSearch.mjs';
 
 const reports = [
   {

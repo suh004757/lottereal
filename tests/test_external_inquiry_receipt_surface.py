@@ -5,7 +5,7 @@ import unittest
 class ExternalInquiryReceiptSurfaceTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        root = Path(__file__).parents[1]
+        root = Path(__file__).parents[1] / 'public'
         cls.index = (root / 'index.html').read_text(encoding='utf-8')
         cls.privacy = (root / 'privacy.html').read_text(encoding='utf-8')
         cls.international = (root / 'EN.html').read_text(encoding='utf-8')
