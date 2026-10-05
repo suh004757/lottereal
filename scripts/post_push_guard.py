@@ -100,15 +100,15 @@ def local_verification_commands() -> list[tuple[list[str], int, str]]:
         return [
             (unittest_command, 180, "unittest"),
             ([sys.executable, "-m", "py_compile", "scripts/maintenance_check.py", "scripts/post_push_guard.py"], 120, "py_compile"),
-            (["node", "--check", "js/reportPage.js"], 60, "node_check_report_page"),
-            (["node", "--check", "js/reportLandingPage.js"], 60, "node_check_report_landing"),
+            (["node", "--check", "public/js/reportPage.js"], 60, "node_check_report_page"),
+            (["node", "--check", "public/js/reportLandingPage.js"], 60, "node_check_report_landing"),
             ([sys.executable, "scripts/maintenance_check.py"], 180, "maintenance_check"),
         ]
     return [
         ([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"], 180, "unittest"),
         ([sys.executable, "-m", "py_compile", "scripts/lottereal_supabase.py", "scripts/maintenance_check.py", "scripts/post_push_guard.py"], 120, "py_compile"),
-        (["node", "--check", "js/config/appConfig.js"], 60, "node_check_app_config"),
-        (["node", "--check", "js/currentYear.js"], 60, "node_check_current_year"),
+        (["node", "--check", "public/js/config/appConfig.js"], 60, "node_check_app_config"),
+        (["node", "--check", "public/js/currentYear.js"], 60, "node_check_current_year"),
         ([sys.executable, "scripts/maintenance_check.py"], 180, "maintenance_check"),
     ]
 
