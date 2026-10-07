@@ -93,7 +93,7 @@ class InternationalGuideBrowserE2ETest(unittest.TestCase):
             trigger.focus()
             page.keyboard.press('Enter')
             search = page.locator('.lr-knowledge-widget__form input')
-            self.assertTrue(search.is_focused())
+            self.assertTrue(search.evaluate('(element) => element === document.activeElement'))
             search.fill(SENSITIVE_MARKER)
             search.press('Enter')
             page.locator('.lr-knowledge-widget__empty').wait_for()
@@ -115,7 +115,7 @@ class InternationalGuideBrowserE2ETest(unittest.TestCase):
             self.assertNotIn(SENSITIVE_MARKER, str(search_event))
 
             page.keyboard.press('Escape')
-            self.assertTrue(trigger.is_focused())
+            self.assertTrue(trigger.evaluate('(element) => element === document.activeElement'))
             page.locator('[data-open-guided-inquiry]').first.click()
             page.locator('[data-choice][data-value="consultation"]').click()
             page.locator('[data-choice][data-value="website"]').click()
