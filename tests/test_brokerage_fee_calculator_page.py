@@ -7,9 +7,27 @@ PAGE = PUBLIC / "brokerage-fee-calculator.html"
 
 
 class BrokerageFeeCalculatorPageTests(unittest.TestCase):
+    def test_search_snippet_and_first_heading_match_observed_fee_query(self):
+        page = PAGE.read_text(encoding="utf-8")
+
+        self.assertIn(
+            "<title>서울 부동산 중개수수료 계산기 | 매매·전세·월세 중개보수 | 롯데부동산</title>",
+            page,
+        )
+        self.assertIn(
+            '<meta name="description" content="서울 부동산 중개수수료(중개보수) 상한액을 계산합니다. 매매·전세·월세 거래금액, 적용 요율과 월세 환산금액을 한 번에 확인하세요.">',
+            page,
+        )
+        self.assertIn(
+            '<meta property="og:title" content="서울 부동산 중개수수료 계산기 | 롯데부동산">',
+            page,
+        )
+        self.assertIn('"name": "서울 부동산 중개수수료 계산기"', page)
+        self.assertIn("<h1>서울 부동산 중개수수료<br><em>상한액 계산</em></h1>", page)
+
     def test_page_has_search_metadata_and_local_calculator_controls(self):
         page = PAGE.read_text(encoding="utf-8")
-        self.assertIn("<title>서울 부동산 중개보수 계산기", page)
+        self.assertIn("<title>서울 부동산 중개수수료 계산기", page)
         self.assertIn('rel="canonical" href="https://lottes.co.kr/brokerage-fee-calculator.html"', page)
         self.assertIn('id="brokerage-fee-form"', page)
         self.assertIn('name="propertyType"', page)
