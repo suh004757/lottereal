@@ -31,6 +31,11 @@ class InternationalLandingTests(unittest.TestCase):
             'fixed date',
             'within 15 days of moving',
             'Requirements can differ by immigration status',
+            'exact move-out date and whether early termination is allowed',
+            'landlord’s identity, ownership or authority to lease',
+            'before paying a deposit',
+            'rental-contract reporting or a fixed-date procedure',
+            'may vary depending on the property, lease terms, visa status and local rules',
         ):
             self.assertIn(marker, html)
 
@@ -38,6 +43,7 @@ class InternationalLandingTests(unittest.TestCase):
         self.assertIn('https://www.law.go.kr/법령/출입국관리법/제88조의2', html)
         self.assertIn('https://www.law.go.kr/법령/주택임대차보호법/제3조의2', html)
         self.assertNotIn('guarantees the return of your deposit', html.lower())
+        self.assertNotIn('lease registration', html.lower())
 
     def test_english_and_japanese_are_static_single_page_guides(self):
         pages = {
