@@ -1,4 +1,4 @@
-import { buildInquiryAnalyticsEvent, buildInquiryPayload } from './inquiryMvp.js';
+import { buildInquiryAnalyticsEvent, buildInquiryPayload, normalizePhone } from './inquiryMvp.js';
 
 const STEP_ORDER = Object.freeze([
   'inquiryType',
@@ -41,6 +41,84 @@ const FIELD_LABELS = Object.freeze({
   phone: '연락처'
 });
 
+const EN_LABELS = Object.freeze({
+  inquiryType: {
+    callback: 'Call request',
+    listing: 'Property inquiry',
+    consultation: 'General inquiry'
+  },
+  sourceChannel: {
+    website: 'Lotte Real Estate website',
+    zigbang: 'Zigbang',
+    dabang: 'Dabang',
+    naver: 'Naver or another online listing',
+    walkin: 'Office visit',
+    other: 'Other'
+  },
+  callbackTime: {
+    anytime: 'Any time',
+    'today-morning': 'This morning',
+    'today-afternoon': 'This afternoon',
+    'weekday-evening': 'Weekday evening',
+    tomorrow: 'Tomorrow'
+  }
+});
+
+const EN_FIELD_LABELS = Object.freeze({
+  externalListingRef: 'Listing reference',
+  name: 'Name',
+  phone: 'Phone number'
+});
+
+const COPY = Object.freeze({
+  ko: Object.freeze({
+    introTitle: '문의 접수 도우미', introText: '몇 가지만 알려주시면 담당자가 확인 후 전화드립니다.',
+    listingContext: '문의 매물', received: '접수되었습니다. 확인 후 연락드리겠습니다.',
+    invalidPhone: '연락처를 확인해 주세요.', listingRequired: '직방·다방 매물번호를 적어주세요.',
+    consentRequired: '문의 접수를 위해 개인정보 수집 동의가 필요합니다.', consentAnswer: '동의함', skipped: '건너뜀',
+    submitting: '문의 내용을 안전하게 접수하고 있습니다.', successStatus: '접수되었습니다. 담당자가 확인 후 희망 시간에 전화드립니다.',
+    failure: '접수 중 문제가 생겼습니다. 잠시 후 다시 시도하거나 전화해 주세요.',
+    next: '다음', skip: '건너뛰기', optional: '선택 입력', phonePlaceholder: '010-1234-5678',
+    listingPlaceholder: '매물번호가 있으면 적어주세요', listingRequiredPlaceholder: '예: 12345678',
+    messageLabel: '추가 문의 내용', messagePlaceholder: '예산, 입주일, 필요 면적, 요청 자료 등 필요한 내용만 적어주세요.',
+    consent: '문의 응대를 위한 개인정보 수집·이용에 동의합니다.', privacyLink: '개인정보처리방침 보기',
+    consentSubmit: '동의하고 내용 확인', reviewInquiry: '문의', reviewSource: '유입', reviewListing: '매물번호',
+    reviewPhone: '연락처', reviewTime: '연락시간', reviewDetails: '요청조건', submit: '이 내용으로 문의 접수',
+    submittingButton: '접수 중…', restart: '처음부터 다시', successTitle: '문의가 접수됐습니다', newInquiry: '새 문의 남기기',
+    phoneEntered: '입력됨', privacyAuthority: '',
+    questions: Object.freeze({
+      inquiryType: '어떤 도움이 필요하신가요?', sourceChannel: '어디에서 보고 문의하시나요?',
+      externalListingRef: '확인할 매물번호가 있나요?', name: '성함을 알려주세요. 원치 않으면 건너뛸 수 있어요.',
+      phone: '연락받을 전화번호를 적어주세요.', callbackTime: '언제 전화드리면 편하신가요?',
+      message: '추가로 전할 내용이 있나요?', privacyConsent: '마지막으로 개인정보 수집 동의가 필요합니다.',
+      review: '입력한 내용을 확인해 주세요.', fallback: '문의 내용을 알려주세요.'
+    })
+  }),
+  en: Object.freeze({
+    introTitle: 'English guided inquiry', introText: 'Answer a few questions and our team will review your request.',
+    listingContext: 'Property', received: 'Your inquiry has been received.',
+    invalidPhone: 'Please enter a Korean phone number, using +82 if needed.', listingRequired: 'Please enter the Zigbang or Dabang listing reference.',
+    consentRequired: 'Consent is required before the inquiry can be submitted.', consentAnswer: 'Agreed', skipped: 'Skipped',
+    submitting: 'Submitting your inquiry securely.', successStatus: 'Your inquiry has been received. Our team will review it and contact you at the preferred time.',
+    failure: 'We could not save the inquiry. Please try again later or use the contact details on this page.',
+    next: 'Next', skip: 'Skip', optional: 'Optional', phonePlaceholder: '+82 10 1234 5678',
+    listingPlaceholder: 'Enter a listing reference if you have one', listingRequiredPlaceholder: 'Example: 12345678',
+    messageLabel: 'Additional inquiry details', messagePlaceholder: 'Share only what is needed: dates, budget, deposit, area, property type, furniture or pets. Do not enter passport or bank details.',
+    consent: 'I agree to the collection and use of my phone number, inquiry category, source and preferred contact time, plus any optional name or message, to answer this inquiry. Records are retained for one year.',
+    privacyLink: 'View the Korean Privacy Policy', consentSubmit: 'Agree and review', reviewInquiry: 'Inquiry', reviewSource: 'Source',
+    reviewListing: 'Listing reference', reviewPhone: 'Phone', reviewTime: 'Contact time', reviewDetails: 'Requirements',
+    submit: 'Submit this inquiry', submittingButton: 'Submitting…', restart: 'Start again', successTitle: 'Inquiry received',
+    newInquiry: 'Send another inquiry', phoneEntered: 'Entered', privacyAuthority: ' The Korean policy is authoritative.',
+    questions: Object.freeze({
+      inquiryType: 'What can we help you with?', sourceChannel: 'Where did you find us or the property?',
+      externalListingRef: 'Do you have a listing reference?', name: 'What name should we use? You may skip this.',
+      phone: 'What Korean phone number can we use, including +82 if needed?', callbackTime: 'When is a convenient time to contact you?',
+      message: 'What accommodation or rental issue should we review?', privacyConsent: 'Please review the privacy notice before submitting.',
+      review: 'Please check the details before submission.', fallback: 'Please tell us what you need.'
+    })
+  })
+});
+
 const modalityTrackers = new WeakMap();
 
 export const INQUIRY_FOCUSABLE_SELECTOR = [
@@ -80,10 +158,15 @@ export function shouldAutofocusInquiryControl({ historyLength = 0, modality = 'p
   return historyLength > 0 && modality === 'keyboard';
 }
 
-export function mountInquiryChat(container) {
+export function mountInquiryChat(container, { locale = 'ko' } = {}) {
   if (!container || container.dataset.inquiryChatReady === 'true') return;
   container.dataset.inquiryChatReady = 'true';
 
+  const activeLocale = locale === 'en' ? 'en' : 'ko';
+  const labels = activeLocale === 'en' ? EN_LABELS : LABELS;
+  const fieldLabels = activeLocale === 'en' ? EN_FIELD_LABELS : FIELD_LABELS;
+  const copy = COPY[activeLocale];
+  const view = { locale: activeLocale, labels, fieldLabels, copy };
   const state = freshState();
   const getInputModality = createInputModalityTracker(document);
   container.addEventListener('click', handleClick);
@@ -135,8 +218,8 @@ export function mountInquiryChat(container) {
     state.values.message = context.inquiryDraft || '';
     state.step = 'name';
     state.history = [
-      { question: questionFor('inquiryType'), answer: '매물 문의' },
-      { question: '어떤 매물을 보고 계신가요?', answer: context.listingTitle }
+      { question: questionFor('inquiryType', view), answer: labels.inquiryType.listing },
+      { question: activeLocale === 'en' ? 'Which property are you asking about?' : '어떤 매물을 보고 계신가요?', answer: context.listingTitle }
     ];
   }
 
@@ -156,7 +239,7 @@ export function mountInquiryChat(container) {
     const data = new FormData(form);
     if (data.get('website')) {
       state.complete = true;
-      state.status = '접수되었습니다. 확인 후 연락드리겠습니다.';
+      state.status = copy.received;
       render();
       return;
     }
@@ -169,31 +252,35 @@ export function mountInquiryChat(container) {
     const field = form.dataset.field;
     const skipped = event.submitter?.classList.contains('is-secondary') === true;
     const value = submittedChatValue(data.get(field), skipped);
-    if (field === 'phone' && !/^\d{9,11}$/.test(value.replace(/\D/g, ''))) {
-      state.status = '연락처를 확인해 주세요.';
-      render();
-      return;
+    if (field === 'phone') {
+      try {
+        normalizePhone(value, { international: activeLocale === 'en' });
+      } catch {
+        state.status = copy.invalidPhone;
+        render();
+        return;
+      }
     }
     if (field === 'externalListingRef' && ['zigbang', 'dabang'].includes(state.values.sourceChannel) && !value) {
-      state.status = '직방·다방 매물번호를 적어주세요.';
+      state.status = copy.listingRequired;
       render();
       return;
     }
     if (field === 'privacyConsent' && data.get('privacyConsent') !== 'yes') {
-      state.status = '문의 접수를 위해 개인정보 수집 동의가 필요합니다.';
+      state.status = copy.consentRequired;
       render();
       return;
     }
 
     const storedValue = field === 'privacyConsent' ? true : value;
-    const displayValue = field === 'privacyConsent' ? '동의함' : (value || '건너뜀');
+    const displayValue = field === 'privacyConsent' ? copy.consentAnswer : (value || copy.skipped);
     answer(field, storedValue, displayValue);
   }
 
   function answer(field, value, displayValue) {
     if (!field) return;
     state.values[field] = value;
-    state.history.push({ question: questionFor(field), answer: displayValue });
+    state.history.push({ question: questionFor(field, view), answer: displayValue });
     state.status = '';
     state.step = nextInquiryChatStep(state.step, state.values);
     render();
@@ -202,12 +289,12 @@ export function mountInquiryChat(container) {
   async function submitInquiry() {
     if (state.submitting) return;
     state.submitting = true;
-    state.status = '문의 내용을 안전하게 접수하고 있습니다.';
+    state.status = copy.submitting;
     render();
 
     try {
-      const payload = buildInquiryPayload(state.values);
-      payload.metadata.entry_point = 'guided-inquiry-chat';
+      const payload = buildInquiryPayload(state.values, { locale: activeLocale });
+      payload.metadata.entry_point = activeLocale === 'en' ? 'guided-inquiry-chat-en' : 'guided-inquiry-chat';
       if (state.listingContext && state.listingContext.listingId) {
         payload.listingId = state.listingContext.listingId;
         payload.listingTitle = state.listingContext.listingTitle;
@@ -221,11 +308,11 @@ export function mountInquiryChat(container) {
         window.gtag('event', analytics.name, analytics.params);
       }
       state.complete = true;
-      state.status = '접수되었습니다. 담당자가 확인 후 희망 시간에 전화드립니다.';
+      state.status = copy.successStatus;
       container.dispatchEvent(new CustomEvent('inquiry-chat-success', { bubbles: true }));
     } catch (error) {
       console.error('[Inquiry Chat] submission failed', error);
-      state.status = '접수 중 문제가 생겼습니다. 잠시 후 다시 시도하거나 전화해 주세요.';
+      state.status = copy.failure;
     } finally {
       state.submitting = false;
       render();
@@ -237,11 +324,11 @@ export function mountInquiryChat(container) {
       <div class="lr-inquiry-chat">
         <div class="lr-inquiry-chat__intro">
           <span aria-hidden="true">L</span>
-          <div><strong>문의 접수 도우미</strong><p>몇 가지만 알려주시면 담당자가 확인 후 전화드립니다.</p></div>
+          <div><strong>${escapeHtml(copy.introTitle)}</strong><p>${escapeHtml(copy.introText)}</p></div>
         </div>
-        ${renderListingContext(state.listingContext)}
+        ${renderListingContext(state.listingContext, view)}
         ${renderHistory(state.history)}
-        ${state.complete ? renderSuccess(state.status) : renderPrompt(state)}
+        ${state.complete ? renderSuccess(state.status, view) : renderPrompt(state, view)}
       </div>
     `;
     const firstControl = container.querySelector(INQUIRY_FOCUSABLE_SELECTOR);
@@ -255,9 +342,9 @@ export function mountInquiryChat(container) {
   }
 }
 
-function renderListingContext(context) {
+function renderListingContext(context, { copy }) {
   if (!context?.listingTitle) return '';
-  return `<p class="lr-inquiry-chat__listing-context"><span>문의 매물</span><strong>${escapeHtml(context.listingTitle)}</strong></p>`;
+  return `<p class="lr-inquiry-chat__listing-context"><span>${escapeHtml(copy.listingContext)}</span><strong>${escapeHtml(context.listingTitle)}</strong></p>`;
 }
 
 function renderHistory(history) {
@@ -267,30 +354,31 @@ function renderHistory(history) {
   `).join('')}</ol>`;
 }
 
-function renderPrompt(state) {
-  const status = state.status ? `<p class="lr-inquiry-chat__status" role="${state.status.includes('접수하고') ? 'status' : 'alert'}">${escapeHtml(state.status)}</p>` : '';
+function renderPrompt(state, view) {
+  const status = state.status ? `<p class="lr-inquiry-chat__status" role="${state.submitting ? 'status' : 'alert'}">${escapeHtml(state.status)}</p>` : '';
   return `
     <section class="lr-inquiry-chat__prompt" aria-live="polite" tabindex="-1">
-      <p class="lr-inquiry-chat__bot">${escapeHtml(questionFor(state.step))}</p>
-      ${renderControls(state)}
+      <p class="lr-inquiry-chat__bot">${escapeHtml(questionFor(state.step, view))}</p>
+      ${renderControls(state, view)}
       ${status}
     </section>
   `;
 }
 
-function renderControls(state) {
-  if (state.step === 'inquiryType') return renderChoices('inquiryType', LABELS.inquiryType);
-  if (state.step === 'sourceChannel') return renderChoices('sourceChannel', LABELS.sourceChannel);
-  if (state.step === 'callbackTime') return renderChoices('callbackTime', LABELS.callbackTime);
+function renderControls(state, view) {
+  const { labels, copy } = view;
+  if (state.step === 'inquiryType') return renderChoices('inquiryType', labels.inquiryType);
+  if (state.step === 'sourceChannel') return renderChoices('sourceChannel', labels.sourceChannel);
+  if (state.step === 'callbackTime') return renderChoices('callbackTime', labels.callbackTime);
   if (state.step === 'externalListingRef') {
     const required = ['zigbang', 'dabang'].includes(state.values.sourceChannel);
-    return renderTextForm('externalListingRef', 'text', required ? '예: 12345678' : '매물번호가 있으면 적어주세요', !required);
+    return renderTextForm('externalListingRef', 'text', required ? copy.listingRequiredPlaceholder : copy.listingPlaceholder, !required, '', view);
   }
-  if (state.step === 'name') return renderTextForm('name', 'text', '선택 입력', true);
-  if (state.step === 'phone') return renderTextForm('phone', 'tel', '010-1234-5678', false, 'tel');
-  if (state.step === 'message') return renderMessageForm(state.values.message);
-  if (state.step === 'privacyConsent') return renderConsentForm();
-  return renderReview(state);
+  if (state.step === 'name') return renderTextForm('name', 'text', copy.optional, true, '', view);
+  if (state.step === 'phone') return renderTextForm('phone', 'tel', copy.phonePlaceholder, false, 'tel', view);
+  if (state.step === 'message') return renderMessageForm(state.values.message, view);
+  if (state.step === 'privacyConsent') return renderConsentForm(view);
+  return renderReview(state, view);
 }
 
 function renderChoices(field, choices) {
@@ -299,79 +387,69 @@ function renderChoices(field, choices) {
   `).join('')}</div>`;
 }
 
-function renderTextForm(field, type, placeholder, allowSkip, inputMode = '') {
+function renderTextForm(field, type, placeholder, allowSkip, inputMode = '', { fieldLabels, copy }) {
   return `
     <form data-chat-form data-field="${field}" class="lr-inquiry-chat__form">
-      <input name="${field}" type="${type}" maxlength="80" aria-label="${escapeHtml(FIELD_LABELS[field])}" ${inputMode ? `inputmode="${inputMode}"` : ''} placeholder="${escapeHtml(placeholder)}" ${allowSkip ? '' : 'required'} autocomplete="${field === 'name' ? 'name' : field === 'phone' ? 'tel' : 'off'}">
-      <div><button type="submit">다음</button>${allowSkip ? `<button type="submit" class="is-secondary" name="${field}" value="">건너뛰기</button>` : ''}</div>
+      <input name="${field}" type="${type}" maxlength="80" aria-label="${escapeHtml(fieldLabels[field])}" ${inputMode ? `inputmode="${inputMode}"` : ''} placeholder="${escapeHtml(placeholder)}" ${allowSkip ? '' : 'required'} autocomplete="${field === 'name' ? 'name' : field === 'phone' ? 'tel' : 'off'}">
+      <div><button type="submit">${escapeHtml(copy.next)}</button>${allowSkip ? `<button type="submit" class="is-secondary" name="${field}" value="">${escapeHtml(copy.skip)}</button>` : ''}</div>
     </form>
   `;
 }
 
-function renderMessageForm(initialValue = '') {
+function renderMessageForm(initialValue = '', { copy }) {
   return `
     <form data-chat-form data-field="message" class="lr-inquiry-chat__form">
-      <textarea name="message" maxlength="1000" rows="5" aria-label="추가 문의 내용" placeholder="예산, 입주일, 필요 면적, 요청 자료 등 필요한 내용만 적어주세요.">${escapeHtml(initialValue)}</textarea>
-      <div><button type="submit">다음</button><button type="submit" class="is-secondary" name="message" value="">건너뛰기</button></div>
+      <textarea name="message" maxlength="1000" rows="5" aria-label="${escapeHtml(copy.messageLabel)}" placeholder="${escapeHtml(copy.messagePlaceholder)}">${escapeHtml(initialValue)}</textarea>
+      <div><button type="submit">${escapeHtml(copy.next)}</button><button type="submit" class="is-secondary" name="message" value="">${escapeHtml(copy.skip)}</button></div>
     </form>
   `;
 }
 
-function renderConsentForm() {
+function renderConsentForm({ copy }) {
   return `
     <form data-chat-form data-field="privacyConsent" class="lr-inquiry-chat__consent">
-      <label><input type="checkbox" name="privacyConsent" value="yes" required> 문의 응대를 위한 개인정보 수집·이용에 동의합니다.</label>
-      <a href="privacy.html" target="_blank" rel="noreferrer">개인정보처리방침 보기</a>
-      <button type="submit">동의하고 내용 확인</button>
+      <label><input type="checkbox" name="privacyConsent" value="yes" required> ${escapeHtml(copy.consent + copy.privacyAuthority)}</label>
+      <a href="privacy.html" target="_blank" rel="noreferrer">${escapeHtml(copy.privacyLink)}</a>
+      <button type="submit">${escapeHtml(copy.consentSubmit)}</button>
     </form>
   `;
 }
 
-function renderReview(state) {
+function renderReview(state, { labels, copy }) {
   const values = state.values;
   return `
     <form data-chat-form data-field="review" class="lr-inquiry-chat__review">
       <dl>
-        <div><dt>문의</dt><dd>${escapeHtml(LABELS.inquiryType[values.inquiryType] || '-')}</dd></div>
-        <div><dt>유입</dt><dd>${escapeHtml(LABELS.sourceChannel[values.sourceChannel] || '-')}</dd></div>
-        ${values.externalListingRef ? `<div><dt>매물번호</dt><dd>${escapeHtml(values.externalListingRef)}</dd></div>` : ''}
-        <div><dt>연락처</dt><dd>${escapeHtml(maskPhoneForReview(values.phone))}</dd></div>
-        <div><dt>연락시간</dt><dd>${escapeHtml(LABELS.callbackTime[values.callbackTime] || '-')}</dd></div>
-        ${values.message ? `<div><dt>요청조건</dt><dd>${escapeHtml(values.message)}</dd></div>` : ''}
+        <div><dt>${escapeHtml(copy.reviewInquiry)}</dt><dd>${escapeHtml(labels.inquiryType[values.inquiryType] || '-')}</dd></div>
+        <div><dt>${escapeHtml(copy.reviewSource)}</dt><dd>${escapeHtml(labels.sourceChannel[values.sourceChannel] || '-')}</dd></div>
+        ${values.externalListingRef ? `<div><dt>${escapeHtml(copy.reviewListing)}</dt><dd>${escapeHtml(values.externalListingRef)}</dd></div>` : ''}
+        <div><dt>${escapeHtml(copy.reviewPhone)}</dt><dd>${escapeHtml(maskPhoneForReview(values.phone, copy))}</dd></div>
+        <div><dt>${escapeHtml(copy.reviewTime)}</dt><dd>${escapeHtml(labels.callbackTime[values.callbackTime] || '-')}</dd></div>
+        ${values.message ? `<div><dt>${escapeHtml(copy.reviewDetails)}</dt><dd>${escapeHtml(values.message)}</dd></div>` : ''}
       </dl>
       <input name="website" type="text" tabindex="-1" autocomplete="off" class="lr-inquiry-chat__honeypot" aria-hidden="true">
-      <button type="submit" ${state.submitting ? 'disabled' : ''}>${state.submitting ? '접수 중…' : '이 내용으로 문의 접수'}</button>
-      <button type="button" class="is-secondary" data-chat-restart>처음부터 다시</button>
+      <button type="submit" ${state.submitting ? 'disabled' : ''}>${escapeHtml(state.submitting ? copy.submittingButton : copy.submit)}</button>
+      <button type="button" class="is-secondary" data-chat-restart>${escapeHtml(copy.restart)}</button>
     </form>
   `;
 }
 
-function renderSuccess(message) {
+function renderSuccess(message, { copy }) {
   return `
     <section class="lr-inquiry-chat__success" role="status" tabindex="-1">
-      <span aria-hidden="true">✓</span><h3>문의가 접수됐습니다</h3><p>${escapeHtml(message)}</p>
-      <button type="button" data-chat-restart>새 문의 남기기</button>
+      <span aria-hidden="true">✓</span><h3>${escapeHtml(copy.successTitle)}</h3><p>${escapeHtml(message)}</p>
+      <button type="button" data-chat-restart>${escapeHtml(copy.newInquiry)}</button>
     </section>
   `;
 }
 
-function questionFor(step) {
-  return {
-    inquiryType: '어떤 도움이 필요하신가요?',
-    sourceChannel: '어디에서 보고 문의하시나요?',
-    externalListingRef: '확인할 매물번호가 있나요?',
-    name: '성함을 알려주세요. 원치 않으면 건너뛸 수 있어요.',
-    phone: '연락받을 전화번호를 적어주세요.',
-    callbackTime: '언제 전화드리면 편하신가요?',
-    message: '추가로 전할 내용이 있나요?',
-    privacyConsent: '마지막으로 개인정보 수집 동의가 필요합니다.',
-    review: '입력한 내용을 확인해 주세요.'
-  }[step] || '문의 내용을 알려주세요.';
+function questionFor(step, { copy } = { copy: COPY.ko }) {
+  return copy.questions[step] || copy.questions.fallback;
 }
 
-function maskPhoneForReview(value) {
+function maskPhoneForReview(value, copy = COPY.ko) {
   const digits = String(value || '').replace(/\D/g, '');
-  return digits.length >= 4 ? `***-****-${digits.slice(-4)}` : '입력됨';
+  return digits.length >= 4 ? `***-****-${digits.slice(-4)}` : copy.phoneEntered;
 }
 
 function escapeHtml(value) {

@@ -21,6 +21,29 @@ const CALLBACK_LABELS = Object.freeze({
   'tomorrow': '내일'
 });
 
+const EN_TYPE_LABELS = Object.freeze({
+  callback: 'Call request',
+  listing: 'Property inquiry',
+  consultation: 'General inquiry'
+});
+
+const EN_SOURCE_LABELS = Object.freeze({
+  website: 'Lotte Real Estate website',
+  zigbang: 'Zigbang',
+  dabang: 'Dabang',
+  naver: 'Naver or another online listing',
+  walkin: 'Office visit',
+  other: 'Other'
+});
+
+const EN_CALLBACK_LABELS = Object.freeze({
+  anytime: 'Any time',
+  'today-morning': 'This morning',
+  'today-afternoon': 'This afternoon',
+  'weekday-evening': 'Weekday evening',
+  tomorrow: 'Tomorrow'
+});
+
 const EVENT_BY_TYPE = Object.freeze({
   callback: 'callback_request_complete',
   listing: 'listing_inquiry_complete',
@@ -36,10 +59,17 @@ export function normalizeInquiryIntent(value) {
   return Object.hasOwn(TYPE_LABELS, candidate) ? candidate : '';
 }
 
-export function normalizePhone(value) {
-  const digits = String(value || '').replace(/\D/g, '');
+export function normalizePhone(value, { international = false } = {}) {
+  const rawValue = String(value || '').trim();
+  let digits = rawValue.replace(/\D/g, '');
+  if (international && (digits.startsWith('00') || (!digits.startsWith('0') && !digits.startsWith('82')))) {
+    throw new Error('Please enter a Korean phone number.');
+  }
+  if (international && digits.startsWith('82')) {
+    digits = `0${digits.slice(2)}`;
+  }
   if (digits.length < 9 || digits.length > 11) {
-    throw new Error('연락처를 확인해 주세요.');
+    throw new Error(international ? 'Please enter a Korean phone number.' : '연락처를 확인해 주세요.');
   }
   return digits;
 }
@@ -57,29 +87,41 @@ export function inquiryValuesFromFormData(data) {
   };
 }
 
-export function buildInquiryPayload(values = {}) {
+export function buildInquiryPayload(values = {}, { locale = 'ko' } = {}) {
+  const isEnglish = locale === 'en';
+  const typeLabels = isEnglish ? EN_TYPE_LABELS : TYPE_LABELS;
+  const sourceLabels = isEnglish ? EN_SOURCE_LABELS : SOURCE_LABELS;
+  const callbackLabels = isEnglish ? EN_CALLBACK_LABELS : CALLBACK_LABELS;
   const inquiryType = TYPE_LABELS[values.inquiryType] ? values.inquiryType : 'consultation';
   const sourceChannel = SOURCE_LABELS[values.sourceChannel] ? values.sourceChannel : 'other';
   const callbackTime = CALLBACK_LABELS[values.callbackTime] ? values.callbackTime : 'anytime';
   const externalListingRef = cleanText(values.externalListingRef, 80);
   const name = cleanText(values.name, 80);
-  const phone = normalizePhone(values.phone);
+  const phone = normalizePhone(values.phone, { international: isEnglish });
   const message = cleanText(values.message, 1000);
 
-  const typeLabel = TYPE_LABELS[inquiryType];
-  const sourceLabel = SOURCE_LABELS[sourceChannel];
-  const callbackLabel = CALLBACK_LABELS[callbackTime];
+  const typeLabel = typeLabels[inquiryType];
+  const sourceLabel = sourceLabels[sourceChannel];
+  const callbackLabel = callbackLabels[callbackTime];
   const listingTitle = inquiryType === 'listing' && externalListingRef
-    ? `${sourceLabel} 매물 ${externalListingRef}`
+    ? (isEnglish ? `${sourceLabel} listing ${externalListingRef}` : `${sourceLabel} 매물 ${externalListingRef}`)
     : typeLabel;
 
-  const messageParts = [
-    `문의 유형: ${typeLabel}`,
-    `유입 경로: ${sourceLabel}`,
-    externalListingRef ? `외부 매물번호: ${externalListingRef}` : '',
-    `희망 연락시간: ${callbackLabel}`,
-    message ? `문의 내용: ${message}` : ''
-  ].filter(Boolean);
+  const messageParts = isEnglish
+    ? [
+        `Inquiry type: ${typeLabel}`,
+        `Source: ${sourceLabel}`,
+        externalListingRef ? `External listing reference: ${externalListingRef}` : '',
+        `Preferred contact time: ${callbackLabel}`,
+        message ? `Inquiry details: ${message}` : ''
+      ].filter(Boolean)
+    : [
+        `문의 유형: ${typeLabel}`,
+        `유입 경로: ${sourceLabel}`,
+        externalListingRef ? `외부 매물번호: ${externalListingRef}` : '',
+        `희망 연락시간: ${callbackLabel}`,
+        message ? `문의 내용: ${message}` : ''
+      ].filter(Boolean);
 
   return {
     listingId: null,
@@ -94,7 +136,9 @@ export function buildInquiryPayload(values = {}) {
       source_channel: sourceChannel,
       external_listing_ref: externalListingRef || null,
       callback_time: callbackTime,
-      privacy_consent: values.privacyConsent === true
+      privacy_consent: values.privacyConsent === true,
+      locale: isEnglish ? 'en' : 'ko',
+      entry_surface: isEnglish ? 'international-rental-widget' : 'korean-guided-inquiry'
     }
   };
 }

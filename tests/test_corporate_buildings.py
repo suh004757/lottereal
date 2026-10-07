@@ -119,7 +119,7 @@ class CorporateBuildingsTest(unittest.TestCase):
         self.assertIn('inquiryDraft:', page_js)
         inquiry_chat = (PUBLIC / 'js' / 'inquiryChat.js').read_text(encoding='utf-8')
         self.assertIn('event.detail?.inquiryDraft', inquiry_chat)
-        self.assertIn('renderMessageForm(state.values.message)', inquiry_chat)
+        self.assertIn('renderMessageForm(state.values.message, view)', inquiry_chat)
         self.assertIn('escapeHtml(initialValue)', inquiry_chat)
         for transport in ('fetch(', 'localStorage', 'sessionStorage', 'sendBeacon', 'XMLHttpRequest'):
             self.assertNotIn(transport, page_js)
