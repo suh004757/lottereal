@@ -94,6 +94,7 @@ class InternationalLandingTests(unittest.TestCase):
 
     def test_english_guide_exposes_the_migrated_safety_and_inquiry_entry_points(self):
         html = (PUBLIC / 'EN.html').read_text(encoding='utf-8')
+        css = (PUBLIC / 'css' / 'international.css').read_text(encoding='utf-8')
         self.assertIn('Rental Safety Guide for International Residents', html)
         self.assertIn('Open the rental safety guide', html)
         self.assertIn('English guided inquiry', html)
@@ -101,7 +102,13 @@ class InternationalLandingTests(unittest.TestCase):
         self.assertGreaterEqual(html.count('data-open-guided-inquiry'), 3)
         self.assertGreaterEqual(html.count('aria-haspopup="dialog"'), 5)
         self.assertIn('external listing reference and any current-site listing context', html)
-        self.assertEqual(html.count('<span aria-hidden="true">'), 4)
+        mobile_bar = html.split('<div class="lr-mobile-actionbar intl-mobile-actionbar"', 1)[1].split('</div>', 1)[0]
+        self.assertEqual(mobile_bar.count('<a '), 2)
+        self.assertIn('>CONTACT</a>', mobile_bar)
+        self.assertIn('>RENTAL GUIDE</a>', mobile_bar)
+        self.assertNotIn('<span', mobile_bar)
+        self.assertIn('.intl-page .intl-mobile-actionbar', css)
+        self.assertIn('font-weight: 700;', css)
         self.assertIn('js/knowledgeWidget.js', html)
         self.assertIn('aria-label="Quick contact menu"', html)
 

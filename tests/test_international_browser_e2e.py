@@ -163,13 +163,13 @@ class InternationalGuideBrowserE2ETest(unittest.TestCase):
                         overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
                         gap: bar.top - notice.bottom,
                         heights: links.map((link) => link.getBoundingClientRect().height),
-                        emojiHidden: links.every((link) => link.querySelector('span')?.getAttribute('aria-hidden') === 'true'),
+                        textOnly: links.length === 2 && links.every((link) => !link.querySelector('span')),
                     };
                 }""")
                 self.assertFalse(geometry['overflow'], geometry)
                 self.assertGreaterEqual(geometry['gap'], 0, geometry)
                 self.assertGreaterEqual(min(geometry['heights']), 44, geometry)
-                self.assertTrue(geometry['emojiHidden'], geometry)
+                self.assertTrue(geometry['textOnly'], geometry)
                 context.close()
 
             browser.close()
