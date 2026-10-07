@@ -6,6 +6,27 @@ PUBLIC = ROOT / "public"
 
 
 class InternationalLandingTests(unittest.TestCase):
+    def test_english_guide_explains_rental_types_and_foreign_resident_protection_steps(self):
+        html = (PUBLIC / 'EN.html').read_text(encoding='utf-8')
+
+        for marker in (
+            'Renting in Korea: a quick guide',
+            'Wolse (monthly rent)',
+            'Jeonse (large refundable deposit)',
+            'Banjeonse (higher deposit, lower monthly rent)',
+            'Foreign resident address reporting and deposit protection',
+            'taking possession of the home',
+            'fixed date',
+            'within 15 days of moving',
+            'Requirements can differ by immigration status',
+        ):
+            self.assertIn(marker, html)
+
+        self.assertIn('https://www.law.go.kr/법령/출입국관리법/제36조', html)
+        self.assertIn('https://www.law.go.kr/법령/출입국관리법/제88조의2', html)
+        self.assertIn('https://www.law.go.kr/법령/주택임대차보호법/제3조의2', html)
+        self.assertNotIn('guarantees the return of your deposit', html.lower())
+
     def test_english_and_japanese_are_static_single_page_guides(self):
         pages = {
             'EN.html': {
