@@ -104,7 +104,7 @@ const COPY = Object.freeze({
     next: 'Next', skip: 'Skip', optional: 'Optional', phonePlaceholder: '+82 10 1234 5678',
     listingPlaceholder: 'Enter a listing reference if you have one', listingRequiredPlaceholder: 'Example: 12345678',
     messageLabel: 'Additional inquiry details', messagePlaceholder: 'Share only what is needed: dates, budget, deposit, area, property type, furniture or pets. Do not enter passport or bank details.',
-    consent: 'I agree to the collection and use of my phone number, inquiry category, source and preferred contact time, plus any optional name or message, to answer this inquiry. Records are retained for one year.',
+    consent: 'I agree to the collection and use of my phone number, inquiry category, source and preferred contact time, plus any optional name, message, external listing reference or current-site listing context, to answer this inquiry. Records are retained for one year.',
     privacyLink: 'View the Korean Privacy Policy', consentSubmit: 'Agree and review', reviewInquiry: 'Inquiry', reviewSource: 'Source',
     reviewListing: 'Listing reference', reviewPhone: 'Phone', reviewTime: 'Contact time', reviewDetails: 'Requirements',
     submit: 'Submit this inquiry', submittingButton: 'Submitting…', restart: 'Start again', successTitle: 'Inquiry received',

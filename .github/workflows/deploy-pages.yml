@@ -24,6 +24,13 @@ jobs:
         run: python3 -B -m unittest discover -s tests -p 'test_*.py'
       - name: Run Node regression suite
         run: node --test tests/*.mjs
+      - name: Run English privacy and accessibility browser E2E
+        run: |
+          python3 -m venv "$RUNNER_TEMP/e2e"
+          "$RUNNER_TEMP/e2e/bin/pip" install --disable-pip-version-check "playwright==1.55.0"
+          chrome_path="$(command -v google-chrome || command -v chromium || true)"
+          test -n "$chrome_path"
+          LOTTEREAL_E2E_CHROME="$chrome_path" "$RUNNER_TEMP/e2e/bin/python" -B -m unittest tests.test_international_browser_e2e -v
       - name: Build allowlisted Pages artifact
         run: python3 scripts/build_pages_artifact.py --output "$RUNNER_TEMP/site" --manifest "$RUNNER_TEMP/pages-manifest.json"
       - name: Upload Pages artifact
