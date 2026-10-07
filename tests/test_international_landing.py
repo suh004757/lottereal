@@ -6,6 +6,18 @@ PUBLIC = ROOT / "public"
 
 
 class InternationalLandingTests(unittest.TestCase):
+    def test_english_guide_explains_proportionate_remote_inquiry_verification(self):
+        html = (PUBLIC / 'EN.html').read_text(encoding='utf-8')
+
+        for marker in (
+            'Remote inquiry verification',
+            'institutional email address issued by your school or employer',
+            'confirm that you control the phone number or messaging account',
+            'prevent impersonation',
+            'Do not send identity documents in your first inquiry',
+        ):
+            self.assertIn(marker, html)
+
     def test_english_guide_explains_rental_types_and_foreign_resident_protection_steps(self):
         html = (PUBLIC / 'EN.html').read_text(encoding='utf-8')
 
