@@ -92,6 +92,16 @@ class InternationalLandingTests(unittest.TestCase):
         for unsupported_claim in ('日本語スタッフ', '日本語対応スタッフ', 'ネイティブスタッフ'):
             self.assertNotIn(unsupported_claim, japanese)
 
+    def test_english_guide_exposes_the_migrated_safety_and_inquiry_entry_points(self):
+        html = (PUBLIC / 'EN.html').read_text(encoding='utf-8')
+        self.assertIn('Rental Safety Guide for International Residents', html)
+        self.assertIn('Open the rental safety guide', html)
+        self.assertIn('English guided inquiry', html)
+        self.assertIn('A Korean callback number is currently required', html)
+        self.assertGreaterEqual(html.count('data-open-guided-inquiry'), 3)
+        self.assertIn('js/knowledgeWidget.js', html)
+        self.assertIn('aria-label="Quick contact menu"', html)
+
     def test_legacy_english_urls_only_move_visitors_to_the_single_guide(self):
         legacy_pages = (
             'contact_EN.html',

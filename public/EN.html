@@ -44,6 +44,7 @@
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="css/mobile.css">
   <link rel="stylesheet" href="css/international.css">
+  <link rel="stylesheet" href="css/knowledge-widget.css">
 </head>
 <body class="intl-page">
   <header class="lr-header intl-header">
@@ -53,6 +54,7 @@
       <nav class="lr-nav" aria-label="International guide navigation">
         <a href="#scope">What we cover</a>
         <a href="#renting">Renting in Korea</a>
+        <a href="#rental-safety">Rental safety</a>
         <a href="#process">How it works</a>
         <a href="#contact">Contact</a>
         <a href="./">한국어</a>
@@ -69,7 +71,7 @@
           <h1>A simple point of contact for property in Seoul</h1>
           <p class="intl-intro">This page is a concise guide for international clients. It is not a translated copy of every function or article on our Korean website.</p>
           <div class="lr-actions">
-            <a class="lr-btn lr-btn--primary" href="contact.html#inquiry-options">Send a written inquiry</a>
+            <a class="lr-btn lr-btn--primary" href="contact.html#inquiry-options" data-open-guided-inquiry>Send a written inquiry</a>
             <a class="lr-btn lr-btn--ghost" href="tel:050714025055">Call 0507-1402-5055</a>
           </div>
           <p class="intl-note">Written communication is recommended. Telephone and in-person service is generally provided in Korean.</p>
@@ -149,6 +151,26 @@
       </div>
     </section>
 
+    <section class="lr-section lr-section--muted" id="rental-safety">
+      <div class="lr-container intl-contact-grid">
+        <div>
+          <p class="lr-kicker">RENTAL SAFETY</p>
+          <h2>Rental Safety Guide for International Residents</h2>
+          <p>Check a curated set of common issues: deposit return, landlord and registry verification, fees and utilities, mold and repairs, early termination, furniture, pets, Korean-language contracts, address procedures and payment safety.</p>
+          <p>The guide is static and uses no generative AI. Your search stays in this browser; analytics receives only a fixed topic category, result count and query length—not the words you type.</p>
+          <div class="lr-actions">
+            <a class="lr-btn lr-btn--primary" href="#renting" data-open-rental-safety>Open the rental safety guide</a>
+            <a class="lr-btn lr-btn--ghost" href="contact.html#inquiry-options" data-open-guided-inquiry>Open the English guided inquiry</a>
+          </div>
+        </div>
+        <aside class="intl-safety-card">
+          <strong>Use the guide without personal information</strong>
+          <p>Do not enter names, phone numbers, a full address, passport details, identity documents or a full contract in the safety search.</p>
+          <p>This guide is for general information only and may vary depending on the property, lease terms, visa status and local rules. It is not legal or immigration advice.</p>
+        </aside>
+      </div>
+    </section>
+
     <section class="lr-section intl-section--ink" id="process">
       <div class="lr-container">
         <div class="intl-section-heading">
@@ -169,9 +191,9 @@
         <div>
           <p class="lr-kicker">CONTACT</p>
           <h2>Start with only the information needed to assess your request</h2>
-          <p>Our secure web inquiry form is operated in Korean, but you may write your message in English. It enters the same staff-managed workflow used by our Korean office.</p>
+          <p>The English guided inquiry uses the same secure, staff-managed workflow as our Korean form. A Korean callback number is currently required; numbers written with +82 are accepted and normalized. You review the details and consent notice before anything is submitted.</p>
           <div class="lr-actions">
-            <a class="lr-btn lr-btn--primary" href="contact.html#inquiry-options">Open the secure inquiry form</a>
+            <a class="lr-btn lr-btn--primary" href="contact.html#inquiry-options" data-open-guided-inquiry>Open the secure inquiry form</a>
             <a class="lr-btn lr-btn--ghost" href="https://goo.gl/maps/FVawYassWFUoJJBT7" target="_blank" rel="noreferrer">Google Maps</a>
             <a class="lr-btn lr-btn--ghost" href="https://map.naver.com/p/search/%EC%84%9C%EC%9A%B8%20%EC%86%A1%ED%8C%8C%EA%B5%AC%20%EB%B0%B1%EC%A0%9C%EA%B3%A0%EB%B6%84%EB%A1%9C27%EA%B8%B8%2027" target="_blank" rel="noreferrer">Naver Map</a>
           </div>
@@ -196,7 +218,7 @@
         <div>
           <p class="lr-kicker">PRIVACY</p>
           <h2>Minimal information, optional analytics</h2>
-          <p>This guide does not contain a separate international inquiry form. If you use the Korean inquiry form, its consent notice and the <a href="privacy.html">Korean Privacy Policy</a> apply. The English text on this page is a convenience summary; the Korean policy is authoritative.</p>
+          <p>The English guided inquiry asks for a phone number, inquiry category, source and preferred contact time, with an optional name and message. It displays a consent notice before submission. Records are retained for one year under the <a href="privacy.html">Korean Privacy Policy</a>. The English text on this page is a convenience summary; the Korean policy is authoritative.</p>
           <p>Website analytics is optional and does not receive inquiry text or phone numbers.</p>
         </div>
         <div class="intl-privacy__controls" aria-label="Analytics preference">
@@ -226,6 +248,14 @@
     <p class="lr-footer__copy">© <span data-current-year></span> Lotte Real Estate. All rights reserved.</p>
   </footer>
 
+  <div class="lr-mobile-actionbar" aria-label="Quick contact menu">
+    <a href="tel:050714025055"><span>📞</span><strong>Call</strong></a>
+    <a href="contact.html#inquiry-options"><span>💬</span><strong>Inquire</strong></a>
+    <a href="#rental-safety" data-open-rental-safety><span>✓</span><strong>Safety</strong></a>
+    <a href="#contact"><span>📍</span><strong>Visit</strong></a>
+  </div>
+
+  <script type="module" src="js/knowledgeWidget.js"></script>
   <script src="js/analyticsEvents.js"></script>
   <script src="js/mobileNav.js"></script>
   <script src="js/currentYear.js"></script>

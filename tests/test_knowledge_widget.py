@@ -27,6 +27,37 @@ class KnowledgeWidgetTest(unittest.TestCase):
                 missing.append(name)
         self.assertEqual(missing, [])
 
+    def test_english_guide_loads_a_foreign_renter_specific_widget(self):
+        html = (PUBLIC / 'EN.html').read_text(encoding='utf-8')
+        widget = (PUBLIC / 'js/knowledgeWidget.js').read_text(encoding='utf-8')
+
+        self.assertIn('js/knowledgeWidget.js', html)
+        self.assertIn('aria-label="Quick contact menu"', html)
+        self.assertIn('contact.html#inquiry-options', html)
+        self.assertIn("document.documentElement.lang.toLowerCase().startsWith('en')", widget)
+        self.assertIn("from './internationalRentalSafety.mjs'", widget)
+        self.assertIn("mountInquiryChat(inquiryChat, { locale: IS_ENGLISH ? 'en' : 'ko' })", widget)
+        for marker in (
+            'Rental safety',
+            'Common issues',
+            'Send an inquiry',
+            'Do not enter names, phone numbers or a full address here.',
+            'Search text is not sent to analytics',
+        ):
+            self.assertIn(marker, widget)
+
+    def test_english_widget_keeps_search_static_and_analytics_non_pii(self):
+        widget = (PUBLIC / 'js/knowledgeWidget.js').read_text(encoding='utf-8')
+        safety = (PUBLIC / 'js/internationalRentalSafety.mjs').read_text(encoding='utf-8')
+
+        self.assertNotIn('fetch(', safety)
+        self.assertNotIn('createInquiry', safety)
+        self.assertNotIn('query_text', widget)
+        self.assertNotIn('raw_query', widget)
+        self.assertIn('query_length', widget)
+        self.assertIn('topic_labels', widget)
+        self.assertIn('This is general information, not legal or immigration advice.', widget)
+
     def test_widget_is_an_accessible_source_search_drawer(self):
         text = (PUBLIC / 'js/knowledgeWidget.js').read_text(encoding='utf-8')
         for marker in (
@@ -64,13 +95,14 @@ class KnowledgeWidgetTest(unittest.TestCase):
         self.assertIn("name: '이름'", chat)
         self.assertIn("phone: '연락처'", chat)
         self.assertIn("externalListingRef: '매물번호'", chat)
-        self.assertIn('aria-label="${escapeHtml(FIELD_LABELS[field])}"', chat)
-        self.assertIn('aria-label="추가 문의 내용"', chat)
+        self.assertIn('aria-label="${escapeHtml(fieldLabels[field])}"', chat)
+        self.assertIn('aria-label="${escapeHtml(copy.messageLabel)}"', chat)
         self.assertNotIn('<div class="lr-inquiry-chat" aria-live="polite">', chat)
         self.assertLess(chat.index('await createInquiry(payload)'), chat.index("window.gtag('event'"))
         analytics_call = chat[chat.index("window.gtag('event'"):]
         self.assertNotIn('payload.phone', analytics_call)
         self.assertNotIn('payload.message', analytics_call)
+
 
     def test_widget_styles_support_desktop_drawer_and_mobile_bottom_sheet(self):
         text = (PUBLIC / 'css/knowledge-widget.css').read_text(encoding='utf-8')

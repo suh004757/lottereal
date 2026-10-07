@@ -20,6 +20,13 @@ const formValues = {
 
 assert.equal(normalizePhone(formValues.phone), '01012345678');
 assert.throws(() => normalizePhone('02-123'), /연락처/);
+assert.equal(normalizePhone('+82 10 1234 5678', { international: true }), '01012345678');
+assert.equal(normalizePhone('+82 2 123 4567', { international: true }), '021234567');
+assert.throws(() => normalizePhone('+33 6 12 10 39 89', { international: true }), /Korean phone number/i);
+assert.throws(() => normalizePhone('33 6 12 10 39 89', { international: true }), /Korean phone number/i);
+assert.throws(() => normalizePhone('00 33 1 23 45 67', { international: true }), /Korean phone number/i);
+assert.throws(() => normalizePhone('+1 23', { international: true }), /phone number/i);
+assert.throws(() => normalizePhone('+1234567890123456', { international: true }), /phone number/i);
 assert.equal(normalizeInquiryIntent('consultation'), 'consultation');
 assert.equal(normalizeInquiryIntent('listing'), 'listing');
 assert.equal(normalizeInquiryIntent('callback'), 'callback');
@@ -81,5 +88,22 @@ const consultationPayload = buildInquiryPayload({
 });
 assert.equal(consultationPayload.listingTitle, '일반 상담');
 assert.equal(buildInquiryAnalyticsEvent(consultationPayload).name, 'general_inquiry_complete');
+
+const internationalPayload = buildInquiryPayload({
+  inquiryType: 'consultation',
+  sourceChannel: 'website',
+  externalListingRef: '',
+  name: 'Example User',
+  phone: '+82 10 5555 0142',
+  callbackTime: 'anytime',
+  message: 'Cat-friendly furnished rental',
+  privacyConsent: true
+}, { locale: 'en' });
+assert.equal(internationalPayload.phone, '01055550142');
+assert.equal(internationalPayload.listingTitle, 'General inquiry');
+assert.equal(internationalPayload.metadata.locale, 'en');
+assert.equal(internationalPayload.metadata.entry_surface, 'international-rental-widget');
+assert.match(internationalPayload.message, /Inquiry type: General inquiry/);
+assert.equal(JSON.stringify(buildInquiryAnalyticsEvent(internationalPayload)).includes('Example User'), false);
 
 console.log('inquiry MVP payload tests passed');
