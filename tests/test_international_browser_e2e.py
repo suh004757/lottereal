@@ -110,7 +110,7 @@ class InternationalGuideBrowserE2ETest(unittest.TestCase):
             self.assertEqual(params['page_path'], '/EN.html')
             self.assertEqual(params['query_length'], len(SENSITIVE_MARKER))
             self.assertEqual(params['result_count'], 0)
-            self.assertEqual(params['topic_labels'], [])
+            self.assertEqual(params['topic_labels'], 'unclassified')
             self.assertEqual(params['guide_locale'], 'en')
             self.assertNotIn(SENSITIVE_MARKER, str(search_event))
 
