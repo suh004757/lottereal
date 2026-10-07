@@ -99,6 +99,9 @@ class InternationalLandingTests(unittest.TestCase):
         self.assertIn('English guided inquiry', html)
         self.assertIn('A Korean callback number is currently required', html)
         self.assertGreaterEqual(html.count('data-open-guided-inquiry'), 3)
+        self.assertGreaterEqual(html.count('aria-haspopup="dialog"'), 5)
+        self.assertIn('external listing reference and any current-site listing context', html)
+        self.assertEqual(html.count('<span aria-hidden="true">'), 4)
         self.assertIn('js/knowledgeWidget.js', html)
         self.assertIn('aria-label="Quick contact menu"', html)
 

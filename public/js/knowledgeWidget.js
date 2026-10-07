@@ -126,12 +126,14 @@ function initializeWidget() {
   });
   attachMobileAction(openPanel);
   document.querySelectorAll('[data-open-rental-safety]').forEach((control) => {
+    control.setAttribute('aria-haspopup', 'dialog');
     control.addEventListener('click', (event) => {
       event.preventDefault();
       openPanel('knowledge');
     });
   });
   document.querySelectorAll('[data-open-guided-inquiry]').forEach((control) => {
+    control.setAttribute('aria-haspopup', 'dialog');
     control.addEventListener('click', (event) => {
       event.preventDefault();
       openPanel('inquiry');

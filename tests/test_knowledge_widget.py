@@ -89,6 +89,8 @@ class KnowledgeWidgetTest(unittest.TestCase):
         self.assertIn("import('./services/backendAdapter.js')", chat)
         self.assertIn('buildInquiryPayload', chat)
         self.assertIn('privacyConsent', chat)
+        self.assertIn('external listing reference or current-site listing context', chat)
+        self.assertIn("control.setAttribute('aria-haspopup', 'dialog')", widget)
         self.assertIn("event.submitter?.classList.contains('is-secondary')", chat)
         self.assertIn('isPersistedInquiryResult(result)', chat)
         self.assertNotIn("state.status = error?.message", chat)

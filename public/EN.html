@@ -71,7 +71,7 @@
           <h1>A simple point of contact for property in Seoul</h1>
           <p class="intl-intro">This page is a concise guide for international clients. It is not a translated copy of every function or article on our Korean website.</p>
           <div class="lr-actions">
-            <a class="lr-btn lr-btn--primary" href="contact.html#inquiry-options" data-open-guided-inquiry>Send a written inquiry</a>
+            <a class="lr-btn lr-btn--primary" href="contact.html#inquiry-options" data-open-guided-inquiry aria-haspopup="dialog">Send a written inquiry</a>
             <a class="lr-btn lr-btn--ghost" href="tel:050714025055">Call 0507-1402-5055</a>
           </div>
           <p class="intl-note">Written communication is recommended. Telephone and in-person service is generally provided in Korean.</p>
@@ -159,8 +159,8 @@
           <p>Check a curated set of common issues: deposit return, landlord and registry verification, fees and utilities, mold and repairs, early termination, furniture, pets, Korean-language contracts, address procedures and payment safety.</p>
           <p>The guide is static and uses no generative AI. Your search stays in this browser; analytics receives only a fixed topic category, result count and query length—not the words you type.</p>
           <div class="lr-actions">
-            <a class="lr-btn lr-btn--primary" href="#renting" data-open-rental-safety>Open the rental safety guide</a>
-            <a class="lr-btn lr-btn--ghost" href="contact.html#inquiry-options" data-open-guided-inquiry>Open the English guided inquiry</a>
+            <a class="lr-btn lr-btn--primary" href="#renting" data-open-rental-safety aria-haspopup="dialog">Open the rental safety guide</a>
+            <a class="lr-btn lr-btn--ghost" href="contact.html#inquiry-options" data-open-guided-inquiry aria-haspopup="dialog">Open the English guided inquiry</a>
           </div>
         </div>
         <aside class="intl-safety-card">
@@ -193,7 +193,7 @@
           <h2>Start with only the information needed to assess your request</h2>
           <p>The English guided inquiry uses the same secure, staff-managed workflow as our Korean form. A Korean callback number is currently required; numbers written with +82 are accepted and normalized. You review the details and consent notice before anything is submitted.</p>
           <div class="lr-actions">
-            <a class="lr-btn lr-btn--primary" href="contact.html#inquiry-options" data-open-guided-inquiry>Open the secure inquiry form</a>
+            <a class="lr-btn lr-btn--primary" href="contact.html#inquiry-options" data-open-guided-inquiry aria-haspopup="dialog">Open the secure inquiry form</a>
             <a class="lr-btn lr-btn--ghost" href="https://goo.gl/maps/FVawYassWFUoJJBT7" target="_blank" rel="noreferrer">Google Maps</a>
             <a class="lr-btn lr-btn--ghost" href="https://map.naver.com/p/search/%EC%84%9C%EC%9A%B8%20%EC%86%A1%ED%8C%8C%EA%B5%AC%20%EB%B0%B1%EC%A0%9C%EA%B3%A0%EB%B6%84%EB%A1%9C27%EA%B8%B8%2027" target="_blank" rel="noreferrer">Naver Map</a>
           </div>
@@ -218,7 +218,7 @@
         <div>
           <p class="lr-kicker">PRIVACY</p>
           <h2>Minimal information, optional analytics</h2>
-          <p>The English guided inquiry asks for a phone number, inquiry category, source and preferred contact time, with an optional name and message. It displays a consent notice before submission. Records are retained for one year under the <a href="privacy.html">Korean Privacy Policy</a>. The English text on this page is a convenience summary; the Korean policy is authoritative.</p>
+          <p>The English guided inquiry asks for a phone number, inquiry category, source and preferred contact time, with an optional name, message, external listing reference and any current-site listing context you choose to attach. It displays a consent notice before submission. Records are retained for one year under the <a href="privacy.html">Korean Privacy Policy</a>. The English text on this page is a convenience summary; the Korean policy is authoritative.</p>
           <p>Website analytics is optional and does not receive inquiry text or phone numbers.</p>
         </div>
         <div class="intl-privacy__controls" aria-label="Analytics preference">
@@ -249,10 +249,10 @@
   </footer>
 
   <div class="lr-mobile-actionbar" aria-label="Quick contact menu">
-    <a href="tel:050714025055"><span>📞</span><strong>Call</strong></a>
-    <a href="contact.html#inquiry-options"><span>💬</span><strong>Inquire</strong></a>
-    <a href="#rental-safety" data-open-rental-safety><span>✓</span><strong>Safety</strong></a>
-    <a href="#contact"><span>📍</span><strong>Visit</strong></a>
+    <a href="tel:050714025055"><span aria-hidden="true">📞</span><strong>Call</strong></a>
+    <a href="contact.html#inquiry-options" data-open-guided-inquiry aria-haspopup="dialog"><span aria-hidden="true">💬</span><strong>Inquire</strong></a>
+    <a href="#rental-safety" data-open-rental-safety aria-haspopup="dialog"><span aria-hidden="true">✓</span><strong>Safety</strong></a>
+    <a href="#contact"><span aria-hidden="true">📍</span><strong>Visit</strong></a>
   </div>
 
   <script type="module" src="js/knowledgeWidget.js"></script>
