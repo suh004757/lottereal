@@ -36,12 +36,15 @@ class InternationalLandingTests(unittest.TestCase):
             'before paying a deposit',
             'rental-contract reporting or a fixed-date procedure',
             'may vary depending on the property, lease terms, visa status and local rules',
+            'A six-month term alone does not determine whether the Housing Lease Protection Act applies',
+            'clearly for temporary use may fall outside the Act',
         ):
             self.assertIn(marker, html)
 
         self.assertIn('https://www.law.go.kr/법령/출입국관리법/제36조', html)
         self.assertIn('https://www.law.go.kr/법령/출입국관리법/제88조의2', html)
         self.assertIn('https://www.law.go.kr/법령/주택임대차보호법/제3조의2', html)
+        self.assertIn('https://www.law.go.kr/법령/주택임대차보호법/제11조', html)
         self.assertNotIn('guarantees the return of your deposit', html.lower())
         self.assertNotIn('lease registration', html.lower())
 
