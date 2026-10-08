@@ -30,7 +30,7 @@ jobs:
           "$RUNNER_TEMP/e2e/bin/pip" install --disable-pip-version-check "playwright==1.55.0"
           chrome_path="$(command -v google-chrome || command -v chromium || true)"
           test -n "$chrome_path"
-          LOTTEREAL_E2E_CHROME="$chrome_path" "$RUNNER_TEMP/e2e/bin/python" -B -m unittest tests.test_international_browser_e2e -v
+          LOTTEREAL_E2E_REQUIRED=1 LOTTEREAL_E2E_CHROME="$chrome_path" "$RUNNER_TEMP/e2e/bin/python" -B -m unittest tests.test_international_browser_e2e -v
       - name: Build allowlisted Pages artifact
         run: python3 scripts/build_pages_artifact.py --output "$RUNNER_TEMP/site" --manifest "$RUNNER_TEMP/pages-manifest.json"
       - name: Upload Pages artifact

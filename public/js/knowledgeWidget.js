@@ -125,6 +125,7 @@ function initializeWidget() {
     }
   });
   attachMobileAction(openPanel);
+  attachInternationalMobileActionVisibility();
   document.querySelectorAll('[data-open-rental-safety]').forEach((control) => {
     control.setAttribute('aria-haspopup', 'dialog');
     control.addEventListener('click', (event) => {
@@ -323,6 +324,20 @@ function renderEmpty() {
       <a href="knowledge.html">전체 자료에서 자세히 찾기</a>
     </div>
   `;
+}
+
+function attachInternationalMobileActionVisibility() {
+  const actionbar = document.querySelector('.intl-mobile-actionbar');
+  const hero = document.querySelector('.intl-hero');
+  if (!actionbar || !hero) return;
+  if (!('IntersectionObserver' in window)) {
+    actionbar.classList.add('is-visible');
+    return;
+  }
+  const observer = new IntersectionObserver(([entry]) => {
+    actionbar.classList.toggle('is-visible', entry.intersectionRatio < 0.15);
+  }, { threshold: [0, 0.15] });
+  observer.observe(hero);
 }
 
 function attachMobileAction(openPanel) {
