@@ -1,5 +1,6 @@
 import os
 import shutil
+import tempfile
 import unittest
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -22,6 +23,11 @@ CACHED_CHROME = Path('/opt/data/cache/ms-playwright/chromium-1243/chrome-linux64
 CHROME = os.environ.get('LOTTEREAL_E2E_CHROME') or (
     str(CACHED_CHROME) if CACHED_CHROME.is_file() else shutil.which('google-chrome') or shutil.which('chromium')
 )
+E2E_REQUIRED = os.environ.get('LOTTEREAL_E2E_REQUIRED') == '1'
+if E2E_REQUIRED and not sync_playwright:
+    raise RuntimeError('LOTTEREAL_E2E_REQUIRED=1 but Playwright is unavailable')
+if E2E_REQUIRED and not CHROME:
+    raise RuntimeError('LOTTEREAL_E2E_REQUIRED=1 but no Chromium executable is available')
 SENSITIVE_MARKER = 'SENSITIVE_SEARCH_MARKER_94821'
 
 
@@ -64,11 +70,25 @@ class InternationalGuideBrowserE2ETest(unittest.TestCase):
         return context
 
     def test_english_widget_privacy_consent_focus_csp_and_mobile_geometry(self):
+        requested_home = os.environ.get('LOTTEREAL_E2E_BROWSER_HOME')
+        browser_home = Path(requested_home) if requested_home else Path(tempfile.mkdtemp(prefix='lottereal-e2e-'))
+        if not requested_home:
+            self.addCleanup(shutil.rmtree, browser_home, True)
+        browser_config = browser_home / 'cache' / 'chrome-config'
+        browser_cache = browser_home / 'cache' / 'chrome-cache'
+        browser_config.mkdir(parents=True, exist_ok=True)
+        browser_cache.mkdir(parents=True, exist_ok=True)
+        browser_env = {
+            'HOME': str(browser_home),
+            'XDG_CONFIG_HOME': str(browser_config),
+            'XDG_CACHE_HOME': str(browser_cache),
+        }
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(
                 headless=True,
                 executable_path=CHROME,
-                args=['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
+                args=['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--disable-crash-reporter'],
+                env=browser_env,
             )
 
             context = self.new_context(browser)
@@ -155,19 +175,42 @@ class InternationalGuideBrowserE2ETest(unittest.TestCase):
                 page = context.new_page()
                 page.goto(f'{self.base}/EN.html', wait_until='domcontentloaded')
                 page.locator('[data-analytics-notice]').wait_for()
+                actionbar = page.locator('.intl-mobile-actionbar')
+                self.assertFalse(actionbar.evaluate("(element) => element.classList.contains('is-visible')"))
+                initial_geometry = page.evaluate("""() => {
+                    const notice = document.querySelector('[data-analytics-notice]').getBoundingClientRect();
+                    const barStyle = getComputedStyle(document.querySelector('.intl-mobile-actionbar'));
+                    return {
+                        noticeBottomGap: window.innerHeight - notice.bottom,
+                        opacity: barStyle.opacity,
+                        visibility: barStyle.visibility,
+                    };
+                }""")
+                self.assertGreaterEqual(initial_geometry['noticeBottomGap'], 0, initial_geometry)
+                self.assertLessEqual(initial_geometry['noticeBottomGap'], 32, initial_geometry)
+                self.assertEqual(initial_geometry['opacity'], '0', initial_geometry)
+                self.assertEqual(initial_geometry['visibility'], 'hidden', initial_geometry)
+                page.locator('#scope').scroll_into_view_if_needed()
+                page.locator('.intl-mobile-actionbar.is-visible').wait_for(state='attached')
+                page.wait_for_timeout(300)
                 geometry = page.evaluate("""() => {
                     const notice = document.querySelector('[data-analytics-notice]').getBoundingClientRect();
                     const bar = document.querySelector('.lr-mobile-actionbar').getBoundingClientRect();
-                    const links = [...document.querySelectorAll('.lr-mobile-actionbar a')];
+                    const actionbarElement = document.querySelector('.lr-mobile-actionbar');
+                    const links = [...actionbarElement.querySelectorAll('a')];
                     return {
                         overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
                         gap: bar.top - notice.bottom,
+                        opacity: getComputedStyle(actionbarElement).opacity,
+                        colors: links.map((link) => getComputedStyle(link).backgroundColor),
                         heights: links.map((link) => link.getBoundingClientRect().height),
                         textOnly: links.length === 2 && links.every((link) => !link.querySelector('span')),
                     };
                 }""")
                 self.assertFalse(geometry['overflow'], geometry)
                 self.assertGreaterEqual(geometry['gap'], 0, geometry)
+                self.assertEqual(geometry['opacity'], '1', geometry)
+                self.assertEqual(geometry['colors'], ['rgb(229, 119, 0)', 'rgb(255, 255, 255)'], geometry)
                 self.assertGreaterEqual(min(geometry['heights']), 44, geometry)
                 self.assertTrue(geometry['textOnly'], geometry)
                 context.close()

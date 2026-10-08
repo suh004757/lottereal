@@ -95,6 +95,7 @@ class InternationalLandingTests(unittest.TestCase):
     def test_english_guide_exposes_the_migrated_safety_and_inquiry_entry_points(self):
         html = (PUBLIC / 'EN.html').read_text(encoding='utf-8')
         css = (PUBLIC / 'css' / 'international.css').read_text(encoding='utf-8')
+        widget = (PUBLIC / 'js' / 'knowledgeWidget.js').read_text(encoding='utf-8')
         self.assertIn('Rental Safety Guide for International Residents', html)
         self.assertIn('Open the rental safety guide', html)
         self.assertIn('English guided inquiry', html)
@@ -109,6 +110,10 @@ class InternationalLandingTests(unittest.TestCase):
         self.assertNotIn('<span', mobile_bar)
         self.assertIn('.intl-page .intl-mobile-actionbar', css)
         self.assertIn('font-weight: 700;', css)
+        self.assertIn('.intl-page .intl-mobile-actionbar::before', css)
+        self.assertIn('linear-gradient(to bottom', css)
+        self.assertIn("attachInternationalMobileActionVisibility()", widget)
+        self.assertIn("entry.intersectionRatio < 0.15", widget)
         self.assertIn('js/knowledgeWidget.js', html)
         self.assertIn('aria-label="Quick contact menu"', html)
 
