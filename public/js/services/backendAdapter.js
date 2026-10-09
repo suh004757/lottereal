@@ -577,7 +577,7 @@ async function updateInquiryStatusSupabase(id, status) {
     .single();
   if (error) {
     console.error('Supabase updateInquiryStatus error', error);
-    return null;
+    throw error;
   }
   return data;
 }

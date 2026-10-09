@@ -32,7 +32,7 @@ import { summarizeInquiryMessage } from './utils/inquiryDisplay.mjs';
 import { reportStaticHref } from './utils/reportUrls.mjs';
 import { initializeReportEditor } from './reportEditorCore.js';
 import { listReports } from './services/reportAdapter.js';
-import { signOutAdmin, getCurrentSessionUser } from './services/authService.js';
+import { signOutAdmin, getCurrentSessionUser, refreshAdminSession } from './services/authService.js';
 
 // ============================================
 // DOM 요소 참조
@@ -49,6 +49,7 @@ const serviceStatusEl = document.querySelector('[data-service-status]');
 const recentContainer = document.querySelector('[data-recent-activities]');
 const listingsTbody = document.querySelector('[data-admin-listings]');
 const inquiriesTbody = document.querySelector('[data-admin-inquiries]');
+const inquiryActionStatus = document.getElementById('inquiryActionStatus');
 const reportsTbody = document.querySelector('[data-admin-reports]');
 const addReportBtn = document.getElementById('addReportBtn');
 const resetReportEditorBtn = document.getElementById('resetReportEditorBtn');
@@ -125,6 +126,7 @@ let inquiryCommentLoadGeneration = 0;
 let inquiryCommentSubmitGeneration = 0;
 let inquiryCommentSubmitting = false;
 let inquiryModalReturnFocus = null;
+let inquiryStatusUpdateInFlight = false;
 
 // ============================================
 // 초기화
@@ -140,6 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function initAdminDashboard() {
   try {
+    await refreshAdminSession();
     currentAdmin = await getCurrentSessionUser();
     if (!currentAdmin || currentAdmin.app_metadata?.role !== 'admin') {
       if (currentAdmin) await signOutAdmin();
@@ -183,6 +186,20 @@ function setTableMessage(tbody, colspan, message) {
   cell.textContent = String(message || '');
   row.appendChild(cell);
   tbody.replaceChildren(row);
+}
+
+function setInquiryActionStatus(message = '', status = 'info') {
+  if (!inquiryActionStatus) return;
+  inquiryActionStatus.textContent = message;
+  inquiryActionStatus.dataset.status = status;
+  inquiryActionStatus.hidden = !message;
+  inquiryActionStatus.style.display = message ? 'block' : 'none';
+}
+
+function setInquiryStatusButtonsDisabled(disabled) {
+  inquiriesTbody?.querySelectorAll('[data-inquiry]').forEach((button) => {
+    button.disabled = disabled;
+  });
 }
 
 function appendTextCell(row, value, childTag = '') {
@@ -490,11 +507,25 @@ async function loadInquiriesAdmin() {
     inquiriesTbody.querySelectorAll('[data-inquiry]').forEach((btn) => {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
+        if (inquiryStatusUpdateInFlight) return;
         const id = btn.getAttribute('data-inquiry');
         const nextStatus = btn.getAttribute('data-status');
-        await updateInquiryStatus(id, nextStatus);
-        loadInquiriesAdmin();
-        loadRecent();
+        inquiryStatusUpdateInFlight = true;
+        setInquiryStatusButtonsDisabled(true);
+        setInquiryActionStatus('문의 상태를 변경하는 중입니다.', 'info');
+        try {
+          await refreshAdminSession();
+          const updated = await updateInquiryStatus(id, nextStatus);
+          if (!updated) throw new Error('Inquiry status update returned no row');
+          setInquiryActionStatus('문의 상태를 변경했습니다.', 'success');
+          await Promise.all([loadInquiriesAdmin(), loadRecent(), loadStats()]);
+        } catch (error) {
+          console.error('[Admin] Inquiry status update failed:', error);
+          setInquiryActionStatus('문의 상태를 변경하지 못했습니다. 다시 로그인한 뒤 재시도해 주세요.', 'error');
+        } finally {
+          inquiryStatusUpdateInFlight = false;
+          setInquiryStatusButtonsDisabled(false);
+        }
       });
     });
     inquiriesTbody.querySelectorAll('[data-share-inquiry]').forEach((btn) => {

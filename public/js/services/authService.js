@@ -229,6 +229,13 @@ export async function signOutAdmin(options = {}) {
   }
 }
 
+export async function refreshAdminSession() {
+  const client = ensureClient();
+  const { data, error } = await client.auth.refreshSession();
+  if (error) throw error;
+  return data?.session || null;
+}
+
 /**
  * 현재 세션의 사용자 정보를 가져옵니다.
  * @returns {Promise<Object|null>} 사용자 객체 또는 null
