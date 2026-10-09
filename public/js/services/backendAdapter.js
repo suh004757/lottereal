@@ -209,6 +209,36 @@ export async function updateInquiryStatus(id, status = 'read') {
   return { id, status };
 }
 
+/**
+ * Admin: list the append-only internal comments for one inquiry.
+ */
+export async function listInquiryCommentsAdmin(inquiryId) {
+  if (!inquiryId) return { ok: false, data: [], error: 'Inquiry id is required' };
+  const provider = (APP_CONFIG.BACKEND_PROVIDER || 'mock').toLowerCase();
+  if (provider === 'supabase') return listInquiryCommentsAdminSupabase(inquiryId);
+  return { ok: true, data: [], error: null };
+}
+
+/**
+ * Admin: append one internal inquiry comment. Existing comments are immutable.
+ */
+export async function createInquiryCommentAdmin(inquiryId, body) {
+  const normalizedBody = String(body || '').trim();
+  if (!inquiryId) throw new Error('Inquiry id is required');
+  if (!normalizedBody || normalizedBody.length > 1000) {
+    throw new Error('Comment must be between 1 and 1000 characters');
+  }
+  const provider = (APP_CONFIG.BACKEND_PROVIDER || 'mock').toLowerCase();
+  if (provider === 'supabase') return createInquiryCommentAdminSupabase(inquiryId, normalizedBody);
+  return {
+    id: `mock-inquiry-comment-${Date.now()}`,
+    inquiry_id: inquiryId,
+    body: normalizedBody,
+    author_id: 'mock-admin',
+    created_at: new Date().toISOString()
+  };
+}
+
 function getApiBaseUrl() {
   const base = (APP_CONFIG.API_BASE_URL || '').trim();
   if (!base) return '';
@@ -548,6 +578,36 @@ async function updateInquiryStatusSupabase(id, status) {
   if (error) {
     console.error('Supabase updateInquiryStatus error', error);
     return null;
+  }
+  return data;
+}
+
+async function listInquiryCommentsAdminSupabase(inquiryId) {
+  const supabase = getSupabaseClient();
+  if (!supabase) return { ok: false, data: [], error: 'Supabase client unavailable' };
+  const { data, error } = await supabase
+    .from('inquiry_comments')
+    .select('id,inquiry_id,body,author_id,created_at')
+    .eq('inquiry_id', inquiryId)
+    .order('created_at', { ascending: true });
+  if (error) {
+    console.error('Supabase listInquiryCommentsAdmin error', error);
+    return { ok: false, data: [], error: error.message || 'Failed to load inquiry comments' };
+  }
+  return { ok: true, data: data || [], error: null };
+}
+
+async function createInquiryCommentAdminSupabase(inquiryId, normalizedBody) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase client unavailable');
+  const { data, error } = await supabase
+    .from('inquiry_comments')
+    .insert([{ inquiry_id: inquiryId, body: normalizedBody }])
+    .select('id,inquiry_id,body,author_id,created_at')
+    .single();
+  if (error) {
+    console.error('Supabase createInquiryCommentAdmin error', error);
+    throw error;
   }
   return data;
 }
