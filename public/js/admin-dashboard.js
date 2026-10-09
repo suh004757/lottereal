@@ -22,7 +22,9 @@ import {
   getRecentActivities,
   listListingsAdmin,
   listInquiriesAdmin,
-  updateInquiryStatus
+  updateInquiryStatus,
+  listInquiryCommentsAdmin,
+  createInquiryCommentAdmin
 } from './services/backendAdapter.js';
 import { getSupabaseClient } from './config/supabaseConfig.js';
 import { SAFE_CONTACT_PHONE } from './utils/contactPhone.mjs';
@@ -95,6 +97,11 @@ const inquiryFields = {
   created: document.querySelector('[data-inquiry-created]'),
   message: document.querySelector('[data-inquiry-message]')
 };
+const inquiryCommentsList = document.querySelector('[data-inquiry-comments]');
+const inquiryCommentsStatus = document.querySelector('[data-inquiry-comments-status]');
+const inquiryCommentForm = document.getElementById('inquiryCommentForm');
+const inquiryCommentInput = inquiryCommentForm?.elements?.inquiryComment;
+const inquiryCommentCount = document.querySelector('[data-inquiry-comment-count]');
 
 // ============================================
 // 전역 상태 변수
@@ -112,6 +119,11 @@ let editingId = null;
 /** @type {Object} 인증 객체 */
 let currentAdmin = null;
 let reportEditorController = null;
+let activeInquiryId = null;
+let inquiryCommentLoadGeneration = 0;
+let inquiryCommentSubmitGeneration = 0;
+let inquiryCommentSubmitting = false;
+let inquiryModalReturnFocus = null;
 
 // ============================================
 // 초기화
@@ -554,6 +566,12 @@ function bindInquiryModal() {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && inquiryModal?.classList.contains('active')) closeInquiryModal();
   });
+  if (inquiryCommentInput) {
+    inquiryCommentInput.addEventListener('input', () => {
+      if (inquiryCommentCount) inquiryCommentCount.textContent = `${inquiryCommentInput.value.length} / 1000`;
+    });
+  }
+  if (inquiryCommentForm) inquiryCommentForm.addEventListener('submit', submitInquiryComment);
 }
 
 /**
@@ -643,6 +661,10 @@ function clearPropertyFormMessage() {
  */
 function openInquiryModal(inq) {
   if (!inquiryModal) return;
+  inquiryModalReturnFocus = document.activeElement;
+  activeInquiryId = inq.id;
+  inquiryCommentSubmitGeneration += 1;
+  inquiryCommentSubmitting = false;
   inquiryFields.title.textContent = inq.listing_title || '-';
   inquiryFields.name.textContent = inq.name || '-';
   inquiryFields.phone.textContent = inq.phone || '-';
@@ -650,16 +672,124 @@ function openInquiryModal(inq) {
   inquiryFields.status.replaceChildren(createStatusBadge(inq.status));
   inquiryFields.created.textContent = formatKst(inq.created_at) || '-';
   inquiryFields.message.textContent = inq.message || '-';
+  if (inquiryCommentInput) inquiryCommentInput.value = '';
+  if (inquiryCommentCount) inquiryCommentCount.textContent = '0 / 1000';
+  const submitButton = inquiryCommentForm?.querySelector('button[type="submit"]');
+  if (submitButton) submitButton.disabled = false;
+  setInquiryCommentStatus('');
   inquiryModal.classList.add('active');
   document.body.style.overflow = 'hidden';
+  closeInquiryModalBtn?.focus();
+  loadInquiryComments(inq.id);
+}
+
+function setInquiryCommentStatus(message, status = 'info') {
+  if (!inquiryCommentsStatus) return;
+  inquiryCommentsStatus.textContent = message;
+  inquiryCommentsStatus.dataset.status = status;
+  inquiryCommentsStatus.hidden = !message;
+}
+
+function renderInquiryComments(comments) {
+  if (!inquiryCommentsList) return;
+  inquiryCommentsList.replaceChildren();
+  if (!comments.length) {
+    const empty = document.createElement('li');
+    empty.className = 'admin-inquiry-comments__empty';
+    empty.textContent = '아직 내부 코멘트가 없습니다.';
+    inquiryCommentsList.appendChild(empty);
+    return;
+  }
+  comments.forEach((comment) => {
+    const item = document.createElement('li');
+    item.className = 'admin-inquiry-comment';
+    const commentBody = document.createElement('p');
+    commentBody.textContent = comment.body;
+    const commentMeta = document.createElement('span');
+    commentMeta.textContent = `관리자 · ${formatKst(comment.created_at) || '-'}`;
+    item.append(commentBody, commentMeta);
+    inquiryCommentsList.appendChild(item);
+  });
+}
+
+async function loadInquiryComments(inquiryId) {
+  const generation = ++inquiryCommentLoadGeneration;
+  if (inquiryCommentsList) {
+    const loading = document.createElement('li');
+    loading.className = 'admin-inquiry-comments__empty';
+    loading.textContent = '코멘트를 불러오는 중입니다.';
+    inquiryCommentsList.replaceChildren(loading);
+  }
+  try {
+    const response = await listInquiryCommentsAdmin(inquiryId);
+    if (generation !== inquiryCommentLoadGeneration || inquiryId !== activeInquiryId) return;
+    if (!response?.ok) {
+      renderInquiryComments([]);
+      setInquiryCommentStatus('코멘트를 불러오지 못했습니다.', 'error');
+      return;
+    }
+    renderInquiryComments(response.data || []);
+  } catch (err) {
+    console.error('문의 코멘트 로드 실패', err);
+    if (generation !== inquiryCommentLoadGeneration || inquiryId !== activeInquiryId) return;
+    renderInquiryComments([]);
+    setInquiryCommentStatus('코멘트를 불러오지 못했습니다.', 'error');
+  }
+}
+
+async function submitInquiryComment(event) {
+  event.preventDefault();
+  if (!activeInquiryId || !inquiryCommentInput) return;
+  if (inquiryCommentSubmitting) return;
+  const submittedInputValue = inquiryCommentInput.value;
+  const body = submittedInputValue.trim();
+  if (!body || body.length > 1000) {
+    setInquiryCommentStatus('코멘트는 1자 이상 1,000자 이하로 입력하세요.', 'error');
+    return;
+  }
+  const inquiryId = activeInquiryId;
+  const submitGeneration = ++inquiryCommentSubmitGeneration;
+  inquiryCommentSubmitting = true;
+  const submitButton = inquiryCommentForm?.querySelector('button[type="submit"]');
+  if (submitButton) submitButton.disabled = true;
+  setInquiryCommentStatus('코멘트를 저장하는 중입니다.');
+  try {
+    await createInquiryCommentAdmin(inquiryId, body);
+    if (!isCurrentInquiryCommentSubmit(submitGeneration, inquiryId)) return;
+    if (inquiryCommentInput.value === submittedInputValue) {
+      inquiryCommentInput.value = '';
+      if (inquiryCommentCount) inquiryCommentCount.textContent = '0 / 1000';
+    }
+    setInquiryCommentStatus('코멘트를 저장했습니다.', 'success');
+    await loadInquiryComments(inquiryId);
+  } catch (err) {
+    console.error('문의 코멘트 저장 실패', err);
+    if (!isCurrentInquiryCommentSubmit(submitGeneration, inquiryId)) return;
+    setInquiryCommentStatus('댓글을 저장하지 못했습니다.', 'error');
+  } finally {
+    if (isCurrentInquiryCommentSubmit(submitGeneration, inquiryId)) {
+      inquiryCommentSubmitting = false;
+      if (submitButton) submitButton.disabled = false;
+    }
+  }
+}
+
+function isCurrentInquiryCommentSubmit(submitGeneration, inquiryId) {
+  return submitGeneration === inquiryCommentSubmitGeneration && inquiryId === activeInquiryId;
 }
 
 /**
  * 문의 모달을 닫습니다.
  */
 function closeInquiryModal() {
+  activeInquiryId = null;
+  inquiryCommentLoadGeneration += 1;
+  inquiryCommentSubmitGeneration += 1;
+  inquiryCommentSubmitting = false;
   inquiryModal?.classList.remove('active');
   document.body.style.overflow = '';
+  inquiryModalReturnFocus?.focus?.();
+  inquiryModalReturnFocus = null;
 }
 
 // ============================================
