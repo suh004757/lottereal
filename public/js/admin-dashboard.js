@@ -28,6 +28,7 @@ import {
 } from './services/backendAdapter.js';
 import { getSupabaseClient } from './config/supabaseConfig.js';
 import { SAFE_CONTACT_PHONE } from './utils/contactPhone.mjs';
+import { summarizeInquiryMessage } from './utils/inquiryDisplay.mjs';
 import { reportStaticHref } from './utils/reportUrls.mjs';
 import { initializeReportEditor } from './reportEditorCore.js';
 import { listReports } from './services/reportAdapter.js';
@@ -457,7 +458,12 @@ async function loadInquiriesAdmin() {
       appendTextCell(tr, inq.listing_title || '');
       appendTextCell(tr, inq.name || '');
       appendTextCell(tr, inq.phone || '');
-      appendTextCell(tr, inq.message || '');
+      const messageCell = document.createElement('td');
+      const preview = document.createElement('p');
+      preview.className = 'admin-inquiry-table__message-preview';
+      preview.textContent = summarizeInquiryMessage(inq.message);
+      messageCell.appendChild(preview);
+      tr.appendChild(messageCell);
       const statusCell = document.createElement('td');
       statusCell.appendChild(createStatusBadge(inq.status));
       tr.appendChild(statusCell);

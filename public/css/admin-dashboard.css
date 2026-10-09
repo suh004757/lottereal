@@ -511,6 +511,113 @@ body.admin-dashboard-shell .admin-nav__item {
 }
 
 /* Inquiries */
+.admin-inquiry-table-wrap {
+    overflow-x: auto;
+    scrollbar-gutter: stable;
+}
+
+.admin-inquiry-table {
+    min-width: 1040px;
+    table-layout: fixed;
+}
+
+.admin-inquiry-table__col--index { width: 46px; }
+.admin-inquiry-table__col--listing { width: 96px; }
+.admin-inquiry-table__col--name { width: 130px; }
+.admin-inquiry-table__col--contact { width: 132px; }
+.admin-inquiry-table__col--status { width: 80px; }
+.admin-inquiry-table__col--date { width: 138px; }
+.admin-inquiry-table__col--actions { width: 140px; }
+
+.admin-inquiry-table th,
+.admin-inquiry-table td {
+    padding: 16px 14px;
+    vertical-align: middle;
+}
+
+.admin-inquiry-table th {
+    white-space: nowrap;
+}
+
+.admin-inquiry-table td {
+    color: #27342f;
+    font-family: "Pretendard Variable", Pretendard, "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.55;
+}
+
+.admin-inquiry-table td:nth-child(1),
+.admin-inquiry-table td:nth-child(2),
+.admin-inquiry-table td:nth-child(3),
+.admin-inquiry-table td:nth-child(4),
+.admin-inquiry-table td:nth-child(6),
+.admin-inquiry-table td:nth-child(7) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-inquiry-table td:nth-child(3) {
+    color: #17231f;
+    font-weight: 700;
+}
+
+.admin-inquiry-table td:nth-child(7) {
+    color: #52605a;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+}
+
+.admin-inquiry-table tbody tr {
+    cursor: pointer;
+}
+
+.admin-inquiry-table__message-preview {
+    display: -webkit-box;
+    margin: 0;
+    overflow: hidden;
+    color: #27342f;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+}
+
+.admin-inquiry-table .admin-status-badge {
+    border: 1px solid #b7d0c4;
+    background: #e8f2ed;
+    color: #1f5b48;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.admin-inquiry-table .admin-status-badge.pending {
+    border-color: #e3c98a;
+    background: #fff2d3;
+    color: #7a5200;
+}
+
+.admin-inquiry-table .admin-table-actions {
+    flex-wrap: nowrap;
+}
+
+.admin-inquiry-table .admin-table-actions .admin-btn {
+    border-color: #aeb8b3;
+    background: #fffdf8;
+    color: #27342f;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.admin-inquiry-table .admin-table-actions .admin-btn:hover {
+    border-color: var(--admin-accent);
+    background: #e8f0eb;
+    color: var(--admin-accent);
+}
+
 .admin-inquiries-grid {
     display: grid;
     gap: 20px;
