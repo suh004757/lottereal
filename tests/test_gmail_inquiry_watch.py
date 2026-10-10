@@ -31,6 +31,15 @@ from scripts.lottereal_gmail_inquiry_watch import (
 
 class GmailInquiryWatchTest(unittest.TestCase):
     def setUp(self):
+        heartbeat_directory = tempfile.TemporaryDirectory()
+        self.addCleanup(heartbeat_directory.cleanup)
+        heartbeat_path = mock.patch.object(
+            gmail_watch,
+            'DEFAULT_HEARTBEAT_PATH',
+            Path(heartbeat_directory.name) / 'gmail-inquiry-watch-heartbeat.json',
+        )
+        heartbeat_path.start()
+        self.addCleanup(heartbeat_path.stop)
         clock = mock.patch.object(
             gmail_watch,
             '_utc_now',
@@ -38,6 +47,12 @@ class GmailInquiryWatchTest(unittest.TestCase):
         )
         clock.start()
         self.addCleanup(clock.stop)
+
+    def test_default_heartbeat_path_is_isolated_from_operating_state(self):
+        self.assertNotEqual(
+            gmail_watch.DEFAULT_HEARTBEAT_PATH,
+            Path('/opt/data/state/lottereal/gmail-inquiry-watch-heartbeat.json'),
+        )
 
     def test_accepts_only_verified_zigbang_sender_and_subject(self):
         self.assertEqual(
