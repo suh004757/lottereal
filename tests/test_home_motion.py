@@ -1,0 +1,44 @@
+import re
+import unittest
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+PUBLIC = ROOT / "public"
+HOME = PUBLIC / "index.html"
+CSS = PUBLIC / "css" / "home-motion.css"
+REPORT_PREVIEW = PUBLIC / "js" / "homeReportPreview.js"
+
+
+class HomeMotionTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.home = HOME.read_text(encoding="utf-8")
+        cls.css = CSS.read_text(encoding="utf-8")
+        cls.preview = REPORT_PREVIEW.read_text(encoding="utf-8")
+
+    def test_hero_skyline_is_decorative_and_keeps_hero_copy(self):
+        hero = self.home.split('id="hero"', 1)[1].split("</section>", 1)[0]
+        self.assertIn('class="lr-hero lr-hero--night"', self.home)
+        self.assertRegex(hero, r'<svg class="lr-hero-skyline"[^>]*aria-hidden="true"')
+        self.assertIn("전화로 바로 상담", hero)
+        self.assertIn('href="tel:050714025055"', hero)
+        self.assertNotIn('class="particle"', hero)
+        self.assertNotRegex(hero, r"\son[a-z]+=")
+
+    def test_motion_stylesheet_is_loaded_and_respects_reduced_motion(self):
+        self.assertIn('<link rel="stylesheet" href="css/home-motion.css">', self.home)
+        self.assertIn("@media (prefers-reduced-motion: reduce)", self.css)
+        self.assertIn("@supports (animation-timeline: view())", self.css)
+
+    def test_report_covers_are_static_decorative_markup(self):
+        covers = re.findall(r"const (MARKET|DISPUTE)_COVER = `(.*?)`;", self.preview, re.S)
+        self.assertEqual({name for name, _ in covers}, {"MARKET", "DISPUTE"})
+        for _, markup in covers:
+            self.assertIn('aria-hidden="true"', markup)
+            self.assertNotIn("${", markup)
+        self.assertIn("${renderCover(report)}", self.preview)
+
+
+if __name__ == "__main__":
+    unittest.main()

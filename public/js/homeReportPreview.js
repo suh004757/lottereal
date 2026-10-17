@@ -5,6 +5,36 @@ import { reportStaticHref } from './utils/reportUrls.mjs';
 
 const section = document.querySelector('[data-report-section]');
 
+const MARKET_COVER = `
+  <div class="lr-report-cover lr-report-cover--market" aria-hidden="true">
+    <svg viewBox="0 0 240 160" focusable="false">
+      <path class="lrc-grid" d="M20 40H220M20 80H220M20 120H220"/>
+      <rect class="lrc-bar" x="34" y="96" width="18" height="44" rx="4"/>
+      <rect class="lrc-bar" x="74" y="78" width="18" height="62" rx="4"/>
+      <rect class="lrc-bar" x="114" y="88" width="18" height="52" rx="4"/>
+      <rect class="lrc-bar" x="154" y="70" width="18" height="70" rx="4"/>
+      <rect class="lrc-bar" x="194" y="84" width="18" height="56" rx="4"/>
+      <path class="lrc-line" pathLength="1" d="M43 84L83 64 123 76 163 56 203 68"/>
+      <circle class="lrc-dot" cx="203" cy="68" r="5"/>
+    </svg>
+  </div>`;
+
+const DISPUTE_COVER = `
+  <div class="lr-report-cover lr-report-cover--dispute" aria-hidden="true">
+    <svg viewBox="0 0 240 160" focusable="false">
+      <rect class="lrc-doc" x="62" y="22" width="92" height="118" rx="10"/>
+      <rect class="lrc-doc-line" x="76" y="42" width="64" height="6" rx="3"/>
+      <rect class="lrc-doc-line" x="76" y="56" width="52" height="6" rx="3"/>
+      <rect class="lrc-doc-line" x="76" y="70" width="60" height="6" rx="3"/>
+      <rect class="lrc-doc-line" x="76" y="84" width="40" height="6" rx="3"/>
+      <g class="lrc-scale">
+        <path d="M176 60V128M156 128H196M146 68H206"/>
+        <path d="M146 68L136 92H156ZM206 68L196 92H216Z"/>
+      </g>
+      <path class="lrc-check" pathLength="1" d="M82 116l10 10 20-22"/>
+    </svg>
+  </div>`;
+
 if (section) {
   const featuredContainer = section.querySelector('[data-report-featured]');
   const secondaryContainer = section.querySelector('[data-report-secondary-list]');
@@ -122,7 +152,8 @@ if (section) {
 
   function renderFeatureCard(report) {
     return `
-      <article class="lr-card lr-card--feature">
+      <article class="lr-card lr-card--feature lr-card--with-cover">
+        ${renderCover(report)}
         <div class="lr-card__body">
           <p class="lr-badge">${getReportLabel(report)}</p>
           <h3>${escapeHtml(report.title || 'Report')}</h3>
@@ -154,6 +185,11 @@ if (section) {
         </div>
       </article>
     `;
+  }
+
+  function renderCover(report) {
+    const isDispute = String(report.metadata?.content_type || '').toLowerCase() === 'dispute_case';
+    return isDispute ? DISPUTE_COVER : MARKET_COVER;
   }
 
   function renderStateCard(title, summary, isError = false) {
