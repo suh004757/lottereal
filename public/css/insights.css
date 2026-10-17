@@ -1258,3 +1258,12 @@
         color: #ffffff !important;
     }
 }
+
+/* report.html: the disclaimer sits right above the body instead of 260px away */
+.lr-section:has(> .lr-container > #report-disclaimer-primary) {
+    padding-bottom: 0;
+}
+
+.lr-section:has(> .lr-container > #report-content) {
+    padding-top: 48px;
+}

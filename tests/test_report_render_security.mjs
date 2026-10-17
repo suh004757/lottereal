@@ -29,3 +29,13 @@ test('public report body can only come from the sanitizer', () => {
   assert.deepEqual(calls, ['<p><img src=x onerror=alert(1)></p>']);
   assert.equal(result, '<p>safe</p>');
 });
+
+test('report body drops a leading markdown title already shown in the header', () => {
+  const result = buildSanitizedReportHtml({
+    markdown: '# 2026년 10월 17일 잠실 아파트 주차\n\n## 먼저 볼 내용\n본문',
+    marked: { parse: (value) => value },
+    purifier: { sanitize: (value) => value }
+  });
+  assert.equal(result.startsWith('## 먼저 볼 내용'), true);
+  assert.equal(result.includes('# 2026년'), false);
+});

@@ -5,6 +5,8 @@ export function buildSanitizedReportHtml({ markdown, marked, purifier }) {
   if (typeof marked.setOptions === 'function') {
     marked.setOptions({ breaks: true, gfm: true });
   }
-  const rawHtml = marked.parse(String(markdown || ''));
+  // The page header already shows the title; drop a leading '# Title' line like the static export does
+  const body = String(markdown || '').replace(/^﻿?\s*#\s+[^\n]+\n+/, '');
+  const rawHtml = marked.parse(body);
   return purifier.sanitize(String(rawHtml || ''));
 }
