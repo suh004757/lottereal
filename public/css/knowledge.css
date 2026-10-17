@@ -12,8 +12,8 @@
   padding: 6.5rem 0 5rem;
   color: #fff;
   background:
-    radial-gradient(circle at 88% 18%, rgba(197, 151, 91, 0.22), transparent 27rem),
-    linear-gradient(124deg, #10243a 0%, #183b54 58%, #254e5c 100%);
+    radial-gradient(circle at 88% 0%, rgba(255, 236, 200, 0.14), transparent 30rem),
+    linear-gradient(135deg, #1b4478 0%, #23558f 60%, #2c6aa8 100%);
 }
 
 .lr-knowledge-hero::after {
@@ -21,8 +21,7 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  opacity: 0.15;
-  background-image: repeating-linear-gradient(90deg, transparent 0, transparent 79px, rgba(255,255,255,.18) 80px);
+  display: none;
 }
 
 .lr-knowledge-hero__grid {
@@ -34,29 +33,21 @@
   align-items: center;
 }
 
-.lr-knowledge-eyebrow {
-  margin: 0 0 1.25rem;
-  color: #e4c69d;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
 .lr-knowledge-hero__intro h1 {
   margin: 0;
   color: #fff;
   font-family: "Noto Sans KR", sans-serif;
-  font-size: clamp(2.6rem, 5vw, 4.5rem);
+  font-size: clamp(2.3rem, 4.2vw, 3.6rem);
   font-weight: 700;
-  line-height: 1.13;
-  letter-spacing: -0.055em;
+  line-height: 1.18;
+  letter-spacing: -0.04em;
+  word-break: keep-all;
 }
 
-.lr-knowledge-hero__intro > p:not(.lr-knowledge-eyebrow) {
+.lr-knowledge-hero__intro > p {
   max-width: 37rem;
   margin: 1.7rem 0 0;
-  color: rgba(255,255,255,.78);
+  color: rgba(255,255,255,.88);
   font-size: 1.05rem;
   line-height: 1.9;
 }
@@ -240,9 +231,9 @@
 }
 
 .lr-community-pulse__rank {
-  color: #b38a57;
-  font-family: "Playfair Display", serif;
-  font-size: 1.35rem;
+  color: var(--lr-accent-text, #a14a07);
+  font-variant-numeric: tabular-nums;
+  font-size: 1.2rem;
   font-weight: 700;
 }
 
@@ -459,7 +450,6 @@
   background: #fff;
 }
 
-.lr-knowledge-method-grid span { color: #8a5a12; font-family: "Playfair Display", serif; font-size: 1.4rem; }
 .lr-knowledge-method-grid h3 { margin: 1.1rem 0 .7rem; color: var(--knowledge-ink); font-size: 1.18rem; }
 .lr-knowledge-method-grid p { margin: 0; color: #66625c; line-height: 1.75; }
 

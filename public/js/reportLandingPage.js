@@ -76,7 +76,7 @@ function renderFeaturedReport(report) {
   container.innerHTML = `
     <article class="lr-card lr-card--feature">
       <div class="lr-card__body">
-        <p class="lr-badge">Featured Report</p>
+        <p class="lr-badge">${config.key === 'dispute-cases' ? '최신 사례' : '최신 리포트'}</p>
         <h3>${escapeHtml(report.title || '')}</h3>
         <p class="lr-text">${escapeHtml(report.summary || '')}</p>
         <div class="lr-card__meta">
@@ -84,7 +84,7 @@ function renderFeaturedReport(report) {
           <span>${config.key === 'dispute-cases' ? '판례·법령 검증' : '시장·정책 자료'}</span>
         </div>
         <div class="lr-actions">
-          <a class="lr-btn lr-btn--primary" href="${reportStaticHref(report.slug)}">최신 리포트 보기</a>
+          <a class="lr-btn lr-btn--primary" href="${reportStaticHref(report.slug)}">${config.key === 'dispute-cases' ? '사례 읽기' : '최신 리포트 보기'}</a>
         </div>
       </div>
     </article>
@@ -102,7 +102,7 @@ function renderReportList(reports) {
 
   container.innerHTML = reports.map((report) => `
     <article class="lr-report-hub__report-card">
-      <p class="lr-badge">Report</p>
+      <p class="lr-badge">리포트</p>
       <h3>${escapeHtml(report.title || '')}</h3>
       <p>${escapeHtml(report.summary || '')}</p>
       <div class="lr-card__meta">
