@@ -189,8 +189,9 @@ class CorporateBuildingsTest(unittest.TestCase):
         css = (PUBLIC / 'css' / 'corporate-buildings.css').read_text(encoding='utf-8')
 
         self.assertIn('class="hq-headline-line"', hub)
-        self.assertIn('<em>독립 사옥</em>을 제안합니다', hub)
-        self.assertNotIn('<em>독립 사옥</em>을 찾습니다', hub)
+        self.assertIn('독립 사옥을 제안합니다', hub)
+        self.assertNotIn('독립 사옥을 찾습니다', hub)
+        self.assertNotIn('<em>', hub.split('<h1>', 1)[1].split('</h1>', 1)[0])
         mobile = css[css.index('@media (max-width: 640px)'):]
         hero_rule = re.search(r'\.hq-hero__copy h1\s*\{([^}]*)\}', mobile)
         if hero_rule is None:

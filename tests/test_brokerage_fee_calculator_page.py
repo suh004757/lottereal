@@ -23,7 +23,7 @@ class BrokerageFeeCalculatorPageTests(unittest.TestCase):
             page,
         )
         self.assertIn('"name": "서울 부동산 중개수수료 계산기"', page)
-        self.assertIn("<h1>서울 부동산 중개수수료<br><em>상한액 계산</em></h1>", page)
+        self.assertIn("<h1>서울 부동산 중개수수료<br>상한액 계산</h1>", page)
 
     def test_page_has_search_metadata_and_local_calculator_controls(self):
         page = PAGE.read_text(encoding="utf-8")

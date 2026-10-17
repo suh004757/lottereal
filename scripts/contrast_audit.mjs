@@ -343,7 +343,7 @@ export function connect(wsUrl) {
   return { ws, send, opened, on: (fn) => listeners.push(fn) };
 }
 
-async function auditPage(cdp, baseUrl, page, viewport) {
+async function auditPage(cdp, baseUrl, page, viewport, prepare) {
   const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
   const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
   const s = (method, params) => cdp.send(method, params, sessionId);
@@ -358,6 +358,10 @@ async function auditPage(cdp, baseUrl, page, viewport) {
   await s('Page.navigate', { url: `${baseUrl}/${page}` });
   await Promise.race([loaded, new Promise((r) => setTimeout(r, 15000))]);
   await new Promise((r) => setTimeout(r, 2500));
+  if (prepare) {
+    await s('Runtime.evaluate', { expression: prepare, awaitPromise: true });
+    await new Promise((r) => setTimeout(r, 1200));
+  }
   const { result } = await s('Runtime.evaluate', { expression: COLLECT, returnByValue: true });
   const rows = (result.value || []).map((item) => ({ page, viewport: viewport.name, ...item, ...evaluate(item) }));
   for (const row of rows) {
@@ -377,7 +381,10 @@ async function main(argv) {
   const json = argv.includes('--json');
   const chromeIndex = argv.indexOf('--chrome');
   const chromeArg = chromeIndex >= 0 ? argv[chromeIndex + 1] : undefined;
-  const pages = argv.filter((a, i) => !a.startsWith('--') && argv[i - 1] !== '--chrome');
+  // --eval JS runs in each page after load, e.g. to submit a form and audit the result state
+  const evalIndex = argv.indexOf('--eval');
+  const prepare = evalIndex >= 0 ? argv[evalIndex + 1] : undefined;
+  const pages = argv.filter((a, i) => !a.startsWith('--') && !['--chrome', '--eval'].includes(argv[i - 1]));
   const server = await startServer();
   const baseUrl = `http://127.0.0.1:${server.address().port}`;
   const chrome = await launchChrome(await findChrome(chromeArg));
@@ -386,7 +393,7 @@ async function main(argv) {
   const results = [];
   try {
     for (const page of pages.length ? pages : DEFAULT_PAGES) {
-      for (const viewport of VIEWPORTS) results.push(...await auditPage(cdp, baseUrl, page, viewport));
+      for (const viewport of VIEWPORTS) results.push(...await auditPage(cdp, baseUrl, page, viewport, prepare));
     }
   } finally {
     cdp.ws.close();

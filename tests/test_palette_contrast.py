@@ -71,8 +71,8 @@ class PaletteContrastTests(unittest.TestCase):
         self.assertIn("#23558f", hero)
         self.assertNotIn("rgba(9, 27, 45", fee)
         self.assertNotIn("#102031", fee)
-        em = fee[fee.index(".fee-hero h1 em {"):]
-        self.assertIn("var(--lr-yellow-text", em[:em.index("}")])
+        page = (ROOT / "public" / "brokerage-fee-calculator.html").read_text(encoding="utf-8")
+        self.assertNotIn("<em>", page.split("<h1>", 1)[1].split("</h1>", 1)[0])
 
 
 if __name__ == "__main__":

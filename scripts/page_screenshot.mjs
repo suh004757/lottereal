@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Full-page PC (1440) and mobile (390, emulated) screenshots of public/ pages.
-// Usage: node scripts/page_screenshot.mjs OUT_DIR page.html [page.html ...]
+// Usage: node scripts/page_screenshot.mjs OUT_DIR page.html [page.html ...] [--eval JS]
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { connect, findChrome, launchChrome, startServer } from './contrast_audit.mjs';
@@ -10,7 +10,7 @@ const VIEWPORTS = [
   { name: 'mobile', width: 390, height: 844, mobile: true },
 ];
 
-async function shoot(cdp, baseUrl, page, viewport, outDir) {
+async function shoot(cdp, baseUrl, page, viewport, outDir, prepare) {
   const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
   const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
   const s = (method, params) => cdp.send(method, params, sessionId);
@@ -25,6 +25,10 @@ async function shoot(cdp, baseUrl, page, viewport, outDir) {
   await s('Page.navigate', { url: `${baseUrl}/${page}` });
   await Promise.race([loaded, new Promise((r) => setTimeout(r, 15000))]);
   await new Promise((r) => setTimeout(r, 2000));
+  if (prepare) {
+    await s('Runtime.evaluate', { expression: prepare, awaitPromise: true });
+    await new Promise((r) => setTimeout(r, 1200));
+  }
   const { result } = await s('Runtime.evaluate', {
     expression: 'Math.min(document.documentElement.scrollHeight, 6000)', returnByValue: true,
   });
@@ -38,7 +42,10 @@ async function shoot(cdp, baseUrl, page, viewport, outDir) {
   return file;
 }
 
-const [outDir, ...pages] = process.argv.slice(2);
+const args = process.argv.slice(2);
+const evalIndex = args.indexOf('--eval');
+const prepare = evalIndex >= 0 ? args[evalIndex + 1] : undefined;
+const [outDir, ...pages] = args.filter((a, i) => a !== '--eval' && args[i - 1] !== '--eval');
 if (!outDir || !pages.length) {
   console.error('usage: node scripts/page_screenshot.mjs OUT_DIR page.html [...]');
   process.exit(2);
@@ -51,7 +58,7 @@ const cdp = connect(chrome.wsUrl);
 await cdp.opened;
 try {
   for (const page of pages) {
-    for (const viewport of VIEWPORTS) console.log(await shoot(cdp, baseUrl, page, viewport, outDir));
+    for (const viewport of VIEWPORTS) console.log(await shoot(cdp, baseUrl, page, viewport, outDir, prepare));
   }
 } finally {
   cdp.ws.close();
