@@ -56,6 +56,17 @@ class PaletteContrastTests(unittest.TestCase):
             self.assertIn(sky, motion)
         self.assertNotIn("#0b1626", motion)
 
+    def test_fee_calculator_shares_the_dusk_sky_and_yellow_accent(self):
+        fee = (ROOT / "public" / "css" / "brokerage-fee-calculator.css").read_text(encoding="utf-8")
+        hero = fee[fee.index(".fee-hero {"):]
+        hero = hero[:hero.index("}")]
+        self.assertIn("rgba(27, 68, 120", hero)
+        self.assertIn("#23558f", hero)
+        self.assertNotIn("rgba(9, 27, 45", fee)
+        self.assertNotIn("#102031", fee)
+        em = fee[fee.index(".fee-hero h1 em {"):]
+        self.assertIn("var(--lr-yellow-text", em[:em.index("}")])
+
 
 if __name__ == "__main__":
     unittest.main()
