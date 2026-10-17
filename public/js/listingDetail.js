@@ -42,6 +42,53 @@ async function init() {
     renderDetail(listing);
     bindPhoneBtn(listing);
     bindInquiryButtons(listing);
+    return;
+  }
+  renderClosed();
+}
+
+/**
+ * 거래 완료로 내려간 매물이나 잘못된 링크로 들어온 경우 빈 화면 대신 다음 행동을 안내합니다.
+ */
+function renderClosed() {
+  document.title = '거래가 완료된 매물 | 롯데부동산';
+  if (titleEl) titleEl.textContent = '거래가 완료되었거나 내려간 매물입니다';
+  if (infoEl) infoEl.textContent = '비슷한 조건의 매물은 직방·다방 등록 매물과 등록 전 매물까지 함께 찾아드립니다.';
+  if (descEl) {
+    descEl.textContent = '';
+    const links = document.createElement('p');
+    links.className = 'lr-actions';
+    const list = document.createElement('a');
+    list.className = 'lr-btn lr-btn--ghost';
+    list.href = 'listings.html';
+    list.textContent = '매물 목록 보기';
+    const request = document.createElement('a');
+    request.className = 'lr-btn lr-btn--primary';
+    request.href = 'contact.html?intent=listing#inquiry-options';
+    request.textContent = '조건 남기기';
+    links.append(request, list);
+    descEl.appendChild(links);
+  }
+  if (featuresEl) {
+    featuresEl.hidden = true;
+    if (featuresEl.previousElementSibling?.tagName === 'H4') featuresEl.previousElementSibling.hidden = true;
+  }
+  // Nothing left to show or ask about this listing: drop the empty photo and listing chat
+  // Their CSS sets display, which outranks the hidden attribute
+  const media = document.querySelector('.lr-detail__media');
+  if (media) media.style.display = 'none';
+  const layout = document.querySelector('.lr-detail');
+  if (layout) {
+    layout.style.gridTemplateColumns = 'minmax(0, 720px)';
+    layout.style.justifyContent = 'center';
+  }
+  document.querySelectorAll('[data-listing-chat-open]').forEach((link) => { link.style.display = 'none'; });
+  const inquirySection = document.getElementById('inquiry');
+  if (inquirySection) inquirySection.hidden = true;
+  if (phoneBtn) {
+    phoneBtn.href = SAFE_CONTACT_TEL;
+    phoneBtn.textContent = getPhoneButtonLabel('전화로 조건 말하기');
+    phoneBtn.className = 'lr-btn lr-btn--ghost';
   }
 }
 

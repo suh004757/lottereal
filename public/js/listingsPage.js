@@ -79,26 +79,25 @@ function renderListings(data, filters = {}) {
   if (!listContainer) return;
   listContainer.innerHTML = '';
 
+  const hasListings = Array.isArray(data) && data.length > 0;
+  const hasFilters = Boolean(filters.keyword || filters.propertyType || filters.city || filters.district);
   const summary = document.createElement('div');
   summary.className = 'lr-listing-summary';
   summary.innerHTML = `
     <div>
-      <p class="lr-kicker">검색 결과</p>
-      <h2>${data?.length || 0}개 매물을 확인했습니다</h2>
+      <p class="lr-kicker">${hasListings ? '검색 결과' : '현재 공개 매물'}</p>
+      <h2>${hasListings ? `${data.length}개 매물을 확인했습니다` : (hasFilters ? '이 조건의 공개 매물은 지금 없습니다' : '지금 사이트에 올린 매물은 없습니다')}</h2>
     </div>
-    <p>${buildFilterSummary(filters)}</p>
+    <p>${hasListings ? buildFilterSummary(filters) : '대부분의 매물은 직방·다방에 먼저 올리고 있습니다. 조건을 알려주시면 그쪽 매물과 등록 전 매물까지 함께 찾아드립니다.'}</p>
   `;
   listContainer.appendChild(summary);
 
-  if (!data || data.length === 0) {
-    const empty = document.createElement('div');
-    empty.className = 'lr-listing-state';
-    empty.innerHTML = `
-      <strong>조건에 맞는 공개 매물이 없습니다.</strong>
-      <span>등록 전 매물이나 직방·다방에 올라간 매물도 확인해드릴 수 있습니다. 원하시는 조건을 전화로 알려주세요.</span>
-      <a class="lr-btn lr-btn--primary" href="tel:050714025055">전화로 조건 말하기</a>
-    `;
-    listContainer.appendChild(empty);
+  // No public listings: the request card is the page's main action, not an empty box
+  if (!hasListings) {
+    const grid = document.createElement('div');
+    grid.className = 'lr-listing-grid';
+    grid.appendChild(buildRequestCard());
+    listContainer.appendChild(grid);
     return;
   }
 

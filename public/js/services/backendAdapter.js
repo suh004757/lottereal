@@ -196,6 +196,19 @@ export async function confirmListingAvailable(id) {
 }
 
 /**
+ * Admin: mark a listing 거래 완료 (hidden from public reads, row kept) or reopen it.
+ */
+export async function setListingClosed(id, closed) {
+  const provider = (APP_CONFIG.BACKEND_PROVIDER || 'mock').toLowerCase();
+  if (provider !== 'supabase') return closed ? new Date().toISOString() : null;
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase client unavailable');
+  const { data, error } = await supabase.rpc('admin_set_listing_closed', { listing_id: id, closed: Boolean(closed) });
+  if (error) throw error;
+  return data;
+}
+
+/**
  * Admin: delete listing
  */
 export async function deleteListing(id) {

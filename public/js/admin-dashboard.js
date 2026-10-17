@@ -18,6 +18,7 @@ import {
   uploadImage,
   updateListing,
   confirmListingAvailable,
+  setListingClosed,
   deleteListing,
   getDashboardStats,
   getRecentActivities,
@@ -399,7 +400,7 @@ async function loadListingsAdmin() {
     items.forEach((item, idx) => {
       const tr = document.createElement('tr');
       appendTextCell(tr, idx + 1);
-      appendTextCell(tr, item.title || '');
+      appendTextCell(tr, item.closed_at ? `[거래 완료] ${item.title || ''}` : (item.title || ''));
       appendTextCell(tr, item.property_type || '');
       appendTextCell(tr, item.address || '');
       appendTextCell(tr, formatKst(item.created_at) || '');
@@ -408,9 +409,14 @@ async function loadListingsAdmin() {
       const actions = document.createElement('div');
       actions.className = 'admin-table-actions';
       const confirmButton = createAdminButton('거래 가능 확인', 'admin-btn admin-btn--ghost', { confirm: item.id });
+      confirmButton.hidden = Boolean(item.closed_at);
+      const closeButton = createAdminButton(item.closed_at ? '다시 공개' : '거래 완료', 'admin-btn admin-btn--ghost', {
+        close: item.id,
+        closed: item.closed_at ? 'true' : 'false'
+      });
       const editButton = createAdminButton('수정', 'admin-btn admin-btn--ghost', { edit: item.id });
       const deleteButton = createAdminButton('삭제', 'admin-btn admin-btn--ghost danger', { delete: item.id });
-      actions.append(confirmButton, editButton, deleteButton);
+      actions.append(confirmButton, closeButton, editButton, deleteButton);
       actionCell.appendChild(actions);
       tr.appendChild(actionCell);
       listingsTbody.appendChild(tr);
@@ -427,6 +433,21 @@ async function loadListingsAdmin() {
           console.error('거래 가능 확인 실패', err);
           btn.disabled = false;
           btn.textContent = '확인 실패 · 다시 시도';
+        }
+      });
+    });
+
+    // 거래 완료 hides the listing from public pages without deleting it; 다시 공개 undoes it
+    listingsTbody.querySelectorAll('[data-close]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        try {
+          await setListingClosed(btn.getAttribute('data-close'), btn.dataset.closed !== 'true');
+          loadListingsAdmin();
+        } catch (err) {
+          console.error('거래 상태 변경 실패', err);
+          btn.disabled = false;
+          btn.textContent = '변경 실패 · 다시 시도';
         }
       });
     });
