@@ -1,0 +1,465 @@
+/* Home: 상담부터 입주까지 motion journey */
+
+.lr-journey {
+  position: relative;
+  display: grid;
+  gap: 28px;
+  --lj-amber: #f8c26a;
+  --lj-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Stage ------------------------------------------------------------ */
+
+.lr-journey__stage {
+  position: relative;
+  height: clamp(220px, 30vw, 320px);
+  border-radius: 30px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 85% 10%, rgba(217, 119, 6, 0.28), transparent 42%),
+    radial-gradient(circle at 10% 100%, rgba(42, 74, 117, 0.9), transparent 55%),
+    linear-gradient(135deg, var(--lr-navy-dark, #152840), var(--lr-navy, #1E3A5F));
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+}
+
+.lr-journey__copy {
+  position: absolute;
+  top: 50%;
+  left: clamp(28px, 5vw, 64px);
+  width: 36%;
+  transform: translateY(-50%);
+  display: grid;
+  gap: 10px;
+  color: #fff;
+  word-break: keep-all;
+}
+
+.lr-journey__copy.is-changing {
+  animation: lj-copy 0.6s var(--lj-ease) both;
+}
+
+.lr-journey__copy-index {
+  color: var(--lj-amber);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  letter-spacing: 0.12em;
+}
+
+.lr-journey__copy strong {
+  font-size: clamp(1.6rem, 2.6vw, 2.2rem);
+  line-height: 1.25;
+  letter-spacing: -0.03em;
+}
+
+.lr-journey__copy p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.lr-journey__scene {
+  position: absolute;
+  top: 6%;
+  left: 44%;
+  width: 52%;
+  height: 88%;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(12px) scale(0.98);
+  transition: opacity 0.5s var(--lj-ease), transform 0.6s var(--lj-ease), visibility 0s linear 0.5s;
+  font-family: 'Noto Sans KR', 'Inter', sans-serif;
+}
+
+.lr-journey__scene.is-active {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition-delay: 0s;
+}
+
+.lr-journey__scene * {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.lr-journey__scene text {
+  fill: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  text-anchor: middle;
+}
+
+.lr-journey__scene .lj-caption {
+  fill: rgba(255, 255, 255, 0.72);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* 01 상담 접수 */
+.lj-disc { fill: var(--lj-amber); }
+.lj-phone { fill: var(--lr-navy-dark, #152840); }
+.lj-wave { fill: none; stroke: var(--lj-amber); stroke-width: 2; opacity: 0; }
+.lj-chip rect { fill: rgba(255, 255, 255, 0.08); stroke: rgba(248, 194, 106, 0.55); stroke-width: 1.5; }
+.lj-chip--care rect { fill: var(--lj-amber); stroke: none; }
+.lj-chip--care text { fill: var(--lr-navy-dark, #152840); }
+
+.is-active .lj-wave--1 { animation: lj-ring 2.4s ease-out infinite; }
+.is-active .lj-wave--2 { animation: lj-ring 2.4s ease-out 1.2s infinite; }
+.is-active .lj-phone { animation: lj-shake 2.4s ease-in-out infinite; }
+.is-active .lj-chip--1 { animation: lj-pop 0.55s var(--lj-ease) 0.25s both; }
+.is-active .lj-chip--2 { animation: lj-pop 0.55s var(--lj-ease) 0.6s both; }
+.is-active .lj-chip--3 { animation: lj-pop 0.55s var(--lj-ease) 0.95s both; }
+
+/* 02 맞춤 제안 */
+.lj-card > rect:first-child { fill: rgba(255, 255, 255, 0.94); }
+.lj-card__img { fill: #cbd5e1; }
+.lj-card--pick .lj-card__img { fill: #fde7c2; }
+.lj-line { fill: #e2e8f0; }
+.lj-card--l, .lj-card--r { opacity: 0.38; }
+.lj-badge circle { fill: var(--lr-primary, #d97706); }
+.lj-badge path { fill: none; stroke: #fff; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+
+.is-active .lj-card--l { animation: lj-fan-l 0.9s var(--lj-ease) both; }
+.is-active .lj-card--r { animation: lj-fan-r 0.9s var(--lj-ease) both; }
+.is-active .lj-card--pick { animation: lj-rise 0.9s var(--lj-ease) 0.2s both; }
+.is-active .lj-badge { animation: lj-pop 0.5s var(--lj-ease) 1s both; }
+
+/* 03 현장 방문 */
+.lj-grid path { fill: none; stroke: rgba(255, 255, 255, 0.07); stroke-width: 1; }
+.lj-route { fill: none; stroke: var(--lj-amber); stroke-width: 4; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 0; }
+.lj-pin--start circle { fill: #fff; stroke: var(--lj-amber); stroke-width: 4; }
+.lj-pin--end path { fill: var(--lr-primary, #d97706); }
+.lj-pin--end circle { fill: #fff; }
+
+.is-active .lj-route { animation: lj-draw 1.4s var(--lj-ease) 0.2s both; }
+.is-active .lj-pin--end { animation: lj-drop 0.7s cubic-bezier(0.3, 1.6, 0.5, 1) 1.4s both; }
+
+/* 04 협상·계약 */
+.lj-doc > rect:first-child { fill: rgba(255, 255, 255, 0.95); }
+.lj-sign { fill: none; stroke: var(--lr-navy, #1E3A5F); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 0; }
+.lj-stamp circle { fill: rgba(217, 119, 6, 0.12); stroke: var(--lr-primary, #d97706); stroke-width: 3; }
+.lj-stamp text { fill: var(--lr-primary-strong, #b45309); font-size: 13px; font-weight: 700; }
+.lj-stamp { transform: rotate(-12deg); }
+
+.is-active .lj-doc__line { animation: lj-grow 0.5s var(--lj-ease) both; transform-origin: left center; }
+.is-active .lj-doc__line:nth-child(3) { animation-delay: 0.12s; }
+.is-active .lj-doc__line:nth-child(4) { animation-delay: 0.24s; }
+.is-active .lj-doc__line:nth-child(5) { animation-delay: 0.36s; }
+.is-active .lj-sign { animation: lj-draw 1.1s ease-in-out 0.6s both; }
+.is-active .lj-stamp { animation: lj-stamp 0.45s cubic-bezier(0.3, 1.5, 0.5, 1) 1.7s both; }
+
+/* 05 입주·사후관리 */
+.lj-house { fill: rgba(255, 255, 255, 0.06); stroke: #fff; stroke-width: 4; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 0; }
+.lj-door { fill: var(--lj-amber); transform-origin: left center; }
+.lj-key circle, .lj-key path { fill: none; stroke: var(--lj-amber); stroke-width: 4; stroke-linecap: round; }
+.lj-key { transform-origin: 20% 20%; }
+
+.is-active .lj-house { animation: lj-draw 1.2s var(--lj-ease) both; }
+.is-active .lj-door { animation: lj-door 0.6s var(--lj-ease) 1.1s both; }
+.is-active .lj-key { animation: lj-swing 1.6s ease-in-out 0.8s both; }
+.is-active .lj-chip--care { animation: lj-pop 0.5s var(--lj-ease) 1.5s both; }
+
+/* Steps ------------------------------------------------------------ */
+
+.lr-journey__track {
+  position: relative;
+  --lj-gap: 16px;
+}
+
+.lr-journey__rail {
+  position: absolute;
+  top: 21px;
+  left: 22px;
+  width: calc(80% + var(--lj-gap) * 0.8 - 22px);
+  height: 2px;
+  background: rgba(30, 58, 95, 0.12);
+  border-radius: 2px;
+}
+
+.lr-journey__fill {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, var(--lr-primary, #d97706), var(--lj-amber));
+  transform: scaleX(var(--journey-progress, 0));
+  transform-origin: left center;
+  transition: transform 0.9s var(--lj-ease);
+}
+
+.lr-journey__steps {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--lj-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lr-journey__steps li {
+  margin: 0;
+  padding: 0;
+}
+
+.lr-journey__steps li::before {
+  display: none;
+}
+
+.lr-journey__step {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  padding: 0 4px 14px 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+  word-break: keep-all;
+}
+
+.lr-journey__dot {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 6px;
+  border-radius: 50%;
+  border: 2px solid rgba(30, 58, 95, 0.16);
+  background: #fff;
+  color: var(--lr-navy, #1E3A5F);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.4s var(--lj-ease), border-color 0.4s var(--lj-ease), color 0.4s var(--lj-ease), transform 0.4s var(--lj-ease), box-shadow 0.4s var(--lj-ease);
+}
+
+.lr-journey__step strong {
+  color: var(--lr-navy, #1E3A5F);
+  font-size: 1.05rem;
+  line-height: 1.35;
+}
+
+.lr-journey__step > span:last-child {
+  color: var(--lr-text-secondary, #475569);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.lr-journey__step.is-done .lr-journey__dot {
+  border-color: var(--lr-primary, #d97706);
+  color: var(--lr-primary-strong, #b45309);
+}
+
+.lr-journey__step.is-active .lr-journey__dot {
+  background: var(--lr-primary, #d97706);
+  border-color: var(--lr-primary, #d97706);
+  color: #fff;
+  transform: scale(1.08);
+  box-shadow: 0 0 0 7px rgba(217, 119, 6, 0.16);
+}
+
+.lr-journey__step.is-active strong {
+  color: var(--lr-primary-strong, #b45309);
+}
+
+.lr-journey__step:focus-visible {
+  outline: 2px solid var(--lr-primary, #d97706);
+  outline-offset: 4px;
+  border-radius: 12px;
+}
+
+.lr-journey__toggle {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 50%;
+  background: rgba(21, 40, 64, 0.55);
+  color: #fff;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+
+.lr-journey__toggle[hidden] {
+  display: none;
+}
+
+.lr-journey__toggle:focus-visible {
+  outline: 2px solid var(--lj-amber);
+  outline-offset: 2px;
+}
+
+/* Mobile ----------------------------------------------------------- */
+
+@media (max-width: 768px) {
+  .lr-journey {
+    gap: 22px;
+  }
+
+  .lr-journey__stage {
+    height: 210px;
+    border-radius: 22px;
+  }
+
+  .lr-journey__copy {
+    display: none;
+  }
+
+  .lr-journey__scene {
+    left: 4%;
+    width: 92%;
+  }
+
+  .lr-journey__toggle {
+    top: 10px;
+    right: 10px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .lr-journey__rail {
+    display: none;
+  }
+
+  .lr-journey__steps {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .lr-journey__steps li {
+    position: relative;
+  }
+
+  /* Vertical connector between dots */
+  .lr-journey__steps li:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 19px;
+    top: 44px;
+    bottom: 0;
+    width: 2px;
+    background: rgba(30, 58, 95, 0.12);
+  }
+
+  .lr-journey__steps li:not(:last-child)::before {
+    content: '';
+    display: block;
+    position: absolute;
+    z-index: 1;
+    left: 19px;
+    top: 44px;
+    bottom: 0;
+    width: 2px;
+    background: var(--lr-primary, #d97706);
+    transform: scaleY(0);
+    transform-origin: top center;
+    transition: transform 0.6s var(--lj-ease);
+  }
+
+  .lr-journey__steps li:has(.is-done)::before {
+    transform: scaleY(1);
+  }
+
+  .lr-journey__step {
+    grid-template-columns: 40px minmax(0, 1fr);
+    column-gap: 14px;
+    row-gap: 4px;
+    padding: 0 0 22px;
+  }
+
+  .lr-journey__dot {
+    grid-row: span 2;
+    width: 40px;
+    height: 40px;
+    margin: 0;
+    font-size: 12px;
+  }
+
+  .lr-journey__step strong {
+    align-self: center;
+    font-size: 1rem;
+  }
+}
+
+/* Motion preferences ---------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .lr-journey *,
+  .lr-journey *::before,
+  .lr-journey *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Keyframes -------------------------------------------------------- */
+
+@keyframes lj-copy {
+  from { opacity: 0; transform: translateY(calc(-50% + 10px)); }
+}
+
+@keyframes lj-ring {
+  0% { opacity: 0.7; transform: scale(1); }
+  100% { opacity: 0; transform: scale(2.1); }
+}
+
+@keyframes lj-shake {
+  0%, 60%, 100% { transform: rotate(0); }
+  65% { transform: rotate(-10deg); }
+  72% { transform: rotate(9deg); }
+  79% { transform: rotate(-6deg); }
+  86% { transform: rotate(4deg); }
+}
+
+@keyframes lj-pop {
+  from { opacity: 0; transform: translateX(-14px) scale(0.9); }
+}
+
+@keyframes lj-fan-l {
+  from { opacity: 1; transform: translateX(42px) rotate(0); }
+}
+
+@keyframes lj-fan-r {
+  from { opacity: 1; transform: translateX(-42px) rotate(0); }
+}
+
+@keyframes lj-rise {
+  from { transform: translateY(18px); }
+}
+
+@keyframes lj-draw {
+  from { stroke-dashoffset: 1; }
+}
+
+@keyframes lj-drop {
+  from { opacity: 0; transform: translateY(-36px); }
+}
+
+@keyframes lj-grow {
+  from { transform: scaleX(0); }
+}
+
+@keyframes lj-stamp {
+  from { opacity: 0; transform: rotate(-12deg) scale(1.8); }
+}
+
+@keyframes lj-door {
+  from { transform: scaleX(0); }
+}
+
+@keyframes lj-swing {
+  0% { opacity: 0; transform: translate(20px, -20px) rotate(-30deg); }
+  60% { opacity: 1; transform: rotate(10deg); }
+  100% { transform: rotate(0); }
+}

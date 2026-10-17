@@ -54,6 +54,7 @@
     rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="css/mobile.css">
+  <link rel="stylesheet" href="css/home-journey.css">
 </head>
 
 <body>
@@ -229,36 +230,79 @@
       </div>
     </section>
 
-    <section class="lr-section lr-section--muted" id="services">
+    <section class="lr-section lr-section--muted lr-journey-section" id="services" aria-labelledby="home-journey-title">
       <div class="lr-container">
         <div class="lr-section__head">
           <div>
             <p class="lr-kicker">진행 과정</p>
-            <h2>상담부터 입주까지 빠르게 진행합니다</h2>
-            <p class="lr-lead">상담 → 맞춤 제안 → 현장 방문 → 협상/계약 → 입주 및 사후 관리</p>
+            <h2 id="home-journey-title">상담부터 입주까지, 한눈에 보는 다섯 단계</h2>
+            <p class="lr-lead">단계를 누르면 각 과정에서 롯데부동산이 무엇을 해드리는지 보여드립니다.</p>
           </div>
         </div>
-        <div class="lr-grid lr-grid--cols4">
-          <div class="lr-tile">
-            <div class="lr-tile__icon">01</div>
-            <h4>상담 접수</h4>
-            <p>예산, 지역, 목적, 규모, 시기를 상세히 확인합니다.</p>
+
+        <div class="lr-journey" data-journey style="--journey-progress:0">
+          <div class="lr-journey__stage" aria-hidden="true">
+            <div class="lr-journey__copy" data-journey-copy>
+              <span class="lr-journey__copy-index" data-journey-copy-index>01</span>
+              <strong data-journey-copy-title>상담 접수</strong>
+              <p data-journey-copy-text>예산, 지역, 목적, 규모, 입주 시기를 먼저 확인합니다.</p>
+            </div>
+            <!-- 01 상담 접수 -->
+            <svg class="lr-journey__scene is-active" data-journey-scene viewBox="0 0 320 200" role="presentation">
+              <circle class="lj-wave lj-wave--1" cx="92" cy="100" r="34"/>
+              <circle class="lj-wave lj-wave--2" cx="92" cy="100" r="34"/>
+              <circle class="lj-disc" cx="92" cy="100" r="34"/>
+              <path class="lj-phone" d="M80 84c3-3 7-3 9 0l4 6c2 3 1 6-1 8l-3 2c2 5 6 9 11 11l2-3c2-2 5-3 8-1l6 4c3 2 3 6 0 9l-3 3c-4 4-12 3-22-5s-15-18-14-24z"/>
+              <g class="lj-chip lj-chip--1"><rect x="158" y="46" width="112" height="30" rx="15"/><text x="214" y="66">예산</text></g>
+              <g class="lj-chip lj-chip--2"><rect x="158" y="86" width="132" height="30" rx="15"/><text x="224" y="106">희망 지역</text></g>
+              <g class="lj-chip lj-chip--3"><rect x="158" y="126" width="120" height="30" rx="15"/><text x="218" y="146">입주 시기</text></g>
+            </svg>
+            <!-- 02 맞춤 제안 -->
+            <svg class="lr-journey__scene" data-journey-scene viewBox="0 0 320 200" role="presentation">
+              <g class="lj-card lj-card--l"><rect x="40" y="48" width="78" height="104" rx="12"/><rect class="lj-card__img" x="48" y="56" width="62" height="40" rx="6"/><rect class="lj-line" x="48" y="106" width="50" height="7" rx="3.5"/><rect class="lj-line" x="48" y="120" width="36" height="7" rx="3.5"/></g>
+              <g class="lj-card lj-card--r"><rect x="202" y="48" width="78" height="104" rx="12"/><rect class="lj-card__img" x="210" y="56" width="62" height="40" rx="6"/><rect class="lj-line" x="210" y="106" width="50" height="7" rx="3.5"/><rect class="lj-line" x="210" y="120" width="36" height="7" rx="3.5"/></g>
+              <g class="lj-card lj-card--pick"><rect x="116" y="32" width="88" height="124" rx="14"/><rect class="lj-card__img" x="125" y="41" width="70" height="50" rx="7"/><rect class="lj-line" x="125" y="102" width="56" height="8" rx="4"/><rect class="lj-line" x="125" y="117" width="40" height="8" rx="4"/>
+                <g class="lj-badge"><circle cx="196" cy="38" r="15"/><path d="M189 38l5 5 9-10"/></g></g>
+              <text class="lj-caption" x="160" y="186">조건에 맞는 후보만 압축</text>
+            </svg>
+            <!-- 03 현장 방문 -->
+            <svg class="lr-journey__scene" data-journey-scene viewBox="0 0 320 200" role="presentation">
+              <g class="lj-grid"><path d="M20 60H300M20 110H300M20 160H300M80 20V190M160 20V190M240 20V190"/></g>
+              <path class="lj-route" pathLength="1" d="M70 150C110 150 110 100 160 100S220 56 252 56"/>
+              <g class="lj-pin lj-pin--start"><circle cx="70" cy="150" r="9"/></g>
+              <g class="lj-pin lj-pin--end"><path d="M252 22c-12 0-21 9-21 21 0 15 21 34 21 34s21-19 21-34c0-12-9-21-21-21z"/><circle cx="252" cy="43" r="7"/></g>
+              <text class="lj-caption" x="160" y="190">동선에 맞춰 함께 방문</text>
+            </svg>
+            <!-- 04 협상·계약 -->
+            <svg class="lr-journey__scene" data-journey-scene viewBox="0 0 320 200" role="presentation">
+              <g class="lj-doc"><rect x="96" y="20" width="128" height="164" rx="12"/>
+                <rect class="lj-line lj-doc__line" x="114" y="42" width="92" height="7" rx="3.5"/>
+                <rect class="lj-line lj-doc__line" x="114" y="58" width="76" height="7" rx="3.5"/>
+                <rect class="lj-line lj-doc__line" x="114" y="74" width="88" height="7" rx="3.5"/>
+                <rect class="lj-line lj-doc__line" x="114" y="90" width="60" height="7" rx="3.5"/></g>
+              <path class="lj-sign" pathLength="1" d="M116 146c8-14 14-14 14-4s-4 12 2 6 10-14 14-6 2 10 10 2 10-8 16-4"/>
+              <g class="lj-stamp"><circle cx="196" cy="146" r="18"/><text x="196" y="151">확인</text></g>
+            </svg>
+            <!-- 05 입주·사후관리 -->
+            <svg class="lr-journey__scene" data-journey-scene viewBox="0 0 320 200" role="presentation">
+              <path class="lj-house" pathLength="1" d="M100 170V98l60-50 60 50v72z"/>
+              <rect class="lj-door" x="146" y="122" width="28" height="48" rx="3"/>
+              <g class="lj-key"><circle cx="246" cy="76" r="12"/><path d="M234 84l-26 26m8-8l7 7m-1-13l7 7"/></g>
+              <g class="lj-chip lj-chip--care"><rect x="190" y="138" width="104" height="28" rx="14"/><text x="242" y="157">사후 관리</text></g>
+            </svg>
           </div>
-          <div class="lr-tile">
-            <div class="lr-tile__icon">02</div>
-            <h4>맞춤 제안</h4>
-            <p>조건에 맞는 매물을 선별하여 사진, 도면, 설명과 함께 제시합니다.</p>
+
+          <div class="lr-journey__track">
+            <div class="lr-journey__rail" aria-hidden="true"><span class="lr-journey__fill"></span></div>
+            <ol class="lr-journey__steps">
+              <li><button type="button" class="lr-journey__step is-active" data-journey-step aria-current="step"><span class="lr-journey__dot">01</span><strong>상담 접수</strong><span>예산, 지역, 목적, 규모, 입주 시기를 먼저 확인합니다.</span></button></li>
+              <li><button type="button" class="lr-journey__step" data-journey-step><span class="lr-journey__dot">02</span><strong>맞춤 제안</strong><span>조건에 맞는 매물을 사진·도면·설명과 함께 추려드립니다.</span></button></li>
+              <li><button type="button" class="lr-journey__step" data-journey-step><span class="lr-journey__dot">03</span><strong>현장 방문</strong><span>동선에 맞춰 방문 일정을 잡고 현장을 함께 확인합니다.</span></button></li>
+              <li><button type="button" class="lr-journey__step" data-journey-step><span class="lr-journey__dot">04</span><strong>협상 · 계약</strong><span>조건을 조율하고 계약서와 필요 서류를 함께 검토합니다.</span></button></li>
+              <li><button type="button" class="lr-journey__step" data-journey-step><span class="lr-journey__dot">05</span><strong>입주 · 사후관리</strong><span>입주 이후 관리와 임대 운영 문의까지 계속 돕습니다.</span></button></li>
+            </ol>
           </div>
-          <div class="lr-tile">
-            <div class="lr-tile__icon">03</div>
-            <h4>현장 방문 · 협상</h4>
-            <p>방문 일정을 잡고 조건 협상, 계약서를 검토합니다.</p>
-          </div>
-          <div class="lr-tile">
-            <div class="lr-tile__icon">04</div>
-            <h4>입주 · 사후관리</h4>
-            <p>입주부터 관리, 임대 운영까지 계속 지원합니다.</p>
-          </div>
+          <button type="button" class="lr-journey__toggle" data-journey-toggle hidden aria-pressed="false" aria-label="자동 재생 멈춤"><span aria-hidden="true">❚❚</span></button>
         </div>
       </div>
     </section>
@@ -368,6 +412,7 @@
   <script type="module" src="js/homeInquiryReceipts.js"></script>
   <script src="js/languageSuggestion.js"></script>
   <script src="js/currentYear.js"></script>
+  <script src="js/homeJourney.js"></script>
 </body>
 
 </html>
