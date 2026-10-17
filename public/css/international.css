@@ -36,7 +36,7 @@
   padding: clamp(5rem, 10vw, 9rem) 0 clamp(4rem, 8vw, 7rem);
   background:
     linear-gradient(100deg, rgba(247, 243, 233, 0.98) 48%, rgba(247, 243, 233, 0.3)),
-    url("../img/bg-img/slide4.jpg") center/cover;
+    url("../img/bg-img/slide4-wide.webp") center/cover;
 }
 
 .intl-hero__grid {
@@ -331,7 +331,7 @@
 @media (max-width: 620px) {
   .intl-hero {
     padding-top: 4rem;
-    background: linear-gradient(rgba(247, 243, 233, 0.94), rgba(247, 243, 233, 0.98)), url("../img/bg-img/slide4.jpg") center/cover;
+    background: linear-gradient(rgba(247, 243, 233, 0.94), rgba(247, 243, 233, 0.98)), url("../img/bg-img/slide4-wide.webp") center/cover;
   }
 
   .intl-hero h1 {

@@ -3712,7 +3712,7 @@ h1 {
   align-items: center;
   background:
     linear-gradient(120deg, rgba(250, 248, 244, 0.98) 0%, rgba(250, 248, 244, 0.9) 44%, rgba(21, 40, 64, 0.82) 100%),
-    url('img/bg-img/lotte_street_view.png') center right / cover no-repeat;
+    url('img/bg-img/lotte_street_view.webp') center right / cover no-repeat;
 }
 
 .lr-hero::after {
@@ -4048,7 +4048,7 @@ h1 {
     min-height: auto;
     background:
       linear-gradient(180deg, rgba(250, 248, 244, 0.98), rgba(250, 248, 244, 0.96)),
-      url('img/bg-img/lotte_street_view.png') center / cover no-repeat;
+      url('img/bg-img/lotte_street_view.webp') center / cover no-repeat;
   }
 
   .lr-stats-card,

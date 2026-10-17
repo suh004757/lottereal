@@ -15,7 +15,7 @@
   background:
     radial-gradient(ellipse 70% 55% at 82% 108%, rgba(255, 236, 200, .14), rgba(255, 236, 200, 0) 72%),
     linear-gradient(180deg, rgba(27, 68, 120, .96) 0%, rgba(35, 85, 143, .93) 55%, rgba(44, 106, 168, .92) 100%),
-    url('../img/bg-img/lotte_street_view.png') center/cover;
+    url('../img/bg-img/lotte_street_view.webp') center/cover;
   background-color: var(--lr-dusk-2);
 }
 

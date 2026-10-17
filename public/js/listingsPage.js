@@ -148,7 +148,7 @@ function buildListingCard(item) {
   const card = document.createElement('article');
   card.className = 'lr-card lr-card--listing lr-card--listing-premium';
 
-  const image = item.image || (Array.isArray(item.images) && item.images[0]) || 'img/bg-img/lotte_street_view.png';
+  const image = item.image || (Array.isArray(item.images) && item.images[0]) || 'img/bg-img/lotte_street_view.webp';
   const badge = item.property_type || item.type || '매물';
   const telLink = SAFE_CONTACT_TEL;
   const details = extractDetails(item);
