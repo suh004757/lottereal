@@ -1125,3 +1125,108 @@
 .lr-report-neighbor--empty {
     pointer-events: none;
 }
+
+/* Static report readability + at-a-glance strip (2026-10-17) */
+.lr-report-body p,
+.lr-report-body li {
+    color: #1f2937;
+    font-size: 1.0625rem;
+    font-weight: 400;
+    line-height: 1.85;
+}
+
+.lr-report-glance {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1px;
+    max-width: 760px;
+    margin: 1.75rem auto 1.5rem;
+    padding: 0;
+    list-style: none;
+    border-radius: 18px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.lr-report-glance li {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+    padding: 14px 10px;
+    text-align: center;
+    background: rgba(11, 22, 38, 0.55);
+}
+
+.lr-report-glance li::before {
+    display: none;
+}
+
+.lr-report-glance span {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.lr-report-glance strong {
+    color: #f8c26a;
+    font-size: 1.05rem;
+    word-break: keep-all;
+}
+
+.lr-report-header .lr-report-intent-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 1.5rem;
+}
+
+.lr-report-header .lr-report-intent-actions .lr-btn--ghost {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: #fff;
+}
+
+.lr-read-progress {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 60;
+    height: 3px;
+    pointer-events: none;
+}
+
+.lr-read-progress span {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, #d97706, #f8c26a);
+    transform: scaleX(0);
+    transform-origin: left center;
+}
+
+@supports (animation-timeline: scroll()) {
+    .lr-read-progress span {
+        animation: lr-read-progress linear both;
+        animation-timeline: scroll(root);
+    }
+}
+
+@keyframes lr-read-progress {
+    to { transform: scaleX(1); }
+}
+
+@media (max-width: 640px) {
+    .lr-report-glance {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .lr-report-header .lr-report-intent-actions {
+        display: grid;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .lr-read-progress {
+        display: none;
+    }
+}

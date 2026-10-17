@@ -174,12 +174,32 @@ function isContractGuidance(report) {
   return contentType === 'dispute_case' || contentType.endsWith('_checklist');
 }
 
-function shareImageName(report) {
+function reportCategory(report) {
   const contentType = String(report?.metadata?.content_type || '').trim();
-  if (contentType === 'dispute_case') return 'report-dispute.png';
-  if (contentType.endsWith('_checklist')) return 'report-checklist.png';
-  if (contentType.endsWith('_guide') || contentType.endsWith('_explainer')) return 'report-guide.png';
-  return 'report-market.png';
+  if (contentType === 'dispute_case') return { key: 'dispute', label: '계약·분쟁 사례' };
+  if (contentType.endsWith('_checklist')) return { key: 'checklist', label: '계약 체크리스트' };
+  if (contentType.endsWith('_guide') || contentType.endsWith('_explainer')) return { key: 'guide', label: '실전 가이드' };
+  return { key: 'market', label: '시장 리포트' };
+}
+
+function shareImageName(report) {
+  return `report-${reportCategory(report).key}.png`;
+}
+
+function renderGlance(report, bodyHtml) {
+  const text = bodyHtml.replace(/<[^>]+>/g, '').replace(/\s+/g, '');
+  const minutes = Math.max(1, Math.round(text.length / 500));
+  const checks = (bodyHtml.match(/<li[\s>]/g) || []).length;
+  const sources = Array.isArray(report?.evidence_json) ? report.evidence_json.length : 0;
+  const items = [
+    ['유형', reportCategory(report).label],
+    ['읽는 시간', `약 ${minutes}분`],
+    ['확인 항목', `${checks}개`],
+    ['공개 출처', `${sources}건`],
+  ];
+  return '<ul class="lr-report-glance" aria-label="한눈에 보기">'
+    + items.map(([label, value]) => `<li><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></li>`).join('')
+    + '</ul>';
 }
 
 function renderReportCta(report) {
@@ -260,6 +280,7 @@ export function renderStaticReport(report, siteUrl = 'https://lottes.co.kr', opt
   <link rel="stylesheet" href="../css/insights.css">
 </head>
 <body data-report-slug="${escapeHtml(slug)}">
+  <div class="lr-read-progress" aria-hidden="true"><span></span></div>
   <header class="lr-header"><div class="lr-container">
     <div class="lr-brand"><a href="../">롯데부동산</a></div>
     <button class="lr-hamburger" aria-label="메뉴" aria-expanded="false">☰</button>
@@ -273,6 +294,7 @@ export function renderStaticReport(report, siteUrl = 'https://lottes.co.kr', opt
     <section class="lr-report-header"><div class="lr-container">
       <div class="lr-report-meta"><span class="lr-badge lr-badge--info">정보 제공 목적</span><span class="lr-badge lr-badge--data">공개 자료 확인</span></div>
       <h1>${escapeHtml(title)}</h1><p class="lr-report-subtitle">${escapeHtml(summary)}</p>
+      ${renderGlance(report, body)}
       <div class="lr-report-info"><div class="lr-report-info-item"><span class="lr-label">발행·수정</span><span class="lr-value">발행 ${escapeHtml(published || '확인 필요')} · 수정 ${escapeHtml(modified || '확인 필요')}</span></div></div>
       <div class="lr-report-intent-actions"><a class="lr-btn lr-btn--primary" href="tel:050714025055">전화로 바로 물어보기</a><a class="lr-btn lr-btn--ghost" href="../listings.html">매물 보기</a><a class="lr-btn lr-btn--ghost" href="../contact.html">위치·방문 안내</a></div>
     </div></section>

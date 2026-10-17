@@ -51,8 +51,9 @@ class HomeMotionTests(unittest.TestCase):
 class ReportShareCardTests(unittest.TestCase):
     def test_exporter_maps_report_types_to_existing_share_cards(self):
         exporter = (ROOT / "scripts" / "export_static_reports.mjs").read_text(encoding="utf-8")
+        self.assertIn("return `report-${reportCategory(report).key}.png`;", exporter)
         for name in ("market", "checklist", "guide", "dispute"):
-            self.assertIn(f"report-{name}.png", exporter)
+            self.assertIn(f"key: '{name}'", exporter)
             self.assertTrue((PUBLIC / "img" / "og" / f"report-{name}.png").is_file())
         for page in (PUBLIC / "reports").glob("*.html"):
             html = page.read_text(encoding="utf-8")
