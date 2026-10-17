@@ -320,7 +320,22 @@
 .lr-knowledge-answer__header {
   padding: 2.5rem 3rem;
   color: #fff;
-  background: var(--knowledge-ink);
+  background: linear-gradient(135deg, #1b4478 0%, #23558f 100%);
+}
+
+.lr-knowledge-passage__list {
+  margin: 0 0 0.9rem;
+  padding-left: 1.2rem;
+  line-height: 1.75;
+  list-style: disc;
+}
+
+.lr-knowledge-passage__list li::marker {
+  color: var(--knowledge-accent);
+}
+
+.lr-knowledge-passage__list li + li {
+  margin-top: 0.35rem;
 }
 
 .lr-knowledge-answer__header h2 {
@@ -332,7 +347,11 @@
 
 .lr-knowledge-answer__header > p:not(.lr-kicker) {
   margin: 0;
-  color: rgba(255,255,255,.76);
+  color: rgba(255,255,255,.88);
+}
+
+.lr-knowledge-answer__header .lr-kicker {
+  color: var(--lr-yellow-text, #FFD43B);
 }
 
 .lr-knowledge-labels {
@@ -421,14 +440,14 @@
 .lr-knowledge-report-list article:last-child { border-bottom: 0; }
 .lr-knowledge-report-list h4 { margin: .35rem 0 .5rem; color: var(--knowledge-ink); font-size: 1.05rem; }
 .lr-knowledge-report-list p { margin: 0; color: #66625b; line-height: 1.65; }
-.lr-knowledge-report-list small { display: block; margin-top: .45rem; color: #837e75; }
+.lr-knowledge-report-list small { display: block; margin-top: .45rem; color: #6b665e; }
 .lr-knowledge-type { color: #8a5b28; font-size: .74rem; font-weight: 700; }
 
 .lr-knowledge-source-list { display: grid; gap: 1rem; margin: 0; padding: 0; list-style: none; }
 .lr-knowledge-source-list li { padding: 1rem 1.1rem; border: 1px solid #e4ded4; background: #fff; }
 .lr-knowledge-source-list a { margin: 0; }
 .lr-knowledge-source-list p { margin: .45rem 0 0; color: #615e58; }
-.lr-knowledge-source-list span { display: block; margin-top: .35rem; color: #8a857d; font-size: .75rem; }
+.lr-knowledge-source-list span { display: block; margin-top: .35rem; color: #6b665e; font-size: .78rem; }
 
 .lr-knowledge-answer__notice {
   padding: 1.2rem 3rem;

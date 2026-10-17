@@ -166,11 +166,13 @@ function renderSearchResult(result) {
       <section class="lr-knowledge-answer__section">
         <h3>먼저 확인할 내용</h3>
         <div class="lr-knowledge-passages">
-          ${passages.map(({ heading, text, match, matchIndex }) => `
+          ${passages.map(({ heading, text, items, match, matchIndex }) => `
             <blockquote>
               <p class="lr-knowledge-passage__source">${escapeHtml(match.title)}</p>
               <h4>${escapeHtml(heading)}</h4>
-              <p>${escapeHtml(text)}</p>
+              ${items?.length
+                ? `<ul class="lr-knowledge-passage__list">${items.map((item) => `<li>${escapeHtml(item.length > 180 ? `${item.slice(0, 180)}…` : item)}</li>`).join('')}</ul>`
+                : `<p>${escapeHtml(text)}</p>`}
               <a href="${reportStaticHref(match.slug)}" data-knowledge-result data-result-type="passage" data-result-position="${matchIndex + 1}">원문에서 확인하기</a>
             </blockquote>
           `).join('')}

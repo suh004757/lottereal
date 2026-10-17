@@ -141,6 +141,8 @@ export function getOntologySuggestions() {
   return [...SUGGESTIONS];
 }
 
+const LIST_ITEM = /^\s*(?:[-*]|\d+[.)])\s+/;
+
 export function splitMarkdownIntoPassages(markdown = '', fallback = '') {
   const lines = String(markdown || '').split(/\r?\n/);
   const passages = [];
@@ -149,7 +151,18 @@ export function splitMarkdownIntoPassages(markdown = '', fallback = '') {
 
   const flush = () => {
     const text = buffer.join(' ').replace(/^[-*>\d.\s]+/, '').replace(/\s+/g, ' ').trim();
-    if (text.length >= 12) passages.push({ heading, text: text.slice(0, 560) });
+    if (text.length >= 12) {
+      const passage = { heading, text: text.slice(0, 560) };
+      // Keep markdown list items apart so the page can show them as a list, not one run-on line
+      const listLines = buffer.filter((line) => LIST_ITEM.test(line));
+      if (listLines.length >= 2 && listLines.length === buffer.length) {
+        passage.items = listLines
+          .map((line) => line.replace(LIST_ITEM, '').replace(/\s+/g, ' ').trim())
+          .filter(Boolean)
+          .slice(0, 8);
+      }
+      passages.push(passage);
+    }
     buffer = [];
   };
 
@@ -215,10 +228,10 @@ function selectPassages(document, terms, detectedLabels) {
     .filter((passage) => passage.score > 0)
     .sort((a, b) => b.score - a.score || a.order - b.order)
     .slice(0, 3)
-    .map(({ heading, text }) => ({ heading, text }));
+    .map(({ heading, text, items }) => (items ? { heading, text, items } : { heading, text }));
 
   if (selected.length) return selected;
-  return document.passages.slice(0, 2).map(({ heading, text }) => ({ heading, text }));
+  return document.passages.slice(0, 2).map(({ heading, text, items }) => (items ? { heading, text, items } : { heading, text }));
 }
 
 function detectLabels(value) {

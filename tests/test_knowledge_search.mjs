@@ -4,7 +4,8 @@ import {
   buildKnowledgeIndex,
   searchKnowledge,
   getOntologySuggestions,
-  selectCommunityPulse
+  selectCommunityPulse,
+  splitMarkdownIntoPassages
 } from '../public/js/knowledgeSearch.mjs';
 
 const reports = [
@@ -106,4 +107,19 @@ test('community pulse default window requires two finite whole views and valid p
   assert.deepEqual(pulse.map((item) => item.slug), ['tie-newer', 'tie-older', 'boundary']);
   assert.equal(index.documents.find((item) => item.slug === 'tie-older').viewCount, 2);
   assert.equal(index.documents.find((item) => item.slug === 'infinite').viewCount, 0);
+});
+
+test('markdown lists become passage items instead of one run-on line', () => {
+  const [list, prose] = splitMarkdownIntoPassages([
+    '## 준비할 것',
+    '1. 임대차계약서',
+    '2. 보증금 이체 내역',
+    '- 주민등록초본',
+    '',
+    '## 흐름',
+    '일반 문단은 목록 없이 그대로 보여줍니다.'
+  ].join('\n'));
+  assert.deepEqual(list.items, ['임대차계약서', '보증금 이체 내역', '주민등록초본']);
+  assert.ok(list.text.includes('보증금 이체 내역'));
+  assert.equal(prose.items, undefined);
 });
