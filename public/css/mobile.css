@@ -934,3 +934,60 @@
     display: none !important;
   }
 }
+
+/* Readability floor for phones: most visitors are 40-60s, so nothing that carries
+   information goes below 12px, meta lines sit at 13px+, and text people must read
+   (address, consent, suggestions) at 14px. */
+@media (max-width: 768px) {
+  .lr-badge {
+    font-size: 12px !important;
+    letter-spacing: 0 !important;
+  }
+
+  .lr-card__meta span,
+  .lr-report-info-item .lr-label,
+  .lr-cta .lr-meta span,
+  .lr-listing-price small {
+    font-size: 13px !important;
+  }
+
+  .lr-listing-facts strong,
+  .lr-weekly__name em,
+  .lr-inquiry-label small,
+  .lr-inquiry-type small {
+    font-size: 12.5px !important;
+  }
+
+  .lr-weekly__tip,
+  .lr-weekly__axis {
+    font-size: 13px !important;
+  }
+
+  .lr-footer p.lr-text,
+  .lr-footer p.lr-kicker,
+  .lr-footer p.lr-footer__privacy-contact {
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+  }
+
+  .lr-footer p.lr-footer__copy,
+  .lr-footer p.lr-footer__disclaimer {
+    font-size: 13px !important;
+    line-height: 1.6 !important;
+  }
+
+  .lr-inquiry-consent span {
+    font-size: 14px !important;
+    line-height: 1.55 !important;
+  }
+
+  .lr-knowledge-suggestions button,
+  .lr-knowledge-search-card form > p,
+  .lr-knowledge-suggestions > p {
+    font-size: 14px !important;
+  }
+
+  .lr-mobile-actionbar strong {
+    font-size: 13px !important;
+  }
+}
