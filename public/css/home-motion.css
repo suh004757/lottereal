@@ -216,6 +216,55 @@
   color: #fff;
 }
 
+/* 직방·다방 profile links under the request actions; pending ones are plain text */
+.lr-listing-external {
+  display: grid;
+  gap: 8px;
+  margin-top: 6px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.lr-listing-external p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.lr-listing-external div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lr-listing-external a,
+.lr-listing-external span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.lr-listing-external a {
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  text-decoration: none;
+}
+
+.lr-listing-external a:hover,
+.lr-listing-external a:focus-visible {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.lr-listing-external span.is-pending {
+  color: rgba(255, 255, 255, 0.82);
+  border: 1px dashed rgba(255, 255, 255, 0.35);
+}
+
 /* Skyline -------------------------------------------------------- */
 
 .lr-hero-skyline {

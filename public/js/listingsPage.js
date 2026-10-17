@@ -7,6 +7,7 @@ import { listListingsPublic } from './services/backendAdapter.js';
 import { SAFE_CONTACT_TEL, getPhoneButtonLabel } from './utils/contactPhone.mjs';
 import { formatListingDisplayPrice } from './utils/propertyPrice.mjs';
 import { getListingDetailUrl } from './utils/listingRoutes.mjs';
+import { getExternalProfileLinks } from './config/externalProfiles.mjs';
 import {
   getListingFreshness,
   getListingFreshnessCopy,
@@ -135,12 +136,39 @@ function buildRequestCard() {
   form.href = 'contact.html?intent=listing#inquiry-options';
   form.textContent = '조건 남기기';
   actions.append(call, form);
+  const external = buildExternalProfiles();
   const intro = document.createElement('div');
   intro.append(kicker, title, body);
   const next = document.createElement('div');
-  next.append(points, actions);
+  next.append(points, actions, external);
   card.append(intro, next);
   return card;
+}
+
+// Most listings live on 직방/다방; until the office's public pages are set they read 준비 중
+function buildExternalProfiles() {
+  const wrap = document.createElement('div');
+  wrap.className = 'lr-listing-external';
+  const label = document.createElement('p');
+  label.textContent = '직방·다방 등록 매물';
+  const row = document.createElement('div');
+  getExternalProfileLinks().forEach(({ label: name, href }) => {
+    if (href) {
+      const link = document.createElement('a');
+      link.href = href;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = `${name}에서 보기`;
+      row.appendChild(link);
+    } else {
+      const pending = document.createElement('span');
+      pending.className = 'is-pending';
+      pending.textContent = `${name} · 준비 중`;
+      row.appendChild(pending);
+    }
+  });
+  wrap.append(label, row);
+  return wrap;
 }
 
 function buildListingCard(item) {
