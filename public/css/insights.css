@@ -1245,6 +1245,11 @@
     color: var(--lr-yellow-text, #FFD43B);
 }
 
+/* hub headers center the title; the label above it follows */
+.lr-report-header--hub > .lr-container > .lr-kicker {
+    text-align: center;
+}
+
 .lr-hero--insights .lr-meta span {
     color: rgba(255, 255, 255, 0.9);
 }

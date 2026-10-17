@@ -4691,3 +4691,54 @@ h1 {
     justify-self: end;
   }
 }
+
+/* 404: static page (no scripts, no web fonts), dusk band like the rest of the site */
+.lr-notfound {
+  min-height: 100vh;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+  background: linear-gradient(160deg, #1b4478 0%, #23558f 60%, #2c6aa8 100%);
+  color: #fff;
+}
+
+.lr-notfound__main {
+  width: min(100%, 36rem);
+}
+
+.lr-notfound__brand {
+  display: inline-block;
+  margin-bottom: 28px;
+  color: var(--lr-yellow-text, #FFD43B);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.lr-notfound h1 {
+  margin: 0 0 14px;
+  color: #fff;
+  font-size: clamp(1.9rem, 5vw, 2.6rem);
+  font-weight: 700;
+  line-height: 1.25;
+  word-break: keep-all;
+}
+
+.lr-notfound p {
+  margin: 0 0 28px;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.7;
+  word-break: keep-all;
+}
+
+.lr-notfound__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.lr-notfound__links .lr-btn--ghost {
+  border-color: rgba(255, 255, 255, 0.55);
+  background: transparent;
+  color: #fff;
+}
