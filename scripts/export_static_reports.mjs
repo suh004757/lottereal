@@ -900,6 +900,11 @@ async function main() {
       const created = parseRequiredTimestamp(report, 'created_at');
       const updated = parseRequiredTimestamp(report, 'updated_at');
       if (updated < created) throw new Error(`updated_at precedes created_at for report ${report?.slug || ''}`);
+      const published = publishedDate(report);
+      const modified = sourceModifiedDate(report);
+      if (modified < published) {
+        throw new Error(`dateModified precedes datePublished after Asia/Seoul normalization for report ${report?.slug || ''}`);
+      }
     }
     const existing = fs.existsSync(args.outputDir)
       ? fs.readdirSync(args.outputDir).filter((filename) => filename.endsWith('.html'))

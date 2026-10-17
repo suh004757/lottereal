@@ -218,6 +218,19 @@ class StaticReportExportTests(unittest.TestCase):
                 self.assertEqual(self.report_page.read_bytes(), baseline["archive"])
                 self.assertEqual(self.feed.read_bytes(), baseline["feed"])
 
+    def test_rejects_metadata_modified_date_before_published_date_after_seoul_normalization(self):
+        report = dict(self.report, metadata={
+            **self.report["metadata"],
+            "published_at": "2026-09-27T15:30:00+00:00",
+            "modified_at": "2026-09-27T23:20:00+09:00",
+        })
+
+        result = self.run_export([report])
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("dateModified precedes datePublished", result.stderr)
+        self.assertFalse(self.output_dir.exists())
+
     def test_regenerates_complete_server_rendered_archive_in_publication_order(self):
         # The feed is committed by the same publication transaction.
         self.assertFalse(self.feed.exists())

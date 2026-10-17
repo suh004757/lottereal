@@ -15,12 +15,15 @@ The REB key is read server-side by reb_stats.load_env() and never printed.
 from __future__ import annotations
 
 import argparse
+import fcntl
+import hashlib
 import html
 import json
 import math
 import os
 import shutil
 import sys
+from contextlib import contextmanager
 from datetime import date, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
@@ -249,23 +252,87 @@ def _sync_file(path: Path) -> None:
         os.fsync(stream.fileno())
 
 
+def _file_hash(path: Path) -> str | None:
+    return hashlib.sha256(path.read_bytes()).hexdigest() if path.exists() else None
+
+
+def _write_journal(path: Path, journal: dict) -> None:
+    path.write_text(json.dumps(journal), encoding="utf-8")
+    _sync_file(path)
+
+
 def _recover_pair(transaction: Path) -> None:
     journal_path = transaction / "journal.json"
     if not journal_path.exists():
         shutil.rmtree(transaction, ignore_errors=True)
         return
     journal = json.loads(journal_path.read_text(encoding="utf-8"))
+    if (journal.get("version") != 2 or journal.get("phase") not in {"prepared", "committing", "committed"}
+            or not isinstance(journal.get("progress"), int) or not isinstance(journal.get("operations"), list)
+            or not 0 <= journal["progress"] <= len(journal["operations"])):
+        raise ChartDataError(f"invalid recovery journal; preserved transaction: {transaction}")
+    conflicts = []
+    if journal["phase"] == "committed":
+        for operation in journal["operations"]:
+            if _file_hash(Path(operation["target"])) != operation["installed_hash"]:
+                conflicts.append(Path(operation["target"]))
+        if conflicts:
+            joined = ", ".join(str(path) for path in conflicts)
+            raise ChartDataError(f"recovery conflict; committed targets changed and were preserved: {joined}; transaction: {transaction}")
+        shutil.rmtree(transaction)
+        return
     for operation in reversed(journal["operations"]):
         target = Path(operation["target"])
-        backup = transaction / operation["backup"]
-        if operation["existed"]:
+        current_hash = _file_hash(target)
+        original_hash = operation["original_hash"]
+        installed_hash = operation["installed_hash"]
+        if current_hash == original_hash:
+            continue
+        if current_hash != installed_hash:
+            conflicts.append(target)
+            continue
+        backup_name = operation.get("backup")
+        if original_hash is not None:
+            backup = transaction / backup_name
+            if _file_hash(backup) != original_hash:
+                conflicts.append(target)
+                continue
             restore = transaction / f"restore-{backup.name}"
             shutil.copyfile(backup, restore)
             _sync_file(restore)
             os.replace(restore, target)
-        elif target.exists():
+        else:
             target.unlink()
+    if conflicts:
+        joined = ", ".join(str(path) for path in conflicts)
+        raise ChartDataError(f"recovery conflict; intervening edits preserved: {joined}; transaction: {transaction}")
     shutil.rmtree(transaction)
+
+
+@contextmanager
+def _updater_mutex(home: Path, evidence_path: Path):
+    common = Path(os.path.commonpath([home.resolve().parent, evidence_path.resolve().parent]))
+    try:
+        home.resolve().relative_to(ROOT)
+        evidence_path.resolve().relative_to(ROOT)
+        git_entry = ROOT / ".git"
+        git_state = git_entry if git_entry.is_dir() else Path(
+            git_entry.read_text(encoding="utf-8").strip().removeprefix("gitdir: ")
+        )
+        lock_path = git_state / "weekly-market-chart-update.lock"
+    except (ValueError, FileNotFoundError):
+        lock_path = common / ".weekly-market-chart.update.lock"
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    stream = lock_path.open("a+", encoding="utf-8")
+    try:
+        try:
+            fcntl.flock(stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as error:
+            raise ChartDataError("weekly chart updater is already running") from error
+        yield
+    finally:
+        fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
+        stream.close()
 
 
 def publish_pair(home: Path, home_content: str, evidence_path: Path, evidence_content: str) -> None:
@@ -280,27 +347,33 @@ def publish_pair(home: Path, home_content: str, evidence_path: Path, evidence_co
     try:
         for index, (target, content) in enumerate(((home, home_content), (evidence_path, evidence_content))):
             target.parent.mkdir(parents=True, exist_ok=True)
-            existed = target.exists()
+            original_hash = _file_hash(target)
             backup_name = f"backups/{index}"
-            if existed:
+            if original_hash is not None:
                 shutil.copyfile(target, transaction / backup_name)
                 _sync_file(transaction / backup_name)
             stage_name = f"staged/{index}"
             (transaction / stage_name).write_text(content, encoding="utf-8")
             _sync_file(transaction / stage_name)
+            installed_hash = _file_hash(transaction / stage_name)
             operations.append({
                 "target": str(target.resolve()), "backup": backup_name,
-                "staged": stage_name, "existed": existed,
+                "staged": stage_name, "original_hash": original_hash,
+                "installed_hash": installed_hash,
             })
-        journal = {"version": 1, "phase": "prepared", "operations": operations}
+        journal = {"version": 2, "phase": "prepared", "progress": 0, "operations": operations}
         journal_path = transaction / "journal.json"
-        journal_path.write_text(json.dumps(journal), encoding="utf-8")
-        _sync_file(journal_path)
+        _write_journal(journal_path, journal)
         journal["phase"] = "committing"
-        journal_path.write_text(json.dumps(journal), encoding="utf-8")
-        _sync_file(journal_path)
-        for operation in operations:
+        _write_journal(journal_path, journal)
+        for index, operation in enumerate(operations):
+            if _file_hash(Path(operation["target"])) != operation["original_hash"]:
+                raise ChartDataError(f"publication target changed before install: {operation['target']}")
             os.replace(transaction / operation["staged"], operation["target"])
+            journal["progress"] = index + 1
+            _write_journal(journal_path, journal)
+        journal["phase"] = "committed"
+        _write_journal(journal_path, journal)
         shutil.rmtree(transaction)
     except BaseException:
         _recover_pair(transaction)
@@ -321,17 +394,18 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(evidence(data), ensure_ascii=False, indent=2))
         return 0
 
-    if args.evidence.exists():
-        previous = json.loads(args.evidence.read_text(encoding="utf-8"))
-        if previous.get("survey_date", "") > data["survey_date"]:
-            raise ChartDataError(f"refusing to move chart backwards: {previous['survey_date']} -> {data['survey_date']}")
+    with _updater_mutex(args.home, args.evidence):
+        if args.evidence.exists():
+            previous = json.loads(args.evidence.read_text(encoding="utf-8"))
+            if previous.get("survey_date", "") > data["survey_date"]:
+                raise ChartDataError(f"refusing to move chart backwards: {previous['survey_date']} -> {data['survey_date']}")
 
-    home = args.home.read_text(encoding="utf-8")
-    updated = apply_to_home(home, render_block(data))
-    payload = json.dumps(evidence(data), ensure_ascii=False, indent=2) + "\n"
-    changed = updated != home or not args.evidence.exists() or args.evidence.read_text(encoding="utf-8") != payload
-    if changed:
-        publish_pair(args.home, updated, args.evidence, payload)
+        home = args.home.read_text(encoding="utf-8")
+        updated = apply_to_home(home, render_block(data))
+        payload = json.dumps(evidence(data), ensure_ascii=False, indent=2) + "\n"
+        changed = updated != home or not args.evidence.exists() or args.evidence.read_text(encoding="utf-8") != payload
+        if changed:
+            publish_pair(args.home, updated, args.evidence, payload)
     print(json.dumps({"ok": True, "changed": changed, "survey_date": data["survey_date"]}, ensure_ascii=False))
     return 0
 

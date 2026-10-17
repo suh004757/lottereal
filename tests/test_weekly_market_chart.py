@@ -1,4 +1,5 @@
 import copy
+import hashlib
 import importlib.util
 import json
 import tempfile
@@ -122,6 +123,43 @@ class WeeklyMarketChartTests(unittest.TestCase):
             self.assertEqual((home.read_bytes(), evidence.read_bytes()), before)
             self.assertEqual(chart.main(["--input", str(FIXTURE), "--home", str(home), "--evidence", str(evidence)]), 0)
             self.assertFalse((Path(tmp) / ".weekly-market-chart.publish").exists())
+
+    def test_recover_pair_preserves_intervening_edit_and_reports_conflict(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            target = root / "index.html"
+            target.write_bytes(b"operator edit")
+            transaction = root / ".weekly-market-chart.publish"
+            (transaction / "backups").mkdir(parents=True)
+            (transaction / "backups" / "0").write_bytes(b"original")
+            digest = lambda value: hashlib.sha256(value).hexdigest()
+            (transaction / "journal.json").write_text(json.dumps({
+                "version": 2,
+                "phase": "committing",
+                "progress": 1,
+                "operations": [{
+                    "target": str(target),
+                    "backup": "backups/0",
+                    "staged": "staged/0",
+                    "original_hash": digest(b"original"),
+                    "installed_hash": digest(b"installed"),
+                }],
+            }), encoding="utf-8")
+
+            with self.assertRaisesRegex(chart.ChartDataError, "recovery conflict"):
+                chart._recover_pair(transaction)
+
+            self.assertEqual(target.read_bytes(), b"operator edit")
+            self.assertTrue(transaction.exists(), "conflicted journal must remain for operator recovery")
+
+    def test_direct_updater_mutex_rejects_overlap(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp) / "index.html"
+            evidence = Path(tmp) / "Data" / "weekly.json"
+            with chart._updater_mutex(home, evidence):
+                with self.assertRaisesRegex(chart.ChartDataError, "already running"):
+                    with chart._updater_mutex(home, evidence):
+                        self.fail("second updater unexpectedly acquired mutex")
 
 
 if __name__ == "__main__":

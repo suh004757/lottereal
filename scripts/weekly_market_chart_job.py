@@ -126,6 +126,21 @@ def _main() -> int:
     if run(["git", "pull", "--ff-only", "origin", "main"], env=git_env).returncode != 0:
         print("LotteReal weekly chart job failed: git pull --ff-only")
         return 1
+    ahead = run(["git", "rev-list", "--count", "origin/main..HEAD"])
+    if ahead.returncode != 0:
+        print("LotteReal weekly chart job failed: cannot compare main with origin/main")
+        return 1
+    try:
+        ahead_count = int(ahead.stdout.strip())
+    except ValueError:
+        print("LotteReal weekly chart job failed: invalid git ahead count")
+        return 1
+    if ahead_count:
+        GUARD_PENDING.write_text(json.dumps({"commit": "local-ahead-retry"}) + "\n", encoding="utf-8")
+        if run(["git", "push", "origin", "HEAD:main"], env=git_env).returncode != 0:
+            print("LotteReal weekly chart job failed: git push retry (local commit preserved)")
+            return 1
+        return run_guard()
 
     output_paths = [REPO / relative for relative in OUTPUTS]
     snapshots = snapshot_outputs(output_paths)
@@ -148,11 +163,11 @@ def _main() -> int:
     commit = run(["git", "commit", "-m", f"[verified] Refresh weekly REB apartment chart ({survey})"])
     if commit.returncode != 0:
         return fail("git commit failed", snapshots, generated)
+    GUARD_PENDING.write_text(json.dumps({"survey_date": survey}) + "\n", encoding="utf-8")
     if run(["git", "push", "origin", "HEAD:main"], env=git_env).returncode != 0:
         print("LotteReal weekly chart job failed: git push (local commit preserved for retry)")
         return 1
 
-    GUARD_PENDING.write_text(json.dumps({"survey_date": survey}) + "\n", encoding="utf-8")
     guard_code = run_guard()
     status = "ok" if guard_code == 0 else f"post_push_guard exit {guard_code}"
     print(f"LotteReal weekly chart refreshed to {survey} ({status})")

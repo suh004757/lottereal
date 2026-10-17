@@ -1,38 +1,43 @@
 {
   "version": 1,
   "tool": "cwebp",
-  "required_version": "1.3.x or newer",
+  "required_version": "1.3.2",
   "defaults": ["-quiet", "-q", "82", "-m", "6", "-metadata", "none", "-exact"],
   "images": [
     {
       "source": "public/img/bg-img/lotte_street_view.png",
       "output": "public/img/bg-img/lotte_street_view.webp",
       "width": 1024,
-      "height": 1024
+      "height": 1024,
+      "sha256": "7d96f6f85759bbd84510019571e6354e3a0285f2d9e7bfc6a70514cb72a712f2"
     },
     {
       "source": "public/img/bg-img/slide1.jpg",
       "output": "public/img/bg-img/slide1-card.webp",
       "width": 640,
-      "height": 480
+      "height": 480,
+      "sha256": "143bb7ddf610ecdf7fab5713c65976499d9bebf3f1ed313891d0b1d2f5b5fa6f"
     },
     {
       "source": "public/img/bg-img/slide2.jpg",
       "output": "public/img/bg-img/slide2-card.webp",
       "width": 800,
-      "height": 450
+      "height": 450,
+      "sha256": "dc7cd00ba5925df368887007ea9f378dcb1f054ffaac4e5adf0f718a610073eb"
     },
     {
       "source": "public/img/bg-img/slide4.jpg",
       "output": "public/img/bg-img/slide4-card.webp",
       "width": 800,
-      "height": 533
+      "height": 533,
+      "sha256": "b011db8b21e6373b234f0dedb7d1e401b8d401d6e7dbb8b1329609aa15c499bd"
     },
     {
       "source": "public/img/bg-img/slide4.jpg",
       "output": "public/img/bg-img/slide4-wide.webp",
       "width": 1600,
-      "height": 1067
+      "height": 1067,
+      "sha256": "d568852a92cd0cf2c4204f0f9967cd8fab732f8329abe690e409ad93c17bb271"
     }
   ]
 }

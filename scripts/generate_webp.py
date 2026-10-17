@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import shutil
@@ -32,14 +33,32 @@ def webp_dimensions(path: Path) -> tuple[int, int]:
     raise ValueError(f"unsupported WebP encoding: {path}")
 
 
-def main() -> int:
+def require_cwebp_version(executable: str, required: str) -> None:
+    result = subprocess.run([executable, "-version"], check=True, text=True, capture_output=True)
+    actual = result.stdout.strip().splitlines()[-1] if result.stdout.strip() else ""
+    if actual != required:
+        raise RuntimeError(f"cwebp version mismatch: required {required}, found {actual or 'unknown'}")
+
+
+def validate_output(path: Path, item: dict) -> None:
+    expected_dimensions = item["width"], item["height"]
+    if not path.is_file() or webp_dimensions(path) != expected_dimensions:
+        raise RuntimeError(f"invalid generated WebP: {path} (expected {expected_dimensions})")
+    actual_hash = hashlib.sha256(path.read_bytes()).hexdigest()
+    if actual_hash != item["sha256"]:
+        raise RuntimeError(f"WebP sha256 mismatch: {path} (expected {item['sha256']}, found {actual_hash})")
+
+
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="validate committed outputs without running cwebp")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     executable = shutil.which(manifest["tool"])
     if not args.check and not executable:
         parser.error("cwebp is required; install libwebp tools")
+    if executable:
+        require_cwebp_version(executable, manifest["required_version"])
     for item in manifest["images"]:
         source = ROOT / item["source"]
         output = ROOT / item["output"]
@@ -54,12 +73,15 @@ def main() -> int:
             try:
                 command = [executable, *manifest["defaults"], "-resize", str(expected[0]), str(expected[1]), str(source), "-o", str(temporary)]
                 subprocess.run(command, check=True)
+                validate_output(temporary, item)
                 os.replace(temporary, output)
             finally:
                 temporary.unlink(missing_ok=True)
-        if not output.is_file() or webp_dimensions(output) != expected:
-            raise RuntimeError(f"invalid generated WebP: {output} (expected {expected})")
-    print(json.dumps({"ok": True, "checked": args.check, "images": len(manifest["images"])}))
+        validate_output(output, item)
+    print(json.dumps({
+        "ok": True, "checked": args.check, "images": len(manifest["images"]),
+        "encoder_verified": bool(executable),
+    }))
     return 0
 
 

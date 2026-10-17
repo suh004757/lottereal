@@ -65,6 +65,8 @@ class WeeklyChartJobBranchTests(unittest.TestCase):
                     return subprocess.CompletedProcess(cmd, 0, stdout="main\n", stderr="")
                 if cmd[:2] == ["git", "status"]:
                     return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+                if cmd[:3] == ["git", "rev-list", "--count"]:
+                    return subprocess.CompletedProcess(cmd, 0, stdout="0\n", stderr="")
                 if cmd[-1:] == ["scripts/update_weekly_market_chart.py"]:
                     return subprocess.CompletedProcess(cmd, 0, stdout='{"changed":false,"survey_date":"2026-10-12"}\n', stderr="")
                 return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
@@ -76,6 +78,34 @@ class WeeklyChartJobBranchTests(unittest.TestCase):
                  mock.patch.object(job.post_push_guard, "git_env_with_token", return_value=({}, None)):
                 self.assertEqual(job.main(), 0)
             self.assertTrue(any(cmd[-1:] == ["scripts/post_push_guard.py"] for cmd in calls), calls)
+            self.assertFalse(marker.exists())
+
+    def test_clean_main_ahead_retries_push_then_runs_pending_guard_before_update(self):
+        calls = []
+        with tempfile.TemporaryDirectory() as tmp:
+            marker = Path(tmp) / "pending.json"
+
+            def run(cmd, env=None, timeout=600):
+                calls.append(cmd)
+                if cmd[:3] == ["git", "rev-parse", "--abbrev-ref"]:
+                    return subprocess.CompletedProcess(cmd, 0, stdout="main\n", stderr="")
+                if cmd[:2] == ["git", "status"]:
+                    return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+                if cmd[:3] == ["git", "rev-list", "--count"]:
+                    return subprocess.CompletedProcess(cmd, 0, stdout="1\n", stderr="")
+                return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+
+            with mock.patch.object(job, "run", run), \
+                 mock.patch.object(job, "GUARD_PENDING", marker), \
+                 mock.patch.object(job, "MUTEX", Path(tmp) / "mutex"), \
+                 mock.patch.object(job.post_push_guard, "load_env", return_value={}), \
+                 mock.patch.object(job.post_push_guard, "git_env_with_token", return_value=({}, None)):
+                self.assertEqual(job.main(), 0)
+
+            push_at = calls.index(["git", "push", "origin", "HEAD:main"])
+            guard_at = next(i for i, cmd in enumerate(calls) if cmd[-1:] == ["scripts/post_push_guard.py"])
+            self.assertLess(push_at, guard_at)
+            self.assertFalse(any(cmd[-1:] == ["scripts/update_weekly_market_chart.py"] for cmd in calls))
             self.assertFalse(marker.exists())
 
 
