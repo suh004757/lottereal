@@ -17,6 +17,7 @@ import {
   createListing,
   uploadImage,
   updateListing,
+  confirmListingAvailable,
   deleteListing,
   getDashboardStats,
   getRecentActivities,
@@ -382,16 +383,16 @@ async function loadRecent() {
  */
 async function loadListingsAdmin() {
   if (!listingsTbody) return;
-  setTableMessage(listingsTbody, 6, '불러오는 중...');
+  setTableMessage(listingsTbody, 7, '불러오는 중...');
   try {
     const response = await listListingsAdmin({ page: 1, pageSize: 50 });
     const items = response?.data || [];
     if (!response?.ok) {
-      setTableMessage(listingsTbody, 6, `매물 불러오기 실패: ${response?.error || '알 수 없는 오류'}`);
+      setTableMessage(listingsTbody, 7, `매물 불러오기 실패: ${response?.error || '알 수 없는 오류'}`);
       return;
     }
     if (items.length === 0) {
-      setTableMessage(listingsTbody, 6, '매물이 없습니다.');
+      setTableMessage(listingsTbody, 7, '매물이 없습니다.');
       return;
     }
     listingsTbody.replaceChildren();
@@ -402,15 +403,32 @@ async function loadListingsAdmin() {
       appendTextCell(tr, item.property_type || '');
       appendTextCell(tr, item.address || '');
       appendTextCell(tr, formatKst(item.created_at) || '');
+      appendTextCell(tr, item.last_verified_at ? formatKst(item.last_verified_at) : '미확인');
       const actionCell = document.createElement('td');
       const actions = document.createElement('div');
       actions.className = 'admin-table-actions';
+      const confirmButton = createAdminButton('거래 가능 확인', 'admin-btn admin-btn--ghost', { confirm: item.id });
       const editButton = createAdminButton('수정', 'admin-btn admin-btn--ghost', { edit: item.id });
       const deleteButton = createAdminButton('삭제', 'admin-btn admin-btn--ghost danger', { delete: item.id });
-      actions.append(editButton, deleteButton);
+      actions.append(confirmButton, editButton, deleteButton);
       actionCell.appendChild(actions);
       tr.appendChild(actionCell);
       listingsTbody.appendChild(tr);
+    });
+
+    // Re-confirming keeps the public page out of the "거래 가능 여부 확인 필요" state for 30 days
+    listingsTbody.querySelectorAll('[data-confirm]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        try {
+          await confirmListingAvailable(btn.getAttribute('data-confirm'));
+          loadListingsAdmin();
+        } catch (err) {
+          console.error('거래 가능 확인 실패', err);
+          btn.disabled = false;
+          btn.textContent = '확인 실패 · 다시 시도';
+        }
+      });
     });
 
     listingsTbody.querySelectorAll('[data-edit]').forEach((btn) => {
@@ -438,7 +456,7 @@ async function loadListingsAdmin() {
     });
   } catch (err) {
     console.error('\uB9E4\uBB3C \uAD00\uB9AC \uB85C\uB4DC \uC2E4\uD328', err);
-    setTableMessage(listingsTbody, 6, '매물 불러오기 실패했습니다.');
+    setTableMessage(listingsTbody, 7, '매물 불러오기 실패했습니다.');
   }
 }// ============================================
 // 문의 관리

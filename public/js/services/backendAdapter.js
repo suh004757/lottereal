@@ -183,6 +183,19 @@ export async function updateListing(id, patch) {
 }
 
 /**
+ * Admin: mark a listing as re-confirmed available (sets last_verified_at = now()).
+ */
+export async function confirmListingAvailable(id) {
+  const provider = (APP_CONFIG.BACKEND_PROVIDER || 'mock').toLowerCase();
+  if (provider !== 'supabase') return new Date().toISOString();
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase client unavailable');
+  const { data, error } = await supabase.rpc('admin_confirm_listing_available', { listing_id: id });
+  if (error) throw error;
+  return data;
+}
+
+/**
  * Admin: delete listing
  */
 export async function deleteListing(id) {

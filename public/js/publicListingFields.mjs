@@ -11,7 +11,8 @@ export const PUBLIC_LISTING_SELECT_FIELDS = Object.freeze([
   'latitude',
   'longitude',
   'images',
-  'created_at'
+  'created_at',
+  'last_verified_at'
 ]);
 
 export const PUBLIC_LISTING_SELECT_QUERY = PUBLIC_LISTING_SELECT_FIELDS.join(',');

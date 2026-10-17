@@ -28,7 +28,8 @@ test('public listing projection keeps every field required by public cards and d
     'latitude',
     'longitude',
     'images',
-    'created_at'
+    'created_at',
+    'last_verified_at'
   ];
   assert.deepEqual(PUBLIC_LISTING_SELECT_FIELDS, required);
   assert.equal(PUBLIC_LISTING_SELECT_QUERY, required.join(','));
