@@ -5,7 +5,7 @@ from pathlib import Path
 
 PUBLIC = Path(__file__).resolve().parents[1] / "public"
 FOREIGN = {"EN.html", "JP.html"}
-EYEBROW = re.compile(r'class="(?:lr-kicker|hq-eyebrow|hq-index)[^"]*">([^<]+)<')
+EYEBROW = re.compile(r'class="(?:lr-kicker|hq-eyebrow|hq-index)[^"]*"[^>]*>([^<]+)<')
 
 
 class KoreanLabelTests(unittest.TestCase):
@@ -18,7 +18,7 @@ class KoreanLabelTests(unittest.TestCase):
             if name in FOREIGN or name.endswith(("_EN.html", "-en.html")):
                 continue
             for label in EYEBROW.findall(page.read_text(encoding="utf-8")):
-                if re.fullmatch(r"[A-Z0-9 ·/&+.,-]{4,}", label.strip()):
+                if re.fullmatch(r"[A-Za-z0-9 ·/&+.,-]{4,}", label.strip()) and re.search(r"[A-Za-z]{3}", label):
                     offenders.append(f"{name}: {label.strip()}")
         self.assertEqual(offenders, [])
 

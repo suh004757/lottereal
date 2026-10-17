@@ -50,7 +50,7 @@ export const REPORT_LANDING_CONFIG = {
     path: 'songpa-market-report.html',
     title: '송파구 부동산 시장 리포트 | 롯데부동산',
     description: '송파구와 잠실 생활권의 매매, 전세, 거래 흐름을 실제 매물 비교 순서와 함께 정리한 시장 리포트 허브입니다.',
-    heroKicker: 'Songpa Market',
+    heroKicker: '송파 시장 리포트',
     heroTitle: '송파구 부동산 시장 리포트',
     heroBody: '지역 평균에서 출발해 같은 단지와 면적의 실거래, 전세·월세 비용, 입주 일정과 계약 안전까지 실제 선택에 필요한 순서로 좁혀봅니다.',
     introSections: [
@@ -103,7 +103,7 @@ export const REPORT_LANDING_CONFIG = {
     path: 'jamsil-market-report.html',
     title: '잠실 아파트 시장 분석 | 롯데부동산',
     description: '잠실 아파트의 매매, 전세, 거래 흐름을 단지·면적별 비교와 계약 확인 순서로 정리한 지역 분석 허브입니다.',
-    heroKicker: 'Jamsil Brief',
+    heroKicker: '잠실 시장 리포트',
     heroTitle: '잠실 아파트 시장 분석',
     heroBody: '대단지 평균에 머무르지 않고 같은 면적의 실거래, 계약 해제, 전세와 월세 비용, 정비사업 단계와 현재 거주 조건을 함께 비교합니다.',
     introSections: [
@@ -156,7 +156,7 @@ export const REPORT_LANDING_CONFIG = {
     path: 'gangnam-office-report.html',
     title: '강남 사무실 임대 시장 리포트 | 롯데부동산',
     description: '강남 업무권의 사무실 임대료, 총점유비용, 실사용 면적과 계약 조건을 함께 비교하는 시장 분석 허브입니다.',
-    heroKicker: 'Gangnam Office',
+    heroKicker: '강남 오피스 리포트',
     heroTitle: '강남 사무실 임대 시장 리포트',
     heroBody: '월차임만 보지 않고 관리비와 공사비를 합친 총점유비용, 실제 좌석이 들어가는 면적, 이전 일정과 원상복구 조건까지 확인합니다.',
     introSections: [

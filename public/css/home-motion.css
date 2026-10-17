@@ -731,3 +731,76 @@
 @keyframes lh-fade {
   from { opacity: 0; }
 }
+
+/* Two self-serve tools share one quiet dusk band instead of two stacked navy cards */
+.lr-home-tools {
+  color: #fff;
+  background: linear-gradient(180deg, #1b4478 0%, #183d6c 100%);
+}
+
+.lr-home-tools h2 {
+  max-width: 44rem;
+  margin: 0 0 36px;
+  color: #fff;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  word-break: keep-all;
+}
+
+.lr-home-tools__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.lr-home-tools__grid article {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  padding: 30px 40px 6px 0;
+}
+
+.lr-home-tools__grid article + article {
+  padding: 30px 0 6px 40px;
+  border-left: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.lr-home-tools h3 {
+  margin: 0;
+  color: #fff;
+  font-size: 1.25rem;
+  line-height: 1.4;
+  word-break: keep-all;
+}
+
+.lr-home-tools p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+  line-height: 1.75;
+  word-break: keep-all;
+}
+
+.lr-home-tools .lr-actions {
+  align-items: center;
+  margin-top: 8px;
+}
+
+.lr-home-tools .lr-link {
+  color: #fff;
+}
+
+@media (max-width: 768px) {
+  .lr-home-tools__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .lr-home-tools__grid article,
+  .lr-home-tools__grid article + article {
+    padding: 26px 0;
+    border-left: 0;
+  }
+
+  .lr-home-tools__grid article + article {
+    border-top: 1px solid rgba(255, 255, 255, 0.22);
+  }
+}

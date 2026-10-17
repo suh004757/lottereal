@@ -91,4 +91,14 @@ const empty = renderPublicReceipts([], { total: 0, jeonse: 0, monthlyRent: 0, sa
 assert.match(empty, /아직 공개할 수 있는 관심 기록이 없습니다/);
 assert.match(empty, /찾는 매물 상담하기/);
 
+const repeated = normalizePublicReceipts([
+  rows[1],
+  { ...rows[1], received_bucket: '2026-07-17' },
+  { ...rows[1], received_bucket: '2026-07-16' }
+], now);
+const grouped = renderPublicReceipts(repeated, null);
+assert.equal(grouped.match(/매물번호 50170001/g).length, 1);
+assert.match(grouped, /관심 3회/);
+assert.match(grouped, /2026\.07\.18/);
+
 console.log('external inquiry receipt UI tests passed');

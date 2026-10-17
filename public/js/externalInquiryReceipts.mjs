@@ -36,34 +36,81 @@ export function renderPublicReceipts(receipts = [], summary = null) {
     `;
   }
 
-  const summaryHtml = safeSummary ? `
+  const summaryHtml = safeSummary ? renderSummary(safeSummary) : '';
+  const current = receipts.filter((receipt) => receipt.isCurrent);
+  const history = receipts.filter((receipt) => !receipt.isCurrent);
+  const groups = [
+    renderGroup('지금 관심', '최근 24시간, 1시간 단위', current, current.length),
+    renderGroup('지난 관심 기록', '접수 날짜 기준', history, HISTORY_VISIBLE)
+  ].join('');
+
+  return `${summaryHtml}<div class="lr-activity-list">${groups}</div>`;
+}
+
+const HISTORY_VISIBLE = 6;
+
+function renderSummary(summary) {
+  const parts = [
+    ['월세', summary.monthlyRent, 'is-monthly'],
+    ['전세', summary.jeonse, 'is-jeonse'],
+    ['매매', summary.sale, 'is-sale']
+  ];
+  const bar = summary.total > 0
+    ? `<div class="lr-activity-split" aria-hidden="true">${parts
+      .filter(([, count]) => count > 0)
+      .map(([, count, cls]) => `<i class="${cls}" style="flex-grow:${count}"></i>`)
+      .join('')}</div>`
+    : '';
+  return `
     <div class="lr-activity-summary" aria-label="문의 유형별 현황">
-      <strong>최근 확인된 관심 문의 ${safeSummary.total}건</strong>
-      <span>전세 ${safeSummary.jeonse}</span>
-      <span>월세 ${safeSummary.monthlyRent}</span>
-      <span>매매 ${safeSummary.sale}</span>
+      <p><strong>최근 확인된 관심 문의 ${summary.total}건</strong><span>직방 문의 기준</span></p>
+      ${bar}
+      <ul class="lr-activity-legend">${parts
+        .map(([label, count, cls]) => `<li class="${cls}">${label} ${count}</li>`)
+        .join('')}</ul>
     </div>
-  ` : '';
+  `;
+}
 
-  const cardsHtml = receipts.map((receipt) => `
-    <article class="lr-receipt-row">
-      <div class="lr-receipt-main">
-        <div class="lr-receipt-tags">
-          <span class="lr-receipt-platform">${escapeHtml(receipt.sourceLabel)}</span>
-          <span class="lr-receipt-type">${escapeHtml(receipt.transactionType)}</span>
-          <span class="lr-receipt-age${receipt.isCurrent ? ' is-current' : ''}">${receipt.isCurrent ? '지금 관심' : '지난 관심 기록'}</span>
-        </div>
-        <strong>매물번호 ${escapeHtml(receipt.listingNumber)}</strong>
-        <span class="lr-receipt-time">${escapeHtml(receipt.timeLabel)} 고객 관심 접수</span>
-      </div>
-      <div class="lr-receipt-actions">
-        <span class="lr-receipt-status">접수됨</span>
-        <a class="lr-receipt-inquire" data-listing-reference-inquiry href="contact.html?source=zigbang&amp;listing=${encodeURIComponent(receipt.listingNumber)}#inquiry-options">이 매물 문의</a>
-      </div>
-    </article>
-  `).join('');
+function renderGroup(title, note, receipts, visible) {
+  if (receipts.length === 0) return '';
+  const rows = groupByListing(receipts).map(renderRow);
+  const shown = rows.slice(0, visible).join('');
+  const rest = rows.slice(visible);
+  const more = rest.length
+    ? `<details class="lr-activity-more"><summary>지난 기록 ${rest.length}건 더 보기</summary><ol class="lr-activity-rows">${rest.join('')}</ol></details>`
+    : '';
+  return `
+    <section class="lr-activity-group">
+      <h3>${title}<span>${note}</span></h3>
+      <ol class="lr-activity-rows">${shown}</ol>
+      ${more}
+    </section>
+  `;
+}
 
-  return `${summaryHtml}<div class="lr-activity-list">${cardsHtml}</div>`;
+// Repeat interest in one listing reads as one row with a count, newest date first
+function groupByListing(receipts) {
+  const byKey = new Map();
+  for (const receipt of receipts) {
+    const key = `${receipt.listingNumber}|${receipt.transactionType}`;
+    const seen = byKey.get(key);
+    if (seen) seen.count += 1;
+    else byKey.set(key, { ...receipt, count: 1 });
+  }
+  return [...byKey.values()];
+}
+
+function renderRow(receipt) {
+  const count = receipt.count > 1 ? `<span class="lr-receipt-count">관심 ${receipt.count}회</span>` : '';
+  return `
+    <li class="lr-receipt-row${receipt.isCurrent ? ' is-current' : ''}">
+      <span class="lr-receipt-time">${escapeHtml(receipt.timeLabel)}</span>
+      <span class="lr-receipt-type">${escapeHtml(receipt.transactionType)}</span>
+      <strong>매물번호 ${escapeHtml(receipt.listingNumber)}${count}</strong>
+      <a class="lr-receipt-inquire" data-listing-reference-inquiry href="contact.html?source=zigbang&amp;listing=${encodeURIComponent(receipt.listingNumber)}#inquiry-options">이 매물 문의</a>
+    </li>
+  `;
 }
 
 function normalizeRow(row, nowMs) {

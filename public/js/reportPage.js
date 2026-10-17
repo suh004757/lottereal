@@ -161,7 +161,7 @@ function renderRelatedHubs() {
 
   container.innerHTML = hubs.map((hub) => `
     <a class="lr-report-hub-link" href="${escapeHtml(hub.path)}">
-      <p class="lr-kicker">${escapeHtml(hub.heroKicker || 'Report Hub')}</p>
+      <p class="lr-kicker">${escapeHtml(hub.heroKicker || '지역 리포트')}</p>
       <h3>${escapeHtml(hub.heroTitle || '')}</h3>
       <p>${escapeHtml(hub.description || '')}</p>
       <span class="lr-link">허브 보기</span>
