@@ -4,7 +4,7 @@
   position: relative;
   display: grid;
   gap: 28px;
-  --lj-amber: #f8c26a;
+  --lj-amber: #FFC20E;
   --lj-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
@@ -16,9 +16,8 @@
   border-radius: 30px;
   overflow: hidden;
   background:
-    radial-gradient(circle at 85% 10%, rgba(217, 119, 6, 0.28), transparent 42%),
-    radial-gradient(circle at 10% 100%, rgba(42, 74, 117, 0.9), transparent 55%),
-    linear-gradient(135deg, var(--lr-navy-dark, #152840), var(--lr-navy, #1E3A5F));
+    radial-gradient(circle at 85% 0%, rgba(255, 236, 200, 0.12), transparent 45%),
+    linear-gradient(135deg, #1b4478 0%, #23558f 100%);
   box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
 }
 
@@ -39,10 +38,10 @@
 }
 
 .lr-journey__copy-index {
-  color: var(--lj-amber);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 14px;
-  letter-spacing: 0.12em;
+  color: var(--lr-yellow-text, #FFD43B);
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .lr-journey__copy strong {
@@ -180,7 +179,7 @@
 .lr-journey__fill {
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, var(--lr-primary, #d97706), var(--lj-amber));
+  background: var(--lj-amber);
   transform: scaleX(var(--journey-progress, 0));
   transform-origin: left center;
   transition: transform 0.9s var(--lj-ease);
@@ -230,9 +229,9 @@
   border: 2px solid rgba(30, 58, 95, 0.16);
   background: #fff;
   color: var(--lr-navy, #1E3A5F);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
   transition: background 0.4s var(--lj-ease), border-color 0.4s var(--lj-ease), color 0.4s var(--lj-ease), transform 0.4s var(--lj-ease), box-shadow 0.4s var(--lj-ease);
 }
 

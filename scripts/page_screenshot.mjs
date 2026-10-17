@@ -30,7 +30,7 @@ async function shoot(cdp, baseUrl, page, viewport, outDir, prepare) {
     await new Promise((r) => setTimeout(r, 1200));
   }
   const { result } = await s('Runtime.evaluate', {
-    expression: 'Math.min(document.documentElement.scrollHeight, 6000)', returnByValue: true,
+    expression: 'Math.min(document.documentElement.scrollHeight, 14000)', returnByValue: true,
   });
   const { data } = await s('Page.captureScreenshot', {
     format: 'png', captureBeyondViewport: true,
