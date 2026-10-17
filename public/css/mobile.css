@@ -211,7 +211,7 @@
   }
 
   .lr-hero h1 {
-    font-family: 'Playfair Display', Georgia, serif !important;
+    font-family: 'Noto Sans KR', sans-serif; font-variant-numeric: tabular-nums;
     font-size: clamp(1.9rem, 7.5vw, 2.6rem) !important;
     font-weight: 700 !important;
     line-height: 1.2 !important;
@@ -529,7 +529,6 @@
   }
 
   .lr-tile__icon {
-    font-family: 'JetBrains Mono', monospace;
     font-size: 17px !important;
     font-weight: 700;
     width: 42px !important;

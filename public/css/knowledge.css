@@ -111,8 +111,8 @@
   padding: 0 1.35rem;
   border: 0;
   border-radius: 0.65rem;
-  color: #fff;
-  background: var(--knowledge-ink);
+  color: var(--lr-ink-on-yellow, #13263f);
+  background: var(--lr-yellow, #FFC20E);
   font: inherit;
   font-weight: 700;
   cursor: pointer;
@@ -121,7 +121,7 @@
 
 .lr-knowledge-search-row button:hover {
   transform: translateY(-1px);
-  background: #24445f;
+  background: var(--lr-yellow-strong, #F5B400);
 }
 
 .lr-knowledge-search-row button:disabled {

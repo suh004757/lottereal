@@ -71,7 +71,7 @@
   border-bottom: 1px solid rgba(255,255,255,.24);
 }
 .fee-hero__ledger span { display: block; color: rgba(255,255,255,.88); font-size: .88rem; font-weight: 600; }
-.fee-hero__ledger strong { display: block; margin: 8px 0; font-family: 'Playfair Display', serif; font-size: 2rem; }
+.fee-hero__ledger strong { display: block; margin: 8px 0; font-family: 'Noto Sans KR', sans-serif; font-variant-numeric: tabular-nums; font-size: 2rem; }
 .fee-hero__ledger p { margin: 0; color: rgba(255,255,255,.9); font-size: .9rem; word-break: keep-all; }
 
 .fee-workspace { padding: 88px 0; background: var(--fee-cream); }
@@ -102,16 +102,16 @@
 .fee-input-wrap span { flex: 0 0 auto; color: #5b6570; font-weight: 700; }
 .fee-money-field > p { margin: 8px 0 0; color: #5b6578; font-size: .84rem; }
 .fee-form__error { margin: 22px 0 0; padding: 13px 15px; color: #8a2c25; border-left: 3px solid #a13c33; background: #fbecea; }
-.fee-calculate { display: flex; width: 100%; min-height: 62px; margin-top: 30px; padding: 0 22px; align-items: center; justify-content: center; color: #fff; border: 0; background: var(--fee-ink); font: 700 1rem 'Noto Sans KR', sans-serif; cursor: pointer; }
-.fee-calculate:hover { background: #1a3c5d; }
+.fee-calculate { display: flex; width: 100%; min-height: 62px; margin-top: 30px; padding: 0 22px; align-items: center; justify-content: center; color: var(--lr-ink-on-yellow, #13263f); border: 0; border-radius: 12px; background: var(--lr-yellow, #FFC20E); font: 700 1rem 'Noto Sans KR', sans-serif; cursor: pointer; }
+.fee-calculate:hover { background: var(--lr-yellow-strong, #F2B600); }
 
 .fee-result { position: sticky; top: 92px; min-height: 590px; color: #fff; background: linear-gradient(180deg, #1b4478 0%, #183d6c 100%); }
 .fee-result__empty, .fee-result__content { padding: clamp(28px, 4vw, 46px); }
-.fee-result__mark { display: grid; width: 90px; height: 90px; margin: 62px 0 30px; place-items: center; color: var(--fee-gold); border: 1px solid rgba(255,255,255,.18); border-radius: 50%; font-family: 'Playfair Display', serif; font-size: 2.8rem; }
+.fee-result__mark { display: grid; width: 90px; height: 90px; margin: 62px 0 30px; place-items: center; color: var(--fee-gold); border: 1px solid rgba(255,255,255,.18); border-radius: 50%; font-family: 'Noto Sans KR', sans-serif; font-variant-numeric: tabular-nums; font-size: 2.8rem; }
 .fee-result__empty h2 { max-width: 360px; margin: 0 0 18px; color: #fff; font-size: 2rem; line-height: 1.28; word-break: keep-all; }
 .fee-result__empty > p:last-child { color: rgba(255,255,255,.86); line-height: 1.75; }
 .fee-result__label { margin: 54px 0 6px; color: rgba(255,255,255,.85); }
-.fee-result__amount { display: block; padding-bottom: 30px; color: var(--lr-yellow-text, #FFD43B); border-bottom: 1px solid rgba(255,255,255,.16); font-family: 'Playfair Display','Noto Sans KR',serif; font-size: clamp(2.4rem, 5vw, 4.1rem); line-height: 1.15; overflow-wrap: anywhere; }
+.fee-result__amount { display: block; padding-bottom: 30px; color: var(--lr-yellow-text, #FFD43B); border-bottom: 1px solid rgba(255,255,255,.16); font-family: 'Noto Sans KR', sans-serif; font-variant-numeric: tabular-nums; font-size: clamp(2.4rem, 5vw, 4.1rem); line-height: 1.15; overflow-wrap: anywhere; }
 .fee-result__notice { margin: 15px 0 28px; color: rgba(255,255,255,.86); }
 .fee-bands { margin: 0 0 26px; padding: 18px; border-radius: 4px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); }
 .fee-bands__title { margin: 0 0 14px; color: rgba(255,255,255,.85); font-size: .8rem; font-weight: 700; }
@@ -154,7 +154,7 @@
 .fee-guide__cards { display: grid; grid-template-columns: repeat(3,1fr); margin-top: 60px; border-top: 1px solid rgba(255,255,255,.18); }
 .fee-guide__cards article { padding: 30px 28px 10px 0; border-right: 1px solid rgba(255,255,255,.13); }
 .fee-guide__cards article + article { padding-left: 28px; }
-.fee-guide__cards span { color: var(--lr-yellow-text, #FFD43B); font: 600 1.3rem 'Playfair Display',serif; }
+.fee-guide__cards span { color: var(--lr-yellow-text, #FFD43B); font: 700 1.3rem 'Noto Sans KR', sans-serif; }
 .fee-guide__cards h3 { margin: 28px 0 12px; }
 .fee-guide__cards p { margin: 0; color: rgba(255,255,255,.88); line-height: 1.78; }
 .fee-sources ul { display: grid; gap: 12px; padding: 0; list-style: none; }
