@@ -1137,6 +1137,34 @@
     line-height: 1.85;
 }
 
+/* style.css resets li markers sitewide; report lists need them back */
+.lr-report-body ul > li {
+    list-style: disc;
+}
+
+.lr-report-body ol > li {
+    list-style: decimal;
+}
+
+.lr-report-body li::marker {
+    color: #23558f;
+    font-weight: 600;
+}
+
+/* Korean has no true italic; a tinted note reads better than slanted glyphs */
+.lr-report-body blockquote {
+    padding: 1rem 1.25rem;
+    border-left: 4px solid #23558f;
+    border-radius: 0 12px 12px 0;
+    background: #f1f5fa;
+    font-style: normal;
+    color: #1f2937;
+}
+
+.lr-report-body blockquote p {
+    margin: 0.25rem 0;
+}
+
 .lr-report-glance {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
