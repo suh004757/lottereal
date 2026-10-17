@@ -1,0 +1,154 @@
+[
+ {
+  "CLS_FULLNM": "서울>강남지역>동남권>서초구",
+  "CLS_NM": "서초구",
+  "ITM_ID": 10001,
+  "DTA_VAL": 98.0928179504894,
+  "WRTTIME_DESC": "2026-10-12",
+  "WRTTIME_IDTFR_ID": "202642"
+ },
+ {
+  "CLS_FULLNM": "서울>강남지역>동남권>강남구",
+  "CLS_NM": "강남구",
+  "ITM_ID": 10001,
+  "DTA_VAL": 97.4066398357364,
+  "WRTTIME_DESC": "2026-10-12",
+  "WRTTIME_IDTFR_ID": "202642"
+ },
+ {
+  "CLS_FULLNM": "서울>강남지역>동남권>송파구",
+  "CLS_NM": "송파구",
+  "ITM_ID": 10001,
+  "DTA_VAL": 100.417202242025,
+  "WRTTIME_DESC": "2026-10-12",
+  "WRTTIME_IDTFR_ID": "202642"
+ },
+ {
+  "CLS_FULLNM": "서울",
+  "CLS_NM": "서울",
+  "ITM_ID": 10001,
+  "DTA_VAL": 102.910287113882,
+  "WRTTIME_DESC": "2026-10-12",
+  "WRTTIME_IDTFR_ID": "202642"
+ },
+ {
+  "CLS_FULLNM": "경기",
+  "CLS_NM": "경기",
+  "ITM_ID": 10001,
+  "DTA_VAL": 102.603567051211,
+  "WRTTIME_DESC": "2026-10-12",
+  "WRTTIME_IDTFR_ID": "202642"
+ },
+ {
+  "CLS_FULLNM": "경기",
+  "CLS_NM": "경기",
+  "ITM_ID": 10001,
+  "DTA_VAL": 102.338641952501,
+  "WRTTIME_DESC": "2026-10-05",
+  "WRTTIME_IDTFR_ID": "202641"
+ },
+ {
+  "CLS_FULLNM": "서울>강남지역>동남권>서초구",
+  "CLS_NM": "서초구",
+  "ITM_ID": 10001,
+  "DTA_VAL": 98.3569094447375,
+  "WRTTIME_DESC": "2026-10-05",
+  "WRTTIME_IDTFR_ID": "202641"
+ },
+ {
+  "CLS_FULLNM": "서울>강남지역>동남권>강남구",
+  "CLS_NM": "강남구",
+  "ITM_ID": 10001,
+  "DTA_VAL": 97.7522981902305,
+  "WRTTIME_DESC": "2026-10-05",
+  "WRTTIME_IDTFR_ID": "202641"
+ },
+ {
+  "CLS_FULLNM": "서울>강남지역>동남권>송파구",
+  "CLS_NM": "송파구",
+  "ITM_ID": 10001,
+  "DTA_VAL": 100.624041593038,
+  "WRTTIME_DESC": "2026-10-05",
+  "WRTTIME_IDTFR_ID": "202641"
+ },
+ {
+  "CLS_FULLNM": "전국",
+  "CLS_NM": "전국",
+  "ITM_ID": 10001,
+  "DTA_VAL": 101.209220657823,
+  "WRTTIME_DESC": "2026-10-12",
+  "WRTTIME_IDTFR_ID": "202642"
+ },
+ {
+  "CLS_FULLNM": "서울",
+  "CLS_NM": "서울",
+  "ITM_ID": 10001,
+  "DTA_VAL": 102.744045796114,
+  "WRTTIME_DESC": "2026-10-05",
+  "WRTTIME_IDTFR_ID": "202641"
+ },
+ {
+  "CLS_FULLNM": "서울>강남지역>동남권>서초구",
+  "CLS_NM": "서초구",
+  "ITM_ID": 10001,
+  "DTA_VAL": 98.6215368768035,
+  "WRTTIME_DESC": "2026-09-28",
+  "WRTTIME_IDTFR_ID": "202640"
+ },
+ {
+  "CLS_FULLNM": "서울>강남지역>동남권>강남구",
+  "CLS_NM": "강남구",
+  "ITM_ID": 10001,
+  "DTA_VAL": 98.0847547711522,
+  "WRTTIME_DESC": "2026-09-28",
+  "WRTTIME_IDTFR_ID": "202640"
+ },
+ {
+  "CLS_FULLNM": "서울>강남지역>동남권>송파구",
+  "CLS_NM": "송파구",
+  "ITM_ID": 10001,
+  "DTA_VAL": 100.810779430464,
+  "WRTTIME_DESC": "2026-09-28",
+  "WRTTIME_IDTFR_ID": "202640"
+ },
+ {
+  "CLS_FULLNM": "전국",
+  "CLS_NM": "전국",
+  "ITM_ID": 10001,
+  "DTA_VAL": 101.105389277472,
+  "WRTTIME_DESC": "2026-10-05",
+  "WRTTIME_IDTFR_ID": "202641"
+ },
+ {
+  "CLS_FULLNM": "서울",
+  "CLS_NM": "서울",
+  "ITM_ID": 10001,
+  "DTA_VAL": 102.62171143251,
+  "WRTTIME_DESC": "2026-09-28",
+  "WRTTIME_IDTFR_ID": "202640"
+ },
+ {
+  "CLS_FULLNM": "경기",
+  "CLS_NM": "경기",
+  "ITM_ID": 10001,
+  "DTA_VAL": 102.151757004482,
+  "WRTTIME_DESC": "2026-09-28",
+  "WRTTIME_IDTFR_ID": "202640"
+ },
+ {
+  "CLS_FULLNM": "서울>강남지역>동남권>송파구",
+  "CLS_NM": "송파구",
+  "ITM_ID": 10001,
+  "DTA_VAL": 101.000744648284,
+  "WRTTIME_DESC": "2026-09-21",
+  "WRTTIME_IDTFR_ID": "202639"
+ },
+ {
+  "CLS_FULLNM": "전국",
+  "CLS_NM": "전국",
+  "ITM_ID": 10001,
+  "DTA_VAL": 101.036596269514,
+  "WRTTIME_DESC": "2026-09-28",
+  "WRTTIME_IDTFR_ID": "202640"
+ }
+]

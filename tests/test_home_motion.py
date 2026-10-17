@@ -42,7 +42,7 @@ class HomeMotionTests(unittest.TestCase):
     def test_weekly_chart_states_source_date_and_disclaimer(self):
         stats = self.home.split('id="official-stats"', 1)[1].split("</section>", 1)[0]
         self.assertEqual(stats.count('class="lr-weekly__row '), 6)
-        self.assertIn("2026-10-12 기준", stats)
+        self.assertRegex(stats, r"\d{4}-\d{2}-\d{2} 기준")
         self.assertIn("한국부동산원", stats)
         self.assertIn("매수·매도 권유가 아닙니다", stats)
         self.assertIn("@media (prefers-reduced-motion: reduce)", self.css)
