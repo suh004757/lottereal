@@ -3682,6 +3682,12 @@ h1 {
   background: rgba(217, 119, 6, 0.1);
 }
 
+.lr-nav a.lr-nav-cta.active,
+.lr-nav a.lr-nav-cta[aria-current="page"] {
+  color: var(--lr-ink-on-yellow);
+  background: var(--lr-yellow);
+}
+
 .lr-hero {
   min-height: 720px;
   display: flex;

@@ -1,0 +1,102 @@
+/* Contact page: the phone number is the hero; visit facts sit in one quiet card */
+.lr-inquiry-intro h2,
+.lr-cta h2 {
+  word-break: keep-all;
+}
+
+.lr-contact-hero .lr-lead {
+  max-width: 34rem;
+}
+
+.lr-contact-phone {
+  display: inline-grid;
+  gap: 4px;
+  margin: 8px 0 28px;
+  color: #fff;
+  text-decoration: none;
+}
+
+.lr-contact-phone span {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.lr-contact-phone strong {
+  color: var(--lr-yellow-text, #FFD43B);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: clamp(2.4rem, 5.2vw, 3.75rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  border-bottom: 2px solid rgba(255, 212, 59, 0.45);
+  transition: border-color 0.2s ease;
+}
+
+.lr-contact-phone:hover strong,
+.lr-contact-phone:focus-visible strong {
+  border-color: var(--lr-yellow-text, #FFD43B);
+}
+
+.lr-contact-phone:focus-visible {
+  outline: 3px solid var(--lr-yellow-text, #FFD43B);
+  outline-offset: 6px;
+}
+
+.lr-contact-visit h2 {
+  margin: 0 0 18px;
+  color: var(--lr-ink-on-yellow, #13263f);
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.lr-contact-visit dl {
+  display: grid;
+  gap: 0;
+  margin: 0;
+}
+
+.lr-contact-visit dl > div {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  gap: 12px;
+  padding: 13px 0;
+  border-top: 1px solid rgba(19, 38, 63, 0.12);
+}
+
+.lr-contact-visit dt {
+  color: var(--lr-muted, #5b6578);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.lr-contact-visit dd {
+  margin: 0;
+  color: var(--lr-ink-on-yellow, #13263f);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  word-break: keep-all;
+}
+
+@media (max-width: 768px) {
+  .lr-contact-phone {
+    margin-bottom: 22px;
+  }
+
+  .lr-contact-phone strong {
+    font-size: clamp(2.1rem, 10vw, 2.6rem);
+  }
+
+  /* mobile.css hides hero cards; visit facts are worth keeping on phones */
+  .lr-hero.lr-contact-hero .lr-contact-visit {
+    display: block !important;
+    margin-top: 28px;
+    padding: 22px 20px;
+    border-radius: 18px;
+  }
+
+  .lr-contact-visit dl > div {
+    grid-template-columns: 4.5rem minmax(0, 1fr);
+  }
+}

@@ -275,7 +275,7 @@ async function pixelRatio(s, item) {
 
 // --- Static server + CDP driver ------------------------------------------
 
-function startServer() {
+export function startServer() {
   const server = createServer(async (req, res) => {
     try {
       let rel = decodeURIComponent(new URL(req.url, 'http://x').pathname);
@@ -293,7 +293,7 @@ function startServer() {
   return new Promise((resolve) => server.listen(0, '127.0.0.1', () => resolve(server)));
 }
 
-async function findChrome(explicit) {
+export async function findChrome(explicit) {
   const { access } = await import('node:fs/promises');
   for (const candidate of [explicit, ...CHROME_CANDIDATES].filter(Boolean)) {
     try { await access(candidate); return candidate; } catch { /* next */ }
@@ -301,7 +301,7 @@ async function findChrome(explicit) {
   throw new Error('Chrome not found; pass --chrome PATH or set CHROME_PATH');
 }
 
-async function launchChrome(chromePath) {
+export async function launchChrome(chromePath) {
   const profile = await mkdtemp(path.join(tmpdir(), 'contrast-audit-'));
   const proc = spawn(chromePath, [
     '--headless=new', '--disable-gpu', '--no-first-run', '--no-default-browser-check',
@@ -319,7 +319,7 @@ async function launchChrome(chromePath) {
   return { proc, profile, wsUrl };
 }
 
-function connect(wsUrl) {
+export function connect(wsUrl) {
   const ws = new WebSocket(wsUrl);
   let id = 0;
   const pending = new Map();
