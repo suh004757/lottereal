@@ -4230,9 +4230,27 @@ h1 {
 .lr-listing-price {
   margin: 12px 0 14px;
   color: var(--lr-navy);
-  font-size: clamp(1.4rem, 2vw, 1.9rem);
-  font-weight: 900;
-  letter-spacing: -0.04em;
+  font-size: clamp(1.3rem, 1.7vw, 1.6rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.lr-listing-price small {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--lr-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.lr-listing-location {
+  margin: 0 0 6px;
+  color: var(--lr-muted);
+  font-size: 13px;
+  font-weight: 600;
   overflow-wrap: anywhere;
 }
 

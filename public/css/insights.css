@@ -517,7 +517,7 @@
 /* Report Header */
 .lr-report-header {
     background:
-        radial-gradient(ellipse 60% 70% at 90% 110%, rgba(255, 194, 14, 0.35), transparent 70%),
+        radial-gradient(ellipse 60% 70% at 90% 0%, rgba(255, 236, 200, 0.14), transparent 70%),
         linear-gradient(160deg, #1b4478 0%, #23558f 60%, #2c6aa8 100%);
     padding: 4rem 0 3rem;
     color: #ffffff;

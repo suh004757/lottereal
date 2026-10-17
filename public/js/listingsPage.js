@@ -166,21 +166,18 @@ function buildListingCard(item) {
       <span>${escapeHtml(badge)}</span>
     </a>
     <div class="lr-card__body">
-      <div class="lr-listing-topline">
-        <p class="lr-badge">${escapeHtml(badge)}</p>
-        <span>${escapeHtml(buildLocation(item))}</span>
-      </div>
+      <p class="lr-listing-location">${escapeHtml(buildLocation(item))}</p>
       <h3>${escapeHtml(item.title || '상세 매물')}</h3>
       ${freshnessCopy ? `
         <div class="lr-listing-freshness" role="note">
           <strong>${escapeHtml(freshnessCopy.label)}</strong>
           <span>${escapeHtml(freshnessCopy.message)}</span>
         </div>` : ''}
-      <div class="lr-listing-price">${escapeHtml(freshnessCopy && price ? `${freshnessCopy.pricePrefix} ${price}` : price)}</div>
+      <div class="lr-listing-price">${freshnessCopy && price ? `<small>${escapeHtml(freshnessCopy.pricePrefix)}</small>` : ''}${escapeHtml(price)}</div>
       <div class="lr-listing-facts">
         ${visibleDetails.map((detail) => `<span><strong>${escapeHtml(detail.label)}</strong>${escapeHtml(detail.value)}</span>`).join('')}
       </div>
-      <p class="lr-text">${escapeHtml(buildShortDescription(item, freshness))}</p>
+      ${freshnessCopy ? '' : `<p class="lr-text">${escapeHtml(buildShortDescription(item, freshness))}</p>`}
       <div class="lr-card__actions lr-listing-actions">
         <a class="lr-btn lr-btn--ghost lr-btn--block" href="${detailUrl}">사진·상세 보기</a>
         <a class="lr-btn lr-btn--primary lr-btn--block contact-btn" href="${telLink}" data-phone="${escapeAttribute(formatPhone(contactPhone))}">전화 문의</a>
