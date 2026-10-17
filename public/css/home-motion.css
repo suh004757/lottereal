@@ -393,8 +393,8 @@
 
 .lr-report-cover--market {
   background:
-    radial-gradient(circle at 85% 15%, rgba(217, 119, 6, 0.35), transparent 50%),
-    linear-gradient(150deg, #13263f, #1E3A5F);
+    radial-gradient(circle at 85% 0%, rgba(255, 236, 200, 0.14), transparent 50%),
+    linear-gradient(150deg, #1b4478, #2c6aa8);
 }
 
 .lr-report-cover--dispute {
@@ -405,8 +405,8 @@
 
 .lrc-grid { fill: none; stroke: rgba(255, 255, 255, 0.1); stroke-width: 1; }
 .lrc-bar { fill: rgba(255, 255, 255, 0.16); transform-box: fill-box; transform-origin: bottom; }
-.lrc-line { fill: none; stroke: #f8c26a; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; }
-.lrc-dot { fill: #f8c26a; transform-box: fill-box; transform-origin: center; }
+.lrc-line { fill: none; stroke: #FFC20E; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; }
+.lrc-dot { fill: #FFC20E; transform-box: fill-box; transform-origin: center; }
 
 .lrc-doc { fill: #fff; stroke: rgba(30, 58, 95, 0.12); }
 .lrc-doc-line { fill: #e2e8f0; transform-box: fill-box; transform-origin: left; }
@@ -451,6 +451,7 @@
 }
 
 .lr-weekly .lr-stats-card__intro h2 {
+  word-break: keep-all;
   font-family: 'Noto Sans KR', sans-serif;
   font-weight: 700;
   letter-spacing: -0.04em;
