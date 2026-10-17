@@ -95,7 +95,18 @@ export function buildReportFeed({ reportsDir, output, siteUrl = 'https://lottes.
     .filter(Boolean);
   const feed = renderFeed(entries, siteUrl);
   const current = fs.existsSync(output) ? fs.readFileSync(output, 'utf8') : '';
-  if (current !== feed) fs.writeFileSync(output, feed, 'utf8');
+  if (current !== feed) {
+    fs.mkdirSync(path.dirname(output), { recursive: true });
+    const temporary = path.join(path.dirname(output), `.${path.basename(output)}.${process.pid}.tmp`);
+    try {
+      fs.writeFileSync(temporary, feed, { encoding: 'utf8', flag: 'wx' });
+      const descriptor = fs.openSync(temporary, 'r');
+      try { fs.fsyncSync(descriptor); } finally { fs.closeSync(descriptor); }
+      fs.renameSync(temporary, output);
+    } finally {
+      fs.rmSync(temporary, { force: true });
+    }
+  }
   return { items: Math.min(entries.length, MAX_ITEMS), changed: current !== feed };
 }
 

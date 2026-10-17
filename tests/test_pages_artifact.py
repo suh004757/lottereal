@@ -133,7 +133,8 @@ class PagesArtifactTests(unittest.TestCase):
         self.assertIn("id-token: write", text)
         build = text.split("  build:", 1)[1].split("  deploy:", 1)[0]
         deploy = text.split("  deploy:", 1)[1]
-        self.assertIn("if: github.event_name != 'pull_request'", deploy)
+        self.assertIn("if: github.ref == 'refs/heads/main'", deploy)
+        self.assertNotIn("github.event_name != 'pull_request'", deploy)
         self.assertNotIn("pages: write", build)
         self.assertNotIn("id-token: write", build)
         self.assertNotIn("actions/checkout", deploy)

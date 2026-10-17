@@ -3,6 +3,7 @@ import importlib.util
 import json
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 
@@ -55,6 +56,20 @@ class WeeklyMarketChartTests(unittest.TestCase):
         with self.assertRaises(chart.ChartDataError):
             chart.build_series(spiked)
 
+    def test_rejects_impossible_and_nonconsecutive_weekly_dates(self):
+        impossible = copy.deepcopy(self.rows)
+        for row in impossible:
+            if row["WRTTIME_DESC"] == "2026-10-12":
+                row["WRTTIME_DESC"] = "2026-02-30"
+        with self.assertRaisesRegex(chart.ChartDataError, "invalid weekly date"):
+            chart.build_series(impossible)
+        gapped = copy.deepcopy(self.rows)
+        for row in gapped:
+            if row["WRTTIME_DESC"] == "2026-10-05":
+                row["WRTTIME_DESC"] = "2026-10-04"
+        with self.assertRaisesRegex(chart.ChartDataError, "7 days apart"):
+            chart.build_series(gapped)
+
     def test_published_home_matches_published_evidence(self):
         home = (ROOT / "public" / "index.html").read_text(encoding="utf-8")
         published = json.loads((ROOT / "public" / "Data" / "weekly-apt-change.json").read_text(encoding="utf-8"))
@@ -83,6 +98,30 @@ class WeeklyMarketChartTests(unittest.TestCase):
             tmp_evidence.write_text(json.dumps({"survey_date": "2026-12-31"}), encoding="utf-8")
             with self.assertRaises(chart.ChartDataError):
                 chart.main(["--input", str(FIXTURE), "--home", str(tmp_home), "--evidence", str(tmp_evidence)])
+
+    def test_pair_publication_recovers_after_second_replace_failure(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp) / "index.html"
+            evidence = Path(tmp) / "weekly.json"
+            home.write_text((ROOT / "public" / "index.html").read_text(encoding="utf-8"), encoding="utf-8")
+            evidence.write_text('{"survey_date":"2026-01-01"}\n', encoding="utf-8")
+            before = (home.read_bytes(), evidence.read_bytes())
+            original_replace = chart.os.replace
+            failed = False
+
+            def fail_second(source, target):
+                nonlocal failed
+                if Path(target) == evidence and not failed:
+                    failed = True
+                    raise OSError("injected evidence replace failure")
+                return original_replace(source, target)
+
+            with mock.patch.object(chart.os, "replace", side_effect=fail_second):
+                with self.assertRaisesRegex(OSError, "injected evidence replace failure"):
+                    chart.main(["--input", str(FIXTURE), "--home", str(home), "--evidence", str(evidence)])
+            self.assertEqual((home.read_bytes(), evidence.read_bytes()), before)
+            self.assertEqual(chart.main(["--input", str(FIXTURE), "--home", str(home), "--evidence", str(evidence)]), 0)
+            self.assertFalse((Path(tmp) / ".weekly-market-chart.publish").exists())
 
 
 if __name__ == "__main__":

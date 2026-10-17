@@ -4,7 +4,7 @@ import path from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
-import { buildReportFeed } from './build_report_feed.mjs';
+import { readReportEntry, renderFeed } from './build_report_feed.mjs';
 
 const require = createRequire(import.meta.url);
 const { Marked, Renderer } = require('../public/js/vendor/marked-18.0.11.min.js');
@@ -83,15 +83,34 @@ const markdown = markdownRenderer();
 
 function dateOnly(value) {
   const raw = String(value || '');
-  return /^\d{4}-\d{2}-\d{2}/.test(raw) ? raw.slice(0, 10) : '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return isCalendarDate(raw) ? raw : '';
+  const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(?:Z|[+-](\d{2}):(\d{2}))$/);
+  if (!match) return '';
+  const [, year, month, day, hour, minute, second, offsetHour = '00', offsetMinute = '00'] = match;
+  if (!isCalendarDate(`${year}-${month}-${day}`)
+      || Number(hour) > 23 || Number(minute) > 59 || Number(second) > 59
+      || Number(offsetHour) > 23 || Number(offsetMinute) > 59) return '';
+  const timestamp = Date.parse(raw);
+  if (!Number.isFinite(timestamp)) return '';
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(new Date(timestamp));
+}
+
+function metadataDate(report, field) {
+  const value = report?.metadata?.[field];
+  if (value === undefined || value === null || value === '') return '';
+  const parsed = dateOnly(value);
+  if (!parsed) throw new Error(`invalid metadata.${field} for report ${report?.slug || ''}`);
+  return parsed;
 }
 
 function publishedDate(report) {
-  return dateOnly(report?.metadata?.published_at) || dateOnly(report?.created_at);
+  return metadataDate(report, 'published_at') || dateOnly(report?.created_at);
 }
 
 function sourceModifiedDate(report) {
-  return dateOnly(report?.metadata?.modified_at)
+  return metadataDate(report, 'modified_at')
     || dateOnly(report?.updated_at)
     || publishedDate(report);
 }
@@ -657,7 +676,8 @@ function releasePublicationMutex(mutexRoot, token) {
 
 function allowedTarget(target, args) {
   const resolved = path.resolve(target);
-  if (resolved === path.resolve(args.sitemap) || resolved === path.resolve(args.reportPage)) return true;
+  if (resolved === path.resolve(args.sitemap) || resolved === path.resolve(args.reportPage)
+      || resolved === path.resolve(path.dirname(args.sitemap), 'rss.xml')) return true;
   return path.dirname(resolved) === path.resolve(args.outputDir)
     && resolved.endsWith('.html')
     && SAFE_SLUG.test(path.basename(resolved, '.html'));
@@ -917,6 +937,14 @@ async function main() {
     }
     specifications.push({ kind: 'replace', target: args.sitemap, content: nextSitemap });
     specifications.push({ kind: 'replace', target: args.reportPage, content: nextReportPage });
+    const feedEntries = [...rendered.entries()]
+      .map(([filename, html]) => readReportEntry(html, filename))
+      .filter(Boolean);
+    specifications.push({
+      kind: 'replace',
+      target: path.join(path.dirname(args.sitemap), 'rss.xml'),
+      content: renderFeed(feedEntries, args.siteUrl),
+    });
     verifyMutexOwnership(publicationMutex, mutexToken);
     const journal = prepareTransaction(publicationLock, specifications);
     publishTransaction(publicationLock, journal, args, publicationMutex, mutexToken);
@@ -933,13 +961,10 @@ async function main() {
   } finally {
     releasePublicationMutex(publicationMutex, mutexToken);
   }
-  // Derived from the pages just published; written next to the sitemap, outside the transaction.
-  const feed = buildReportFeed({
-    reportsDir: args.outputDir,
-    output: path.join(path.dirname(args.sitemap), 'rss.xml'),
-    siteUrl: args.siteUrl
-  });
-  process.stdout.write(JSON.stringify({ ok: true, reports: reports.length, outputDir: args.outputDir, feedItems: feed.items }) + '\n');
+  process.stdout.write(JSON.stringify({
+    ok: true, reports: reports.length, outputDir: args.outputDir,
+    feedItems: Math.min(reports.length, 40),
+  }) + '\n');
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

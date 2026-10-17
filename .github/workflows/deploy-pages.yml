@@ -39,7 +39,8 @@ jobs:
           path: ${{ runner.temp }}/site
 
   deploy:
-    if: github.event_name != 'pull_request'
+    # PRs and manual runs on non-main refs remain build-only.
+    if: github.ref == 'refs/heads/main'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

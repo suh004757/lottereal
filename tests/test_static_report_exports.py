@@ -18,6 +18,7 @@ class StaticReportExportTests(unittest.TestCase):
         self.output_dir = self.base / "reports"
         self.sitemap = self.base / "Sitemap.xml"
         self.report_page = self.base / "report.html"
+        self.feed = self.base / "rss.xml"
         self.lock_path = self.base / ".report.html.publish.lock"
         self.mutex_path = self.base / ".report.html.publish.mutex"
         self.report_page.write_text(
@@ -181,7 +182,45 @@ class StaticReportExportTests(unittest.TestCase):
         self.assertIn("발행 2026-09-28 · 수정 2026-09-28", html)
         self.assertIn("<lastmod>2026-09-28</lastmod>", self.sitemap.read_text(encoding="utf-8"))
 
+    def test_timestamp_fallback_uses_asia_seoul_calendar_date(self):
+        report = dict(
+            self.report,
+            created_at="2026-09-27T15:30:00+00:00",
+            updated_at="2026-09-27T16:00:00+00:00",
+        )
+        result = self.run_export([report])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        html = (self.output_dir / f"{report['slug']}.html").read_text(encoding="utf-8")
+        self.assertIn('\"datePublished\":\"2026-09-28\"', html)
+        self.assertIn('\"dateModified\":\"2026-09-28\"', html)
+        self.assertIn("<lastmod>2026-09-28</lastmod>", self.sitemap.read_text(encoding="utf-8"))
+
+    def test_rejects_impossible_semantic_metadata_dates_without_changing_outputs(self):
+        first = self.run_export([self.report])
+        self.assertEqual(first.returncode, 0, first.stderr)
+        baseline = {
+            "report": (self.output_dir / f"{self.report['slug']}.html").read_bytes(),
+            "sitemap": self.sitemap.read_bytes(),
+            "archive": self.report_page.read_bytes(),
+            "feed": self.feed.read_bytes(),
+        }
+        for field, value in (
+            ("published_at", "2026-02-30"),
+            ("modified_at", "2026-02-30T09:00:00+09:00"),
+        ):
+            with self.subTest(field=field, value=value):
+                invalid = dict(self.report, metadata={**self.report["metadata"], field: value})
+                result = self.run_export([invalid])
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(f"invalid metadata.{field}", result.stderr)
+                self.assertEqual((self.output_dir / f"{self.report['slug']}.html").read_bytes(), baseline["report"])
+                self.assertEqual(self.sitemap.read_bytes(), baseline["sitemap"])
+                self.assertEqual(self.report_page.read_bytes(), baseline["archive"])
+                self.assertEqual(self.feed.read_bytes(), baseline["feed"])
+
     def test_regenerates_complete_server_rendered_archive_in_publication_order(self):
+        # The feed is committed by the same publication transaction.
+        self.assertFalse(self.feed.exists())
         older = dict(
             self.report,
             slug="2026-09-25-older-report",
@@ -1009,6 +1048,35 @@ for (const method of ['writeFileSync', 'renameSync']) {
         )
         self.assertEqual(self.sitemap.read_bytes(), original_sitemap)
         self.assertEqual(self.report_page.read_bytes(), original_report_page)
+
+    def test_feed_install_failure_rolls_back_every_publication_output(self):
+        first = self.run_export([self.report])
+        self.assertEqual(first.returncode, 0, first.stderr)
+        target = self.output_dir / f"{self.report['slug']}.html"
+        baseline = (target.read_bytes(), self.sitemap.read_bytes(), self.report_page.read_bytes(), self.feed.read_bytes())
+        injector = self.base / "fail-feed-install.cjs"
+        injector.write_text(
+            """const fs = require('node:fs');
+const path = require('node:path');
+const feed = path.resolve(process.env.FAIL_FEED_TARGET);
+const originalRename = fs.renameSync;
+fs.renameSync = function (source, destination) {
+  if (path.resolve(String(destination)) === feed && path.basename(path.dirname(String(source))) === 'staged') {
+    throw new Error('injected feed export failure');
+  }
+  return originalRename.apply(this, arguments);
+};
+""",
+            encoding="utf-8",
+        )
+        changed = dict(self.report, summary="RSS 실패 시 공개되면 안 되는 변경", updated_at="2026-09-27T04:00:00+00:00")
+        result = self.run_export([changed], env={
+            "NODE_OPTIONS": f"--require={injector}",
+            "FAIL_FEED_TARGET": str(self.feed),
+        })
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("injected feed export failure", result.stderr)
+        self.assertEqual((target.read_bytes(), self.sitemap.read_bytes(), self.report_page.read_bytes(), self.feed.read_bytes()), baseline)
 
     def test_staging_failure_cleans_every_stage_and_preserves_publication(self):
         first = self.run_export([self.report])

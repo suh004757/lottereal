@@ -18,8 +18,10 @@ import argparse
 import html
 import json
 import math
+import os
+import shutil
 import sys
-from datetime import date
+from datetime import date, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 
@@ -81,6 +83,10 @@ def build_series(rows: list[dict]) -> dict:
     """Return latest two weekly changes per region; all regions must share dates."""
     by_region: dict[str, dict[str, Decimal]] = {}
     for row in rows:
+        try:
+            date.fromisoformat(str(row["WRTTIME_DESC"]))
+        except (TypeError, ValueError) as error:
+            raise ChartDataError(f"invalid weekly date: {row.get('WRTTIME_DESC')}") from error
         by_region.setdefault(row["CLS_FULLNM"], {})[row["WRTTIME_DESC"]] = Decimal(str(row["DTA_VAL"]))
     dates = None
     for label, full in REGIONS:
@@ -92,6 +98,9 @@ def build_series(rows: list[dict]) -> dict:
             dates = latest
         elif latest != dates:
             raise ChartDataError(f"week mismatch for {label}: {latest} != {dates}")
+    parsed_dates = [date.fromisoformat(value) for value in dates]
+    if parsed_dates[1] - parsed_dates[0] != timedelta(days=7) or parsed_dates[2] - parsed_dates[1] != timedelta(days=7):
+        raise ChartDataError(f"weekly dates must be exactly 7 days apart: {dates}")
     regions = []
     for label, full in REGIONS:
         series = by_region[full]
@@ -235,6 +244,69 @@ def evidence(data: dict) -> dict:
     }
 
 
+def _sync_file(path: Path) -> None:
+    with path.open("rb") as stream:
+        os.fsync(stream.fileno())
+
+
+def _recover_pair(transaction: Path) -> None:
+    journal_path = transaction / "journal.json"
+    if not journal_path.exists():
+        shutil.rmtree(transaction, ignore_errors=True)
+        return
+    journal = json.loads(journal_path.read_text(encoding="utf-8"))
+    for operation in reversed(journal["operations"]):
+        target = Path(operation["target"])
+        backup = transaction / operation["backup"]
+        if operation["existed"]:
+            restore = transaction / f"restore-{backup.name}"
+            shutil.copyfile(backup, restore)
+            _sync_file(restore)
+            os.replace(restore, target)
+        elif target.exists():
+            target.unlink()
+    shutil.rmtree(transaction)
+
+
+def publish_pair(home: Path, home_content: str, evidence_path: Path, evidence_content: str) -> None:
+    common = Path(os.path.commonpath([home.resolve().parent, evidence_path.resolve().parent]))
+    transaction = common / ".weekly-market-chart.publish"
+    if transaction.exists():
+        _recover_pair(transaction)
+    transaction.mkdir()
+    (transaction / "staged").mkdir()
+    (transaction / "backups").mkdir()
+    operations = []
+    try:
+        for index, (target, content) in enumerate(((home, home_content), (evidence_path, evidence_content))):
+            target.parent.mkdir(parents=True, exist_ok=True)
+            existed = target.exists()
+            backup_name = f"backups/{index}"
+            if existed:
+                shutil.copyfile(target, transaction / backup_name)
+                _sync_file(transaction / backup_name)
+            stage_name = f"staged/{index}"
+            (transaction / stage_name).write_text(content, encoding="utf-8")
+            _sync_file(transaction / stage_name)
+            operations.append({
+                "target": str(target.resolve()), "backup": backup_name,
+                "staged": stage_name, "existed": existed,
+            })
+        journal = {"version": 1, "phase": "prepared", "operations": operations}
+        journal_path = transaction / "journal.json"
+        journal_path.write_text(json.dumps(journal), encoding="utf-8")
+        _sync_file(journal_path)
+        journal["phase"] = "committing"
+        journal_path.write_text(json.dumps(journal), encoding="utf-8")
+        _sync_file(journal_path)
+        for operation in operations:
+            os.replace(transaction / operation["staged"], operation["target"])
+        shutil.rmtree(transaction)
+    except BaseException:
+        _recover_pair(transaction)
+        raise
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--input", type=Path, help="JSON list of R-ONE rows instead of calling the API")
@@ -259,9 +331,7 @@ def main(argv: list[str] | None = None) -> int:
     payload = json.dumps(evidence(data), ensure_ascii=False, indent=2) + "\n"
     changed = updated != home or not args.evidence.exists() or args.evidence.read_text(encoding="utf-8") != payload
     if changed:
-        args.home.write_text(updated, encoding="utf-8")
-        args.evidence.parent.mkdir(parents=True, exist_ok=True)
-        args.evidence.write_text(payload, encoding="utf-8")
+        publish_pair(args.home, updated, args.evidence, payload)
     print(json.dumps({"ok": True, "changed": changed, "survey_date": data["survey_date"]}, ensure_ascii=False))
     return 0
 
