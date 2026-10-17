@@ -4248,6 +4248,7 @@ h1 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 9px;
+  align-items: start;
   margin: 0 0 16px;
 }
 

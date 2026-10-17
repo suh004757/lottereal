@@ -105,7 +105,43 @@ function renderListings(data, filters = {}) {
   const grid = document.createElement('div');
   grid.className = 'lr-listing-grid';
   data.forEach((item) => grid.appendChild(buildListingCard(item)));
+  grid.appendChild(buildRequestCard());
   listContainer.appendChild(grid);
+}
+
+function buildRequestCard() {
+  const card = document.createElement('article');
+  card.className = 'lr-listing-request';
+  const kicker = document.createElement('p');
+  kicker.className = 'lr-kicker';
+  kicker.textContent = '맞춤 매물 요청';
+  const title = document.createElement('h3');
+  title.textContent = '찾는 매물이 없나요? 조건만 알려주세요';
+  const body = document.createElement('p');
+  body.textContent = '공개 전 매물과 직방·다방 등록 매물까지 함께 확인해 방문 전에 후보를 추려드립니다.';
+  const points = document.createElement('ul');
+  ['예산·보증금·월세', '희망 동네와 입주 시기', '꼭 필요한 조건 한두 가지'].forEach((text) => {
+    const li = document.createElement('li');
+    li.textContent = text;
+    points.appendChild(li);
+  });
+  const actions = document.createElement('div');
+  actions.className = 'lr-actions';
+  const call = document.createElement('a');
+  call.className = 'lr-btn lr-btn--primary';
+  call.href = SAFE_CONTACT_TEL;
+  call.textContent = '전화로 조건 말하기';
+  const form = document.createElement('a');
+  form.className = 'lr-btn lr-btn--ghost';
+  form.href = 'contact.html?intent=listing#inquiry-options';
+  form.textContent = '조건 남기기';
+  actions.append(call, form);
+  const intro = document.createElement('div');
+  intro.append(kicker, title, body);
+  const next = document.createElement('div');
+  next.append(points, actions);
+  card.append(intro, next);
+  return card;
 }
 
 function buildListingCard(item) {
