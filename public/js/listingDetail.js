@@ -52,18 +52,25 @@ async function init() {
 function renderDetail(listing) {
   if (titleEl) titleEl.textContent = listing.title || '';
 
-  const formattedPrice = formatPrice(listing.price, listing.metadata?.deposit, listing.property_type);
+  const formattedPrice = formatPrice(listing);
   const freshness = getListingFreshness(listing);
   const freshnessCopy = getListingFreshnessCopy(freshness, 'ko');
 
   const infoParts = [
     listing.address || listing.city || '',
     freshnessCopy && formattedPrice ? `${freshnessCopy.pricePrefix} ${formattedPrice}` : formattedPrice,
-    listing.property_type || ''
+    // 가격에 이미 거래유형이 들어 있으면 다시 붙이지 않습니다
+    listing.property_type && formattedPrice.includes(listing.property_type) ? '' : (listing.property_type || '')
   ].filter(Boolean);
   if (infoEl) infoEl.textContent = infoParts.join(' · ');
   if (tagsEl) tagsEl.innerHTML = (listing.tags || []).map((t) => `<span>${escapeHtml(t)}</span>`).join('');
-  if (featuresEl) featuresEl.innerHTML = (listing.features || []).map((f) => `<li>${escapeHtml(f)}</li>`).join('');
+  if (featuresEl) {
+    const features = listing.features || [];
+    featuresEl.innerHTML = features.map((f) => `<li>${escapeHtml(f)}</li>`).join('');
+    // 특징이 없으면 빈 제목을 남기지 않습니다
+    featuresEl.hidden = features.length === 0;
+    if (featuresEl.previousElementSibling?.tagName === 'H4') featuresEl.previousElementSibling.hidden = features.length === 0;
+  }
   if (descEl) {
     if (freshnessCopy) {
       descEl.insertAdjacentHTML('beforebegin', `
@@ -72,7 +79,8 @@ function renderDetail(listing) {
           <span>${freshnessCopy.message}</span>
         </div>`);
     }
-    descEl.textContent = getSafeListingDescription(listing, freshness, 'ko');
+    // 확인 필요 안내가 이미 같은 내용을 말하므로 보관용 설명 문단은 생략합니다
+    descEl.textContent = freshnessCopy ? '' : getSafeListingDescription(listing, freshness, 'ko');
   }
   if (noteEl) noteEl.textContent = listing.contactNote || '';
 
@@ -186,20 +194,29 @@ function applySeo(listing, formattedPrice, freshness) {
  * @param {string} type - 부동산 타입
  * @returns {string} 포맷팅된 가격 문자열
  */
-function formatPrice(price, deposit, type) {
-  if (!price) return '';
-  const p = Number(price);
-  const d = Number(deposit || 0);
-  const typeStr = (type || '').trim();
+function formatPrice(listing) {
+  const price = Number(listing.price || 0);
+  const metadata = listing.metadata || {};
+  const typeStr = String(listing.property_type || '').trim();
 
-  // 월세
+  // 월세: metadata.deposit가 있으면 price는 월세, 없으면 price가 보증금이고 월세는 설명에서 찾습니다
   if (typeStr === '월세' || typeStr === 'Monthly Rent') {
-    if (d > 0) return `${d.toLocaleString()} / ${p.toLocaleString()} 만원`;
-    return `${p.toLocaleString()} 만원 (월세)`;
+    const metaDeposit = Number(metadata.deposit || 0);
+    const deposit = metaDeposit || price;
+    const monthly = metaDeposit
+      ? price
+      : Number(metadata.monthly_rent || metadata.monthlyRent || 0) || parseMonthlyRent(listing.description);
+    if (deposit && monthly) return `보증금 ${deposit.toLocaleString()} / 월세 ${monthly.toLocaleString()}만원`;
+    return price ? `월세 ${price.toLocaleString()}만원` : '';
   }
 
   // 전세 또는 매매
-  return formatManwonAmount(p);
+  return price ? formatManwonAmount(price) : '';
+}
+
+function parseMonthlyRent(text) {
+  const match = String(text || '').match(/월세\s*([0-9,]+)\s*만원?/);
+  return match ? Number(match[1].replace(/,/g, '')) : 0;
 }
 
 /**

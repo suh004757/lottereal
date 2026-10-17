@@ -36,7 +36,7 @@ async function shoot(cdp, baseUrl, page, viewport, outDir, prepare) {
     format: 'png', captureBeyondViewport: true,
     clip: { x: 0, y: 0, width: viewport.width, height: result.value, scale: 1 },
   });
-  const file = path.join(outDir, `${page.replace(/[\/]/g, '_').replace(/\.html$/, '')}-${viewport.name}.png`);
+  const file = path.join(outDir, `${page.replace(/\?.*$/, '').replace(/[\/]/g, '_').replace(/\.html$/, '')}-${viewport.name}.png`);
   await writeFile(file, Buffer.from(data, 'base64'));
   await cdp.send('Target.closeTarget', { targetId });
   return file;
