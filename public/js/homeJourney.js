@@ -43,7 +43,9 @@
   const canAutoplay = () => inView && !pausedByUser && !reducedMotion.matches && !document.hidden;
 
   const sync = () => {
-    if (canAutoplay()) {
+    const autoplaying = canAutoplay();
+    root.classList.toggle('is-motion-paused', !autoplaying);
+    if (autoplaying) {
       if (!timer) timer = window.setInterval(() => setActive(active + 1), INTERVAL_MS);
     } else if (timer) {
       window.clearInterval(timer);

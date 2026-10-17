@@ -37,14 +37,34 @@ const phoneBtn = document.getElementById('phoneBtn');
  * 페이지 초기화 함수
  */
 async function init() {
-  const listing = id ? await getListingById(id) : null;
-  if (listing) {
-    renderDetail(listing);
-    bindPhoneBtn(listing);
-    bindInquiryButtons(listing);
-    return;
+  try {
+    const listing = id ? await getListingById(id) : null;
+    if (listing) {
+      renderDetail(listing);
+      bindPhoneBtn(listing);
+      bindInquiryButtons(listing);
+      return;
+    }
+    renderClosed();
+  } catch (error) {
+    console.error('매물 상세 로드 실패', error);
+    renderUnavailable();
   }
-  renderClosed();
+}
+
+function renderUnavailable() {
+  document.title = '매물 정보를 불러올 수 없습니다 | 롯데부동산';
+  if (titleEl) titleEl.textContent = '매물 정보를 잠시 불러올 수 없습니다';
+  if (infoEl) infoEl.textContent = '거래 완료 여부를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.';
+  if (descEl) {
+    descEl.replaceChildren();
+    const retry = document.createElement('button');
+    retry.type = 'button';
+    retry.className = 'lr-btn lr-btn--primary';
+    retry.textContent = '다시 시도';
+    retry.addEventListener('click', init);
+    descEl.appendChild(retry);
+  }
 }
 
 /**
@@ -163,9 +183,9 @@ function renderImageGallery(listing) {
 
   // Create thumbnails from validated URLs only
   thumbnailsEl.innerHTML = safeImages.map((image, index) => `
-    <div class="lr-detail__thumbnail ${index === 0 ? 'lr-detail__thumbnail--active' : ''}" data-image-index="${index}">
+    <button type="button" class="lr-detail__thumbnail ${index === 0 ? 'lr-detail__thumbnail--active' : ''}" data-image-index="${index}" aria-label="매물 이미지 ${index + 1} 보기" aria-pressed="${index === 0 ? 'true' : 'false'}">
       <img src="${escapeHtml(image)}" alt="매물 이미지 ${index + 1}">
-    </div>
+    </button>
   `).join('');
 
   // Add click handlers to thumbnails
@@ -177,7 +197,9 @@ function renderImageGallery(listing) {
 
       // Update active state
       thumbnails.forEach(t => t.classList.remove('lr-detail__thumbnail--active'));
+      thumbnails.forEach(t => t.setAttribute('aria-pressed', 'false'));
       thumbnail.classList.add('lr-detail__thumbnail--active');
+      thumbnail.setAttribute('aria-pressed', 'true');
     });
   });
 }

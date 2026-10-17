@@ -46,8 +46,8 @@ export function formatListingDisplayPrice(listing = {}, { emptyLabel = false } =
   const metadata = listing.metadata || {};
 
   if (type.includes('월세') || type === 'Monthly Rent') {
-    const knownDeposit = toAmount(metadata.deposit ?? listing.deposit);
-    const knownMonthly = toAmount(metadata.monthly_rent ?? metadata.monthlyRent);
+    const knownDeposit = toAmount(listing.deposit ?? metadata.deposit);
+    const knownMonthly = toAmount(listing.monthly_rent ?? metadata.monthly_rent ?? metadata.monthlyRent);
     const deposit = knownDeposit || price;
     const monthly = knownDeposit
       ? knownMonthly || price

@@ -19,7 +19,6 @@ import {
   updateListing,
   confirmListingAvailable,
   setListingClosed,
-  deleteListing,
   getDashboardStats,
   getRecentActivities,
   listListingsAdmin,
@@ -35,6 +34,7 @@ import { reportStaticHref } from './utils/reportUrls.mjs';
 import { initializeReportEditor } from './reportEditorCore.js';
 import { listReports } from './services/reportAdapter.js';
 import { signOutAdmin, getCurrentSessionUser, refreshAdminSession } from './services/authService.js';
+import { buildAdminListingPayload } from './utils/adminListingPayload.mjs';
 
 // ============================================
 // DOM 요소 참조
@@ -83,6 +83,7 @@ const modalOverlay = document.querySelector('.admin-modal__overlay');
 const propertyForm = document.getElementById('propertyForm');
 const transactionTypeSelect = document.querySelector('select[name="transactionType"]');
 const depositField = document.getElementById('depositField');
+const monthlyRentField = document.getElementById('monthlyRentField');
 const propertyImagesInput = document.getElementById('propertyImages');
 const imagePreviewContainer = document.getElementById('imagePreview');
 const propertyFormMessage = document.getElementById('propertyFormMessage');
@@ -129,6 +130,9 @@ let inquiryCommentSubmitGeneration = 0;
 let inquiryCommentSubmitting = false;
 let inquiryModalReturnFocus = null;
 let inquiryStatusUpdateInFlight = false;
+let propertyImageGeneration = 0;
+let propertyImagesPending = false;
+let propertyModalReturnFocus = null;
 
 // ============================================
 // 초기화
@@ -415,8 +419,7 @@ async function loadListingsAdmin() {
         closed: item.closed_at ? 'true' : 'false'
       });
       const editButton = createAdminButton('수정', 'admin-btn admin-btn--ghost', { edit: item.id });
-      const deleteButton = createAdminButton('삭제', 'admin-btn admin-btn--ghost danger', { delete: item.id });
-      actions.append(confirmButton, closeButton, editButton, deleteButton);
+      actions.append(confirmButton, closeButton, editButton);
       actionCell.appendChild(actions);
       tr.appendChild(actionCell);
       listingsTbody.appendChild(tr);
@@ -427,6 +430,7 @@ async function loadListingsAdmin() {
       btn.addEventListener('click', async () => {
         btn.disabled = true;
         try {
+          await refreshAdminSession();
           await confirmListingAvailable(btn.getAttribute('data-confirm'));
           loadListingsAdmin();
         } catch (err) {
@@ -442,6 +446,7 @@ async function loadListingsAdmin() {
       btn.addEventListener('click', async () => {
         btn.disabled = true;
         try {
+          await refreshAdminSession();
           await setListingClosed(btn.getAttribute('data-close'), btn.dataset.closed !== 'true');
           loadListingsAdmin();
         } catch (err) {
@@ -460,21 +465,7 @@ async function loadListingsAdmin() {
       });
     });
 
-    listingsTbody.querySelectorAll('[data-delete]').forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        const id = btn.getAttribute('data-delete');
-        if (!confirm('\uC774 \uB9E4\uBB3C\uC744 \uC0AD\uC81C\uD560\uAE4C\uC694?')) return;
-        try {
-          await deleteListing(id);
-          loadStats();
-          loadRecent();
-          loadListingsAdmin();
-        } catch (err) {
-          console.error('\uC0AD\uC81C \uC2E4\uD328', err);
-          alert('\uC0AD\uC81C \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4.');
-        }
-      });
-    });
+
   } catch (err) {
     console.error('\uB9E4\uBB3C \uAD00\uB9AC \uB85C\uB4DC \uC2E4\uD328', err);
     setTableMessage(listingsTbody, 7, '매물 불러오기 실패했습니다.');
@@ -615,13 +606,16 @@ function bindModal() {
   if (cancelModalBtn) cancelModalBtn.addEventListener('click', closeModal);
   if (modalOverlay) modalOverlay.addEventListener('click', closeModal);
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && propertyModal?.classList.contains('active')) closeModal();
+    if (!propertyModal?.classList.contains('active')) return;
+    if (e.key === 'Escape') closeModal();
+    else trapModalFocus(e, propertyModal);
   });
 
   if (transactionTypeSelect && depositField) {
     transactionTypeSelect.addEventListener('change', (e) => {
       const value = e.target.value || '';
       depositField.style.display = (value === '전세' || value === '월세') ? 'block' : 'none';
+      if (monthlyRentField) monthlyRentField.style.display = value === '월세' ? 'block' : 'none';
     });
   }
 
@@ -675,6 +669,9 @@ function bindLogout() {
  * @param {Array<string>} item.images - 이미지 URL 배열
  */
 function openModal(item) {
+  propertyImageGeneration += 1;
+  propertyImagesPending = false;
+  propertyModalReturnFocus = document.activeElement;
   editingId = item?.id || null;
   clearPropertyFormMessage();
   if (editingId) {
@@ -689,12 +686,15 @@ function openModal(item) {
   }
   propertyModal?.classList.add('active');
   document.body.style.overflow = 'hidden';
+  propertyForm?.querySelector('input, select, textarea, button')?.focus();
 }
 
 /**
  * 매물 모달을 닫고 폼 상태를 초기화합니다.
  */
 function closeModal() {
+  propertyImageGeneration += 1;
+  propertyImagesPending = false;
   propertyModal?.classList.remove('active');
   document.body.style.overflow = '';
   propertyForm?.reset();
@@ -703,6 +703,25 @@ function closeModal() {
   editingId = null;
   renderImagePreviews();
   clearPropertyFormMessage();
+  propertyModalReturnFocus?.focus?.();
+  propertyModalReturnFocus = null;
+}
+
+function trapModalFocus(event, modal) {
+  if (event.key !== 'Tab') return;
+  const focusable = Array.from(modal.querySelectorAll(
+    'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
+  )).filter((element) => !element.hidden && element.offsetParent !== null);
+  if (!focusable.length) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
 }
 
 function setPropertyFormMessage(message = '', status = 'info') {
@@ -881,35 +900,55 @@ function closeInquiryModal() {
  * @param {Event} e - 파일 입력 이벤트
  */
 async function onImagesSelected(e) {
+  const generation = ++propertyImageGeneration;
   const files = Array.from(e.target.files || []);
   if (files.length + uploadedImages.length > 10) {
     setPropertyFormMessage('최대 10개의 이미지만 업로드할 수 있습니다.', 'error');
     return;
   }
   if (!files.length) return;
+  propertyImagesPending = true;
+  togglePropertyFormDisabled(true);
   if (imagePreviewContainer) {
     imagePreviewContainer.innerHTML = '<div style="color: var(--admin-muted); padding: 12px;">이미지 처리 중...</div>';
   }
   setPropertyFormMessage('이미지를 처리하고 있습니다...', 'info');
-  for (const file of files) {
-    if (file.size > 5 * 1024 * 1024) {
-      setPropertyFormMessage(`${file.name} (이)가 5MB 용량 제한을 초과했습니다.`, 'error');
-      continue;
-    }
-    const resizedFile = await resizeImage(file);
-    const reader = new FileReader();
-    reader.onload = (ev) => {
+  try {
+    for (const file of files) {
+      if (file.size > 5 * 1024 * 1024) {
+        setPropertyFormMessage(`${file.name} (이)가 5MB 용량 제한을 초과했습니다.`, 'error');
+        continue;
+      }
+      const resizedFile = await resizeImage(file);
+      const preview = await readFileAsDataUrl(resizedFile);
+      if (generation !== propertyImageGeneration || !propertyModal?.classList.contains('active')) return;
       uploadedImages.push({
         file: resizedFile,
-        preview: ev.target.result,
+        preview,
         originalSize: file.size,
         resizedSize: resizedFile.size
       });
       renderImagePreviews();
-    };
-    reader.readAsDataURL(resizedFile);
+    }
+    if (generation === propertyImageGeneration) setPropertyFormMessage('이미지가 준비되었습니다.', 'success');
+  } catch (error) {
+    if (generation === propertyImageGeneration) setPropertyFormMessage(error?.message || '이미지를 처리하지 못했습니다.', 'error');
+  } finally {
+    if (generation === propertyImageGeneration) {
+      propertyImagesPending = false;
+      togglePropertyFormDisabled(false);
+    }
   }
-  setPropertyFormMessage('이미지가 준비되었습니다.', 'success');
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error || new Error('이미지 미리보기를 읽지 못했습니다.'));
+    reader.onabort = () => reject(new Error('이미지 미리보기가 취소되었습니다.'));
+    reader.readAsDataURL(file);
+  });
 }
 
 /**
@@ -978,6 +1017,10 @@ function bindPropertyForm() {
   if (!propertyForm) return;
   propertyForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (propertyImagesPending) {
+      setPropertyFormMessage('이미지 처리가 끝날 때까지 기다려 주세요.', 'info');
+      return;
+    }
     const formData = new FormData(propertyForm);
     formData.delete('images');
     const propertyData = Object.fromEntries(formData.entries());
@@ -987,29 +1030,7 @@ function bindPropertyForm() {
       togglePropertyFormDisabled(true);
       const imageUrls = await uploadImagesToSupabase(uploadedImages);
       setPropertyFormMessage(editingId ? '매물 정보를 업데이트하는 중...' : '새 매물을 등록하는 중...', 'info');
-      const payload = {
-        title: propertyData.title || propertyData.name || '관리자 등록 매물',
-        description: propertyData.description || '',
-        price: propertyData.price ? Number(propertyData.price) : null,
-        currency: 'KRW',
-        location: {
-          address: propertyData.address || '',
-          city: propertyData.city || 'Seoul',
-          district: propertyData.district || 'Songpa'
-        },
-        propertyType: propertyData.propertyType || propertyData.transactionType || '',
-        images: imageUrls,
-        contact: {
-          name: propertyData.contactName || '',
-          phone: propertyData.contactPhone || '',
-          email: propertyData.contactEmail || ''
-        },
-        metadata: {
-          source: 'admin-dashboard',
-          submittedAt: new Date().toISOString(),
-          deposit: propertyData.deposit ? Number(propertyData.deposit) : 0
-        }
-      };
+      const payload = buildAdminListingPayload(propertyData, imageUrls);
 
       let successMessage = '';
       if (editingId) {
@@ -1104,10 +1125,12 @@ function fillForm(item) {
   propertyForm.querySelector('[name="title"]').value = item.title || '';
   propertyForm.querySelector('[name="transactionType"]').value = item.property_type || '';
   propertyForm.querySelector('[name="price"]').value = item.price || '';
-  // Populate deposit if available in metadata
-  const depositVal = item.metadata?.deposit || '';
+  const depositVal = item.deposit ?? item.metadata?.deposit ?? '';
   if (propertyForm.querySelector('[name="deposit"]')) {
     propertyForm.querySelector('[name="deposit"]').value = depositVal;
+  }
+  if (propertyForm.querySelector('[name="monthlyRent"]')) {
+    propertyForm.querySelector('[name="monthlyRent"]').value = item.monthly_rent ?? item.metadata?.monthly_rent ?? '';
   }
   // Trigger change to show/hide deposit field
   const event = new Event('change');

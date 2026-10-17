@@ -21,6 +21,7 @@ const reportSlug = urlParams.get('slug');
 
 let currentReport = null;
 let publishedReports = [];
+let evidenceReturnFocus = null;
 
 function initReportPage() {
   loadReport();
@@ -39,8 +40,12 @@ function initReportPage() {
   if (modal) {
     modal.addEventListener('click', (event) => {
       if (event.target === modal) {
-        closeEvidence();
+        window.closeEvidence();
       }
+    });
+    modal.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') window.closeEvidence();
+      else trapModalFocus(event, modal);
     });
   }
 }
@@ -62,15 +67,20 @@ async function loadReport() {
       return;
     }
 
-    publishedReports = await listPublishedReports({ limit: 50 });
-
     renderMetadata();
     renderReport();
     renderRevisions();
-    renderArchive();
     renderRelatedHubs();
-    renderRelatedReports();
-    renderNeighbors();
+
+    try {
+      publishedReports = await listPublishedReports({ limit: 50 });
+      renderArchive();
+      renderRelatedReports();
+      renderNeighbors();
+    } catch (auxiliaryError) {
+      console.error('Error loading report archive:', auxiliaryError);
+      renderAuxiliaryFallback();
+    }
 
     incrementReportViews(currentReport.slug).catch((error) => {
       console.warn('[Analytics] Failed to increment view count:', error);
@@ -146,6 +156,18 @@ function renderArchive() {
     .slice(0, 6);
 
   renderReportCards(archiveList, reports, '다른 발행 리포트가 없습니다.');
+}
+
+function renderAuxiliaryFallback() {
+  const fallbacks = [
+    ['report-archive-list', '최근 리포트를 불러오지 못했습니다.'],
+    ['report-related-list', '관련 리포트를 불러오지 못했습니다.'],
+    ['report-neighbors', '이전·다음 리포트를 불러오지 못했습니다.']
+  ];
+  fallbacks.forEach(([id, message]) => {
+    const container = document.getElementById(id);
+    if (container) container.innerHTML = `<div class="lr-report-archive__empty">${escapeHtml(message)}</div>`;
+  });
 }
 
 function renderRelatedHubs() {
@@ -343,8 +365,10 @@ window.openEvidence = function openEvidence() {
     <div>${sourcesHtml || '<p style="color: #6b7280;">자료 출처가 없습니다.</p>'}</div>
   `;
 
+  evidenceReturnFocus = document.activeElement;
   modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
+  modal.querySelector('[data-report-close-evidence]')?.focus();
 };
 
 window.closeEvidence = function closeEvidence() {
@@ -352,7 +376,26 @@ window.closeEvidence = function closeEvidence() {
   if (!modal) return;
   modal.style.display = 'none';
   document.body.style.overflow = '';
+  evidenceReturnFocus?.focus?.();
+  evidenceReturnFocus = null;
 };
+
+function trapModalFocus(event, modal) {
+  if (event.key !== 'Tab') return;
+  const focusable = Array.from(modal.querySelectorAll(
+    'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+  )).filter((element) => element.offsetParent !== null);
+  if (!focusable.length) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
 
 window.copySummary = function copySummary() {
   const summary = `${currentReport.title}\n\n${currentReport.summary}\n\n자세한 내용: ${reportStaticUrl(currentReport.slug)}`;

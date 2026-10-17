@@ -101,6 +101,17 @@ assert.equal(grouped.match(/매물번호 50170001/g).length, 1);
 assert.match(grouped, /관심 3회/);
 assert.match(grouped, /2026\.07\.18/);
 
+// A listing remains one group even when the newest transaction label changed.
+const changedType = normalizePublicReceipts([
+  rows[1],
+  { ...rows[1], transaction_type: '전세', received_bucket: '2026-07-19' }
+], now);
+const changedTypeHtml = renderPublicReceipts(changedType, null);
+assert.equal(changedTypeHtml.match(/매물번호 50170001/g).length, 1);
+assert.match(changedTypeHtml, /관심 2회/);
+assert.match(changedTypeHtml, /2026\.07\.19/);
+assert.match(changedTypeHtml, /전세/);
+
 // Twelve repeats of one listing must not crowd out other listings
 const crowded = [
   ...Array.from({ length: 12 }, (_, index) => ({ ...rows[1], received_bucket: `2026-08-${String(27 - index).padStart(2, '0')}` })),

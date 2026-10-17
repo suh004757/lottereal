@@ -3,6 +3,8 @@ export const PUBLIC_LISTING_SELECT_FIELDS = Object.freeze([
   'title',
   'description',
   'price',
+  'deposit',
+  'monthly_rent',
   'currency',
   'property_type',
   'address',

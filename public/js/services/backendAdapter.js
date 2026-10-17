@@ -7,6 +7,12 @@ import { APP_CONFIG } from '../config/appConfig.js';
 import { getSupabaseClient } from '../config/supabaseConfig.js';
 import { PUBLIC_LISTING_SELECT_QUERY } from '../publicListingFields.mjs';
 import { SAFE_CONTACT_PHONE } from '../utils/contactPhone.mjs';
+import { mapListingPayloadToDatabase } from '../utils/adminListingPayload.mjs';
+import {
+  assertSupabasePrivilegedProvider,
+  getPublicListingFromSupabase,
+  listPublicListingsFromSupabase
+} from './publicListingRepository.mjs';
 
 // 리스팅 페이로드 스키마 정의
 export const LISTING_PAYLOAD_SCHEMA = {
@@ -187,7 +193,7 @@ export async function updateListing(id, patch) {
  */
 export async function confirmListingAvailable(id) {
   const provider = (APP_CONFIG.BACKEND_PROVIDER || 'mock').toLowerCase();
-  if (provider !== 'supabase') return new Date().toISOString();
+  assertSupabasePrivilegedProvider(provider);
   const supabase = getSupabaseClient();
   if (!supabase) throw new Error('Supabase client unavailable');
   const { data, error } = await supabase.rpc('admin_confirm_listing_available', { listing_id: id });
@@ -200,7 +206,7 @@ export async function confirmListingAvailable(id) {
  */
 export async function setListingClosed(id, closed) {
   const provider = (APP_CONFIG.BACKEND_PROVIDER || 'mock').toLowerCase();
-  if (provider !== 'supabase') return closed ? new Date().toISOString() : null;
+  assertSupabasePrivilegedProvider(provider);
   const supabase = getSupabaseClient();
   if (!supabase) throw new Error('Supabase client unavailable');
   const { data, error } = await supabase.rpc('admin_set_listing_closed', { listing_id: id, closed: Boolean(closed) });
@@ -208,14 +214,6 @@ export async function setListingClosed(id, closed) {
   return data;
 }
 
-/**
- * Admin: delete listing
- */
-export async function deleteListing(id) {
-  const provider = (APP_CONFIG.BACKEND_PROVIDER || 'mock').toLowerCase();
-  if (provider === 'supabase') return deleteListingSupabase(id);
-  return { id, deleted: true };
-}
 
 /**
  * Admin: list inquiries
@@ -299,23 +297,7 @@ async function createListingSupabase(payload) {
     return createListingMock(payload);
   }
 
-  const dbPayload = {
-    title: payload.title,
-    description: payload.description,
-    price: payload.price,
-    currency: payload.currency || 'KRW',
-    address: payload.location?.address,
-    city: payload.location?.city,
-    district: payload.location?.district,
-    latitude: payload.location?.latitude,
-    longitude: payload.location?.longitude,
-    property_type: payload.propertyType,
-    images: payload.images,
-    contact_name: payload.contact?.name,
-    contact_phone: SAFE_CONTACT_PHONE,
-    contact_email: payload.contact?.email,
-    user_id: payload.metadata?.userId
-  };
+  const dbPayload = { ...mapListingPayloadToDatabase(payload), contact_phone: SAFE_CONTACT_PHONE };
 
   const { data, error } = await supabase
     .from('property_listings')
@@ -412,44 +394,14 @@ async function createInquiryMock(payload) {
 
 async function listListingsPublicSupabase({ query, page, pageSize, propertyType, city, district, minPrice, maxPrice }) {
   const supabase = getSupabaseClient();
-  if (!supabase) return listListingsMock();
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
-  let req = supabase
-    .from('property_listings')
-    .select(PUBLIC_LISTING_SELECT_QUERY)
-    .order('created_at', { ascending: false })
-    .range(from, to);
-  if (query) {
-    const q = `%${query}%`;
-    req = req.or(`title.ilike.${q},description.ilike.${q},address.ilike.${q},city.ilike.${q},district.ilike.${q}`);
-  }
-  if (propertyType) req = req.eq('property_type', propertyType);
-  if (city) req = req.ilike('city', `%${city}%`);
-  if (district) req = req.ilike('district', `%${district}%`);
-  if (minPrice) req = req.gte('price', Number(minPrice));
-  if (maxPrice) req = req.lte('price', Number(maxPrice));
-  const { data, error } = await req;
-  if (error) {
-    console.error('Supabase listListingsPublic error', error);
-    return listListingsMock();
-  }
-  return data || [];
+  return listPublicListingsFromSupabase(supabase, PUBLIC_LISTING_SELECT_QUERY, {
+    query, page, pageSize, propertyType, city, district, minPrice, maxPrice
+  });
 }
 
 async function getListingByIdSupabase(id) {
   const supabase = getSupabaseClient();
-  if (!supabase) return null;
-  const { data, error } = await supabase
-    .from('property_listings')
-    .select(PUBLIC_LISTING_SELECT_QUERY)
-    .eq('id', id)
-    .single();
-  if (error) {
-    console.error('Supabase getListingById error', error);
-    return null;
-  }
-  return data;
+  return getPublicListingFromSupabase(supabase, PUBLIC_LISTING_SELECT_QUERY, id);
 }
 
 async function getDashboardStatsSupabase() {
@@ -528,22 +480,7 @@ async function listListingsAdminSupabase({ page, pageSize, sort, direction }) {
 async function updateListingSupabase(id, patch) {
   const supabase = getSupabaseClient();
   if (!supabase) return null;
-  const dbPatch = {
-    title: patch.title,
-    description: patch.description,
-    price: patch.price,
-    currency: patch.currency,
-    address: patch.location?.address || patch.address,
-    city: patch.location?.city || patch.city,
-    district: patch.location?.district || patch.district,
-    latitude: patch.location?.latitude,
-    longitude: patch.location?.longitude,
-    property_type: patch.propertyType || patch.property_type,
-    images: patch.images,
-    contact_name: patch.contact?.name || patch.contact_name,
-    contact_phone: SAFE_CONTACT_PHONE,
-    contact_email: patch.contact?.email || patch.contact_email
-  };
+  const dbPatch = { ...mapListingPayloadToDatabase(patch), contact_phone: SAFE_CONTACT_PHONE };
   const { data, error } = await supabase
     .from('property_listings')
     .update(dbPatch)
@@ -557,16 +494,6 @@ async function updateListingSupabase(id, patch) {
   return data;
 }
 
-async function deleteListingSupabase(id) {
-  const supabase = getSupabaseClient();
-  if (!supabase) return null;
-  const { error } = await supabase.from('property_listings').delete().eq('id', id);
-  if (error) {
-    console.error('Supabase deleteListing error', error);
-    throw error;
-  }
-  return { id, deleted: true };
-}
 
 async function listInquiriesAdminSupabase({ page, pageSize, status, query }) {
   const supabase = getSupabaseClient();

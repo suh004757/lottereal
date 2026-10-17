@@ -69,8 +69,12 @@ class PublicListingColumnPrivacyMigrationTest(unittest.TestCase):
 
     def test_admin_adapter_uses_rpc_and_write_readbacks_use_public_projection(self):
         source = (PUBLIC / "js" / "services" / "backendAdapter.js").read_text(encoding="utf-8-sig")
+        repository = (PUBLIC / "js" / "services" / "publicListingRepository.mjs").read_text(encoding="utf-8-sig")
         self.assertIn(".rpc('admin_list_property_listings'", source)
-        self.assertGreaterEqual(source.count(".select(PUBLIC_LISTING_SELECT_QUERY)"), 4)
+        self.assertGreaterEqual(source.count(".select(PUBLIC_LISTING_SELECT_QUERY)"), 2)
+        self.assertIn("listPublicListingsFromSupabase(supabase, PUBLIC_LISTING_SELECT_QUERY", source)
+        self.assertIn("getPublicListingFromSupabase(supabase, PUBLIC_LISTING_SELECT_QUERY", source)
+        self.assertGreaterEqual(repository.count(".select(selectQuery)"), 2)
         self.assertGreaterEqual(source.count(".select('id', { count: 'exact', head: true })"), 2)
 
 

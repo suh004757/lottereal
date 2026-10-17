@@ -3109,12 +3109,19 @@ h1 {
   flex-shrink: 0;
   width: 80px;
   height: 60px;
+  padding: 0;
+  appearance: none;
   border-radius: var(--lr-radius-sm);
   border: 2px solid var(--lr-border);
   overflow: hidden;
   cursor: pointer;
   transition: all 0.2s ease;
   background: var(--lr-surface);
+}
+
+.lr-detail__thumbnail:focus-visible {
+  outline: 3px solid var(--lr-primary);
+  outline-offset: 3px;
 }
 
 .lr-detail__thumbnail:hover {

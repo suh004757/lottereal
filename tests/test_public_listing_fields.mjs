@@ -20,6 +20,8 @@ test('public listing projection keeps every field required by public cards and d
     'title',
     'description',
     'price',
+    'deposit',
+    'monthly_rent',
     'currency',
     'property_type',
     'address',

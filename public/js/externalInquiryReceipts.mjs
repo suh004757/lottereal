@@ -40,7 +40,7 @@ export function normalizePublicReceipts(rows = [], now = new Date()) {
 const MAX_LISTINGS = 12;
 
 function listingKey(receipt) {
-  return `${receipt.listingNumber}|${receipt.transactionType}`;
+  return `${receipt.source}|${receipt.listingNumber}`;
 }
 
 export function renderPublicReceipts(receipts = [], summary = null) {
@@ -148,6 +148,7 @@ function normalizeRow(row, nowMs) {
     if (!Number.isFinite(receivedAtMs)) return null;
     if (receivedAtMs > nowMs + 5 * 60 * 1000 || receivedAtMs < nowMs - 24 * 60 * 60 * 1000) return null;
     return {
+      source: row.source,
       sourceLabel: SOURCE_LABELS[row.source],
       listingNumber,
       transactionType,
@@ -168,6 +169,7 @@ function normalizeRow(row, nowMs) {
     || receivedBucket > latestHistoryDate
   ) return null;
   return {
+    source: row.source,
     sourceLabel: SOURCE_LABELS[row.source],
     listingNumber,
     transactionType,

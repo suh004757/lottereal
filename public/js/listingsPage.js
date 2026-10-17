@@ -8,6 +8,8 @@ import { SAFE_CONTACT_TEL, getPhoneButtonLabel } from './utils/contactPhone.mjs'
 import { formatListingDisplayPrice } from './utils/propertyPrice.mjs';
 import { getListingDetailUrl } from './utils/listingRoutes.mjs';
 import { getExternalProfileLinks } from './config/externalProfiles.mjs';
+import { safeImageUrl } from './publicRenderSecurity.mjs';
+import { createRequestGeneration } from './utils/requestGeneration.mjs';
 import {
   getListingFreshness,
   getListingFreshnessCopy,
@@ -16,6 +18,7 @@ import {
 
 const listContainer = document.querySelector('[data-listings-grid]');
 const filterForm = document.querySelector('[data-filter-form]');
+const listingRequests = createRequestGeneration();
 
 loadListings(readFilters());
 
@@ -49,6 +52,7 @@ function readFilters() {
 
 async function loadListings(filters = {}) {
   if (!listContainer) return;
+  const requestGeneration = listingRequests.begin();
   listContainer.innerHTML = '<div class="lr-listing-state">매물을 불러오고 있습니다...</div>';
   try {
     let data = await listListingsPublic({
@@ -60,19 +64,23 @@ async function loadListings(filters = {}) {
       pageSize: 50
     });
 
+    if (!listingRequests.isCurrent(requestGeneration)) return;
     if (window.LR_translate) {
       data = window.LR_translate.properties(data);
     }
 
     renderListings(data, filters);
   } catch (err) {
+    if (!listingRequests.isCurrent(requestGeneration)) return;
     console.error('리스트 로드 실패', err);
     listContainer.innerHTML = `
       <div class="lr-listing-state lr-listing-state--error">
         <strong>매물 목록을 불러오지 못했습니다.</strong>
         <span>전화 주시면 현재 가능한 매물을 바로 확인해드리겠습니다.</span>
-        <a class="lr-btn lr-btn--primary" href="tel:050714025055">전화로 문의</a>
+        <button class="lr-btn lr-btn--primary" type="button" data-listings-retry>다시 시도</button>
+        <a class="lr-btn lr-btn--ghost" href="tel:050714025055">전화로 문의</a>
       </div>`;
+    listContainer.querySelector('[data-listings-retry]')?.addEventListener('click', () => loadListings(readFilters()));
   }
 }
 
@@ -175,7 +183,8 @@ function buildListingCard(item) {
   const card = document.createElement('article');
   card.className = 'lr-card lr-card--listing lr-card--listing-premium';
 
-  const image = item.image || (Array.isArray(item.images) && item.images[0]) || 'img/bg-img/lotte_street_view.webp';
+  const image = safeImageUrl(item.image || (Array.isArray(item.images) && item.images[0]))
+    || 'img/bg-img/lotte_street_view.webp';
   const badge = item.property_type || item.type || '매물';
   const telLink = SAFE_CONTACT_TEL;
   const details = extractDetails(item);
@@ -187,10 +196,15 @@ function buildListingCard(item) {
   const price = formatListingDisplayPrice(item, { emptyLabel: true });
   const detailUrl = getListingDetailUrl(item);
 
+  const thumbnail = document.createElement('a');
+  thumbnail.className = 'lr-card__thumb lr-listing-thumb';
+  thumbnail.href = detailUrl;
+  thumbnail.setAttribute('aria-label', item.title || '매물 상세 보기');
+  thumbnail.style.backgroundImage = `url(${JSON.stringify(image)})`;
+  const badgeElement = document.createElement('span');
+  badgeElement.textContent = badge;
+  thumbnail.appendChild(badgeElement);
   card.innerHTML = `
-    <a class="lr-card__thumb lr-listing-thumb" href="${detailUrl}" style="background-image:url('${escapeAttribute(image)}');" aria-label="${escapeAttribute(item.title || '매물 상세 보기')}">
-      <span>${escapeHtml(badge)}</span>
-    </a>
     <div class="lr-card__body">
       <p class="lr-listing-location">${escapeHtml(buildLocation(item))}</p>
       <h3>${escapeHtml(item.title || '상세 매물')}</h3>
@@ -210,6 +224,7 @@ function buildListingCard(item) {
       </div>
     </div>
   `;
+  card.prepend(thumbnail);
   return card;
 }
 
@@ -270,8 +285,4 @@ function escapeHtml(value) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
-}
-
-function escapeAttribute(value) {
-  return escapeHtml(value).replace(/`/g, '&#096;');
 }

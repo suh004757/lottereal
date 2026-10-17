@@ -22,7 +22,16 @@ function publicProfileUrl(value, hosts) {
   } catch {
     return '';
   }
-  if (url.protocol !== 'https:' || !hosts.includes(url.hostname) || url.search || url.username || url.password) return '';
+  if (
+    url.protocol !== 'https:'
+    || !hosts.includes(url.hostname)
+    || url.search
+    || url.hash
+    || url.username
+    || url.password
+  ) return '';
+  const profileMatch = /^\/agent\/([A-Za-z0-9-]+)\/?$/.exec(url.pathname);
+  if (!profileMatch || /(?:admin|auth|callback|login|private|secret|token)/i.test(profileMatch[1])) return '';
   return url.href;
 }
 

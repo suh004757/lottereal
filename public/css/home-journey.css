@@ -82,6 +82,11 @@
   transform-origin: center;
 }
 
+.lr-journey.is-motion-paused .lr-journey__scene *,
+.lr-journey.is-motion-paused .lr-journey__copy {
+  animation-play-state: paused !important;
+}
+
 .lr-journey__scene text {
   fill: #fff;
   font-size: 15px;

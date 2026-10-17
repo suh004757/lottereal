@@ -330,11 +330,11 @@
     </footer>
 
     <!-- Evidence Modal -->
-    <div id="evidence-modal" class="lr-modal" style="display: none;">
+    <div id="evidence-modal" class="lr-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="evidence-modal-title">
         <div class="lr-modal__content">
             <div class="lr-modal__header">
-                <h3>데이터 근거 및 출처</h3>
-                <button class="lr-modal__close" data-report-close-evidence>&times;</button>
+                <h3 id="evidence-modal-title">데이터 근거 및 출처</h3>
+                <button type="button" class="lr-modal__close" data-report-close-evidence aria-label="자료 출처 닫기">&times;</button>
             </div>
             <div class="lr-modal__body" id="evidence-content">
                 <!-- Populated by JS -->
