@@ -174,6 +174,14 @@ function isContractGuidance(report) {
   return contentType === 'dispute_case' || contentType.endsWith('_checklist');
 }
 
+function shareImageName(report) {
+  const contentType = String(report?.metadata?.content_type || '').trim();
+  if (contentType === 'dispute_case') return 'report-dispute.png';
+  if (contentType.endsWith('_checklist')) return 'report-checklist.png';
+  if (contentType.endsWith('_guide') || contentType.endsWith('_explainer')) return 'report-guide.png';
+  return 'report-market.png';
+}
+
 function renderReportCta(report) {
   if (isContractGuidance(report)) {
     return '<section class="lr-section"><div class="lr-container lr-cta"><div>'
@@ -240,7 +248,10 @@ export function renderStaticReport(report, siteUrl = 'https://lottes.co.kr', opt
   <meta property="og:title" content="${escapeHtml(title)} | 롯데부동산">
   <meta property="og:description" content="${escapeHtml(summary)}">
   <meta property="og:url" content="${escapeHtml(canonical)}">
-  <meta property="og:image" content="${base}/img/bg-img/lotte_street_view.png">
+  <meta property="og:image" content="${base}/img/og/${shareImageName(report)}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
   <script type="application/ld+json">${jsonLd(schema)}</script>
   <script src="../js/privacyAnalytics.js"></script>
   <link rel="icon" href="../img/core-img/favicon.ico">

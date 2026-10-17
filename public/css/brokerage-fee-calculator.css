@@ -127,6 +127,26 @@
 .fee-result__label { margin: 54px 0 6px; color: rgba(255,255,255,.6); }
 .fee-result__amount { display: block; padding-bottom: 30px; color: #f0c57d; border-bottom: 1px solid rgba(255,255,255,.16); font-family: 'Playfair Display','Noto Sans KR',serif; font-size: clamp(2.4rem, 5vw, 4.1rem); line-height: 1.15; overflow-wrap: anywhere; }
 .fee-result__notice { margin: 15px 0 28px; color: rgba(255,255,255,.74); }
+.fee-bands { margin: 0 0 26px; padding: 18px; border-radius: 4px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); }
+.fee-bands__title { margin: 0 0 14px; color: rgba(255,255,255,.62); font-size: .8rem; font-weight: 700; letter-spacing: .04em; }
+.fee-bands__track { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 3px; margin: 0; padding: 0; list-style: none; }
+.fee-bands__track li { position: relative; display: grid; gap: 6px; margin: 0; padding: 12px 4px 10px; text-align: center; background: rgba(255,255,255,.08); transition: background .4s ease, transform .4s ease; animation: fee-band-in .5s cubic-bezier(.2,.8,.2,1) both; }
+.fee-bands__track li::before { display: none; }
+.fee-bands__track li:first-child { border-radius: 4px 0 0 4px; }
+.fee-bands__track li:last-child { border-radius: 0 4px 4px 0; }
+.fee-bands__track li:nth-child(2) { animation-delay: .05s; } .fee-bands__track li:nth-child(3) { animation-delay: .1s; }
+.fee-bands__track li:nth-child(4) { animation-delay: .15s; } .fee-bands__track li:nth-child(5) { animation-delay: .2s; }
+.fee-bands__track li:nth-child(6) { animation-delay: .25s; }
+.fee-bands__track strong { color: rgba(255,255,255,.82); font-size: .92rem; }
+.fee-bands__track span { color: rgba(255,255,255,.5); font-size: .68rem; white-space: nowrap; letter-spacing: -.02em; }
+.fee-bands__track li.is-active { background: #f0c57d; transform: translateY(-3px); }
+.fee-bands__track li.is-active strong, .fee-bands__track li.is-active span { color: var(--fee-ink, #111827); }
+.fee-bands__marker { position: absolute; bottom: -9px; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 3px #f0c57d; animation: fee-marker-in .6s .35s cubic-bezier(.3,1.5,.5,1) both; }
+.fee-bands__note { margin: 20px 0 0; color: rgba(255,255,255,.74); font-size: .86rem; line-height: 1.6; }
+@keyframes fee-band-in { from { opacity: 0; transform: translateY(8px); } }
+@keyframes fee-marker-in { from { opacity: 0; transform: scale(0); } }
+@media (max-width: 480px) { .fee-bands__track span { font-size: .6rem; white-space: normal; overflow-wrap: anywhere; } .fee-bands__track strong { font-size: .8rem; } }
+@media (prefers-reduced-motion: reduce) { .fee-bands__track li, .fee-bands__marker { animation: none; transition: none; } }
 .fee-breakdown { margin: 0; }
 .fee-breakdown div { display: flex; padding: 13px 0; justify-content: space-between; gap: 24px; border-bottom: 1px solid rgba(255,255,255,.1); }
 .fee-breakdown dt { color: rgba(255,255,255,.58); }

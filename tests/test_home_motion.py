@@ -39,6 +39,25 @@ class HomeMotionTests(unittest.TestCase):
             self.assertNotIn("${", markup)
         self.assertIn("${renderCover(report)}", self.preview)
 
+    def test_weekly_chart_states_source_date_and_disclaimer(self):
+        stats = self.home.split('id="official-stats"', 1)[1].split("</section>", 1)[0]
+        self.assertEqual(stats.count('class="lr-weekly__row '), 6)
+        self.assertIn("2026-10-12 기준", stats)
+        self.assertIn("한국부동산원", stats)
+        self.assertIn("매수·매도 권유가 아닙니다", stats)
+        self.assertIn("@media (prefers-reduced-motion: reduce)", self.css)
+
+
+class ReportShareCardTests(unittest.TestCase):
+    def test_exporter_maps_report_types_to_existing_share_cards(self):
+        exporter = (ROOT / "scripts" / "export_static_reports.mjs").read_text(encoding="utf-8")
+        for name in ("market", "checklist", "guide", "dispute"):
+            self.assertIn(f"report-{name}.png", exporter)
+            self.assertTrue((PUBLIC / "img" / "og" / f"report-{name}.png").is_file())
+        for page in (PUBLIC / "reports").glob("*.html"):
+            html = page.read_text(encoding="utf-8")
+            self.assertRegex(html, r'og:image" content="https://lottes\.co\.kr/img/og/report-(market|checklist|guide|dispute)\.png"')
+
 
 if __name__ == "__main__":
     unittest.main()

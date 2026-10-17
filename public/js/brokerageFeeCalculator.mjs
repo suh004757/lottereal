@@ -45,6 +45,12 @@ function rentalAmount(deposit, monthlyRent) {
   };
 }
 
+export function housingFeeBands(transactionType) {
+  if (transactionType === 'sale') return HOUSING_SALE_BANDS;
+  if (transactionType === 'rent') return HOUSING_RENT_BANDS;
+  return null;
+}
+
 const MAX_TRANSACTION_AMOUNT = 100_000_000_000_000;
 
 function requireAmount(value, { allowZero = false } = {}) {

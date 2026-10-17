@@ -1,4 +1,4 @@
-import { calculateBrokerageFee } from './brokerageFeeCalculator.mjs';
+import { calculateBrokerageFee, housingFeeBands } from './brokerageFeeCalculator.mjs';
 
 const WON_PER_MANWON = 10_000;
 const won = new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW', maximumFractionDigits: 0 });
@@ -20,6 +20,74 @@ export function formatKoreanAmount(value) {
   if (eok) parts.push(`${eok.toLocaleString('ko-KR')}억`);
   if (man) parts.push(`${man.toLocaleString('ko-KR')}만`);
   return `${parts.join(' ')}원`;
+}
+
+export function formatBandBoundary(value) {
+  if (value >= 100_000_000) return `${value / 100_000_000}억`;
+  return `${value / 10_000_000}천만`;
+}
+
+export function bandPosition(bands, amount) {
+  const index = bands.findIndex((band) => amount < band.below);
+  const lower = index > 0 ? bands[index - 1].below : 0;
+  const upper = Number.isFinite(bands[index].below) ? bands[index].below : lower * 2;
+  return { index, offset: Math.min(Math.max((amount - lower) / (upper - lower), 0.04), 0.96) };
+}
+
+function renderBands(result, transactionType, propertyType) {
+  const wrap = document.querySelector('[data-result-bands]');
+  const trackList = document.querySelector('[data-result-band-track]');
+  const note = document.querySelector('[data-result-band-note]');
+  if (!wrap || !trackList || !note) return;
+  const bands = propertyType === 'housing' ? housingFeeBands(transactionType) : null;
+  trackList.replaceChildren();
+  if (!bands) {
+    wrap.hidden = true;
+    return;
+  }
+  const { index, offset } = bandPosition(bands, result.transactionAmount);
+  bands.forEach((band, i) => {
+    const item = document.createElement('li');
+    item.className = i === index ? 'is-active' : '';
+    const rate = document.createElement('strong');
+    rate.textContent = `${(band.rate * 100).toFixed(1)}%`;
+    const range = document.createElement('span');
+    const lower = i > 0 ? formatBandBoundary(bands[i - 1].below) : '';
+    range.textContent = Number.isFinite(band.below) ? `${lower}~${formatBandBoundary(band.below)}` : `${lower}~`;
+    item.append(rate, range);
+    if (i === index) {
+      const marker = document.createElement('i');
+      marker.className = 'fee-bands__marker';
+      marker.style.left = `${(offset * 100).toFixed(1)}%`;
+      item.append(marker);
+    }
+    trackList.append(item);
+  });
+  const capped = result.cap !== null && Math.floor(result.transactionAmount * result.rate) > result.cap;
+  note.textContent = capped
+    ? `이 구간은 한도액 ${won.format(result.cap)}이 적용되어, 요율 계산값보다 상한액이 낮아졌습니다.`
+    : `${(result.rate * 100).toFixed(1)}% 구간에 해당합니다. 금액이 다음 구간으로 넘어가면 요율이 바뀝니다.`;
+  wrap.hidden = false;
+}
+
+function countUp(node, target) {
+  const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const resultRegion = document.querySelector('#fee-result');
+  if (reduce || target <= 0) {
+    node.textContent = won.format(target);
+    return;
+  }
+  resultRegion?.setAttribute('aria-busy', 'true');
+  const start = performance.now();
+  const duration = 800;
+  const step = (now) => {
+    const progress = Math.min((now - start) / duration, 1);
+    const eased = 1 - (1 - progress) ** 3;
+    node.textContent = won.format(Math.round(target * eased));
+    if (progress < 1) requestAnimationFrame(step);
+    else resultRegion?.setAttribute('aria-busy', 'false');
+  };
+  requestAnimationFrame(step);
 }
 
 function track(name) {
@@ -82,7 +150,7 @@ function init() {
         input.monthlyRent = manWonToWon(form.elements.monthlyRent.value || 0);
       }
       const result = calculateBrokerageFee(input);
-      document.querySelector('[data-result-fee]').textContent = won.format(result.ceilingFee);
+      countUp(document.querySelector('[data-result-fee]'), result.ceilingFee);
       document.querySelector('[data-result-vat]').textContent = won.format(result.vatAtTenPercent);
       document.querySelector('[data-result-total-with-vat]').textContent = won.format(result.totalWithVatAtTenPercent);
       document.querySelector('[data-result-amount]').textContent = won.format(result.transactionAmount);
@@ -93,6 +161,7 @@ function init() {
       if (result.monthlyMultiplier !== null) {
         document.querySelector('[data-result-formula]').textContent = `보증금 + 월세 × ${result.monthlyMultiplier}`;
       }
+      renderBands(result, transactionType, propertyType);
       resultEmpty.hidden = true;
       resultContent.hidden = false;
       document.querySelector('#fee-result')?.focus();
