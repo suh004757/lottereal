@@ -19,7 +19,7 @@
   border: 1px solid rgba(255,255,255,.26);
   border-radius: 999px;
   color: #fff;
-  background: linear-gradient(135deg, #173650, #245867);
+  background: linear-gradient(135deg, #1b4478, #23558f);
   box-shadow: 0 16px 42px rgba(8, 29, 44, .3);
   font: inherit;
   cursor: pointer;
@@ -82,15 +82,14 @@
   gap: 1rem;
   padding: 1.35rem 1.4rem 1.15rem;
   color: #fff;
-  background: linear-gradient(135deg, #13283b, #255764);
+  background: linear-gradient(135deg, #1b4478, #23558f);
 }
 
 .lr-knowledge-widget__panel > header p {
   margin: 0 0 .28rem;
-  color: #dfc69d;
-  font-size: .75rem;
+  color: var(--lr-yellow-text, #FFD43B);
+  font-size: .78rem;
   font-weight: 700;
-  letter-spacing: .12em;
 }
 
 .lr-knowledge-widget__panel > header h2 {
@@ -299,8 +298,8 @@
   height: 40px;
   border-radius: 13px 13px 13px 4px;
   color: #fff;
-  background: linear-gradient(145deg, #173650, #2d6971);
-  font-family: Georgia, serif;
+  background: linear-gradient(145deg, #1b4478, #2c6aa8);
+  font-family: 'Noto Sans KR', sans-serif;
   font-size: 1.2rem;
   font-weight: 700;
 }
@@ -398,7 +397,7 @@
 .lr-inquiry-chat__form > div { display: flex; gap: .45rem; }
 .lr-inquiry-chat__form button:not(.is-secondary),
 .lr-inquiry-chat__consent button,
-.lr-inquiry-chat__review button[type="submit"] { color: #fff; border-color: #173650; background: #173650; }
+.lr-inquiry-chat__review button[type="submit"] { color: var(--lr-ink-on-yellow, #13263f); border-color: var(--lr-yellow, #FFC20E); background: var(--lr-yellow, #FFC20E); }
 .lr-inquiry-chat__form .is-secondary,
 .lr-inquiry-chat__review .is-secondary { color: #6c655c; background: transparent; }
 
@@ -530,6 +529,8 @@
     max-height: none;
     overflow-y: auto;
   }
+  .lr-knowledge-widget__panel > footer span { flex-basis: auto; }
+
   .lr-knowledge-widget__panel > footer {
     align-items: flex-start;
     flex-direction: column;
