@@ -39,6 +39,12 @@ def main() -> int:
     env_values = post_push_guard.load_env(post_push_guard.DEFAULT_ENV)
     git_env, _ = post_push_guard.git_env_with_token(env_values)
 
+    # Pull, push and the failure reset all assume main; on any other branch they would
+    # merge main into it, push a different ref, or wipe it. Refuse instead.
+    branch = run(["git", "rev-parse", "--abbrev-ref", "HEAD"]).stdout.strip()
+    if branch != "main":
+        print(f"LotteReal weekly chart job skipped: checkout is on '{branch or 'unknown'}', not main")
+        return 1
     if run(["git", "status", "--porcelain"]).stdout.strip():
         print("LotteReal weekly chart job skipped: working tree has other changes")
         return 1
@@ -64,7 +70,7 @@ def main() -> int:
     commit = run(["git", "commit", "-m", f"[verified] Refresh weekly REB apartment chart ({survey})"])
     if commit.returncode != 0:
         return fail("git commit failed")
-    if run(["git", "push", "origin", "main"], env=git_env).returncode != 0:
+    if run(["git", "push", "origin", "HEAD:main"], env=git_env).returncode != 0:
         run(["git", "reset", "--hard", "origin/main"])
         print("LotteReal weekly chart job failed: git push (local commit discarded)")
         return 1
