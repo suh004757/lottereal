@@ -1,4 +1,5 @@
 Sitemap: https://lottes.co.kr/Sitemap.xml
+Sitemap: https://lottes.co.kr/rss.xml
 
 User-agent: *
 Allow: /

@@ -119,7 +119,7 @@ The artifact builder preserves relative paths, canonical metadata, sitemap entri
 | `scss/` | Style source outside the deployed artifact |
 | `docs/` | Public architecture and change-control documentation |
 
-`public/reports/`, `public/Sitemap.xml`, and `public/report.html` are produced as one publication transaction by `scripts/export_static_reports.mjs`. Generated output is not edited manually.
+`public/reports/`, `public/Sitemap.xml`, and `public/report.html` are produced as one publication transaction by `scripts/export_static_reports.mjs`. Generated output is not edited manually. After a successful publication the exporter also rebuilds `public/rss.xml` from the published report pages (`scripts/build_report_feed.mjs`, newest 40 reports, dated from the reports so an unchanged set is byte-identical).
 
 ## Security and privacy model
 

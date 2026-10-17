@@ -4,6 +4,7 @@ import path from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import { buildReportFeed } from './build_report_feed.mjs';
 
 const require = createRequire(import.meta.url);
 const { Marked, Renderer } = require('../public/js/vendor/marked-18.0.11.min.js');
@@ -225,6 +226,15 @@ function renderReportCta(report) {
     + '</div></div></div></section>';
 }
 
+// Daily posts open with the publication day ("2026년 10월 17일 …"). Searchers type the
+// question, not the day, and result titles get cut off, so the browser/search title leads
+// with the question. Month/week prefixes stay: there the period is the subject.
+export function searchTitle(title = '') {
+  const value = String(title).trim();
+  const withoutDay = value.replace(/^\d{4}년\s*\d{1,2}월\s*\d{1,2}일\s+/, '').trim();
+  return withoutDay || value;
+}
+
 export function renderStaticReport(report, siteUrl = 'https://lottes.co.kr', options = {}) {
   const slug = String(report?.slug || '');
   if (!SAFE_SLUG.test(slug)) throw new Error(`unsafe report slug: ${slug}`);
@@ -258,14 +268,15 @@ export function renderStaticReport(report, siteUrl = 'https://lottes.co.kr', opt
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'none'; script-src 'self' https://www.googletagmanager.com; script-src-attr 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://itcztvceelfvppjwhmvl.supabase.co https://www.google-analytics.com https://region1.google-analytics.com; form-action 'self'; upgrade-insecure-requests">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <title>${escapeHtml(title)} | 롯데부동산</title>
+  <title>${escapeHtml(searchTitle(title))} | 롯데부동산</title>
   <meta name="description" content="${escapeHtml(summary)}">
   <meta name="lottereal:content-hash" content="${contentHash}">
   <meta name="robots" content="index,follow">
   <link rel="canonical" href="${escapeHtml(canonical)}">
+  <link rel="alternate" type="application/rss+xml" title="롯데부동산 시장·계약 자료" href="${base}/rss.xml">
   <meta property="og:type" content="article">
   <meta property="og:locale" content="ko_KR">
-  <meta property="og:title" content="${escapeHtml(title)} | 롯데부동산">
+  <meta property="og:title" content="${escapeHtml(searchTitle(title))} | 롯데부동산">
   <meta property="og:description" content="${escapeHtml(summary)}">
   <meta property="og:url" content="${escapeHtml(canonical)}">
   <meta property="og:image" content="${base}/img/og/${shareImageName(report)}">
@@ -922,7 +933,13 @@ async function main() {
   } finally {
     releasePublicationMutex(publicationMutex, mutexToken);
   }
-  process.stdout.write(JSON.stringify({ ok: true, reports: reports.length, outputDir: args.outputDir }) + '\n');
+  // Derived from the pages just published; written next to the sitemap, outside the transaction.
+  const feed = buildReportFeed({
+    reportsDir: args.outputDir,
+    output: path.join(path.dirname(args.sitemap), 'rss.xml'),
+    siteUrl: args.siteUrl
+  });
+  process.stdout.write(JSON.stringify({ ok: true, reports: reports.length, outputDir: args.outputDir, feedItems: feed.items }) + '\n');
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
