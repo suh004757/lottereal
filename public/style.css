@@ -4742,3 +4742,21 @@ h1 {
   background: transparent;
   color: #fff;
 }
+
+/* Line icons for the mobile action bar and call button (emoji rendered differently per phone) */
+.lr-icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.lr-mobile-actionbar a > span:first-child {
+  display: grid;
+  place-items: center;
+  height: 22px;
+}

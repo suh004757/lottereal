@@ -59,7 +59,7 @@
 .nh-choice input { position: absolute; opacity: 0; pointer-events: none; }
 .nh-choice span { display: flex; min-height: 79px; padding: 16px 17px; flex-direction: column; justify-content: center; border: 1px solid var(--nh-line); background: #fff; transition: border-color .16s ease, background .16s ease, transform .16s ease; }
 .nh-choice strong { color: var(--nh-ink); }
-.nh-choice small { margin-top: 5px; color: #69747e; line-height: 1.38; }
+.nh-choice small { margin-top: 5px; color: #5d6872; line-height: 1.38; }
 .nh-choice input:checked + span { border-color: var(--nh-ink); background: #fbf4e9; box-shadow: inset 4px 0 0 var(--nh-coral); transform: translateY(-1px); }
 .nh-choice input:focus-visible + span { outline: 3px solid rgba(35,113,171,.3); outline-offset: 2px; }
 .nh-selection-meta { display: flex; margin: 14px 0 0; align-items: center; justify-content: space-between; color: #6a7680; font-size: .84rem; }

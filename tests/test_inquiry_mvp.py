@@ -84,7 +84,8 @@ class InquiryMvpPageTest(unittest.TestCase):
     def test_home_mobile_actionbar_includes_direct_inquiry_action(self):
         html = (PUBLIC / 'index.html').read_text(encoding='utf-8')
         css = (PUBLIC / 'style.css').read_text(encoding='utf-8')
-        self.assertIn('<a href="contact.html#inquiry-options"><span>💬</span><strong>문의하기</strong></a>', html)
+        self.assertRegex(html, r'<a href="contact\.html#inquiry-options"><span><svg class="lr-icon"[^>]*aria-hidden="true"[^>]*>.*?</svg></span><strong>문의하기</strong></a>')
+        self.assertNotIn('💬', html)
         self.assertIn('grid-auto-columns: minmax(0, 1fr);', css)
 
     def test_listing_detail_uses_guided_chat_with_automatic_listing_context(self):

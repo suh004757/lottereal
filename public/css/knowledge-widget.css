@@ -88,7 +88,7 @@
 .lr-knowledge-widget__panel > header p {
   margin: 0 0 .28rem;
   color: #dfc69d;
-  font-size: .68rem;
+  font-size: .75rem;
   font-weight: 700;
   letter-spacing: .12em;
 }
@@ -192,8 +192,8 @@
 .lr-knowledge-widget__form small {
   display: block;
   margin-top: .45rem;
-  color: #7d7972;
-  font-size: .68rem;
+  color: #66625b;
+  font-size: .78rem;
 }
 
 .lr-knowledge-widget__suggestions {
@@ -210,7 +210,7 @@
   color: #5f513f;
   background: #f9f3e8;
   font: inherit;
-  font-size: .68rem;
+  font-size: .78rem;
   cursor: pointer;
 }
 
@@ -235,7 +235,7 @@
 
 .lr-knowledge-widget__result-list article > span {
   color: #9a652d;
-  font-size: .66rem;
+  font-size: .75rem;
   font-weight: 700;
 }
 
@@ -319,7 +319,7 @@
 }
 
 .lr-inquiry-chat__history li { display: grid; gap: .22rem; }
-.lr-inquiry-chat__history p { margin: 0; color: #7d776e; font-size: .65rem; }
+.lr-inquiry-chat__history p { margin: 0; color: #66625b; font-size: .75rem; }
 .lr-inquiry-chat__history span {
   justify-self: end;
   max-width: 82%;
@@ -405,7 +405,7 @@
 .lr-inquiry-chat__consent { display: grid; gap: .65rem; }
 .lr-inquiry-chat__consent label { display: flex; align-items: flex-start; gap: .5rem; color: #4e4a44; font-size: .73rem; line-height: 1.5; }
 .lr-inquiry-chat__consent input { margin-top: .18rem; accent-color: #245867; }
-.lr-inquiry-chat__consent a { color: #285a7f; font-size: .68rem; text-decoration: underline; }
+.lr-inquiry-chat__consent a { color: #285a7f; font-size: .76rem; text-decoration: underline; }
 
 .lr-inquiry-chat__review { display: grid; gap: .6rem; }
 .lr-inquiry-chat__review dl { display: grid; gap: .35rem; margin: 0; }
@@ -432,7 +432,7 @@
 }
 
 .lr-knowledge-widget__panel > footer a { color: #254f71; font-size: .72rem; font-weight: 700; }
-.lr-knowledge-widget__panel > footer span { flex-basis: 100%; color: #858078; font-size: .62rem; }
+.lr-knowledge-widget__panel > footer span { flex-basis: 100%; color: #66625b; font-size: .72rem; }
 
 .lr-mobile-actionbar__knowledge { display: none; }
 
@@ -502,7 +502,7 @@
     background: #f7f2ea;
   }
 
-  .lr-inquiry-chat__listing-context span { color: #7d776e; font-size: .65rem; font-weight: 700; }
+  .lr-inquiry-chat__listing-context span { color: #66625b; font-size: .74rem; font-weight: 700; }
   .lr-inquiry-chat__listing-context strong { overflow-wrap: anywhere; color: #273d4e; font-size: .78rem; }
 
   .lr-knowledge-widget__panel {
