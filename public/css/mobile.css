@@ -116,8 +116,9 @@
     top: 60px;
     left: 0;
     right: 0;
-    background: var(--lr-mobile-ink);
-    border-bottom: 2px solid rgba(201, 146, 42, 0.25);
+    background: linear-gradient(180deg, #173a68, #1f4b82);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.28);
     z-index: 300;
     padding: 0 20px;
     gap: 0 !important;
@@ -152,19 +153,25 @@
   }
 
   .lr-nav a {
-    color: rgba(255, 255, 255, 0.75) !important;
+    color: rgba(255, 255, 255, 0.92) !important;
     font-size: 16px !important;
     font-weight: 500 !important;
     padding: 16px 0 !important;
     border-radius: 0 !important;
     background: transparent !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
     letter-spacing: -0.01em;
     transition: color 0.2s ease;
   }
 
+  .lr-nav a.active:not(.lr-nav-cta),
+  .lr-nav a[aria-current="page"]:not(.lr-nav-cta) {
+    color: var(--lr-yellow-text, #FFD43B) !important;
+    font-weight: 700 !important;
+  }
+
   .lr-nav a:hover {
-    color: var(--lr-mobile-accent) !important;
+    color: var(--lr-yellow-text, #FFD43B) !important;
     background: transparent !important;
     transform: none !important;
   }
@@ -173,7 +180,7 @@
     border-bottom: none !important;
   }
 
-  .lr-nav-cta {
+  .lr-nav a.lr-nav-cta {
     background: var(--lr-yellow, #FFC20E) !important;
     color: var(--lr-ink-on-yellow, #13263f) !important;
     border-radius: 10px !important;
