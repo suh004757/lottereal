@@ -202,12 +202,12 @@ textarea.lr-inquiry-input {
   min-height: 56px;
   border: 0;
   border-radius: 13px;
-  color: #fff;
-  background: #173f58;
+  color: var(--lr-ink-on-yellow, #13263f);
+  background: var(--lr-yellow, #FFC20E);
   font: inherit;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 12px 28px rgba(23, 63, 88, .2);
+  box-shadow: 0 12px 28px rgba(255, 194, 14, .28);
 }
 
 .lr-inquiry-submit:disabled {
