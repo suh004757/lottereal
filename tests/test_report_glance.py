@@ -26,6 +26,11 @@ class ReportGlanceTests(unittest.TestCase):
         self.assertIn("animation-timeline: scroll(root);", tail)
         self.assertIn("@media (prefers-reduced-motion: reduce)", tail)
 
+    def test_dark_header_buttons_do_not_leak_into_archive_intent_panel(self):
+        css = (PUBLIC / "css" / "insights.css").read_text(encoding="utf-8")
+        self.assertNotIn(".lr-report-header .lr-report-intent-actions", css)
+        self.assertIn(".lr-report-header > .lr-container > .lr-report-intent-actions .lr-btn--ghost", css)
+
 
 if __name__ == "__main__":
     unittest.main()

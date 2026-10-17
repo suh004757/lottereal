@@ -1174,7 +1174,7 @@
     word-break: keep-all;
 }
 
-.lr-report-header .lr-report-intent-actions {
+.lr-report-header > .lr-container > .lr-report-intent-actions {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
@@ -1182,7 +1182,7 @@
     margin-top: 1.5rem;
 }
 
-.lr-report-header .lr-report-intent-actions .lr-btn--ghost {
+.lr-report-header > .lr-container > .lr-report-intent-actions .lr-btn--ghost {
     background: rgba(255, 255, 255, 0.08);
     border-color: rgba(255, 255, 255, 0.3);
     color: #fff;
@@ -1220,7 +1220,7 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .lr-report-header .lr-report-intent-actions {
+    .lr-report-header > .lr-container > .lr-report-intent-actions {
         display: grid;
     }
 }
