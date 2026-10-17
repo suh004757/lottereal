@@ -3148,7 +3148,7 @@ h1 {
 }
 
 .lr-listing-inquiry-entry span {
-  color: var(--lr-primary);
+  color: var(--lr-accent-text);
   font-size: 12px;
   font-weight: 800;
   letter-spacing: .05em;

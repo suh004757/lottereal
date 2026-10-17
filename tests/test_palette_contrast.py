@@ -56,6 +56,13 @@ class PaletteContrastTests(unittest.TestCase):
             self.assertIn(sky, motion)
         self.assertNotIn("#0b1626", motion)
 
+    def test_international_checklist_headings_are_light_on_the_ink_band(self):
+        intl = (ROOT / "public" / "css" / "international.css").read_text(encoding="utf-8")
+        rule = intl[intl.index(".intl-steps strong {"):]
+        self.assertIn("color: #f7f3e9;", rule[:rule.index("}")])
+        self.assertGreaterEqual(ratio("#f7f3e9", "#153b2d"), 4.5)
+        self.assertGreaterEqual(ratio("#7a5c22", "#f7f3e9"), 4.5)
+
     def test_fee_calculator_shares_the_dusk_sky_and_yellow_accent(self):
         fee = (ROOT / "public" / "css" / "brokerage-fee-calculator.css").read_text(encoding="utf-8")
         hero = fee[fee.index(".fee-hero {"):]

@@ -307,7 +307,7 @@
 }
 
 .lr-breadcrumb a {
-    color: #3b82f6;
+    color: #1d4ed8;
     text-decoration: none;
     transition: color 0.2s ease;
 }
@@ -1230,5 +1230,31 @@
 @media (prefers-reduced-motion: reduce) {
     .lr-read-progress {
         display: none;
+    }
+}
+
+/* Contrast: dusk-sky hubs keep yellow kickers and bright meta on every width */
+.lr-hero.lr-hero--insights {
+    background:
+        radial-gradient(ellipse 70% 60% at 85% 110%, rgba(255, 194, 14, .2), rgba(255, 194, 14, 0) 70%),
+        linear-gradient(180deg, #1b4478 0%, #23558f 55%, #2c6aa8 100%) !important;
+}
+
+.lr-hero--insights .lr-kicker,
+.lr-report-header > .lr-container > .lr-kicker {
+    color: var(--lr-yellow-text, #FFD43B);
+}
+
+.lr-hero--insights .lr-meta span {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.lr-hero--insights::after {
+    display: none;
+}
+
+@media (max-width: 980px) {
+    .lr-hero.lr-hero--insights h1 {
+        color: #ffffff !important;
     }
 }

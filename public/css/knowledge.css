@@ -459,7 +459,7 @@
   background: #fff;
 }
 
-.lr-knowledge-method-grid span { color: var(--knowledge-accent); font-family: "Playfair Display", serif; font-size: 1.4rem; }
+.lr-knowledge-method-grid span { color: #8a5a12; font-family: "Playfair Display", serif; font-size: 1.4rem; }
 .lr-knowledge-method-grid h3 { margin: 1.1rem 0 .7rem; color: var(--knowledge-ink); font-size: 1.18rem; }
 .lr-knowledge-method-grid p { margin: 0; color: #66625c; line-height: 1.75; }
 

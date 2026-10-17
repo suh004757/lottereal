@@ -2,6 +2,7 @@
   --intl-ink: #153b2d;
   --intl-paper: #f7f3e9;
   --intl-gold: #a7833d;
+  --intl-gold-text: #7a5c22;
   --intl-line: rgba(21, 59, 45, 0.18);
   background: var(--intl-paper);
   color: #17352b;
@@ -82,7 +83,7 @@
 
 .intl-office-card__label,
 .intl-panel > span {
-  color: var(--intl-gold);
+  color: var(--intl-gold-text);
   font-weight: 700;
   letter-spacing: 0.12em;
 }
@@ -188,8 +189,12 @@
   counter-reset: item;
 }
 
+.intl-steps strong {
+  color: #f7f3e9;
+}
+
 .intl-steps span {
-  color: rgba(247, 243, 233, 0.76);
+  color: rgba(247, 243, 233, 0.86);
   line-height: 1.7;
 }
 
