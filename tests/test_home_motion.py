@@ -26,6 +26,14 @@ class HomeMotionTests(unittest.TestCase):
         self.assertNotIn('class="particle"', hero)
         self.assertNotRegex(hero, r"\son[a-z]+=")
 
+    def test_hero_skyline_is_a_quiet_line_drawing(self):
+        hero = self.home.split('id="hero"', 1)[1].split("</section>", 1)[0]
+        self.assertIn('class="lh-line lh-line--tower"', hero)
+        for busy in ("lh-star", "lh-win", "lh-ripple", "lr-kicker"):
+            self.assertNotIn(busy, hero)
+        self.assertIn("</span> <span>", hero)
+        self.assertNotIn("background-clip: text", self.css)
+
     def test_motion_stylesheet_is_loaded_and_respects_reduced_motion(self):
         self.assertIn('<link rel="stylesheet" href="css/home-motion.css">', self.home)
         self.assertIn("@media (prefers-reduced-motion: reduce)", self.css)

@@ -1,4 +1,4 @@
-/* Home motion: 잠실 dusk skyline hero (Lotte yellow on blue) + section reveal */
+/* Home hero: 잠실 skyline drawn as a fine-line elevation on a calm dusk-blue sky */
 
 .lr-hero.lr-hero--night {
   --lh-amber: #FFD43B;
@@ -6,9 +6,8 @@
   padding: 96px 0 300px;
   background-color: #23558f;
   background-image:
-    radial-gradient(ellipse 70% 42% at 66% 100%, rgba(255, 194, 14, 0.55), transparent 72%),
-    radial-gradient(ellipse 50% 60% at 8% 0%, rgba(140, 190, 245, 0.28), transparent 70%),
-    linear-gradient(180deg, #1b4478 0%, #23558f 52%, #2c6aa8 100%);
+    radial-gradient(ellipse 60% 38% at 60% 100%, rgba(255, 236, 200, 0.16), transparent 75%),
+    linear-gradient(180deg, #173a68 0%, #1f4b82 55%, #2a5f9b 100%);
   background-size: auto;
   background-position: 0 0;
   background-repeat: no-repeat;
@@ -33,10 +32,7 @@
 }
 
 .lr-hero--night .lr-hero-title span:last-child {
-  background: linear-gradient(90deg, #fff 0%, #FFE58A 45%, var(--lh-amber) 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: #fff;
 }
 
 .lr-hero--night .lr-lead {
@@ -64,16 +60,30 @@
   color: var(--lh-amber);
 }
 
+/* Facts read as one quiet line separated by hairlines, not pills */
+.lr-hero--night .lr-proof-strip {
+  gap: 0;
+}
+
 .lr-hero--night .lr-proof-strip span {
-  background: rgba(14, 40, 76, 0.5);
-  border-color: rgba(255, 212, 59, 0.35);
-  color: #fff;
+  padding: 2px 18px;
+  border: 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 0;
+  background: none;
+  color: rgba(255, 255, 255, 0.92);
   box-shadow: none;
-  backdrop-filter: blur(6px);
+  backdrop-filter: none;
+}
+
+.lr-hero--night .lr-proof-strip span:first-child {
+  padding-left: 0;
+  border-left: 0;
 }
 
 .lr-hero--night .lr-proof-strip strong {
-  color: var(--lh-amber);
+  color: #fff;
+  font-weight: 700;
 }
 
 .lr-hero--night .lr-meta {
@@ -108,8 +118,7 @@
 .lr-hero.lr-hero--night.lr-hero--compact {
   padding: 88px 0 72px;
   background-image:
-    radial-gradient(ellipse 50% 70% at 88% 100%, rgba(255, 194, 14, 0.38), transparent 70%),
-    radial-gradient(ellipse 50% 60% at 8% 0%, rgba(140, 190, 245, 0.25), transparent 70%),
+    radial-gradient(ellipse 55% 60% at 88% 100%, rgba(255, 236, 200, 0.14), transparent 72%),
     linear-gradient(160deg, #1b4478 0%, #23558f 60%, #2c6aa8 100%);
 }
 
@@ -220,50 +229,72 @@
   pointer-events: none;
 }
 
-.lh-star {
-  fill: #fff;
-  opacity: 0.5;
-  animation: lh-twinkle 5s ease-in-out infinite;
+.lh-ground {
+  fill: rgba(16, 42, 78, 0.45);
 }
 
-.lh-bld--back {
-  fill: #3a6597;
-  opacity: 0.9;
+.lh-line {
+  fill: none;
+  stroke-linejoin: miter;
+  vector-effect: non-scaling-stroke;
 }
 
-.lh-bld--front {
-  fill: #183a63;
+.lh-line--back {
+  stroke: rgba(255, 255, 255, 0.22);
+  stroke-width: 1;
 }
 
-.lh-tower {
-  fill: #1d4573;
-  stroke: rgba(255, 212, 59, 0.5);
-  stroke-width: 1.2;
+.lh-line--front {
+  stroke: rgba(255, 255, 255, 0.55);
+  stroke-width: 1.25;
 }
 
-.lh-tower-edge {
-  stroke: rgba(255, 212, 59, 0.4);
+.lh-line--joints,
+.lh-line--floors {
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 1;
+}
+
+.lh-line--tower {
+  stroke: rgba(255, 255, 255, 0.85);
+  stroke-width: 1.5;
+}
+
+.lh-line--seam {
+  stroke: rgba(255, 255, 255, 0.3);
+  stroke-width: 1;
+}
+
+.lh-line--horizon {
+  stroke: rgba(255, 236, 200, 0.45);
   stroke-width: 1;
 }
 
 .lh-beacon {
-  fill: #ef4444;
-  animation: lh-beacon 2.4s ease-in-out infinite;
+  fill: var(--lr-yellow, #FFC20E);
 }
 
-.lh-win {
-  fill: var(--lh-amber, #f8c26a);
-  opacity: 0.85;
-  animation: lh-window 8s steps(1, end) infinite;
+.lh-beacon-halo {
+  fill: rgba(255, 194, 14, 0.18);
 }
 
-.lh-river {
-  fill: #183a63;
+/* One orchestrated moment: the elevation draws itself once on load */
+.lh-line--back,
+.lh-line--front,
+.lh-line--tower {
+  stroke-dasharray: 1;
+  animation: lrc-draw 2.6s cubic-bezier(0.45, 0, 0.2, 1) both;
 }
 
-.lh-ripple {
-  fill: rgba(255, 212, 59, 0.55);
-  animation: lh-ripple 6s ease-in-out infinite;
+.lh-line--front { animation-delay: 0.25s; }
+.lh-line--tower { animation-delay: 0.6s; animation-duration: 1.8s; }
+
+.lh-line--joints,
+.lh-line--floors,
+.lh-line--seam,
+.lh-beacon,
+.lh-beacon-halo {
+  animation: lh-fade 1.2s ease-out 1.6s both;
 }
 
 /* Mobile --------------------------------------------------------- */
@@ -273,8 +304,8 @@
     padding: 88px 20px 190px !important;
     background-color: #23558f !important;
     background-image:
-      radial-gradient(ellipse 100% 30% at 70% 100%, rgba(255, 194, 14, 0.5), transparent 72%),
-      linear-gradient(180deg, #1b4478 0%, #23558f 52%, #2c6aa8 100%) !important;
+      radial-gradient(ellipse 100% 26% at 60% 100%, rgba(255, 236, 200, 0.16), transparent 75%),
+      linear-gradient(180deg, #173a68 0%, #1f4b82 55%, #2a5f9b 100%) !important;
   }
 
   .lr-hero--night h1,
@@ -311,8 +342,8 @@
   .lr-hero--night .lr-proof-strip span {
     box-sizing: border-box;
     max-width: 100%;
-    background: rgba(14, 40, 76, 0.5);
-    color: #fff;
+    background: none;
+    color: rgba(255, 255, 255, 0.92);
   }
 
   .lr-hero--night .lr-meta {
@@ -697,23 +728,6 @@
   50% { transform: rotate(4deg); }
 }
 
-@keyframes lh-twinkle {
-  0%, 100% { opacity: 0.25; }
-  50% { opacity: 0.9; }
-}
-
-@keyframes lh-beacon {
-  0%, 100% { opacity: 0.2; }
-  50% { opacity: 1; }
-}
-
-@keyframes lh-window {
-  0% { opacity: 0.85; }
-  70% { opacity: 0.15; }
-  85% { opacity: 0.85; }
-}
-
-@keyframes lh-ripple {
-  0%, 100% { opacity: 0.1; transform: translateX(0); }
-  50% { opacity: 0.7; transform: translateX(24px); }
+@keyframes lh-fade {
+  from { opacity: 0; }
 }
