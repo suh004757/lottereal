@@ -303,7 +303,7 @@ export function renderStaticReport(report, siteUrl = 'https://lottes.co.kr', opt
     ${renderReportCta(report)}
   </main>
   <footer class="lr-footer"><div class="lr-container lr-footer__content"><div><p class="lr-kicker">롯데부동산</p><p class="lr-text">서울시 송파구 백제고분로27길 27 1층</p><p class="lr-text">문의전화: 0507-1402-5055 | 중개사무소등록번호 11710-2018-00141</p></div><div class="lr-footer__links"><a href="../privacy.html">개인정보처리방침</a><a href="../EN.html">ENGLISH</a></div></div><p class="lr-footer__copy">© ${COPYRIGHT_YEAR} 롯데부동산. All rights reserved.</p></footer>
-  <script src="../js/analyticsEvents.js"></script><script src="../js/mobileNav.js"></script><script type="module" src="../js/staticReportPage.mjs"></script>
+  <script src="../js/analyticsEvents.js"></script><script src="../js/mobileNav.js"></script><script src="../js/phoneHandoff.js"></script><script type="module" src="../js/staticReportPage.mjs"></script>
 </body>
 </html>\n`;
 }

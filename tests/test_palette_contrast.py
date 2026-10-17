@@ -52,8 +52,9 @@ class PaletteContrastTests(unittest.TestCase):
             self.assertGreaterEqual(ratio("#ffffff", sky), 4.5, sky)
             self.assertGreaterEqual(ratio(token("lr-yellow-text"), sky), 3, sky)
         motion = (ROOT / "public" / "css" / "home-motion.css").read_text(encoding="utf-8")
-        for sky in HERO_SKY:
-            self.assertIn(sky, motion)
+        for step, sky in enumerate(HERO_SKY, start=1):
+            self.assertEqual(token(f"lr-dusk-{step}"), sky)
+            self.assertIn(f"var(--lr-dusk-{step})", motion)
         self.assertNotIn("#0b1626", motion)
 
     def test_international_checklist_headings_are_light_on_the_ink_band(self):
@@ -68,7 +69,9 @@ class PaletteContrastTests(unittest.TestCase):
         hero = fee[fee.index(".fee-hero {"):]
         hero = hero[:hero.index("}")]
         self.assertIn("rgba(27, 68, 120", hero)
-        self.assertIn("#23558f", hero)
+        self.assertIn("var(--lr-dusk-2)", hero)
+        root = (ROOT / "public" / "style.css").read_text(encoding="utf-8")
+        self.assertIn("--lr-dusk-2: #23558f;", root)
         self.assertNotIn("rgba(9, 27, 45", fee)
         self.assertNotIn("#102031", fee)
         page = (ROOT / "public" / "brokerage-fee-calculator.html").read_text(encoding="utf-8")

@@ -123,3 +123,12 @@ test('markdown lists become passage items instead of one run-on line', () => {
   assert.ok(list.text.includes('보증금 이체 내역'));
   assert.equal(prose.items, undefined);
 });
+
+test('asterisk bullets and bold text inside items still become list items', () => {
+  const [list] = splitMarkdownIntoPassages([
+    '## 준비할 것',
+    '* **임대차계약서** 원본',
+    '* 보증금 이체 내역'
+  ].join('\n'));
+  assert.deepEqual(list.items, ['임대차계약서 원본', '보증금 이체 내역']);
+});

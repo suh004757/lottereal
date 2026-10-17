@@ -518,7 +518,7 @@
 .lr-report-header {
     background:
         radial-gradient(ellipse 60% 70% at 90% 0%, rgba(255, 236, 200, 0.14), transparent 70%),
-        linear-gradient(160deg, #1b4478 0%, #23558f 60%, #2c6aa8 100%);
+        linear-gradient(160deg, var(--lr-dusk-1) 0%, var(--lr-dusk-2) 60%, var(--lr-dusk-3) 100%);
     padding: 4rem 0 3rem;
     color: #ffffff;
 }
@@ -1147,14 +1147,14 @@
 }
 
 .lr-report-body li::marker {
-    color: #23558f;
+    color: var(--lr-dusk-2);
     font-weight: 600;
 }
 
 /* Korean has no true italic; a tinted note reads better than slanted glyphs */
 .lr-report-body blockquote {
     padding: 1rem 1.25rem;
-    border-left: 4px solid #23558f;
+    border-left: 4px solid var(--lr-dusk-2);
     border-radius: 0 12px 12px 0;
     background: #f1f5fa;
     font-style: normal;
@@ -1265,7 +1265,7 @@
 .lr-hero.lr-hero--insights {
     background:
         radial-gradient(ellipse 70% 60% at 85% 110%, rgba(255, 194, 14, .2), rgba(255, 194, 14, 0) 70%),
-        linear-gradient(180deg, #1b4478 0%, #23558f 55%, #2c6aa8 100%) !important;
+        linear-gradient(180deg, var(--lr-dusk-1) 0%, var(--lr-dusk-2) 55%, var(--lr-dusk-3) 100%) !important;
 }
 
 .lr-hero--insights .lr-kicker,

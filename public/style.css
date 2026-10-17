@@ -2311,6 +2311,11 @@ img {
   --lr-ink-on-yellow: #13263f;
   --lr-yellow-text: #FFD43B;
 
+  /* Dusk sky: dark sections and headers (top → bottom of the gradient) */
+  --lr-dusk-1: #1b4478;
+  --lr-dusk-2: #23558f;
+  --lr-dusk-3: #2c6aa8;
+
   /* Navy Accent */
   --lr-navy: #1E3A5F;
   --lr-navy-light: #2A4A75;
@@ -2834,7 +2839,7 @@ h1 {
 .lr-cta {
   background:
     radial-gradient(circle at 90% 0%, rgba(255, 236, 200, 0.12), transparent 45%),
-    linear-gradient(135deg, #1b4478, #23558f);
+    linear-gradient(135deg, var(--lr-dusk-1), var(--lr-dusk-2));
   border: none;
   border-radius: var(--lr-radius-lg);
   padding: 56px 48px;
@@ -4704,7 +4709,7 @@ h1 {
   display: grid;
   place-items: center;
   padding: 24px 16px;
-  background: linear-gradient(160deg, #1b4478 0%, #23558f 60%, #2c6aa8 100%);
+  background: linear-gradient(160deg, var(--lr-dusk-1) 0%, var(--lr-dusk-2) 60%, var(--lr-dusk-3) 100%);
   color: #fff;
 }
 
@@ -4764,4 +4769,75 @@ h1 {
   display: grid;
   place-items: center;
   height: 22px;
+}
+
+/* Desktop phone-link answer: the number, shown where the eye already is */
+.lr-phone-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 32px;
+  z-index: 1200;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 20px;
+  min-width: 300px;
+  padding: 18px 20px 18px 24px;
+  border-radius: 16px;
+  color: #fff;
+  background: linear-gradient(160deg, var(--lr-dusk-1), var(--lr-dusk-2));
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.32);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 12px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.lr-phone-toast.is-open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+}
+
+.lr-phone-toast span {
+  grid-column: 1;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 14px;
+}
+
+.lr-phone-toast strong {
+  grid-column: 1;
+  color: var(--lr-yellow-text);
+  font-size: 26px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  user-select: all;
+}
+
+.lr-phone-toast button {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  align-self: start;
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  color: #fff;
+  background: transparent;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.lr-phone-toast button:focus-visible {
+  outline: 2px solid var(--lr-yellow);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lr-phone-toast { transition: none; }
+}
+
+.lr-phone-toast span:empty {
+  display: none;
 }

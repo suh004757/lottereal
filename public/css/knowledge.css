@@ -13,7 +13,7 @@
   color: #fff;
   background:
     radial-gradient(circle at 88% 0%, rgba(255, 236, 200, 0.14), transparent 30rem),
-    linear-gradient(135deg, #1b4478 0%, #23558f 60%, #2c6aa8 100%);
+    linear-gradient(135deg, var(--lr-dusk-1) 0%, var(--lr-dusk-2) 60%, var(--lr-dusk-3) 100%);
 }
 
 .lr-knowledge-hero::after {
@@ -320,7 +320,7 @@
 .lr-knowledge-answer__header {
   padding: 2.5rem 3rem;
   color: #fff;
-  background: linear-gradient(135deg, #1b4478 0%, #23558f 100%);
+  background: linear-gradient(135deg, var(--lr-dusk-1) 0%, var(--lr-dusk-2) 100%);
 }
 
 .lr-knowledge-passage__list {

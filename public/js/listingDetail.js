@@ -6,8 +6,8 @@
 import { getListingById } from './services/backendAdapter.js';
 import { escapeHtml, safeImageUrl } from './publicRenderSecurity.mjs';
 import { buildAbsoluteUrl, renderJsonLd, updateSeoMeta } from './utils/seo.js';
-import { SAFE_CONTACT_TEL, getPublicContactPhone } from './utils/contactPhone.mjs';
-import { formatManwonAmount } from './utils/propertyPrice.mjs';
+import { SAFE_CONTACT_TEL, getPhoneButtonLabel, getPublicContactPhone } from './utils/contactPhone.mjs';
+import { formatListingDisplayPrice } from './utils/propertyPrice.mjs';
 import { getListingDetailUrl } from './utils/listingRoutes.mjs';
 import {
   getListingFreshness,
@@ -52,7 +52,7 @@ async function init() {
 function renderDetail(listing) {
   if (titleEl) titleEl.textContent = listing.title || '';
 
-  const formattedPrice = formatPrice(listing);
+  const formattedPrice = formatListingDisplayPrice(listing);
   const freshness = getListingFreshness(listing);
   const freshnessCopy = getListingFreshnessCopy(freshness, 'ko');
 
@@ -188,38 +188,6 @@ function applySeo(listing, formattedPrice, freshness) {
 }
 
 /**
- * 가격을 포맷팅합니다.
- * @param {number} price - 가격
- * @param {number} deposit - 보증금 (월세의 경우)
- * @param {string} type - 부동산 타입
- * @returns {string} 포맷팅된 가격 문자열
- */
-function formatPrice(listing) {
-  const price = Number(listing.price || 0);
-  const metadata = listing.metadata || {};
-  const typeStr = String(listing.property_type || '').trim();
-
-  // 월세: metadata.deposit가 있으면 price는 월세, 없으면 price가 보증금이고 월세는 설명에서 찾습니다
-  if (typeStr === '월세' || typeStr === 'Monthly Rent') {
-    const metaDeposit = Number(metadata.deposit || 0);
-    const deposit = metaDeposit || price;
-    const monthly = metaDeposit
-      ? price
-      : Number(metadata.monthly_rent || metadata.monthlyRent || 0) || parseMonthlyRent(listing.description);
-    if (deposit && monthly) return `보증금 ${deposit.toLocaleString()} / 월세 ${monthly.toLocaleString()}만원`;
-    return price ? `월세 ${price.toLocaleString()}만원` : '';
-  }
-
-  // 전세 또는 매매
-  return price ? formatManwonAmount(price) : '';
-}
-
-function parseMonthlyRent(text) {
-  const match = String(text || '').match(/월세\s*([0-9,]+)\s*만원?/);
-  return match ? Number(match[1].replace(/,/g, '')) : 0;
-}
-
-/**
  * 전화 버튼을 바인딩합니다.
  * @param {Object} listing - 리스팅 데이터 객체
  */
@@ -232,15 +200,7 @@ function bindPhoneBtn(listing) {
   // href 동적 설정
   phoneBtn.href = telLink;
   phoneBtn.setAttribute('data-phone', contactPhone);
-
-  phoneBtn.addEventListener('click', (e) => {
-    // 데스크톱에서는 첫 클릭에 버튼에 번호를 보여줍니다
-    if (window.innerWidth > 768 && !phoneBtn.dataset.revealed) {
-      e.preventDefault();
-      phoneBtn.dataset.revealed = 'true';
-      phoneBtn.textContent = contactPhone;
-    }
-  });
+  phoneBtn.textContent = getPhoneButtonLabel();
 }
 
 function bindInquiryButtons(listing) {

@@ -17,11 +17,30 @@ export function normalizePublicReceipts(rows = [], now = new Date()) {
   const nowMs = now instanceof Date ? now.getTime() : new Date(now).getTime();
   if (!Number.isFinite(nowMs) || !Array.isArray(rows)) return [];
 
-  return rows
+  const sorted = rows
     .map((row) => normalizeRow(row, nowMs))
     .filter(Boolean)
-    .sort((left, right) => right.receivedAtMs - left.receivedAtMs)
-    .slice(0, 12);
+    .sort((left, right) => right.receivedAtMs - left.receivedAtMs);
+
+  // Cap by distinct listings, not raw rows: twelve repeats of one listing must not
+  // push every other listing out. Repeats of a kept listing stay so its count is right.
+  const kept = [];
+  const listings = new Set();
+  for (const receipt of sorted) {
+    const key = listingKey(receipt);
+    if (!listings.has(key)) {
+      if (listings.size >= MAX_LISTINGS) continue;
+      listings.add(key);
+    }
+    kept.push(receipt);
+  }
+  return kept;
+}
+
+const MAX_LISTINGS = 12;
+
+function listingKey(receipt) {
+  return `${receipt.listingNumber}|${receipt.transactionType}`;
 }
 
 export function renderPublicReceipts(receipts = [], summary = null) {
@@ -93,7 +112,7 @@ function renderGroup(title, note, receipts, visible) {
 function groupByListing(receipts) {
   const byKey = new Map();
   for (const receipt of receipts) {
-    const key = `${receipt.listingNumber}|${receipt.transactionType}`;
+    const key = listingKey(receipt);
     const seen = byKey.get(key);
     if (seen) seen.count += 1;
     else byKey.set(key, { ...receipt, count: 1 });

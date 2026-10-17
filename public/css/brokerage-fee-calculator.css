@@ -16,7 +16,7 @@
     radial-gradient(ellipse 70% 55% at 82% 108%, rgba(255, 236, 200, .14), rgba(255, 236, 200, 0) 72%),
     linear-gradient(180deg, rgba(27, 68, 120, .96) 0%, rgba(35, 85, 143, .93) 55%, rgba(44, 106, 168, .92) 100%),
     url('../img/bg-img/lotte_street_view.png') center/cover;
-  background-color: #23558f;
+  background-color: var(--lr-dusk-2);
 }
 
 .fee-hero__grid {
@@ -105,7 +105,7 @@
 .fee-calculate { display: flex; width: 100%; min-height: 62px; margin-top: 30px; padding: 0 22px; align-items: center; justify-content: center; color: var(--lr-ink-on-yellow, #13263f); border: 0; border-radius: 12px; background: var(--lr-yellow, #FFC20E); font: 700 1rem 'Noto Sans KR', sans-serif; cursor: pointer; }
 .fee-calculate:hover { background: var(--lr-yellow-strong, #F2B600); }
 
-.fee-result { position: sticky; top: 92px; min-height: 590px; color: #fff; background: linear-gradient(180deg, #1b4478 0%, #183d6c 100%); }
+.fee-result { position: sticky; top: 92px; min-height: 590px; color: #fff; background: linear-gradient(180deg, var(--lr-dusk-1) 0%, #183d6c 100%); }
 .fee-result__empty, .fee-result__content { padding: clamp(28px, 4vw, 46px); }
 .fee-result__mark { display: grid; width: 90px; height: 90px; margin: 62px 0 30px; place-items: center; color: var(--fee-gold); border: 1px solid rgba(255,255,255,.18); border-radius: 50%; font-family: 'Noto Sans KR', sans-serif; font-variant-numeric: tabular-nums; font-size: 2.8rem; }
 .fee-result__empty h2 { max-width: 360px; margin: 0 0 18px; color: #fff; font-size: 2rem; line-height: 1.28; word-break: keep-all; }
@@ -147,7 +147,7 @@
 .fee-result__actions button { color: #fff; background: transparent; }
 .fee-result__actions a { color: var(--fee-ink); background: #fff; }
 
-.fee-guide { padding: 96px 0; color: #fff; background: linear-gradient(180deg, #1b4478 0%, #183d6c 100%); }
+.fee-guide { padding: 96px 0; color: #fff; background: linear-gradient(180deg, var(--lr-dusk-1) 0%, #183d6c 100%); }
 .fee-guide h2, .fee-guide h3 { color: #fff; }
 .fee-guide__intro { display: grid; grid-template-columns: .4fr 1fr; gap: 40px; align-items: start; }
 .fee-guide__intro h2 { margin: 0; max-width: 780px; font-size: clamp(2rem,4vw,3.6rem); line-height: 1.18; letter-spacing: -.055em; word-break: keep-all; }

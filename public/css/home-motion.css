@@ -4,7 +4,7 @@
   --lh-amber: #FFD43B;
   min-height: 0;
   padding: 96px 0 300px;
-  background-color: #23558f;
+  background-color: var(--lr-dusk-2);
   background-image:
     radial-gradient(ellipse 60% 38% at 60% 100%, rgba(255, 236, 200, 0.16), transparent 75%),
     linear-gradient(180deg, #173a68 0%, #1f4b82 55%, #2a5f9b 100%);
@@ -119,7 +119,7 @@
   padding: 88px 0 72px;
   background-image:
     radial-gradient(ellipse 55% 60% at 88% 100%, rgba(255, 236, 200, 0.14), transparent 72%),
-    linear-gradient(160deg, #1b4478 0%, #23558f 60%, #2c6aa8 100%);
+    linear-gradient(160deg, var(--lr-dusk-1) 0%, var(--lr-dusk-2) 60%, var(--lr-dusk-3) 100%);
 }
 
 .lr-hero--night.lr-hero--compact h1 {
@@ -152,7 +152,7 @@
   color: #fff;
   background:
     radial-gradient(circle at 96% 0%, rgba(255, 236, 200, 0.14), transparent 45%),
-    linear-gradient(160deg, #1b4478, #23558f);
+    linear-gradient(160deg, var(--lr-dusk-1), var(--lr-dusk-2));
   box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
 }
 
@@ -302,7 +302,7 @@
 @media (max-width: 768px) {
   .lr-hero.lr-hero--night {
     padding: 88px 20px 190px !important;
-    background-color: #23558f !important;
+    background-color: var(--lr-dusk-2) !important;
     background-image:
       radial-gradient(ellipse 100% 26% at 60% 100%, rgba(255, 236, 200, 0.16), transparent 75%),
       linear-gradient(180deg, #173a68 0%, #1f4b82 55%, #2a5f9b 100%) !important;
@@ -355,7 +355,7 @@
   }
 
   body:has(.lr-hero--night) .lr-header {
-    background: #1b4478 !important;
+    background: var(--lr-dusk-1) !important;
   }
 
   .lr-hero.lr-hero--night.lr-hero--compact {
@@ -394,7 +394,7 @@
 .lr-report-cover--market {
   background:
     radial-gradient(circle at 85% 0%, rgba(255, 236, 200, 0.14), transparent 50%),
-    linear-gradient(150deg, #1b4478, #2c6aa8);
+    linear-gradient(150deg, var(--lr-dusk-1), var(--lr-dusk-3));
 }
 
 .lr-report-cover--dispute {
@@ -736,7 +736,7 @@
 /* Two self-serve tools share one quiet dusk band instead of two stacked navy cards */
 .lr-home-tools {
   color: #fff;
-  background: linear-gradient(180deg, #1b4478 0%, #183d6c 100%);
+  background: linear-gradient(180deg, var(--lr-dusk-1) 0%, #183d6c 100%);
 }
 
 .lr-home-tools h2 {

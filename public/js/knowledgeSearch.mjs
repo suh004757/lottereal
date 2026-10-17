@@ -177,7 +177,9 @@ export function splitMarkdownIntoPassages(markdown = '', fallback = '') {
       flush();
       continue;
     }
-    buffer.push(line.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/[*_`]/g, ''));
+    // Normalise a '* item' bullet to '- item' first, so stripping emphasis doesn't eat the list marker
+    const bulletSafe = line.replace(/^(\s*)\*\s+/, '$1- ');
+    buffer.push(bulletSafe.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/[*_`]/g, ''));
   }
   flush();
 

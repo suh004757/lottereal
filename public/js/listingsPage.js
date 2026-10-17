@@ -4,8 +4,8 @@
  */
 
 import { listListingsPublic } from './services/backendAdapter.js';
-import { SAFE_CONTACT_TEL, getPublicContactPhone } from './utils/contactPhone.mjs';
-import { formatListingPrice } from './utils/propertyPrice.mjs';
+import { SAFE_CONTACT_TEL, getPhoneButtonLabel } from './utils/contactPhone.mjs';
+import { formatListingDisplayPrice } from './utils/propertyPrice.mjs';
 import { getListingDetailUrl } from './utils/listingRoutes.mjs';
 import {
   getListingFreshness,
@@ -150,7 +150,6 @@ function buildListingCard(item) {
 
   const image = item.image || (Array.isArray(item.images) && item.images[0]) || 'img/bg-img/lotte_street_view.png';
   const badge = item.property_type || item.type || '매물';
-  const contactPhone = getPublicContactPhone();
   const telLink = SAFE_CONTACT_TEL;
   const details = extractDetails(item);
   const freshness = getListingFreshness(item);
@@ -158,7 +157,7 @@ function buildListingCard(item) {
   const visibleDetails = freshness.needsReview
     ? details.filter((detail) => detail.label !== '입주')
     : details;
-  const price = formatPrice(item);
+  const price = formatListingDisplayPrice(item, { emptyLabel: true });
   const detailUrl = getListingDetailUrl(item);
 
   card.innerHTML = `
@@ -180,23 +179,11 @@ function buildListingCard(item) {
       ${freshnessCopy ? '' : `<p class="lr-text">${escapeHtml(buildShortDescription(item, freshness))}</p>`}
       <div class="lr-card__actions lr-listing-actions">
         <a class="lr-btn lr-btn--ghost lr-btn--block" href="${detailUrl}">사진·상세 보기</a>
-        <a class="lr-btn lr-btn--primary lr-btn--block contact-btn" href="${telLink}" data-phone="${escapeAttribute(formatPhone(contactPhone))}">전화 문의</a>
+        <a class="lr-btn lr-btn--primary lr-btn--block contact-btn" href="${telLink}">${escapeHtml(getPhoneButtonLabel())}</a>
       </div>
     </div>
   `;
   return card;
-}
-
-if (listContainer) {
-  listContainer.addEventListener('click', (e) => {
-    const btn = e.target.closest('.contact-btn');
-    // On desktop the first click shows the number on the button instead of a dialog
-    if (btn && window.innerWidth > 768 && !btn.dataset.revealed) {
-      e.preventDefault();
-      btn.dataset.revealed = 'true';
-      btn.textContent = btn.getAttribute('data-phone');
-    }
-  });
 }
 
 function buildFilterSummary(filters) {
@@ -209,26 +196,6 @@ function buildFilterSummary(filters) {
 
 function buildLocation(item) {
   return [item.city, item.district, item.address].filter(Boolean).join(' ') || '위치 문의';
-}
-
-function formatPrice(item) {
-  const type = String(item.property_type || item.type || '').trim();
-  const price = toNumber(item.price);
-  const metadata = item.metadata || {};
-  const deposit = toNumber(metadata.deposit || item.deposit);
-  const monthlyFromText = parseMonthlyRent(item.description || '');
-
-  if (type.includes('월세')) {
-    const depositText = deposit || price;
-    const monthlyText = monthlyFromText || toNumber(metadata.monthly_rent || metadata.monthlyRent);
-    if (depositText && monthlyText) return `보증금 ${depositText.toLocaleString()} / 월세 ${monthlyText.toLocaleString()}만원`;
-    if (price) return `월세 ${price.toLocaleString()}만원`;
-    return '월세 문의';
-  }
-
-  if (type.includes('전세')) return price ? formatListingPrice(price, '전세') : '전세가 문의';
-  if (type.includes('매매')) return price ? formatListingPrice(price, '매매') : '매매가 문의';
-  return price ? formatListingPrice(price) : '가격 문의';
 }
 
 function extractDetails(item) {
@@ -260,11 +227,6 @@ function buildShortDescription(item, freshness = getListingFreshness(item)) {
   return text.length > 96 ? `${text.slice(0, 96)}…` : text;
 }
 
-function parseMonthlyRent(text) {
-  const match = String(text).match(/월세\s*([0-9,]+)\s*만원?/);
-  return match ? toNumber(match[1]) : 0;
-}
-
 function matchFirst(text, regex) {
   const match = String(text).match(regex);
   return match ? match[1].replace(/\s+/g, ' ').trim() : '';
@@ -272,21 +234,6 @@ function matchFirst(text, regex) {
 
 function normalizeRoomText(value) {
   return value.replace('쓰리룸', '3룸').replace('투룸', '2룸').replace('원룸', '1룸');
-}
-
-function toNumber(value) {
-  if (value === null || value === undefined || value === '') return 0;
-  const number = Number(String(value).replace(/[^0-9.]/g, ''));
-  return Number.isFinite(number) ? number : 0;
-}
-
-function formatPhone(value) {
-  const digits = String(value || '').replace(/[^0-9]/g, '');
-  if (digits.length === 8) return `${digits.slice(0, 4)}-${digits.slice(4)}`;
-  if (digits.startsWith('02') && digits.length === 9) return `02-${digits.slice(2, 5)}-${digits.slice(5)}`;
-  if (digits.startsWith('02') && digits.length === 10) return `02-${digits.slice(2, 6)}-${digits.slice(6)}`;
-  if (digits.length === 11) return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
-  return value || '0507-1402-5055';
 }
 
 function escapeHtml(value) {

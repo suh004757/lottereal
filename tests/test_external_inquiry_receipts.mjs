@@ -101,4 +101,13 @@ assert.equal(grouped.match(/매물번호 50170001/g).length, 1);
 assert.match(grouped, /관심 3회/);
 assert.match(grouped, /2026\.07\.18/);
 
+// Twelve repeats of one listing must not crowd out other listings
+const crowded = [
+  ...Array.from({ length: 12 }, (_, index) => ({ ...rows[1], received_bucket: `2026-08-${String(27 - index).padStart(2, '0')}` })),
+  { ...rows[1], listing_number: '50170099', received_bucket: '2026-08-01' }
+];
+const crowdedHtml = renderPublicReceipts(normalizePublicReceipts(crowded, now), null);
+assert.match(crowdedHtml, /관심 12회/);
+assert.match(crowdedHtml, /매물번호 50170099/);
+
 console.log('external inquiry receipt UI tests passed');
