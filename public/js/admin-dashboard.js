@@ -35,6 +35,7 @@ import { initializeReportEditor } from './reportEditorCore.js';
 import { listReports } from './services/reportAdapter.js';
 import { signOutAdmin, getCurrentSessionUser, refreshAdminSession } from './services/authService.js';
 import { buildAdminListingPayload } from './utils/adminListingPayload.mjs';
+import { createFormContextGeneration } from './utils/formContextGeneration.mjs';
 
 // ============================================
 // DOM 요소 참조
@@ -133,6 +134,7 @@ let inquiryStatusUpdateInFlight = false;
 let propertyImageGeneration = 0;
 let propertyImagesPending = false;
 let propertyModalReturnFocus = null;
+const propertyFormContext = createFormContextGeneration();
 
 // ============================================
 // 초기화
@@ -669,8 +671,10 @@ function bindLogout() {
  * @param {Array<string>} item.images - 이미지 URL 배열
  */
 function openModal(item) {
+  propertyFormContext.invalidate();
   propertyImageGeneration += 1;
   propertyImagesPending = false;
+  togglePropertyFormDisabled(false);
   propertyModalReturnFocus = document.activeElement;
   editingId = item?.id || null;
   clearPropertyFormMessage();
@@ -693,8 +697,10 @@ function openModal(item) {
  * 매물 모달을 닫고 폼 상태를 초기화합니다.
  */
 function closeModal() {
+  propertyFormContext.invalidate();
   propertyImageGeneration += 1;
   propertyImagesPending = false;
+  togglePropertyFormDisabled(false);
   propertyModal?.classList.remove('active');
   document.body.style.overflow = '';
   propertyForm?.reset();
@@ -1024,42 +1030,68 @@ function bindPropertyForm() {
     const formData = new FormData(propertyForm);
     formData.delete('images');
     const propertyData = Object.fromEntries(formData.entries());
+    const submitContext = propertyFormContext.capture(editingId);
+    const submittedEditingId = editingId;
+    const submittedImages = [...uploadedImages];
+    const submittedExistingImages = [...existingImages];
+    const isCurrentPropertySubmit = () => propertyFormContext.isCurrent(submitContext, editingId);
 
     try {
       setPropertyFormMessage('이미지 업로드를 시작합니다...', 'info');
       togglePropertyFormDisabled(true);
-      const imageUrls = await uploadImagesToSupabase(uploadedImages);
-      setPropertyFormMessage(editingId ? '매물 정보를 업데이트하는 중...' : '새 매물을 등록하는 중...', 'info');
+      const imageUrls = await uploadImagesToSupabase(submittedImages);
+      if (!isCurrentPropertySubmit()) return;
+      setPropertyFormMessage(submittedEditingId ? '매물 정보를 업데이트하는 중...' : '새 매물을 등록하는 중...', 'info');
       const payload = buildAdminListingPayload(propertyData, imageUrls);
 
       let successMessage = '';
-      if (editingId) {
-        payload.images = [...(existingImages || []), ...imageUrls];
-        await updateListing(editingId, payload);
+      if (submittedEditingId) {
+        payload.images = [...submittedExistingImages, ...imageUrls];
+        const freshAdmin = await requireCurrentAdmin();
+        if (!isCurrentPropertySubmit()) return;
+        currentAdmin = freshAdmin;
+        await updateListing(submittedEditingId, payload);
+        if (!isCurrentPropertySubmit()) return;
         successMessage = '매물이 수정되었습니다.';
       } else {
         payload.images = imageUrls;
+        const freshAdmin = await requireCurrentAdmin();
+        if (!isCurrentPropertySubmit()) return;
+        currentAdmin = freshAdmin;
         await createListing(payload);
+        if (!isCurrentPropertySubmit()) return;
         successMessage = `매물이 등록되었습니다. (이미지 ${imageUrls.length}개 포함)`;
       }
       setPropertyFormMessage(successMessage, 'success');
       uploadedImages = [];
       existingImages = [];
-      editingId = null;
       renderImagePreviews();
       await wait(1000);
+      if (!isCurrentPropertySubmit()) return;
       closeModal();
       loadStats();
       loadRecent();
       loadListingsAdmin();
     } catch (err) {
+      if (!isCurrentPropertySubmit()) return;
       console.error('매물 저장 실패:', err);
       const fallback = err?.message || '매물 저장 중 오류가 발생했습니다.';
       setPropertyFormMessage(fallback, 'error');
     } finally {
-      togglePropertyFormDisabled(false);
+      if (isCurrentPropertySubmit()) {
+        togglePropertyFormDisabled(false);
+      }
     }
   });
+}
+
+async function requireCurrentAdmin() {
+  const session = await refreshAdminSession();
+  const user = session?.user || null;
+  if (!user || user.app_metadata?.role !== 'admin') {
+    throw new Error('관리자 권한을 다시 확인할 수 없습니다. 다시 로그인해 주세요.');
+  }
+  return user;
 }
 
 /**

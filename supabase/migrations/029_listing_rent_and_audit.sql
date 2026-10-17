@@ -15,11 +15,32 @@ alter table public.property_listings
 
 grant select (deposit, monthly_rent) on table public.property_listings to anon, authenticated;
 revoke delete on table public.property_listings from authenticated;
+revoke update on table public.property_listings from authenticated;
+grant update (
+  title,
+  description,
+  price,
+  deposit,
+  monthly_rent,
+  currency,
+  property_type,
+  address,
+  city,
+  district,
+  latitude,
+  longitude,
+  images,
+  contact_name,
+  contact_phone,
+  contact_email,
+  user_id
+) on table public.property_listings to authenticated;
 
 create table if not exists public.listing_state_audit (
   id bigint generated always as identity primary key,
   listing_id uuid not null references public.property_listings(id) on delete restrict,
-  actor_id uuid not null references auth.users(id) on delete restrict,
+  -- Keep the immutable actor UUID even if the corresponding auth user is later deleted.
+  actor_id uuid not null,
   previous_state jsonb not null,
   new_state jsonb not null,
   action text not null check (action in ('confirm_available', 'close', 'reopen')),

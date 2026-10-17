@@ -5,6 +5,7 @@ import { buildAdminListingPayload, mapListingPayloadToDatabase } from '../public
 import { PUBLIC_LISTING_SELECT_FIELDS } from '../public/js/publicListingFields.mjs';
 import { formatListingDisplayPrice } from '../public/js/utils/propertyPrice.mjs';
 import { createRequestGeneration } from '../public/js/utils/requestGeneration.mjs';
+import { createFormContextGeneration } from '../public/js/utils/formContextGeneration.mjs';
 import {
   assertSupabasePrivilegedProvider,
   getPublicListingFromSupabase,
@@ -46,6 +47,17 @@ test('legacy monthly rows still read rent from the description', () => {
   );
 });
 
+test('explicit zero deposit is distinct from an unknown monthly-rent deposit', () => {
+  assert.equal(
+    formatListingDisplayPrice({ property_type: '월세', deposit: 0, monthly_rent: 95, price: 95 }),
+    '보증금 0만원 / 월세 95만원'
+  );
+  assert.equal(
+    formatListingDisplayPrice({ property_type: '월세', deposit: null, monthly_rent: 95, price: 95 }),
+    '월세 95만원'
+  );
+});
+
 test('editing a legacy monthly row does not reinterpret its deposit price as monthly rent', () => {
   const payload = buildAdminListingPayload({
     transactionType: '월세', price: '2000', deposit: '', monthlyRent: '',
@@ -64,6 +76,19 @@ test('request generation accepts only the newest search completion', () => {
   assert.equal(requests.isCurrent(second), true);
   requests.invalidate();
   assert.equal(requests.isCurrent(second), false);
+});
+
+test('form context invalidates stale submits even when the same listing is reopened', () => {
+  const contexts = createFormContextGeneration();
+  contexts.invalidate();
+  const first = contexts.capture('listing-a');
+  assert.equal(contexts.isCurrent(first, 'listing-a'), true);
+
+  contexts.invalidate();
+  assert.equal(contexts.isCurrent(first, 'listing-a'), false);
+  const second = contexts.capture('listing-a');
+  assert.equal(contexts.isCurrent(second, 'listing-a'), true);
+  assert.equal(contexts.isCurrent(second, 'listing-b'), false);
 });
 
 test('listing repository throws query failures, distinguishes not-found, and privileged mocks fail closed', async () => {

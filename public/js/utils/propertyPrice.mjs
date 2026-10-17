@@ -29,6 +29,10 @@ function toAmount(value) {
   return Number.isFinite(number) ? number : 0;
 }
 
+function hasExplicitAmount(value) {
+  return value !== null && value !== undefined && value !== '';
+}
+
 function parseMonthlyRent(text) {
   const match = String(text || '').match(/월세\s*([0-9,]+)\s*만원?/);
   return match ? toAmount(match[1]) : 0;
@@ -46,13 +50,18 @@ export function formatListingDisplayPrice(listing = {}, { emptyLabel = false } =
   const metadata = listing.metadata || {};
 
   if (type.includes('월세') || type === 'Monthly Rent') {
-    const knownDeposit = toAmount(listing.deposit ?? metadata.deposit);
+    const rawDeposit = listing.deposit ?? metadata.deposit;
+    const hasKnownDeposit = hasExplicitAmount(rawDeposit);
+    const knownDeposit = toAmount(rawDeposit);
     const knownMonthly = toAmount(listing.monthly_rent ?? metadata.monthly_rent ?? metadata.monthlyRent);
-    const deposit = knownDeposit || price;
-    const monthly = knownDeposit
-      ? knownMonthly || price
-      : knownMonthly || parseMonthlyRent(listing.description);
-    if (deposit && monthly) return `보증금 ${formatManwonAmount(deposit)} / 월세 ${monthly.toLocaleString()}만원`;
+    const legacyMonthly = parseMonthlyRent(listing.description);
+    const hasLegacyDeposit = !hasKnownDeposit && !knownMonthly && Boolean(legacyMonthly && price);
+    const deposit = hasKnownDeposit ? knownDeposit : (hasLegacyDeposit ? price : 0);
+    const monthly = hasKnownDeposit ? knownMonthly || price : knownMonthly || legacyMonthly;
+    if ((hasKnownDeposit || hasLegacyDeposit) && monthly) {
+      const depositLabel = deposit === 0 ? '0만원' : formatManwonAmount(deposit);
+      return `보증금 ${depositLabel} / 월세 ${monthly.toLocaleString()}만원`;
+    }
     if (monthly) return `월세 ${monthly.toLocaleString()}만원`;
     return emptyLabel ? EMPTY_LABELS.월세 : '';
   }

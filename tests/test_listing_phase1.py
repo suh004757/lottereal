@@ -23,6 +23,36 @@ class ListingPhaseOneTests(unittest.TestCase):
         self.assertIn("revoke delete on table public.property_listings from authenticated", sql)
         self.assertNotRegex(sql, r"grant\s+delete.*authenticated")
 
+    def test_migration_limits_direct_updates_to_non_lifecycle_columns(self):
+        sql = MIGRATION.read_text(encoding="utf-8").lower()
+        self.assertRegex(
+            sql,
+            r"revoke\s+update\s+on\s+table\s+public\.property_listings\s+from\s+authenticated",
+        )
+        self.assertNotRegex(
+            sql,
+            r"grant\s+update\s+on\s+(?:table\s+)?public\.property_listings\s+to\s+authenticated",
+        )
+        update_grant = re.search(
+            r"grant\s+update\s*\((.*?)\)\s+on\s+table\s+public\.property_listings\s+to\s+authenticated",
+            sql,
+            re.DOTALL,
+        )
+        if update_grant is None:
+            self.fail("authenticated column-level UPDATE grant is missing")
+        granted = {column.strip() for column in update_grant.group(1).split(",")}
+        self.assertTrue({"title", "description", "deposit", "monthly_rent", "contact_phone"} <= granted)
+        self.assertNotIn("closed_at", granted)
+        self.assertNotIn("last_verified_at", granted)
+
+    def test_audit_actor_survives_auth_user_deletion(self):
+        sql = MIGRATION.read_text(encoding="utf-8").lower()
+        actor_definition = re.search(r"actor_id\s+uuid[^,]*", sql)
+        if actor_definition is None:
+            self.fail("actor_id definition is missing")
+        actor_sql = actor_definition.group(0)
+        self.assertNotIn("references auth.users", actor_sql)
+
     def test_irreversible_delete_path_is_absent_and_privileged_actions_refresh(self):
         dashboard = (PUBLIC / "js" / "admin-dashboard.js").read_text(encoding="utf-8")
         adapter = (PUBLIC / "js" / "services" / "backendAdapter.js").read_text(encoding="utf-8")
@@ -57,6 +87,21 @@ class ListingPhaseOneTests(unittest.TestCase):
         self.assertIn("propertyModalReturnFocus", js)
         self.assertIn("trapModalFocus", js)
         self.assertIn("propertyImagesPending", js)
+
+    def test_listing_writes_refresh_role_and_guard_stale_submit_context(self):
+        js = (PUBLIC / "js" / "admin-dashboard.js").read_text(encoding="utf-8")
+        submit = js[js.index("function bindPropertyForm"):js.index("async function uploadImagesToSupabase")]
+        self.assertIn("const submitContext = propertyFormContext.capture(editingId);", submit)
+        self.assertIn("await requireCurrentAdmin();", submit)
+        self.assertIn("propertyFormContext.isCurrent(submitContext, editingId)", submit)
+        self.assertGreaterEqual(submit.count("if (!isCurrentPropertySubmit()) return;"), 5)
+        self.assertRegex(submit, r"finally\s*\{\s*if \(isCurrentPropertySubmit\(\)\)")
+
+        for function_name in ("openModal", "closeModal"):
+            start = js.index(f"function {function_name}")
+            block = js[start:js.index("\n}", start) + 2]
+            self.assertIn("propertyFormContext.invalidate();", block)
+            self.assertIn("togglePropertyFormDisabled(false);", block)
 
     def test_report_evidence_dialog_and_auxiliary_failures_are_independent(self):
         html = (PUBLIC / "report.html").read_text(encoding="utf-8")
