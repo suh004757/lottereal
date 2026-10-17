@@ -1,14 +1,14 @@
-/* Home motion: 잠실 night skyline hero + section reveal */
+/* Home motion: 잠실 dusk skyline hero (Lotte yellow on blue) + section reveal */
 
 .lr-hero.lr-hero--night {
-  --lh-amber: #f8c26a;
+  --lh-amber: #FFD43B;
   min-height: 0;
   padding: 96px 0 300px;
-  background-color: #0e1d31;
+  background-color: #23558f;
   background-image:
-    radial-gradient(ellipse 60% 45% at 74% 100%, rgba(217, 119, 6, 0.32), transparent 70%),
-    radial-gradient(ellipse 50% 60% at 10% 0%, rgba(42, 74, 117, 0.55), transparent 70%),
-    linear-gradient(180deg, #0b1626 0%, #13263f 55%, #1E3A5F 100%);
+    radial-gradient(ellipse 70% 42% at 66% 100%, rgba(255, 194, 14, 0.55), transparent 72%),
+    radial-gradient(ellipse 50% 60% at 8% 0%, rgba(140, 190, 245, 0.28), transparent 70%),
+    linear-gradient(180deg, #1b4478 0%, #23558f 52%, #2c6aa8 100%);
   background-size: auto;
   background-position: 0 0;
   background-repeat: no-repeat;
@@ -33,14 +33,14 @@
 }
 
 .lr-hero--night .lr-hero-title span:last-child {
-  background: linear-gradient(90deg, #fff 0%, #fde7c2 55%, var(--lh-amber) 100%);
+  background: linear-gradient(90deg, #fff 0%, #FFE58A 45%, var(--lh-amber) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
 .lr-hero--night .lr-lead {
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba(255, 255, 255, 0.94);
 }
 
 .lr-hero--night .lr-btn--ghost {
@@ -57,7 +57,7 @@
 }
 
 .lr-hero--night .lr-btn--text {
-  color: rgba(255, 255, 255, 0.86);
+  color: #fff;
 }
 
 .lr-hero--night .lr-btn--text:hover {
@@ -65,9 +65,9 @@
 }
 
 .lr-hero--night .lr-proof-strip span {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(248, 194, 106, 0.28);
-  color: rgba(255, 255, 255, 0.82);
+  background: rgba(14, 40, 76, 0.5);
+  border-color: rgba(255, 212, 59, 0.35);
+  color: #fff;
   box-shadow: none;
   backdrop-filter: blur(6px);
 }
@@ -77,7 +77,7 @@
 }
 
 .lr-hero--night .lr-meta {
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(255, 255, 255, 0.88);
 }
 
 .lr-hero--night .lr-brief-card h2 {
@@ -85,8 +85,8 @@
 }
 
 .lr-hero--night .lr-brief-card {
-  background: rgba(11, 22, 38, 0.55);
-  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(14, 40, 76, 0.62);
+  border-color: rgba(255, 255, 255, 0.22);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }
@@ -108,16 +108,20 @@
 .lr-hero.lr-hero--night.lr-hero--compact {
   padding: 88px 0 72px;
   background-image:
-    radial-gradient(ellipse 50% 70% at 85% 30%, rgba(217, 119, 6, 0.22), transparent 70%),
-    radial-gradient(ellipse 50% 60% at 10% 0%, rgba(42, 74, 117, 0.55), transparent 70%),
-    linear-gradient(160deg, #0b1626 0%, #13263f 60%, #1E3A5F 100%);
+    radial-gradient(ellipse 50% 70% at 88% 100%, rgba(255, 194, 14, 0.38), transparent 70%),
+    radial-gradient(ellipse 50% 60% at 8% 0%, rgba(140, 190, 245, 0.25), transparent 70%),
+    linear-gradient(160deg, #1b4478 0%, #23558f 60%, #2c6aa8 100%);
 }
 
 .lr-hero--night.lr-hero--compact h1 {
   color: #fff;
 }
 
-.lr-hero--night .lr-hero__card {
+.lr-hero--night.lr-hero--compact .lr-hero__card .lr-kicker {
+  color: var(--lr-accent-text, #a14a07);
+}
+
+.lr-hero--night.lr-hero--compact .lr-hero__card {
   background: rgba(255, 255, 255, 0.96);
   border-color: rgba(255, 255, 255, 0.2);
   box-shadow: 0 30px 70px rgba(5, 12, 22, 0.45);
@@ -138,8 +142,8 @@
   border-radius: 28px;
   color: #fff;
   background:
-    radial-gradient(circle at 90% 10%, rgba(217, 119, 6, 0.38), transparent 45%),
-    linear-gradient(160deg, #13263f, #1E3A5F);
+    radial-gradient(circle at 96% 100%, rgba(255, 194, 14, 0.38), transparent 42%),
+    linear-gradient(160deg, #1b4478, #23558f);
   box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
 }
 
@@ -163,7 +167,7 @@
 
 .lr-listing-request p {
   margin: 0;
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba(255, 255, 255, 0.94);
   line-height: 1.7;
   word-break: keep-all;
 }
@@ -181,7 +185,7 @@
   gap: 10px;
   align-items: center;
   margin: 0;
-  color: rgba(255, 255, 255, 0.86);
+  color: #fff;
   font-size: 14px;
 }
 
@@ -190,7 +194,7 @@
   flex: 0 0 8px;
   height: 8px;
   border-radius: 50%;
-  background: #f8c26a;
+  background: var(--lh-amber, #FFD43B);
 }
 
 .lr-listing-request .lr-actions {
@@ -218,26 +222,27 @@
 
 .lh-star {
   fill: #fff;
+  opacity: 0.5;
   animation: lh-twinkle 5s ease-in-out infinite;
 }
 
 .lh-bld--back {
-  fill: #1c3554;
-  opacity: 0.85;
+  fill: #3a6597;
+  opacity: 0.9;
 }
 
 .lh-bld--front {
-  fill: #0a1524;
+  fill: #183a63;
 }
 
 .lh-tower {
-  fill: #0d1a2c;
-  stroke: rgba(248, 194, 106, 0.35);
+  fill: #1d4573;
+  stroke: rgba(255, 212, 59, 0.5);
   stroke-width: 1.2;
 }
 
 .lh-tower-edge {
-  stroke: rgba(248, 194, 106, 0.28);
+  stroke: rgba(255, 212, 59, 0.4);
   stroke-width: 1;
 }
 
@@ -253,11 +258,11 @@
 }
 
 .lh-river {
-  fill: #0a1524;
+  fill: #183a63;
 }
 
 .lh-ripple {
-  fill: rgba(248, 194, 106, 0.45);
+  fill: rgba(255, 212, 59, 0.55);
   animation: lh-ripple 6s ease-in-out infinite;
 }
 
@@ -266,10 +271,10 @@
 @media (max-width: 768px) {
   .lr-hero.lr-hero--night {
     padding: 88px 20px 190px !important;
-    background-color: #0e1d31 !important;
+    background-color: #23558f !important;
     background-image:
-      radial-gradient(ellipse 90% 30% at 80% 100%, rgba(217, 119, 6, 0.3), transparent 70%),
-      linear-gradient(180deg, #0b1626 0%, #13263f 60%, #1E3A5F 100%) !important;
+      radial-gradient(ellipse 100% 30% at 70% 100%, rgba(255, 194, 14, 0.5), transparent 72%),
+      linear-gradient(180deg, #1b4478 0%, #23558f 52%, #2c6aa8 100%) !important;
   }
 
   .lr-hero--night h1,
@@ -282,13 +287,14 @@
   }
 
   .lr-hero--night .lr-lead {
-    color: rgba(255, 255, 255, 0.78) !important;
+    color: rgba(255, 255, 255, 0.94) !important;
   }
 
   .lr-hero--night .lr-btn--primary {
-    background: var(--lr-primary, #d97706) !important;
-    border-color: var(--lr-primary, #d97706) !important;
-    box-shadow: 0 10px 28px rgba(217, 119, 6, 0.35) !important;
+    background: var(--lr-yellow, #FFC20E) !important;
+    border-color: var(--lr-yellow, #FFC20E) !important;
+    color: var(--lr-ink-on-yellow, #13263f) !important;
+    box-shadow: 0 10px 28px rgba(255, 194, 14, 0.35) !important;
   }
 
   .lr-hero--night .lr-btn--ghost {
@@ -298,21 +304,27 @@
   }
 
   .lr-hero--night .lr-btn--text {
-    color: rgba(255, 255, 255, 0.86) !important;
+    color: #fff !important;
     border-color: rgba(255, 255, 255, 0.22) !important;
   }
 
   .lr-hero--night .lr-proof-strip span {
-    background: rgba(255, 255, 255, 0.07);
-    color: rgba(255, 255, 255, 0.82);
+    box-sizing: border-box;
+    max-width: 100%;
+    background: rgba(14, 40, 76, 0.5);
+    color: #fff;
   }
 
   .lr-hero--night .lr-meta {
-    color: rgba(255, 255, 255, 0.55) !important;
+    color: rgba(255, 255, 255, 0.88) !important;
   }
 
   .lr-hero-skyline {
     height: 200px;
+  }
+
+  body:has(.lr-hero--night) .lr-header {
+    background: #1b4478 !important;
   }
 
   .lr-hero.lr-hero--night.lr-hero--compact {
@@ -457,7 +469,7 @@
 
 .lr-weekly__caption {
   margin-bottom: 14px;
-  color: #64748b;
+  color: var(--lr-muted, #5b6578);
   font-size: 13px;
   font-weight: 600;
 }

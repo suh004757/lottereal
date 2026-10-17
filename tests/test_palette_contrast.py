@@ -1,0 +1,61 @@
+"""Brand palette tokens must keep WCAG AA text contrast.
+
+Full rendered-page coverage lives in scripts/contrast_audit.mjs (needs Chrome);
+this test pins the shared tokens so a palette edit cannot silently regress.
+"""
+import re
+import unittest
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+STYLE = (ROOT / "public" / "style.css").read_text(encoding="utf-8")
+LIGHT_SURFACES = ["#ffffff", "#FAFAF8", "#f5f3ef", "#fff7ed", "#f8fafc"]
+HERO_SKY = ["#1b4478", "#23558f", "#2c6aa8"]
+
+
+def token(name):
+    match = re.search(rf"--{name}:\s*(#[0-9a-fA-F]{{6}})", STYLE)
+    assert match, name
+    return match.group(1)
+
+
+def luminance(value):
+    def channel(c):
+        c = int(c, 16) / 255
+        return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+    r, g, b = value[1:3], value[3:5], value[5:7]
+    return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
+
+
+def ratio(fg, bg):
+    hi, lo = sorted((luminance(fg), luminance(bg)), reverse=True)
+    return (hi + 0.05) / (lo + 0.05)
+
+
+class PaletteContrastTests(unittest.TestCase):
+    def test_body_and_label_tokens_pass_aa_on_every_light_surface(self):
+        for name in ("lr-muted", "lr-accent-text", "lr-text-secondary"):
+            for surface in LIGHT_SURFACES:
+                self.assertGreaterEqual(ratio(token(name), surface), 4.5, (name, surface))
+
+    def test_primary_buttons_are_navy_ink_on_lotte_yellow(self):
+        self.assertGreaterEqual(ratio(token("lr-ink-on-yellow"), token("lr-yellow")), 7)
+        self.assertGreaterEqual(ratio(token("lr-ink-on-yellow"), token("lr-yellow-strong")), 7)
+        block = STYLE[STYLE.index(".lr-btn--primary {"):]
+        block = block[:block.index("}")]
+        self.assertIn("var(--lr-yellow)", block)
+        self.assertIn("var(--lr-ink-on-yellow)", block)
+
+    def test_hero_sky_keeps_white_and_yellow_text_readable(self):
+        for sky in HERO_SKY:
+            self.assertGreaterEqual(ratio("#ffffff", sky), 4.5, sky)
+            self.assertGreaterEqual(ratio(token("lr-yellow-text"), sky), 3, sky)
+        motion = (ROOT / "public" / "css" / "home-motion.css").read_text(encoding="utf-8")
+        for sky in HERO_SKY:
+            self.assertIn(sky, motion)
+        self.assertNotIn("#0b1626", motion)
+
+
+if __name__ == "__main__":
+    unittest.main()

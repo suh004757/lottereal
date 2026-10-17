@@ -516,7 +516,9 @@
 
 /* Report Header */
 .lr-report-header {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+    background:
+        radial-gradient(ellipse 60% 70% at 90% 110%, rgba(255, 194, 14, 0.35), transparent 70%),
+        linear-gradient(160deg, #1b4478 0%, #23558f 60%, #2c6aa8 100%);
     padding: 4rem 0 3rem;
     color: #ffffff;
 }
@@ -540,17 +542,17 @@
 }
 
 .lr-badge--info {
-    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    background: linear-gradient(135deg, #fde68a, #fcd34d);
     color: #78350f;
 }
 
 .lr-badge--data {
-    background: linear-gradient(135deg, #60a5fa, #3b82f6);
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
     color: #1e3a8a;
 }
 
 .lr-badge--ai {
-    background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+    background: linear-gradient(135deg, #ede9fe, #ddd6fe);
     color: #4c1d95;
 }
 
@@ -591,7 +593,7 @@
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.88);
     font-weight: 600;
 }
 
@@ -765,7 +767,7 @@
 .lr-revision-version {
     font-size: 0.875rem;
     font-weight: 700;
-    color: #3b82f6;
+    color: #1d4ed8;
     background: rgba(59, 130, 246, 0.1);
     padding: 0.25rem 0.75rem;
     border-radius: 1rem;
@@ -1155,7 +1157,7 @@
     margin: 0;
     padding: 14px 10px;
     text-align: center;
-    background: rgba(11, 22, 38, 0.55);
+    background: rgba(14, 40, 76, 0.6);
 }
 
 .lr-report-glance li::before {
@@ -1163,13 +1165,13 @@
 }
 
 .lr-report-glance span {
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.9);
     font-size: 0.75rem;
     font-weight: 600;
 }
 
 .lr-report-glance strong {
-    color: #f8c26a;
+    color: #FFD43B;
     font-size: 1.05rem;
     word-break: keep-all;
 }
@@ -1199,7 +1201,7 @@
 .lr-read-progress span {
     display: block;
     height: 100%;
-    background: linear-gradient(90deg, #d97706, #f8c26a);
+    background: linear-gradient(90deg, #FFC20E, #FFD43B);
     transform: scaleX(0);
     transform-origin: left center;
 }

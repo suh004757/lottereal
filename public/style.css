@@ -2303,6 +2303,13 @@ img {
   --lr-primary-strong: #b45309;
   --lr-primary-light: #fff7ed;
   --lr-primary-dark: #92400e;
+  --lr-accent-text: #a14a07;
+
+  /* Lotte signature yellow (buttons: navy ink on yellow, 9.4:1) */
+  --lr-yellow: #FFC20E;
+  --lr-yellow-strong: #F5B400;
+  --lr-ink-on-yellow: #13263f;
+  --lr-yellow-text: #FFD43B;
 
   /* Navy Accent */
   --lr-navy: #1E3A5F;
@@ -2312,7 +2319,7 @@ img {
   /* Text Colors */
   --lr-text: #1a1a1a;
   --lr-text-secondary: #475569;
-  --lr-muted: #94a3b8;
+  --lr-muted: #5b6578;
   --lr-border: #e2e8f0;
   --lr-border-light: #f8fafc;
 
@@ -2397,8 +2404,8 @@ body {
 }
 
 .lr-nav-cta {
-  color: #FFFFFF !important;
-  background: var(--lr-navy);
+  color: var(--lr-ink-on-yellow) !important;
+  background: var(--lr-yellow);
   font-weight: 600;
   box-shadow: 0 4px 12px rgba(30, 58, 95, 0.3);
   transition: var(--lr-transition);
@@ -2436,7 +2443,7 @@ body {
 /* Animations removed for instant visibility */
 
 .lr-kicker {
-  color: var(--lr-primary);
+  color: var(--lr-accent-text);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -2490,16 +2497,17 @@ h1 {
 }
 
 .lr-btn--primary {
-  background: var(--lr-primary);
-  color: #FFFFFF;
-  box-shadow: 0 8px 20px rgba(217, 119, 6, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.18);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  background: var(--lr-yellow);
+  color: var(--lr-ink-on-yellow);
+  box-shadow: 0 8px 20px rgba(245, 180, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(160, 110, 0, 0.35);
 }
 
 .lr-btn--primary:hover {
-  background: var(--lr-primary-strong);
+  background: var(--lr-yellow-strong);
+  color: var(--lr-ink-on-yellow);
   transform: translateY(-2px);
-  box-shadow: 0 12px 26px rgba(180, 83, 9, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  box-shadow: 0 12px 26px rgba(245, 180, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 .lr-btn--secondary {
@@ -2702,7 +2710,7 @@ h1 {
   padding: 8px 14px;
   border-radius: 999px;
   background: #f8fafc;
-  color: #64748b;
+  color: var(--lr-muted);
   font-weight: 700;
   font-size: 11px;
   text-transform: uppercase;
@@ -2759,10 +2767,10 @@ h1 {
 .lr-detail__cta .lr-btn--primary,
 .lr-report-actions .lr-btn--primary,
 .lr-nav .lr-nav-cta {
-  background: var(--lr-primary);
-  color: #fff;
-  border-color: rgba(0, 0, 0, 0.05);
-  box-shadow: 0 8px 20px rgba(217, 119, 6, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  background: var(--lr-yellow);
+  color: var(--lr-ink-on-yellow);
+  border-color: rgba(160, 110, 0, 0.35);
+  box-shadow: 0 8px 20px rgba(245, 180, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 .lr-hero .lr-btn--primary:hover,
@@ -2770,8 +2778,8 @@ h1 {
 .lr-detail__cta .lr-btn--primary:hover,
 .lr-report-actions .lr-btn--primary:hover,
 .lr-nav .lr-nav-cta:hover {
-  background: var(--lr-primary-strong);
-  color: #fff;
+  background: var(--lr-yellow-strong);
+  color: var(--lr-ink-on-yellow);
 }
 
 .lr-tile {
@@ -2843,7 +2851,12 @@ h1 {
 }
 
 .lr-cta .lr-kicker {
-  color: var(--lr-primary);
+  color: var(--lr-yellow-text);
+}
+
+.lr-cta .lr-meta,
+.lr-cta .lr-meta span {
+  color: rgba(255, 255, 255, 0.9);
 }
 
 @media (max-width: 991px) {
@@ -3849,7 +3862,7 @@ h1 {
 
 .lr-stat-pill span,
 .lr-stat-pill small {
-  color: #64748b;
+  color: var(--lr-muted);
   font-weight: 700;
 }
 
@@ -3862,7 +3875,7 @@ h1 {
 .lr-source-note {
   grid-column: 1 / -1;
   margin: 0;
-  color: #64748b;
+  color: var(--lr-muted);
   font-size: 13px;
   line-height: 1.7;
   border-top: 1px solid rgba(30, 58, 95, 0.08);
@@ -4117,7 +4130,7 @@ h1 {
 
 .lr-listing-summary p {
   margin: 0;
-  color: #64748b;
+  color: var(--lr-muted);
   font-weight: 700;
   line-height: 1.6;
 }
@@ -4202,7 +4215,7 @@ h1 {
 
 .lr-listing-topline span {
   min-width: 0;
-  color: #64748b;
+  color: var(--lr-muted);
   font-weight: 800;
   font-size: 13px;
   text-align: right;
@@ -4340,7 +4353,8 @@ h1 {
   }
 
   .lr-mobile-actionbar a:first-child {
-    background: linear-gradient(135deg, var(--lr-primary), var(--lr-primary-dark));
+    background: var(--lr-yellow);
+    color: var(--lr-ink-on-yellow);
   }
 
   body {
@@ -4520,7 +4534,7 @@ h1 {
 }
 
 .lr-receipt-time {
-  color: #64748b;
+  color: var(--lr-muted);
   font-size: 0.93rem;
 }
 
@@ -4552,7 +4566,7 @@ h1 {
   display: grid;
   gap: 8px;
   margin: 0;
-  color: #64748b;
+  color: var(--lr-muted);
   line-height: 1.65;
 }
 

@@ -250,19 +250,19 @@
 
 .lr-journey__step.is-done .lr-journey__dot {
   border-color: var(--lr-primary, #d97706);
-  color: var(--lr-primary-strong, #b45309);
+  color: var(--lr-accent-text, #a14a07);
 }
 
 .lr-journey__step.is-active .lr-journey__dot {
-  background: var(--lr-primary, #d97706);
-  border-color: var(--lr-primary, #d97706);
-  color: #fff;
+  background: var(--lr-yellow, #FFC20E);
+  border-color: var(--lr-yellow-strong, #F5B400);
+  color: var(--lr-ink-on-yellow, #13263f);
   transform: scale(1.08);
   box-shadow: 0 0 0 7px rgba(217, 119, 6, 0.16);
 }
 
 .lr-journey__step.is-active strong {
-  color: var(--lr-primary-strong, #b45309);
+  color: var(--lr-accent-text, #a14a07);
 }
 
 .lr-journey__step:focus-visible {

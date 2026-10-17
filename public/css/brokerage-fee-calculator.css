@@ -3,6 +3,7 @@
   --fee-cream: #f6f1e8;
   --fee-paper: #fffdf8;
   --fee-gold: #bd8a3b;
+  --fee-gold-text: #8a5a12;
   --fee-line: rgba(17, 36, 58, 0.14);
 }
 
@@ -94,7 +95,7 @@
 .fee-form { padding: clamp(26px, 5vw, 52px); }
 .fee-form__head { padding-bottom: 30px; border-bottom: 1px solid var(--fee-line); }
 .fee-form__head h2 { margin: 8px 0 0; color: var(--fee-ink); font-size: clamp(1.8rem, 3vw, 2.65rem); letter-spacing: -.045em; word-break: keep-all; }
-.fee-step { margin: 0; color: var(--fee-gold); font-size: .78rem; font-weight: 700; letter-spacing: .13em; }
+.fee-step { margin: 0; color: var(--fee-gold-text); font-size: .78rem; font-weight: 700; letter-spacing: .13em; }
 .fee-fieldset { margin: 34px 0 0; padding: 0; border: 0; }
 .fee-fieldset legend, .fee-money-field > label { margin-bottom: 13px; color: var(--fee-ink); font-size: 1rem; font-weight: 700; }
 .fee-choice-grid { display: grid; gap: 10px; }
@@ -114,7 +115,7 @@
 .fee-input-wrap input { width: 100%; min-height: 64px; padding: 10px 8px; color: var(--fee-ink); border: 0; outline: 0; background: transparent; font-family: 'Noto Sans KR', sans-serif; font-size: 1.65rem; font-weight: 700; }
 .fee-input-wrap input:focus { box-shadow: inset 0 -3px 0 var(--fee-gold); }
 .fee-input-wrap span { flex: 0 0 auto; color: #5b6570; font-weight: 700; }
-.fee-money-field > p { margin: 8px 0 0; color: #76808a; font-size: .84rem; }
+.fee-money-field > p { margin: 8px 0 0; color: #5b6578; font-size: .84rem; }
 .fee-form__error { margin: 22px 0 0; padding: 13px 15px; color: #8a2c25; border-left: 3px solid #a13c33; background: #fbecea; }
 .fee-calculate { display: flex; width: 100%; min-height: 62px; margin-top: 30px; padding: 0 22px; align-items: center; justify-content: space-between; color: #fff; border: 0; background: var(--fee-ink); font: 700 1rem 'Noto Sans KR', sans-serif; cursor: pointer; }
 .fee-calculate:hover { background: #1a3c5d; }
@@ -204,4 +205,11 @@
   .fee-result__amount, .fee-result .fee-step, .fee-result__notice, .fee-breakdown dt { color: #000; }
   .fee-breakdown__total dd { color: #000; }
   .fee-breakdown div { border-color: #bbb; }
+}
+
+/* Contrast: kickers on the dark hero/guide bands use Lotte yellow */
+.fee-hero .lr-kicker,
+.fee-guide .lr-kicker,
+.fee-result .fee-step {
+  color: var(--lr-yellow-text, #FFD43B);
 }
