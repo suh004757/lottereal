@@ -91,7 +91,8 @@ class ListingUiTest(unittest.TestCase):
         positions = [home.index(marker) for marker in ordered]
         self.assertEqual(positions, sorted(positions))
         self.assertIn('어떤 매물을 찾고 계신가요?', home)
-        hero = home[home.index('<section class="lr-hero"'):home.index('</section>', home.index('<section class="lr-hero"'))]
+        hero_start = home.index('<section class="lr-hero')
+        hero = home[hero_start:home.index('</section>', hero_start)]
         self.assertIn('href="corporate-buildings.html"', hero)
         self.assertIn('기업 사옥·빌딩 보기', hero)
         self.assertNotIn('기업 사옥 350억', hero)
