@@ -217,10 +217,11 @@ function bindPhoneBtn(listing) {
   phoneBtn.setAttribute('data-phone', contactPhone);
 
   phoneBtn.addEventListener('click', (e) => {
-    // 데스크톱에서는 전화 대신 알림 표시
-    if (window.innerWidth > 768) {
+    // 데스크톱에서는 첫 클릭에 버튼에 번호를 보여줍니다
+    if (window.innerWidth > 768 && !phoneBtn.dataset.revealed) {
       e.preventDefault();
-      alert(`전화 문의: ${contactPhone}\n(모바일에서는 바로 전화가 연결됩니다)`);
+      phoneBtn.dataset.revealed = 'true';
+      phoneBtn.textContent = contactPhone;
     }
   });
 }

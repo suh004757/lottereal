@@ -190,10 +190,11 @@ function buildListingCard(item) {
 if (listContainer) {
   listContainer.addEventListener('click', (e) => {
     const btn = e.target.closest('.contact-btn');
-    if (btn && window.innerWidth > 768) {
+    // On desktop the first click shows the number on the button instead of a dialog
+    if (btn && window.innerWidth > 768 && !btn.dataset.revealed) {
       e.preventDefault();
-      const phone = btn.getAttribute('data-phone');
-      alert(`전화 문의: ${phone}\n모바일에서는 바로 전화가 연결됩니다.`);
+      btn.dataset.revealed = 'true';
+      btn.textContent = btn.getAttribute('data-phone');
     }
   });
 }
