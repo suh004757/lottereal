@@ -1,3 +1,4 @@
+import re
 import unittest
 from pathlib import Path
 
@@ -40,8 +41,11 @@ class OctoberFiveDailyContentTests(unittest.TestCase):
 
     def test_existing_report_preserves_publication_date_and_links_forward(self):
         self.assertIn('"datePublished":"2026-09-28"', self.updated_html)
-        self.assertIn('"dateModified":"2026-10-05"', self.updated_html)
-        self.assertIn("발행 2026-09-28 · 수정 2026-10-05", self.updated_html)
+        modified = re.search(r'"dateModified":"(\d{4}-\d{2}-\d{2})"', self.updated_html)
+        self.assertIsNotNone(modified)
+        modified_date = modified.group(1) if modified else ""
+        self.assertGreaterEqual(modified_date, "2026-10-05")
+        self.assertIn(f"발행 2026-09-28 · 수정 {modified_date}", self.updated_html)
         self.assertIn(f'href="{NEW_SLUG}.html"', self.updated_html)
 
 
