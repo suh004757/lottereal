@@ -104,11 +104,7 @@ def ga_run_report(body: dict[str, Any]) -> dict[str, Any]:
 
 
 def metric_value(row: dict[str, Any], index: int = 0) -> str:
-    values = row.get('metricValues') or []
-    if not isinstance(values, list) or index >= len(values):
-        return '0'
-    value = values[index]
-    return value.get('value', '0') if isinstance(value, dict) else '0'
+    return row.get('metricValues', [{}])[index].get('value', '0')
 
 
 def dim_value(row: dict[str, Any], index: int = 0) -> str:

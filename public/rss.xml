@@ -6,14 +6,7 @@
     <atom:link href="https://lottes.co.kr/rss.xml" rel="self" type="application/rss+xml"/>
     <description>송파·잠실 부동산 계약 사례와 공공 자료 기반 시장 리포트</description>
     <language>ko</language>
-    <lastBuildDate>Sun, 18 Oct 2026 00:00:00 +0000</lastBuildDate>
-    <item>
-      <title>삼전·석촌 빌라 엘리베이터, &apos;있음&apos;만 확인하면 될까요?</title>
-      <link>https://lottes.co.kr/reports/2026-10-18-samjeon-seokchon-villa-elevator-check.html</link>
-      <guid isPermaLink="true">https://lottes.co.kr/reports/2026-10-18-samjeon-seokchon-villa-elevator-check.html</guid>
-      <description>삼전·석촌 연립·다세대를 살펴볼 때 엘리베이터 설치 여부뿐 아니라 운행 상태, 검사 유효기간, 점검 이력과 실제 이용 조건을 확인하는 순서를 정리했습니다.</description>
-      <pubDate>Sun, 18 Oct 2026 00:00:00 +0000</pubDate>
-    </item>
+    <lastBuildDate>Sat, 17 Oct 2026 00:00:00 +0000</lastBuildDate>
     <item>
       <title>잠실 아파트 주차, 계약 전에 무엇을 확인할까요?</title>
       <link>https://lottes.co.kr/reports/2026-10-17-jamsil-apartment-parking-check.html</link>
@@ -95,7 +88,7 @@
       <title>삼전·석촌 빌라 시세, 아파트 지수로 대신 볼 수 있나요?</title>
       <link>https://lottes.co.kr/reports/2026-09-28-samjeon-seokchon-villa-price-reading.html</link>
       <guid isPermaLink="true">https://lottes.co.kr/reports/2026-09-28-samjeon-seokchon-villa-price-reading.html</guid>
-      <description>삼전·석촌 연립·다세대 가격을 볼 때 아파트 지수와 개별 실거래를 나누고, 대지권면적·건축연도·승강기 조건까지 함께 비교하는 방법을 정리했습니다.</description>
+      <description>삼전·석촌 연립·다세대 가격을 볼 때 아파트 지수와 개별 실거래를 나누고, 10월 4일 갱신된 서울시 자료의 대지권면적까지 함께 비교하는 방법을 정리했습니다.</description>
       <pubDate>Mon, 28 Sep 2026 00:00:00 +0000</pubDate>
     </item>
     <item>
@@ -285,6 +278,13 @@
       <link>https://lottes.co.kr/reports/2026-08-25-real-estate-partial-deposit-cancellation.html</link>
       <guid isPermaLink="true">https://lottes.co.kr/reports/2026-08-25-real-estate-partial-deposit-cancellation.html</guid>
       <description>부동산 계약금의 일부만 먼저 지급한 뒤 계약을 해제하려 할 때 실제 지급액과 약정 계약금 중 무엇을 기준으로 보는지 판례와 대응 순서를 정리했습니다.</description>
+      <pubDate>Tue, 25 Aug 2026 00:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>전셋집이 경매로 넘어가면? 배당요구와 임대차 종료 시점</title>
+      <link>https://lottes.co.kr/reports/2026-08-25-rental-auction-distribution-demand-lease-termination.html</link>
+      <guid isPermaLink="true">https://lottes.co.kr/reports/2026-08-25-rental-auction-distribution-demand-lease-termination.html</guid>
+      <description>임대차기간이 남아 있는데 전셋집이 경매로 넘어간 경우 대항력 있는 임차인이 배당요구를 하면 계약과 우선변제권에 어떤 영향이 있는지 정리했습니다.</description>
       <pubDate>Tue, 25 Aug 2026 00:00:00 +0000</pubDate>
     </item>
   </channel>
