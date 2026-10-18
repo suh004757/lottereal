@@ -56,3 +56,11 @@
 - 주간 REB 차트 cron(`eb60a12303c1`) 첫 자동 실행: 2026-10-22 15:30 KST 결과 확인.
 - RSS 제출 약 2주 뒤 Search Console/GA4 재조회해 위 기준선과 비교.
 - 이 Windows 환경에서 `test_static_report_exports` 37건은 fsync EPERM으로 기존부터 실패 (Linux/CI에서는 통과). 검증은 변경 범위 한정 ad-hoc이며 전체 green 주장 아님.
+
+## 6. 이후 Codex 작업 (2026-10-18, `1fd5113..9b2e602`) 검토 결과
+- `029_listing_rent_and_audit.sql`: `deposit`/`monthly_rent` 컬럼, authenticated의 DELETE 제거와 UPDATE 컬럼 한정, 상태 변경 감사 로그 `listing_state_audit`(ADMIN만 조회). 운영 적용 확인(읽기 전용 조회): 감사 테이블 RLS on, 두 admin 함수가 감사 기록, 테이블 단위 UPDATE/DELETE 권한 없음.
+- admin 수정 payload 필드가 029 UPDATE 허용 컬럼 안에 모두 있음 → 매물 수정 저장 정상 경로 유지.
+- 공개 매물 조회(신규 컬럼 포함) 200, 매물 목록·삼공빌딩 상세 화면 정상.
+- 엘리베이터 리포트는 첫 push CI 실패로 자동 revert 후 테스트 수정해 재발행(`9b2e602`, CI 성공).
+- 이 Windows에서만 실패하는 신규 테스트(fcntl, 경로 구분자, rss.xml CRLF, fsync)는 Linux 복제본에서 모두 통과.
+- 남은 리스크: 거래 완료 매물 사진은 공개 버킷 URL로 계속 열림 (`docs/listing-media-risk.md`).
