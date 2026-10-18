@@ -122,10 +122,14 @@ class ListingPhaseOneTests(unittest.TestCase):
         self.assertRegex(css, r"\.lr-journey\.is-motion-paused[^{]*\{[^}]*animation-play-state:\s*paused")
 
     def test_public_media_risk_is_documented_without_private_bucket_move(self):
+        # Closed-listing photos stay public on purpose (owner decision); the documented risk is
+        # a past listing being read as available, and the controls against that.
         risk = (ROOT / "docs" / "listing-media-risk.md").read_text(encoding="utf-8")
-        self.assertIn("known URL", risk)
         self.assertIn("public", risk.lower())
-        self.assertIn("remaining risk", risk.lower())
+        self.assertIn("intended", risk.lower())
+        self.assertIn("currently available", risk)
+        self.assertIn("closed_at is null", risk)
+        self.assertIn("비슷한 매물 문의", risk)
 
 
 if __name__ == "__main__":

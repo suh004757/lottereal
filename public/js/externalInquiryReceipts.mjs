@@ -63,7 +63,9 @@ export function renderPublicReceipts(receipts = [], summary = null) {
     renderGroup('지난 관심 기록', '접수 날짜 기준', history, HISTORY_VISIBLE)
   ].join('');
 
-  return `${summaryHtml}<div class="lr-activity-list">${groups}</div>`;
+  // These are inquiry records, not a live inventory: a past record must not read as an open listing
+  return `${summaryHtml}<div class="lr-activity-list">${groups}</div>
+    <p class="lr-activity-footnote">문의가 들어온 시점의 기록이라 이미 거래가 끝난 매물이 있을 수 있습니다. 지금 거래 가능한지는 문의하실 때 확인해 드립니다.</p>`;
 }
 
 const HISTORY_VISIBLE = 6;
@@ -127,7 +129,7 @@ function renderRow(receipt) {
       <span class="lr-receipt-time">${escapeHtml(receipt.timeLabel)}</span>
       <span class="lr-receipt-type">${escapeHtml(receipt.transactionType)}</span>
       <strong>매물번호 ${escapeHtml(receipt.listingNumber)}${count}</strong>
-      <a class="lr-receipt-inquire" data-listing-reference-inquiry href="contact.html?source=zigbang&amp;listing=${encodeURIComponent(receipt.listingNumber)}#inquiry-options">이 매물 문의</a>
+      <a class="lr-receipt-inquire" data-listing-reference-inquiry href="contact.html?source=zigbang&amp;listing=${encodeURIComponent(receipt.listingNumber)}#inquiry-options">${receipt.isCurrent ? '이 매물 문의' : '비슷한 매물 문의'}</a>
     </li>
   `;
 }

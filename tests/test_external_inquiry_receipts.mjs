@@ -85,6 +85,10 @@ assert.match(html, /2026\.07\.18/);
 assert.match(html, /지난 관심 기록/);
 assert.match(html, /contact\.html\?source=zigbang&amp;listing=50181019#inquiry-options/);
 assert.match(html, /이 매물 문의/);
+// Past records are not an open-listing claim: they ask about similar listings and carry a timing note
+assert.match(html, /비슷한 매물 문의/);
+assert.match(html, /이미 거래가 끝난 매물이 있을 수 있습니다/);
+assert.match(html, /문의가 들어온 시점의 기록/);
 assert.doesNotMatch(html, /16300|가격|onerror|삼전동|전화|이메일|문의 내용/);
 
 const empty = renderPublicReceipts([], { total: 0, jeonse: 0, monthlyRent: 0, sale: 0 });

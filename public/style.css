@@ -4564,6 +4564,13 @@ h1 {
   border-radius: 2px;
 }
 
+.lr-activity-footnote {
+  margin: 14px 0 0;
+  color: #4b5563;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
 .lr-activity-list {
   display: grid;
   gap: 22px;
