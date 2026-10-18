@@ -11,7 +11,7 @@ class PolicyReportSnippetTests(unittest.TestCase):
         html = REPORT.read_text(encoding="utf-8")
 
         self.assertIn(
-            "<title>이재명 정부 부동산 정책 정리: 대출 규제·공급·토지거래허가 | 롯데부동산</title>",
+            "<title>2026년 이재명 정부 부동산 정책 정리: 대출 규제·공급·청년 주거지원 | 롯데부동산</title>",
             html,
         )
         self.assertNotIn("<title>2026년 3월 이재명 정부 부동산 정책 정리", html)
