@@ -1,3 +1,10 @@
+// KakaoTalk's embedded Android/iOS WebView repaints fixed blur and scroll-linked
+// animation layers less smoothly than the standalone browsers. Load the small
+// detector on every public page before visitors begin interacting with the page.
+import('/js/webviewPerformance.mjs').catch(() => {
+  // Performance enhancement only: navigation must remain usable if loading fails.
+});
+
 document.addEventListener('DOMContentLoaded', () => {
   const mobileQuery = window.matchMedia('(max-width: 768px)');
   const navPairs = Array.from(document.querySelectorAll('.lr-header')).map((header) => ({

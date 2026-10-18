@@ -27,6 +27,8 @@
   let inView = false;
   let pausedByUser = false;
 
+  const isConstrainedWebview = () => document.documentElement.classList.contains('lr-kakao-webview');
+
   const setActive = (index) => {
     active = (index + steps.length) % steps.length;
     steps.forEach((step, i) => {
@@ -40,7 +42,11 @@
     root.style.setProperty('--journey-progress', String(steps.length > 1 ? active / (steps.length - 1) : 0));
   };
 
-  const canAutoplay = () => inView && !pausedByUser && !reducedMotion.matches && !document.hidden;
+  const canAutoplay = () => inView
+    && !pausedByUser
+    && !reducedMotion.matches
+    && !isConstrainedWebview()
+    && !document.hidden;
 
   const sync = () => {
     const autoplaying = canAutoplay();
@@ -52,7 +58,7 @@
       timer = null;
     }
     if (toggle) {
-      toggle.hidden = reducedMotion.matches;
+      toggle.hidden = reducedMotion.matches || isConstrainedWebview();
       toggle.setAttribute('aria-pressed', String(pausedByUser));
       toggle.setAttribute('aria-label', pausedByUser ? '자동 재생' : '자동 재생 멈춤');
       toggle.firstElementChild.textContent = pausedByUser ? '▶' : '❚❚';
@@ -84,6 +90,7 @@
   }
 
   document.addEventListener('visibilitychange', sync);
+  window.addEventListener('lottereal:webview-performance', sync);
   if (reducedMotion.addEventListener) reducedMotion.addEventListener('change', sync);
 
   setActive(0);
