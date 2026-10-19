@@ -8,7 +8,7 @@ import { buildSanitizedReportHtml } from './reportRenderSecurity.mjs';
 import { safeExternalHttpUrl } from './publicRenderSecurity.mjs';
 import { findMatchingLandingConfigs } from './config/reportLandingConfig.js';
 import { buildAbsoluteUrl, renderJsonLd, updateSeoMeta } from './utils/seo.js';
-import { reportStaticHref, reportStaticUrl } from './utils/reportUrls.mjs';
+import { legacyReportRedirectHref, reportStaticHref, reportStaticUrl } from './utils/reportUrls.mjs';
 import {
   compareReportsByPublication,
   formatReportDateMeta,
@@ -57,6 +57,14 @@ if (document.readyState === 'loading') {
 }
 
 async function loadReport() {
+  if (reportSlug) {
+    const staticHref = await legacyReportRedirectHref(window.location.search);
+    if (staticHref) {
+      window.location.replace(staticHref);
+      return;
+    }
+  }
+
   try {
     currentReport = reportSlug
       ? await getReportBySlug(reportSlug)
@@ -449,8 +457,8 @@ function escapeHtml(value = '') {
 function applySeo() {
   const canonical = reportStaticUrl(currentReport.slug || '');
   const title = currentReport.title
-    ? `${currentReport.title} | Lotte Real Estate`
-    : 'Market Report | Lotte Real Estate';
+    ? `${currentReport.title} | 롯데부동산`
+    : '시장 리포트 | 롯데부동산';
   const description = currentReport.summary || 'Data-based real estate market report from Lotte Real Estate.';
   const image = buildAbsoluteUrl('img/bg-img/lotte_street_view.png');
   const publishedTime = currentReport.created_at || currentReport.updated_at;
@@ -463,7 +471,7 @@ function applySeo() {
     ogImage: image,
     type: 'article',
     locale: 'ko_KR',
-    siteName: 'Lotte Real Estate'
+    siteName: '롯데부동산'
   });
 
   renderJsonLd({
