@@ -321,6 +321,61 @@ class GmailInquiryWatchTest(unittest.TestCase):
             self.assertEqual(state['seen_keys'], [])
             self.assertEqual(state['fallback_keys'], [key])
 
+    def test_retried_fallbacks_do_not_starve_newer_inquiries(self):
+        # 2026-09-30..10-19: ten inquiries whose Kakao alert kept failing filled every
+        # 10-item batch, so 56 newer inquiries were never published or announced.
+        base = {
+            'platform': '직방',
+            'received_at': '2026-08-29T12:34:56+09:00',
+            'title': '직방에서 고객 문의가 들어왔습니다.',
+        }
+        stuck = [{**base, 'key': f'{index:x}' * 64, 'uid': str(300 + index)} for index in range(10)]
+        fresh = [
+            {**base, 'key': 'a1' * 32, 'uid': '401'},
+            {**base, 'key': 'b2' * 32, 'uid': '402'},
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            env_path = Path(directory) / '.env'
+            state_path = Path(directory) / 'state.json'
+            env_path.write_text(
+                'LOTTEREAL_GMAIL_ADDRESS=owner@example.com\n'
+                'LOTTEREAL_GMAIL_APP_PASSWORD=secret\n',
+                encoding='utf-8',
+            )
+            state_path.write_text(json.dumps({
+                'initialized': True,
+                'seen_keys': [],
+                'fallback_keys': [item['key'] for item in stuck],
+                'parse_failures': {},
+                'dead_keys': [],
+            }), encoding='utf-8')
+            output = io.StringIO()
+            with (
+                mock.patch.dict(os.environ, {
+                    'LOTTEREAL_ENV_PATH': str(env_path),
+                    'LOTTEREAL_GMAIL_WATCH_STATE': str(state_path),
+                }),
+                mock.patch.object(gmail_watch, 'fetch_verified_messages', return_value=stuck + fresh),
+                mock.patch.object(gmail_watch, 'fetch_zigbang_detail', return_value=[
+                    '• 등록번호 50181019', '• 전세 16300',
+                ]) as detail,
+                mock.patch.object(gmail_watch, 'publish_public_receipt') as publish,
+                mock.patch.object(gmail_watch, 'send_kakao_owner_alert', side_effect=RuntimeError('auth')),
+                mock.patch('sys.stdout', output),
+            ):
+                self.assertEqual(gmail_watch.main(), 0)
+
+            attempted = [call.args[2] for call in detail.call_args_list]
+            self.assertEqual(attempted[:2], ['401', '402'])
+            self.assertEqual(len(attempted), 10)
+            published = [call.args[1]['source_message_hash'] for call in publish.call_args_list]
+            self.assertIn('a1' * 32, published)
+            self.assertIn('b2' * 32, published)
+            self.assertEqual(output.getvalue(), '⚠️ 직방 문의 처리 지연 2건. Gmail에서 확인하세요.\n')
+            state = json.loads(state_path.read_text(encoding='utf-8'))
+            self.assertIn('a1' * 32, state['fallback_keys'])
+            self.assertIn('b2' * 32, state['fallback_keys'])
+
     def test_detail_fetch_exception_does_not_starve_valid_neighbor(self):
         bad_key = '3' * 64
         good_key = '4' * 64

@@ -884,7 +884,12 @@ def main() -> int:
         if not unseen:
             write_heartbeat(heartbeat_path)
             return 0
+        # Inquiries that already fell back are retried after first attempts, so a run of
+        # persistent failures (an expired Kakao grant) cannot take every batch slot.
+        retried = set(state['fallback_keys'])
+        unseen.sort(key=lambda item: item.get('key') in retried)
 
+        delayed: list[dict] = []
         for item in unseen[:10]:
             try:
                 item['detail_lines'] = fetch_zigbang_detail(
@@ -893,9 +898,7 @@ def main() -> int:
                     str(item.get('uid') or ''),
                 )
             except Exception:
-                fallback = record_fallback(state_path, [item])
-                if fallback:
-                    print(fallback, flush=True)
+                delayed.append(item)
                 continue
             receipt = build_public_receipt_payload(item)
             if receipt is None:
@@ -907,9 +910,7 @@ def main() -> int:
             try:
                 publish_public_receipt(values, receipt)
             except Exception:
-                fallback = record_fallback(state_path, [item])
-                if fallback:
-                    print(fallback, flush=True)
+                delayed.append(item)
                 continue
 
             alert = build_alert([item])
@@ -923,12 +924,15 @@ def main() -> int:
                 update_private_env(env_path, token_updates)
                 values.update(token_updates)
             except Exception:
-                fallback = record_fallback(state_path, [item])
-                if fallback:
-                    print(fallback, flush=True)
+                delayed.append(item)
                 continue
 
             mark_delivered(state_path, item['key'])
+        if delayed:
+            # One message per run: a backlog must not become a burst of Discord posts.
+            fallback = record_fallback(state_path, delayed)
+            if fallback:
+                print(fallback, flush=True)
         write_heartbeat(heartbeat_path)
     return 0
 
