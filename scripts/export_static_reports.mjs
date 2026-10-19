@@ -245,6 +245,42 @@ function renderReportCta(report) {
     + '</div></div></div></section>';
 }
 
+// Server-rendered links between report pages. Crawlers that skip JavaScript (Naver's
+// Yeti) otherwise only reach a report through the sitemap. Nearest publication dates in
+// the same category first, so every page passes links to different neighbours instead of
+// all pointing at the newest posts. Not part of the content hash: a new neighbour must
+// not advance an unchanged report's dateModified.
+export function selectRelatedReports(report, reports = [], limit = 4) {
+  const slug = String(report?.slug || '');
+  const category = reportCategory(report).key;
+  const day = (value) => Date.parse(`${publishedDate(value)}T00:00:00Z`) || 0;
+  const origin = day(report);
+  return reports
+    .filter((other) => SAFE_SLUG.test(String(other?.slug || '')) && other.slug !== slug
+      && String(other?.title || '').trim())
+    .map((other) => ({
+      other,
+      rank: reportCategory(other).key === category ? 0 : 1,
+      distance: Math.abs(day(other) - origin),
+    }))
+    .sort((left, right) => left.rank - right.rank || left.distance - right.distance
+      || (left.other.slug < right.other.slug ? -1 : left.other.slug > right.other.slug ? 1 : 0))
+    .slice(0, limit)
+    .map(({ other }) => other);
+}
+
+function renderRelatedReports(related = []) {
+  if (!related.length) return '';
+  const items = related.map((other) => (
+    `<li><a href="${other.slug}.html">${escapeHtml(String(other.title).trim())}</a></li>`
+  )).join('');
+  return '<section class="lr-section lr-related-reports" aria-labelledby="related-reports-title"><div class="lr-container">'
+    + '<h2 id="related-reports-title">함께 보면 좋은 자료</h2>'
+    + `<ul class="lr-report-archive-all__list">${items}</ul>`
+    + '<p><a href="../report.html">전체 자료 보기</a></p>'
+    + '</div></section>';
+}
+
 // Daily posts open with the publication day ("2026년 10월 17일 …"). Searchers type the
 // question, not the day, and result titles get cut off, so the browser/search title leads
 // with the question. Month/week prefixes stay: there the period is the subject.
@@ -330,6 +366,7 @@ export function renderStaticReport(report, siteUrl = 'https://lottes.co.kr', opt
     </div></section>
     <section class="lr-section"><div class="lr-container"><article class="lr-report-body">${body}</article></div></section>
     <section class="lr-section lr-section--muted"><div class="lr-container"><div class="lr-disclaimer"><strong>자료 출처</strong><ul>${renderEvidence(report?.evidence_json)}</ul><p>공개 자료를 바탕으로 정리한 정보 제공용 자료이며, 특정 거래나 수익을 보장하지 않습니다. 실제 계약 전에는 최신 서류와 현장을 다시 확인해 주세요.</p></div></div></section>
+    ${renderRelatedReports(options.related || [])}
     ${renderReportCta(report)}
   </main>
   <footer class="lr-footer"><div class="lr-container lr-footer__content"><div><p class="lr-kicker">롯데부동산</p><p class="lr-text">서울시 송파구 백제고분로27길 27 1층</p><p class="lr-text">문의전화: 0507-1402-5055 | 중개사무소등록번호 11710-2018-00141</p></div><div class="lr-footer__links"><a href="../privacy.html">개인정보처리방침</a><a href="../EN.html">ENGLISH</a></div></div><p class="lr-footer__copy">© ${COPYRIGHT_YEAR} 롯데부동산. All rights reserved.</p></footer>
@@ -922,7 +959,8 @@ async function main() {
       const contentHash = publicContentHash(report);
       const modifiedDate = resolveModifiedDate(report, existingHtml, args.siteUrl);
       modifiedDates.set(report.slug, modifiedDate);
-      rendered.set(filename, renderStaticReport(report, args.siteUrl, { contentHash, modifiedDate }));
+      const related = selectRelatedReports(report, reports);
+      rendered.set(filename, renderStaticReport(report, args.siteUrl, { contentHash, modifiedDate, related }));
     }
     const missing = existing.filter((filename) => !expected.has(filename));
     if ((reports.length === 0 || missing.length > 0) && !args.allowShrink) {

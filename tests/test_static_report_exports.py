@@ -122,6 +122,62 @@ class StaticReportExportTests(unittest.TestCase):
         self.assertIn("<lastmod>2026-09-26</lastmod>", sitemap)
         self.assertNotIn(f"report.html?slug={self.report['slug']}", sitemap)
 
+    def related_report(self, slug, day, content_type="legal_checklist"):
+        return dict(
+            self.report,
+            slug=slug,
+            title=f"{slug} 제목",
+            created_at=f"2026-09-{day:02d}T03:00:00+00:00",
+            updated_at=f"2026-09-{day:02d}T04:00:00+00:00",
+            metadata={"content_type": content_type},
+        )
+
+    def test_static_pages_link_nearest_same_category_reports_in_server_html(self):
+        reports = [
+            self.report,
+            self.related_report("2026-09-25-near-check", 25),
+            self.related_report("2026-09-20-far-check", 20),
+            self.related_report("2026-09-10-farther-check", 10),
+            self.related_report("2026-09-01-farthest-check", 1),
+            self.related_report("2026-09-27-market-report", 27, "market_report"),
+        ]
+        result = self.run_export(reports)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+        html = (self.output_dir / f"{self.report['slug']}.html").read_text(encoding="utf-8")
+        start = html.index('<section class="lr-section lr-related-reports"')
+        related = html[start:html.index("</section>", start)]
+        self.assertIn("함께 보면 좋은 자료", related)
+        links = [part.split('"')[0] for part in related.split('href="')[1:]]
+        self.assertEqual(links, [
+            "2026-09-25-near-check.html",
+            "2026-09-20-far-check.html",
+            "2026-09-10-farther-check.html",
+            "2026-09-01-farthest-check.html",
+            "../report.html",
+        ])
+        self.assertNotIn(f'href="{self.report["slug"]}.html"', related)
+        market = (self.output_dir / "2026-09-27-market-report.html").read_text(encoding="utf-8")
+        self.assertIn('href="2026-09-26-songpa-safe-check.html"', market)
+
+    def test_single_report_has_no_related_section(self):
+        result = self.run_export([self.report])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        html = (self.output_dir / f"{self.report['slug']}.html").read_text(encoding="utf-8")
+        self.assertNotIn("lr-related-reports", html)
+
+    def test_new_related_report_does_not_advance_existing_modified_date(self):
+        first = self.run_export([self.report])
+        self.assertEqual(first.returncode, 0, first.stderr)
+        later = self.related_report("2026-09-29-later-check", 29)
+        later["updated_at"] = "2026-10-05T04:00:00+00:00"
+        report = dict(self.report, updated_at="2026-10-05T04:00:00+00:00")
+        second = self.run_export([report, later])
+        self.assertEqual(second.returncode, 0, second.stderr)
+        html = (self.output_dir / f"{self.report['slug']}.html").read_text(encoding="utf-8")
+        self.assertIn('href="2026-09-29-later-check.html"', html)
+        self.assertIn('"dateModified":"2026-09-26"', html)
+
     def test_contract_guides_use_situation_aware_consultation_handoff(self):
         result = self.run_export([self.report])
         self.assertEqual(result.returncode, 0, result.stderr)
