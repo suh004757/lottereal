@@ -288,6 +288,26 @@ export function selectRelatedReports(report, reports = [], limit = 4) {
     .map(({ other }) => other);
 }
 
+const NEIGHBORHOODS = JSON.parse(fs.readFileSync(path.join(REPO, 'public', 'Data', 'songpa-neighborhood-guide.v1.json'), 'utf8')).neighborhoods;
+
+// 동 named in a report title, matched by stem ("삼전" for 삼전동). 송파 is skipped: in titles
+// it nearly always means 송파구, not 송파동.
+export function neighborhoodsInTitle(title = '', neighborhoods = NEIGHBORHOODS) {
+  const text = String(title);
+  return neighborhoods.filter((area) => area.id !== 'songpa' && text.includes(String(area.name).replace(/동$/, '')));
+}
+
+function renderAreaGuide(report) {
+  const areas = neighborhoodsInTitle(report?.title);
+  if (!areas.length) return '';
+  const links = areas.map((area) => (
+    `<a class="lr-link" href="../songpa-neighborhood-guide.html#area-${escapeHtml(area.id)}">${escapeHtml(area.name)} 생활권 안내</a>`
+  )).join(' ');
+  return '<section class="lr-section lr-report-area-guide"><div class="lr-container">'
+    + `<p class="lr-kicker">이 글의 동네</p><p>${links}</p>`
+    + '</div></section>';
+}
+
 function renderRelatedReports(related = []) {
   if (!related.length) return '';
   const items = related.map((other) => (
@@ -396,6 +416,7 @@ export function renderStaticReport(report, siteUrl = 'https://lottes.co.kr', opt
     </div></section>
     <section class="lr-section"><div class="lr-container"><article class="lr-report-body">${body}</article></div></section>
     <section class="lr-section lr-section--muted"><div class="lr-container"><div class="lr-disclaimer"><strong>자료 출처</strong><ul>${renderEvidence(report?.evidence_json)}</ul><p>공개 자료를 바탕으로 정리한 정보 제공용 자료이며, 특정 거래나 수익을 보장하지 않습니다. 실제 계약 전에는 최신 서류와 현장을 다시 확인해 주세요.</p></div></div></section>
+    ${renderAreaGuide(report)}
     ${renderRelatedReports(options.related || [])}
     ${renderReportCta(report)}
   </main>

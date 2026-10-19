@@ -29,3 +29,14 @@ test('card text is escaped', () => {
 test('missing markers leave the page alone', () => {
   assert.equal(replaceNeighborhoodCards('<main></main>', config.neighborhoods), null);
 });
+
+test('report titles link to the guide card of every 동 they name, except 송파', async () => {
+  const { neighborhoodsInTitle } = await import('../scripts/export_static_reports.mjs');
+  const ids = (title) => neighborhoodsInTitle(title, config.neighborhoods).map((area) => area.id);
+  assert.deepEqual(ids('삼전·석촌 빌라 엘리베이터 확인'), ['samjeon', 'seokchon']);
+  assert.deepEqual(ids('송파 실수요자 확인사항'), []);
+  assert.deepEqual(ids('서울 아파트 지수'), []);
+  for (const area of config.neighborhoods.filter((item) => item.id !== 'songpa')) {
+    assert.deepEqual(ids(`${area.name} 계약 확인`), [area.id]);
+  }
+});
