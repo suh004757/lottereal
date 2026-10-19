@@ -1246,12 +1246,39 @@
 }
 
 @media (max-width: 640px) {
+    /* One compact row so the article starts on the first phone screen. */
     .lr-report-glance {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin: 1.25rem auto 1rem;
+        border-radius: 12px;
+    }
+
+    .lr-report-glance li {
+        gap: 2px;
+        padding: 8px 4px;
+    }
+
+    .lr-report-glance span {
+        font-size: 0.7rem;
+    }
+
+    .lr-report-glance strong {
+        font-size: 0.88rem;
+    }
+
+    .lr-report-header + .lr-section {
+        padding-top: 28px !important; /* mobile.css sets .lr-section padding with !important */
     }
 
     .lr-report-header > .lr-container > .lr-report-intent-actions {
         display: grid;
+    }
+}
+
+/* The fixed phone action bar (style.css, <=720px) already offers call, inquiry,
+   listings and directions; the same three header buttons only push the article down. */
+@media (max-width: 720px) {
+    body:has(.lr-mobile-actionbar) .lr-report-header > .lr-container > .lr-report-intent-actions {
+        display: none;
     }
 }
 
