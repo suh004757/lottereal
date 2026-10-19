@@ -157,6 +157,9 @@
 .fee-guide__cards span { color: var(--lr-yellow-text, #FFD43B); font: 700 1.3rem 'Noto Sans KR', sans-serif; }
 .fee-guide__cards h3 { margin: 28px 0 12px; }
 .fee-guide__cards p { margin: 0; color: rgba(255,255,255,.88); line-height: 1.78; }
+.fee-guide__cards strong { color: var(--lr-yellow-text, #FFD43B); }
+.fee-guide + .fee-guide { padding-top: 0; }
+.fee-guide__note { margin: 28px 0 0; color: rgba(255,255,255,.78); font-size: .95rem; line-height: 1.7; }
 .fee-sources ul { display: grid; gap: 12px; padding: 0; list-style: none; }
 .fee-sources li { display: grid; grid-template-columns: minmax(260px,.7fr) 1fr; padding: 20px 0; gap: 28px; border-bottom: 1px solid var(--fee-line); }
 .fee-sources li a { color: var(--fee-ink); font-weight: 700; }
