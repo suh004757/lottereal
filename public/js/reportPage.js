@@ -5,6 +5,7 @@ import {
   listPublishedReports
 } from './services/reportAdapter.js';
 import { buildSanitizedReportHtml } from './reportRenderSecurity.mjs';
+import { isAutomatedBrowser } from './utils/automatedBrowser.mjs';
 import { safeExternalHttpUrl } from './publicRenderSecurity.mjs';
 import { findMatchingLandingConfigs } from './config/reportLandingConfig.js';
 import { buildAbsoluteUrl, renderJsonLd, updateSeoMeta } from './utils/seo.js';
@@ -90,7 +91,7 @@ async function loadReport() {
       renderAuxiliaryFallback();
     }
 
-    incrementReportViews(currentReport.slug).catch((error) => {
+    if (!isAutomatedBrowser()) incrementReportViews(currentReport.slug).catch((error) => {
       console.warn('[Analytics] Failed to increment view count:', error);
     });
   } catch (error) {

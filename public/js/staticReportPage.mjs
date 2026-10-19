@@ -1,11 +1,15 @@
+import { isAutomatedBrowser } from './utils/automatedBrowser.mjs';
+
 const SAFE_REPORT_SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 export function isSafeReportSlug(slug) {
   return SAFE_REPORT_SLUG.test(String(slug || ''));
 }
 
-export async function trackStaticReportView(slug, increment) {
-  if (!isSafeReportSlug(slug) || typeof increment !== 'function') return false;
+export { isAutomatedBrowser };
+
+export async function trackStaticReportView(slug, increment, nav = globalThis.navigator) {
+  if (!isSafeReportSlug(slug) || typeof increment !== 'function' || isAutomatedBrowser(nav)) return false;
   await increment(slug);
   return true;
 }
