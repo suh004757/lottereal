@@ -203,6 +203,27 @@ class StaticReportExportTests(unittest.TestCase):
         self.assertIn("이전 &lt;확인&gt; 자료", html)
         self.assertIn('href="report.html">전체 자료 보기</a>', html)
 
+    def test_report_breadcrumb_follows_its_menu_section(self):
+        case = dict(
+            self.report,
+            slug="2026-09-21-mold-dispute",
+            title="곰팡이 분쟁 사례",
+            metadata={"content_type": "dispute_case"},
+        )
+        result = self.run_export([self.report, case])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for slug, section in ((self.report["slug"], "report.html"), (case["slug"], "disputes.html")):
+            html = (self.output_dir / f"{slug}.html").read_text(encoding="utf-8")
+            blocks = [
+                json.loads(block.split(">", 1)[1])
+                for block in html.split('<script type="application/ld+json"')[1:]
+                for block in [block.split("</script>", 1)[0]]
+            ]
+            crumbs = next(b for b in blocks if b["@type"] == "BreadcrumbList")["itemListElement"]
+            self.assertEqual(crumbs[1]["item"], f"https://lottes.co.kr/{section}")
+            self.assertEqual(crumbs[-1]["item"], f"https://lottes.co.kr/reports/{slug}.html")
+            self.assertIn(f'<a href="../{section}" class="active">', html)
+
     def test_hub_page_lists_the_reports_its_script_selects(self):
         hub = self.base / "disputes.html"
         hub.write_text(

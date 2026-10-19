@@ -214,6 +214,13 @@ function reportCategory(report) {
   return { key: 'market', label: '시장 리포트' };
 }
 
+// The top-menu section a report belongs to; dispute cases live under the 계약 사례 hub.
+function reportSection(report) {
+  return reportCategory(report).key === 'dispute'
+    ? { href: 'disputes.html', name: '계약 사례' }
+    : { href: 'report.html', name: '시장·정책' };
+}
+
 function shareImageName(report) {
   return `report-${reportCategory(report).key}.png`;
 }
@@ -327,6 +334,16 @@ export function renderStaticReport(report, siteUrl = 'https://lottes.co.kr', opt
     publisher: { '@type': 'Organization', name: '롯데부동산', url: `${base}/` },
   };
   for (const key of Object.keys(schema)) if (schema[key] === undefined) delete schema[key];
+  const section = reportSection(report);
+  const breadcrumb = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: '롯데부동산', item: `${base}/` },
+      { '@type': 'ListItem', position: 2, name: section.name, item: `${base}/${section.href}` },
+      { '@type': 'ListItem', position: 3, name: title, item: canonical },
+    ],
+  };
 
   return `<!DOCTYPE html>
 <html lang="ko">
@@ -351,6 +368,7 @@ export function renderStaticReport(report, siteUrl = 'https://lottes.co.kr', opt
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <script type="application/ld+json">${jsonLd(schema)}</script>
+  <script type="application/ld+json">${jsonLd(breadcrumb)}</script>
   <script src="../js/privacyAnalytics.js"></script>
   <link rel="icon" href="../img/core-img/favicon.ico">
   <link rel="stylesheet" href="../style.css">
@@ -364,7 +382,7 @@ export function renderStaticReport(report, siteUrl = 'https://lottes.co.kr', opt
     <button class="lr-hamburger" aria-label="메뉴" aria-expanded="false">☰</button>
     <nav class="lr-nav" aria-label="주요 메뉴">
       <a href="../corporate-buildings.html">기업 사옥</a><a href="../listings.html">매물 찾기</a>
-      <a href="../report.html" class="active">시장·정책</a><a href="../disputes.html">계약 사례</a>
+      <a href="../report.html"${section.href === 'report.html' ? ' class="active"' : ''}>시장·정책</a><a href="../disputes.html"${section.href === 'disputes.html' ? ' class="active"' : ''}>계약 사례</a>
       <a href="../knowledge.html">자료 찾기</a><a href="../contact.html" class="lr-nav-cta">문의·방문</a>
     </nav>
   </div></header>
