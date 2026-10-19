@@ -3,7 +3,7 @@
 
 <head>
 <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'none'; script-src 'self' https://www.googletagmanager.com; script-src-attr 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://itcztvceelfvppjwhmvl.supabase.co https://www.google-analytics.com https://region1.google-analytics.com; form-action 'self'; upgrade-insecure-requests">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'none'; script-src 'self' https://www.googletagmanager.com https://wcs.pstatic.net; script-src-attr 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://itcztvceelfvppjwhmvl.supabase.co https://www.google-analytics.com https://region1.google-analytics.com https://wcs.naver.com; form-action 'self'; upgrade-insecure-requests">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <script src="js/privacyAnalytics.js"></script>
 
@@ -166,11 +166,11 @@
 
                 <div class="lr-policy">
                     <h3>2. 방문 분석과 브라우저 저장</h3>
-                    <p>사이트 개선을 위해 Google Analytics 4를 사용합니다. 페이지 경로, 브라우저·기기 정보, 대략적인 지역, 방문 및 버튼 이용 정보와 분석용 쿠키 식별자가 처리될 수 있습니다.</p>
+                    <p>사이트 개선을 위해 Google Analytics 4와 네이버 애널리틱스를 사용합니다. 페이지 경로, 브라우저·기기 정보, 대략적인 지역, 방문 및 버튼 이용 정보와 분석용 쿠키 식별자가 처리될 수 있습니다. 네이버 애널리틱스는 네이버 검색으로 들어온 경우의 검색어 등 유입 경로를 확인하는 데 사용합니다.</p>
                     <ul>
-                        <li>현재 페이지와 이전 페이지 URL 모두 검색어(query string)를 제거한 경로만 전송합니다.</li>
+                        <li>Google Analytics에는 현재 페이지와 이전 페이지 URL 모두 검색어(query string)를 제거한 경로만 전송합니다. 네이버 애널리틱스는 네이버 스크립트가 페이지 주소와 이전 페이지 주소를 직접 수집하며, 이 사이트는 주소에 이름·전화번호·문의 내용이나 사이트 내 검색 문장을 넣지 않습니다.</li>
                         <li>Google Signals와 광고 개인화 신호를 사용하지 않습니다.</li>
-                        <li>분석 쿠키 만료기간은 최대 90일로 제한합니다.</li>
+                        <li>Google Analytics 분석 쿠키 만료기간은 최대 90일로 제한합니다.</li>
                         <li>방문자가 별도로 허용한 뒤에만 분석을 시작하며, Do Not Track 설정도 존중합니다.</li>
                         <li>자료검색 문장, 전화번호, 이름, 문의 원문은 분석 이벤트에 포함하지 않습니다.</li>
                     </ul>
@@ -188,10 +188,11 @@
                         <tbody>
                             <tr><td data-label="업체">Supabase Inc. 및 계약상 처리 법인</td><td data-label="업무·이전 항목">문의 데이터베이스 호스팅<br>제1항의 문의 정보</td><td data-label="이전 방법·국가">문의 제출 시 암호화된 네트워크 전송<br>데이터 저장: 일본(도쿄)<br>지원·보안 운영: 미국·싱가포르 등 계약상 처리시설 소재 국가</td><td data-label="근거">개인정보 보호법 제28조의8 제1항 제3호<br>문의 상담 계약 이행에 필요한 위탁·보관</td><td data-label="보유기간">수집일로부터 1년</td></tr>
                             <tr><td data-label="업체">Google LLC</td><td data-label="업무·이전 항목">방문 통계 분석<br>제2항의 분석 정보</td><td data-label="이전 방법·국가">방문 분석 허용 후 암호화된 네트워크 전송<br>미국 등 Google 데이터센터 소재 국가</td><td data-label="근거">개인정보 보호법 제28조의8 제1항 제1호<br>별도 선택 동의</td><td data-label="보유기간">분석 설정 및 Google 정책에 따른 기간</td></tr>
+                            <tr><td data-label="업체">네이버 주식회사</td><td data-label="업무·이전 항목">방문 통계 분석(네이버 애널리틱스)<br>제2항의 분석 정보</td><td data-label="이전 방법·국가">방문 분석 허용 후 암호화된 네트워크 전송<br>국내</td><td data-label="근거">개인정보 보호법 제15조 제1항 제1호<br>별도 선택 동의</td><td data-label="보유기간">분석 설정 및 네이버 정책에 따른 기간</td></tr>
                             <tr><td data-label="업체">주식회사 카카오</td><td data-label="업무·이전 항목">사장님 본인 문의 알림 전송<br>메일 제목, 공개 매물번호·동 단위 소재지·층·방 구조·거래유형·가격, 직방 문의 확인 링크</td><td data-label="이전 방법·국가">카카오 메시지 API를 통한 암호화 전송<br>고객 이름·연락처·이메일·문의 원문 제외</td><td data-label="근거">문의 확인 업무 수행을 위한 최소 처리</td><td data-label="보유기간">카카오 서비스 정책 및 사장님 본인 채팅 보관 설정에 따른 기간</td></tr>
                         </tbody>
                     </table>
-                    <p>Google Analytics를 허용하지 않아도 사이트와 문의 기능을 이용할 수 있습니다. 웹 문의 데이터 저장에 동의하지 않는 경우 문의 양식을 사용하지 않고 전화로 상담할 수 있습니다.</p>
+                    <p>방문 분석(Google Analytics·네이버 애널리틱스)을 허용하지 않아도 사이트와 문의 기능을 이용할 수 있습니다. 웹 문의 데이터 저장에 동의하지 않는 경우 문의 양식을 사용하지 않고 전화로 상담할 수 있습니다.</p>
                     <p>지도 링크를 누르면 Google 또는 네이버 사이트로 이동하며, 이동 후의 정보 처리는 각 서비스의 개인정보처리방침이 적용됩니다.</p>
                 </div>
 
@@ -209,7 +210,7 @@
                     <p>개인정보 침해 상담은 개인정보침해신고센터(국번 없이 118) 또는 개인정보분쟁조정위원회(1833-6972)를 이용할 수 있습니다.</p>
                 </div>
 
-                <p class="lr-policy-date"><strong>공고·시행일:</strong> 2026년 8월 30일<br><strong>버전:</strong> v2.3</p>
+                <p class="lr-policy-date"><strong>공고·시행일:</strong> 2026년 10월 20일<br><strong>버전:</strong> v2.4 (네이버 애널리틱스 추가)</p>
             </div>
         </section>
     </main>

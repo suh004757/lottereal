@@ -2,6 +2,7 @@
   'use strict';
 
   const GA_ID = 'G-VPG00DG5V1';
+  const NAVER_WA = '1a98a7eafcb1eb0';
   const CHOICE_KEY = 'lr_analytics_choice';
   const ANALYTICS_ALLOWED = 'allowed';
   const ANALYTICS_REQUIRED_ONLY = 'required-only';
@@ -22,7 +23,7 @@
   }
 
   function deleteAnalyticsCookies() {
-    const prefixes = ['_ga', '_gid', '_gat'];
+    const prefixes = ['_ga', '_gid', '_gat', 'wcs_bt'];
     document.cookie.split(';').forEach((part) => {
       const name = part.split('=')[0].trim();
       if (!prefixes.some((prefix) => name.startsWith(prefix))) return;
@@ -173,4 +174,15 @@
   script.async = true;
   script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(GA_ID)}`;
   document.head.appendChild(script);
+
+  // Naver Analytics shows Naver search inflow, which GA4 does not. Same consent gate.
+  window.wcs_add = window.wcs_add || {};
+  window.wcs_add.wa = NAVER_WA;
+  const naverScript = document.createElement('script');
+  naverScript.async = true;
+  naverScript.src = 'https://wcs.pstatic.net/wcslog.js';
+  naverScript.addEventListener('load', () => {
+    if (window.wcs) window.wcs_do();
+  }, { once: true });
+  document.head.appendChild(naverScript);
 })();

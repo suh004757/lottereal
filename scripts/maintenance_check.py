@@ -56,10 +56,10 @@ FORBIDDEN_DEPENDENCY_REFS = (
 )
 PUBLIC_CSP = (
     "default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'none'; "
-    "script-src 'self' https://www.googletagmanager.com; script-src-attr 'none'; "
+    "script-src 'self' https://www.googletagmanager.com https://wcs.pstatic.net; script-src-attr 'none'; "
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; "
     "img-src 'self' data: blob: https:; connect-src 'self' https://itcztvceelfvppjwhmvl.supabase.co "
-    "https://www.google-analytics.com https://region1.google-analytics.com; form-action 'self'; upgrade-insecure-requests"
+    "https://www.google-analytics.com https://region1.google-analytics.com https://wcs.naver.com; form-action 'self'; upgrade-insecure-requests"
 )
 ADMIN_CSP = (
     "default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'none'; "
