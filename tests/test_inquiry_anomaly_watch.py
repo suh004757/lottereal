@@ -26,6 +26,75 @@ class InquiryAnomalyWatchTest(unittest.TestCase):
                 {'stale_alerted': False},
             )
             self.assertEqual(state_path.stat().st_mode & 0o777, 0o600)
+    def _delivery_heartbeat(self, path, now, *, pending, delivered_ago=None):
+        payload = {
+            'last_success_at': (now - timedelta(minutes=1)).isoformat().replace('+00:00', 'Z'),
+            'pending_alerts': pending,
+        }
+        if delivered_ago is not None:
+            payload['last_delivered_at'] = (now - delivered_ago).isoformat().replace('+00:00', 'Z')
+        path.write_text(json.dumps(payload), encoding='utf-8')
+
+    def test_undelivered_owner_alerts_raise_one_delivery_warning(self):
+        # 2026-09-30..10-19 the watcher ran (fresh heartbeat) while no Kakao alert
+        # reached the owner; the heartbeat-only check stayed silent for 19 days.
+        from scripts.lottereal_inquiry_anomaly_watch import run_once
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            heartbeat_path = root / 'heartbeat.json'
+            state_path = root / 'anomaly-state.json'
+            now = datetime(2026, 10, 19, 12, 0, tzinfo=timezone.utc)
+            self._delivery_heartbeat(heartbeat_path, now, pending=12, delivered_ago=timedelta(hours=7))
+
+            first = run_once(heartbeat_path, state_path, now=now)
+            second = run_once(heartbeat_path, state_path, now=now + timedelta(minutes=5))
+            self.assertEqual(first, (
+                '⚠️ LotteReal 문의 알림 전달 실패\n'
+                '카카오 알림 대기: 12건, 6시간 이상 전달 없음\n'
+                '카카오 재인증이 필요할 수 있습니다. 문의 원본은 Gmail에서 확인하세요.'
+            ))
+            self.assertEqual(second, '')
+            self.assertEqual(
+                json.loads(state_path.read_text(encoding='utf-8')),
+                {'stale_alerted': False, 'delivery_alerted': True},
+            )
+
+            later = now + timedelta(minutes=10)
+            self._delivery_heartbeat(heartbeat_path, later, pending=0, delivered_ago=timedelta(minutes=1))
+            recovered = run_once(heartbeat_path, state_path, now=later)
+            self.assertEqual(recovered, '✅ LotteReal 카카오 문의 알림 전달 복구')
+            self.assertEqual(
+                json.loads(state_path.read_text(encoding='utf-8')),
+                {'stale_alerted': False, 'delivery_alerted': False},
+            )
+
+    def test_never_delivered_pending_alerts_warn(self):
+        from scripts.lottereal_inquiry_anomaly_watch import run_once
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            heartbeat_path = root / 'heartbeat.json'
+            now = datetime(2026, 10, 19, 12, 0, tzinfo=timezone.utc)
+            self._delivery_heartbeat(heartbeat_path, now, pending=1)
+            self.assertIn('카카오 알림 대기: 1건', run_once(heartbeat_path, root / 's.json', now=now))
+
+    def test_recent_delivery_or_empty_queue_stays_silent(self):
+        from scripts.lottereal_inquiry_anomaly_watch import run_once
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            heartbeat_path = root / 'heartbeat.json'
+            now = datetime(2026, 10, 19, 12, 0, tzinfo=timezone.utc)
+            self._delivery_heartbeat(heartbeat_path, now, pending=2, delivered_ago=timedelta(hours=1))
+            self.assertEqual(run_once(heartbeat_path, root / 'a.json', now=now), '')
+            self._delivery_heartbeat(heartbeat_path, now, pending=0, delivered_ago=timedelta(days=3))
+            self.assertEqual(run_once(heartbeat_path, root / 'b.json', now=now), '')
+            self.assertEqual(
+                json.loads((root / 'b.json').read_text(encoding='utf-8')),
+                {'stale_alerted': False},
+            )
+
     def test_stale_heartbeat_alerts_once_without_private_data(self):
         from scripts.lottereal_inquiry_anomaly_watch import run_once
 

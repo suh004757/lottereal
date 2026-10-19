@@ -375,6 +375,9 @@ class GmailInquiryWatchTest(unittest.TestCase):
             state = json.loads(state_path.read_text(encoding='utf-8'))
             self.assertIn('a1' * 32, state['fallback_keys'])
             self.assertIn('b2' * 32, state['fallback_keys'])
+            heartbeat = json.loads(gmail_watch.DEFAULT_HEARTBEAT_PATH.read_text(encoding='utf-8'))
+            self.assertEqual(heartbeat['pending_alerts'], 12)
+            self.assertNotIn('last_delivered_at', heartbeat)
 
     def test_detail_fetch_exception_does_not_starve_valid_neighbor(self):
         bad_key = '3' * 64

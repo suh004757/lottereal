@@ -103,9 +103,22 @@ def run_once(
     if instant.tzinfo is None:
         raise ValueError('current time must be timezone-aware')
     recorded = None
+    pending_alerts = 0
+    last_delivered = None
     if heartbeat_path.exists():
         try:
             payload = json.loads(heartbeat_path.read_text(encoding='utf-8'))
+            raw_pending = payload.get('pending_alerts', 0)
+            if isinstance(raw_pending, int) and not isinstance(raw_pending, bool) and raw_pending > 0:
+                pending_alerts = raw_pending
+            raw_delivered = payload.get('last_delivered_at')
+            if isinstance(raw_delivered, str):
+                try:
+                    parsed_delivered = datetime.fromisoformat(raw_delivered.replace('Z', '+00:00'))
+                    if parsed_delivered.tzinfo is not None:
+                        last_delivered = parsed_delivered
+                except ValueError:
+                    pass
             raw_recorded = payload.get('last_success_at', payload.get('last_attempt_at'))
             if not isinstance(raw_recorded, str):
                 raise ValueError('invalid heartbeat time')
@@ -115,6 +128,7 @@ def run_once(
         except (OSError, json.JSONDecodeError, UnicodeDecodeError, KeyError, TypeError, ValueError):
             recorded = None
     previous_stale = False
+    delivery_alerted = None
     supabase_failures = 0
     supabase_successes = 0
     supabase_alerted = False
@@ -124,6 +138,7 @@ def run_once(
             previous = json.loads(state_path.read_text(encoding='utf-8'))
             allowed_keys = {
                 'stale_alerted',
+                'delivery_alerted',
                 'supabase_alerted',
                 'supabase_failures',
                 'supabase_successes',
@@ -133,6 +148,10 @@ def run_once(
             if not isinstance(previous.get('stale_alerted'), bool):
                 raise ValueError('invalid anomaly state')
             previous_stale = previous['stale_alerted']
+            if 'delivery_alerted' in previous:
+                if not isinstance(previous['delivery_alerted'], bool):
+                    raise ValueError('invalid anomaly state')
+                delivery_alerted = previous['delivery_alerted']
             if any(key.startswith('supabase_') for key in previous):
                 previous_successes = previous.get('supabase_successes', 0)
                 if (
@@ -152,6 +171,7 @@ def run_once(
         except (json.JSONDecodeError, UnicodeDecodeError, KeyError, TypeError, ValueError):
             _quarantine(state_path)
             state_has_supabase = supabase_ok is not None
+            delivery_alerted = None
     age = None if recorded is None else (
         instant.astimezone(timezone.utc) - recorded.astimezone(timezone.utc)
     )
@@ -169,6 +189,24 @@ def run_once(
             '✅ LotteReal 문의 watcher 정상 복구\n'
             '현재: 정상 실행 중'
         )
+
+    # A running watcher is not a working one: Kakao can reject every alert while the
+    # heartbeat stays fresh (2026-09-30..10-19, KOE322).
+    undelivered = pending_alerts > 0 and (
+        last_delivered is None
+        or instant.astimezone(timezone.utc) - last_delivered.astimezone(timezone.utc)
+        >= timedelta(hours=6)
+    )
+    if undelivered and not delivery_alerted:
+        messages.append(
+            '⚠️ LotteReal 문의 알림 전달 실패\n'
+            f'카카오 알림 대기: {pending_alerts}건, 6시간 이상 전달 없음\n'
+            '카카오 재인증이 필요할 수 있습니다. 문의 원본은 Gmail에서 확인하세요.'
+        )
+        delivery_alerted = True
+    elif not undelivered and delivery_alerted:
+        messages.append('✅ LotteReal 카카오 문의 알림 전달 복구')
+        delivery_alerted = False
 
     if supabase_ok is False:
         supabase_successes = 0
@@ -197,6 +235,8 @@ def run_once(
             supabase_successes = 0
 
     state: dict[str, object] = {'stale_alerted': stale}
+    if delivery_alerted is not None:
+        state['delivery_alerted'] = delivery_alerted
     if state_has_supabase:
         state.update({
             'supabase_alerted': supabase_alerted,

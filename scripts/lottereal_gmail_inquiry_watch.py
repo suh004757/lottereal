@@ -699,23 +699,40 @@ def write_heartbeat(
     *,
     success: bool = True,
     now: datetime | None = None,
+    pending_alerts: int | None = None,
+    delivered: bool = False,
 ) -> None:
     instant = now or _utc_now()
     if instant.tzinfo is None:
         raise ValueError('heartbeat time must be timezone-aware')
     timestamp = instant.astimezone(timezone.utc).isoformat().replace('+00:00', 'Z')
-    payload = {'last_attempt_at': timestamp}
+    payload: dict[str, object] = {'last_attempt_at': timestamp}
     if success:
         payload['last_success_at'] = timestamp
-    elif path.exists():
+    if delivered:
+        payload['last_delivered_at'] = timestamp
+    if pending_alerts is not None:
+        payload['pending_alerts'] = pending_alerts
+    if path.exists():
+        # Fields this write does not decide are carried over, so the watchdog can tell
+        # "running" from "delivering" (lottereal_inquiry_anomaly_watch.py).
         try:
             previous = json.loads(path.read_text(encoding='utf-8'))
-            previous_success = previous.get('last_success_at')
-            if isinstance(previous_success, str):
-                parsed = datetime.fromisoformat(previous_success.replace('Z', '+00:00'))
-                if parsed.tzinfo is not None:
-                    payload['last_success_at'] = previous_success
-        except (OSError, json.JSONDecodeError, UnicodeDecodeError, TypeError, ValueError):
+            for field in ('last_success_at', 'last_delivered_at'):
+                value = previous.get(field)
+                if field in payload or not isinstance(value, str):
+                    continue
+                if datetime.fromisoformat(value.replace('Z', '+00:00')).tzinfo is not None:
+                    payload[field] = value
+            previous_pending = previous.get('pending_alerts')
+            if (
+                'pending_alerts' not in payload
+                and isinstance(previous_pending, int)
+                and not isinstance(previous_pending, bool)
+                and previous_pending >= 0
+            ):
+                payload['pending_alerts'] = previous_pending
+        except (OSError, AttributeError, json.JSONDecodeError, UnicodeDecodeError, TypeError, ValueError):
             pass
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(f'.{path.name}.{os.getpid()}.tmp')
@@ -881,8 +898,9 @@ def main() -> int:
             item for item in items
             if item.get('key') not in seen and item.get('key') not in dead
         ]
+        fetched_keys = {item.get('key') for item in items}
         if not unseen:
-            write_heartbeat(heartbeat_path)
+            write_heartbeat(heartbeat_path, pending_alerts=0)
             return 0
         # Inquiries that already fell back are retried after first attempts, so a run of
         # persistent failures (an expired Kakao grant) cannot take every batch slot.
@@ -890,6 +908,7 @@ def main() -> int:
         unseen.sort(key=lambda item: item.get('key') in retried)
 
         delayed: list[dict] = []
+        delivered_any = False
         for item in unseen[:10]:
             try:
                 item['detail_lines'] = fetch_zigbang_detail(
@@ -928,12 +947,14 @@ def main() -> int:
                 continue
 
             mark_delivered(state_path, item['key'])
+            delivered_any = True
         if delayed:
             # One message per run: a backlog must not become a burst of Discord posts.
             fallback = record_fallback(state_path, delayed)
             if fallback:
                 print(fallback, flush=True)
-        write_heartbeat(heartbeat_path)
+        pending = len(fetched_keys & set(load_state(state_path)['fallback_keys']))
+        write_heartbeat(heartbeat_path, pending_alerts=pending, delivered=delivered_any)
     return 0
 
 
