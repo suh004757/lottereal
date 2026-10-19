@@ -5,6 +5,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { readReportEntry, renderFeed } from './build_report_feed.mjs';
+import { getReportLandingConfigByKey, selectLandingReports } from '../public/js/config/reportLandingConfig.js';
 
 const require = createRequire(import.meta.url);
 const { Marked, Renderer } = require('../public/js/vendor/marked-18.0.11.min.js');
@@ -13,8 +14,17 @@ const REPO = path.resolve(__dirname, '..');
 const SAFE_SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const ARCHIVE_START = '<!-- STATIC_REPORT_ARCHIVE_START -->';
 const ARCHIVE_END = '<!-- STATIC_REPORT_ARCHIVE_END -->';
-const HOME_LINKS_START = '<!-- HOME_REPORT_LINKS_START -->';
-const HOME_LINKS_END = '<!-- HOME_REPORT_LINKS_END -->';
+const LINKS_START = '<!-- REPORT_LINKS_START -->';
+const LINKS_END = '<!-- REPORT_LINKS_END -->';
+// Pages whose report lists are rendered by JavaScript. Each carries a marked placeholder
+// that the exporter fills with plain links (replaced on load).
+const LINKED_PAGES = [
+  'index.html',
+  'disputes.html',
+  'songpa-market-report.html',
+  'jamsil-market-report.html',
+  'gangnam-office-report.html',
+];
 const COPYRIGHT_YEAR = 2026;
 
 function escapeHtml(value = '') {
@@ -418,20 +428,27 @@ function newestFirst(reports) {
   });
 }
 
-// The home report showcase is filled by JavaScript; these server-rendered links are its
-// placeholder (replaced on load) so crawlers that skip JavaScript reach recent reports
-// from the most-crawled page. Returns null when the page has no markers.
-function updateHomeReportLinks(homeText, reports, limit = 6) {
-  const start = homeText.indexOf(HOME_LINKS_START);
-  const end = homeText.indexOf(HOME_LINKS_END);
+// Crawlers that skip JavaScript (Naver's Yeti) see these links where the page script
+// later renders its cards. A hub page (data-report-landing) lists the same reports its
+// script selects; other pages list the newest. Returns null when the page has no markers.
+function updateLinkedReportPage(pageText, reports, limit = 6) {
+  const start = pageText.indexOf(LINKS_START);
+  const end = pageText.indexOf(LINKS_END);
   if (start < 0 || end < 0 || end <= start) return null;
-  const items = newestFirst(reports).slice(0, limit).map((report) => (
+  const landingKey = pageText.match(/data-report-landing="([a-z-]+)"/)?.[1] || '';
+  const config = landingKey ? getReportLandingConfigByKey(landingKey) : null;
+  const selected = config
+    ? selectLandingReports(reports, config).slice(0, landingKey === 'dispute-cases' ? undefined : limit)
+    : newestFirst(reports).slice(0, limit);
+  const items = selected.map((report) => (
     `<li><a href="reports/${report.slug}.html">${escapeHtml(String(report.title || '').trim())}</a></li>`
   )).join('');
-  const block = `${HOME_LINKS_START}<p class="lr-kicker">최근 자료</p>`
-    + `<ul class="lr-report-archive-all__list">${items}</ul>`
-    + `<p><a href="report.html">전체 자료 보기</a></p>${HOME_LINKS_END}`;
-  return homeText.slice(0, start) + block + homeText.slice(end + HOME_LINKS_END.length);
+  const block = selected.length
+    ? `<p class="lr-kicker">${config ? '관련 자료' : '최근 자료'}</p>`
+      + `<ul class="lr-report-archive-all__list">${items}</ul>`
+      + '<p><a href="report.html">전체 자료 보기</a></p>'
+    : '';
+  return pageText.slice(0, start) + LINKS_START + block + pageText.slice(end);
 }
 
 function updateReportArchive(reportPageText, reports) {
@@ -739,14 +756,14 @@ function releasePublicationMutex(mutexRoot, token) {
   syncDirectory(parent);
 }
 
-function homePagePath(args) {
-  return path.resolve(path.dirname(args.reportPage), 'index.html');
+function linkedPagePaths(args) {
+  return LINKED_PAGES.map((name) => path.resolve(path.dirname(args.reportPage), name));
 }
 
 function allowedTarget(target, args) {
   const resolved = path.resolve(target);
   if (resolved === path.resolve(args.sitemap) || resolved === path.resolve(args.reportPage)
-      || resolved === homePagePath(args)
+      || linkedPagePaths(args).includes(resolved)
       || resolved === path.resolve(path.dirname(args.sitemap), 'rss.xml')) return true;
   return path.dirname(resolved) === path.resolve(args.outputDir)
     && resolved.endsWith('.html')
@@ -1013,12 +1030,12 @@ async function main() {
     }
     specifications.push({ kind: 'replace', target: args.sitemap, content: nextSitemap });
     specifications.push({ kind: 'replace', target: args.reportPage, content: nextReportPage });
-    const homePage = homePagePath(args);
-    if (fs.existsSync(homePage)) {
-      const homeText = fs.readFileSync(homePage, 'utf8');
-      const nextHome = updateHomeReportLinks(homeText, reports);
-      if (nextHome !== null && nextHome !== homeText) {
-        specifications.push({ kind: 'replace', target: homePage, content: nextHome });
+    for (const linkedPage of linkedPagePaths(args)) {
+      if (!fs.existsSync(linkedPage)) continue;
+      const pageText = fs.readFileSync(linkedPage, 'utf8');
+      const nextPage = updateLinkedReportPage(pageText, reports);
+      if (nextPage !== null && nextPage !== pageText) {
+        specifications.push({ kind: 'replace', target: linkedPage, content: nextPage });
       }
     }
     const feedEntries = [...rendered.entries()]

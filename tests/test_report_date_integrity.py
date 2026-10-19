@@ -18,9 +18,7 @@ class ReportDateIntegritySurfaceTest(unittest.TestCase):
             self.assertIn('formatReportDateMeta', script, relative)
             self.assertNotIn('formatDate(report.updated_at)', script, relative)
         report_page = (PUBLIC / 'js/reportPage.js').read_text(encoding='utf-8')
-        landing = (PUBLIC / 'js/reportLandingPage.js').read_text(encoding='utf-8')
         self.assertIn('compareReportsByPublication', report_page)
-        self.assertIn('compareReportsByPublication', landing)
         self.assertIn("timeZone: 'Asia/Seoul'", report_page)
 
     def test_detail_page_labels_publication_and_revision_honestly(self):

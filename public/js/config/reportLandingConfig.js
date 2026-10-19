@@ -1,3 +1,5 @@
+import { compareReportsByPublication } from '../utils/reportDates.mjs';
+
 export const REPORT_LANDING_CONFIG = {
   disputeCases: {
     key: 'dispute-cases',
@@ -260,6 +262,59 @@ function scoreLandingMatch(config, haystack, report) {
 
   regions.forEach((region) => {
     if (reportRegion.includes(String(region).toLowerCase())) {
+      score += 4;
+    }
+  });
+
+  return score;
+}
+
+// Shared by the hub pages and scripts/export_static_reports.mjs, which writes the same
+// selection into the hub HTML for crawlers that skip JavaScript.
+export function selectLandingReports(reports, landingConfig) {
+  return reports
+    .map((report) => ({
+      report,
+      score: scoreReport(report, landingConfig)
+    }))
+    .filter((entry) => entry.score > 0)
+    .map((entry) => entry.report)
+    .sort(compareReportsByPublication);
+}
+
+function scoreReport(report, landingConfig) {
+  let score = 0;
+  const requiredContentTypes = landingConfig.reportMatch?.requiredContentTypes || [];
+  const reportType = String(report.metadata?.content_type || '').toLowerCase();
+
+  if (requiredContentTypes.length && !requiredContentTypes.includes(reportType)) {
+    return 0;
+  }
+
+  if (requiredContentTypes.includes(reportType)) {
+    score += 20;
+  }
+
+  const haystack = [
+    report.title,
+    report.summary,
+    report.metadata?.region,
+    report.metadata?.content_type
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+  const regions = landingConfig.reportMatch?.metadataRegion || [];
+  const keywords = landingConfig.reportMatch?.keywords || [];
+
+  keywords.forEach((keyword) => {
+    if (haystack.includes(String(keyword).toLowerCase())) {
+      score += 2;
+    }
+  });
+
+  regions.forEach((region) => {
+    if (haystack.includes(String(region).toLowerCase())) {
       score += 4;
     }
   });

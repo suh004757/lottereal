@@ -182,7 +182,7 @@ class StaticReportExportTests(unittest.TestCase):
         home = self.base / "index.html"
         home.write_text(
             '<html><body><div data-report-secondary-list>'
-            '<!-- HOME_REPORT_LINKS_START -->stale<!-- HOME_REPORT_LINKS_END -->'
+            '<!-- REPORT_LINKS_START -->stale<!-- REPORT_LINKS_END -->'
             '</div></body></html>\n',
             encoding="utf-8",
         )
@@ -202,6 +202,26 @@ class StaticReportExportTests(unittest.TestCase):
         self.assertLess(newest, html.index('href="reports/2026-09-20-older-check.html"'))
         self.assertIn("이전 &lt;확인&gt; 자료", html)
         self.assertIn('href="report.html">전체 자료 보기</a>', html)
+
+    def test_hub_page_lists_the_reports_its_script_selects(self):
+        hub = self.base / "disputes.html"
+        hub.write_text(
+            '<html><body data-report-landing="dispute-cases"><div id="report-landing-list">'
+            '<!-- REPORT_LINKS_START --><!-- REPORT_LINKS_END --></div></body></html>\n',
+            encoding="utf-8",
+        )
+        case = dict(
+            self.report,
+            slug="2026-09-21-mold-dispute",
+            title="곰팡이 분쟁 사례",
+            metadata={"content_type": "dispute_case"},
+        )
+        result = self.run_export([self.report, case])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        html = hub.read_text(encoding="utf-8")
+        self.assertIn('href="reports/2026-09-21-mold-dispute.html"', html)
+        self.assertNotIn(self.report["slug"], html)
+        self.assertIn("관련 자료", html)
 
     def test_home_page_without_markers_is_left_untouched(self):
         home = self.base / "index.html"
