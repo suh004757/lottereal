@@ -21,6 +21,21 @@ if (form) {
   form.elements.sourceChannel.addEventListener('change', syncListingReference);
 
   form.addEventListener('submit', submitInquiry);
+  // The browser's own validation bubble often does not appear in in-app browsers
+  // (KakaoTalk), so the first invalid field also gets a visible status message.
+  let invalidShown = false;
+  form.addEventListener('invalid', (event) => {
+    if (invalidShown) return;
+    invalidShown = true;
+    setTimeout(() => { invalidShown = false; }, 0);
+    showStatus(invalidFieldMessage(event.target?.name), 'error');
+  }, true);
+}
+
+function invalidFieldMessage(name) {
+  if (name === 'privacyConsent') return '연락처 수집 동의에 체크해 주세요.';
+  if (name === 'phone') return '연락받을 전화번호를 입력해 주세요.';
+  return '필수 항목을 선택해 주세요.';
 }
 
 function selectedInquiryType() {

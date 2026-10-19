@@ -185,9 +185,10 @@ textarea.lr-inquiry-input {
 }
 
 .lr-inquiry-consent input {
-  width: 17px;
-  height: 17px;
-  margin-top: 1px;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-top: 0;
   accent-color: #1e526d;
 }
 

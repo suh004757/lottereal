@@ -1032,3 +1032,15 @@
     transition: none !important;
   }
 }
+
+/* Card-foot links ("현재 매물 보기", "이 매물 문의") measured 22-25px tall on phones;
+   give them a 44px tap area without changing how they look. */
+@media (max-width: 768px) {
+  .lr-link,
+  .lr-receipt-inquire {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    font-size: 15px;
+  }
+}
