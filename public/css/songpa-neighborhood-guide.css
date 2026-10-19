@@ -107,8 +107,14 @@
 .nh-method__grid span { color: var(--lr-yellow-text, #FFD43B); font: 700 1.2rem 'Noto Sans KR', sans-serif; }
 .nh-method__grid h3 { margin: 24px 0 10px; }
 .nh-method__grid p { margin: 0; color: rgba(255,255,255,.88); line-height: 1.72; }
-.nh-neighborhoods { display: grid; grid-template-columns: repeat(7,minmax(110px,1fr)); gap: 8px; margin-top: 36px; }
-.nh-neighborhoods span { padding: 14px 8px; text-align: center; border: 1px solid var(--nh-line); color: var(--nh-ink); background: #fff; font-weight: 700; }
+.nh-area-cards { display: grid; grid-template-columns: repeat(auto-fill,minmax(280px,1fr)); gap: 16px; margin-top: 36px; }
+.nh-area-card { padding: 24px 22px; border: 1px solid var(--nh-line); color: var(--nh-ink); background: #fff; }
+.nh-area-card__eyebrow { margin: 0; color: var(--nh-gold); font-size: .9rem; font-weight: 700; }
+.nh-area-card h3 { margin: 6px 0 10px; font-size: 1.35rem; }
+.nh-area-card p { margin: 0 0 10px; line-height: 1.7; }
+.nh-area-card h4 { margin: 16px 0 6px; font-size: .95rem; color: var(--nh-ink-soft); }
+.nh-area-card ul { margin: 0; padding-left: 1.1em; line-height: 1.7; list-style: disc; }
+.nh-area-card__types strong { margin-right: 6px; }
 .nh-sources ul { display: grid; gap: 12px; padding: 0; list-style: none; }
 .nh-sources li { display: grid; grid-template-columns: minmax(260px,.7fr) 1fr; gap: 28px; padding: 20px 0; border-bottom: 1px solid var(--nh-line); }
 .nh-sources a { color: var(--nh-ink); font-weight: 800; }
@@ -123,7 +129,6 @@
   .nh-result { position: static; min-height: 0; }
   .nh-method__grid { grid-template-columns: 1fr; }
   .nh-method__grid article, .nh-method__grid article + article { padding: 26px 0; border-right: 0; border-bottom: 1px solid rgba(255,255,255,.13); }
-  .nh-neighborhoods { grid-template-columns: repeat(4,1fr); }
 }
 @media (max-width: 640px) {
   .nh-hero { padding: 84px 0 62px; }
@@ -134,7 +139,6 @@
   .nh-result { padding: 30px 18px; }
   .nh-result-card { padding: 20px 16px; }
   .nh-form__actions, .nh-result-card__actions { grid-template-columns: 1fr; }
-  .nh-neighborhoods { grid-template-columns: repeat(2,1fr); }
   .nh-sources li { grid-template-columns: 1fr; gap: 7px; }
 }
 
