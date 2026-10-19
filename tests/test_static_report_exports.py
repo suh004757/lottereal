@@ -178,6 +178,39 @@ class StaticReportExportTests(unittest.TestCase):
         self.assertIn('href="2026-09-29-later-check.html"', html)
         self.assertIn('"dateModified":"2026-09-26"', html)
 
+    def test_home_page_gets_server_rendered_latest_report_links(self):
+        home = self.base / "index.html"
+        home.write_text(
+            '<html><body><div data-report-secondary-list>'
+            '<!-- HOME_REPORT_LINKS_START -->stale<!-- HOME_REPORT_LINKS_END -->'
+            '</div></body></html>\n',
+            encoding="utf-8",
+        )
+        older = dict(
+            self.report,
+            slug="2026-09-20-older-check",
+            title="이전 <확인> 자료",
+            created_at="2026-09-20T03:00:00+00:00",
+            updated_at="2026-09-20T04:00:00+00:00",
+        )
+        result = self.run_export([older, self.report])
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+        html = home.read_text(encoding="utf-8")
+        self.assertNotIn("stale", html)
+        newest = html.index('href="reports/2026-09-26-songpa-safe-check.html"')
+        self.assertLess(newest, html.index('href="reports/2026-09-20-older-check.html"'))
+        self.assertIn("이전 &lt;확인&gt; 자료", html)
+        self.assertIn('href="report.html">전체 자료 보기</a>', html)
+
+    def test_home_page_without_markers_is_left_untouched(self):
+        home = self.base / "index.html"
+        original = "<html><body>no markers</body></html>\n"
+        home.write_text(original, encoding="utf-8")
+        result = self.run_export([self.report])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(home.read_text(encoding="utf-8"), original)
+
     def test_contract_guides_use_situation_aware_consultation_handoff(self):
         result = self.run_export([self.report])
         self.assertEqual(result.returncode, 0, result.stderr)

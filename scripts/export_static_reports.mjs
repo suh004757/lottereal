@@ -13,6 +13,8 @@ const REPO = path.resolve(__dirname, '..');
 const SAFE_SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const ARCHIVE_START = '<!-- STATIC_REPORT_ARCHIVE_START -->';
 const ARCHIVE_END = '<!-- STATIC_REPORT_ARCHIVE_END -->';
+const HOME_LINKS_START = '<!-- HOME_REPORT_LINKS_START -->';
+const HOME_LINKS_END = '<!-- HOME_REPORT_LINKS_END -->';
 const COPYRIGHT_YEAR = 2026;
 
 function escapeHtml(value = '') {
@@ -406,6 +408,32 @@ function updateSitemap(sitemapText, reports, siteUrl, modifiedDates = new Map())
   return next.replace(/\s*<\/urlset>\s*$/, `\n${entries}\n</urlset>\n`);
 }
 
+function newestFirst(reports) {
+  return [...reports].sort((left, right) => {
+    const instantOrder = parseRequiredTimestamp(right, 'created_at')
+      - parseRequiredTimestamp(left, 'created_at');
+    const leftSlug = String(left.slug);
+    const rightSlug = String(right.slug);
+    return instantOrder || (leftSlug < rightSlug ? -1 : leftSlug > rightSlug ? 1 : 0);
+  });
+}
+
+// The home report showcase is filled by JavaScript; these server-rendered links are its
+// placeholder (replaced on load) so crawlers that skip JavaScript reach recent reports
+// from the most-crawled page. Returns null when the page has no markers.
+function updateHomeReportLinks(homeText, reports, limit = 6) {
+  const start = homeText.indexOf(HOME_LINKS_START);
+  const end = homeText.indexOf(HOME_LINKS_END);
+  if (start < 0 || end < 0 || end <= start) return null;
+  const items = newestFirst(reports).slice(0, limit).map((report) => (
+    `<li><a href="reports/${report.slug}.html">${escapeHtml(String(report.title || '').trim())}</a></li>`
+  )).join('');
+  const block = `${HOME_LINKS_START}<p class="lr-kicker">최근 자료</p>`
+    + `<ul class="lr-report-archive-all__list">${items}</ul>`
+    + `<p><a href="report.html">전체 자료 보기</a></p>${HOME_LINKS_END}`;
+  return homeText.slice(0, start) + block + homeText.slice(end + HOME_LINKS_END.length);
+}
+
 function updateReportArchive(reportPageText, reports) {
   const start = reportPageText.indexOf(ARCHIVE_START);
   const end = reportPageText.indexOf(ARCHIVE_END);
@@ -711,9 +739,14 @@ function releasePublicationMutex(mutexRoot, token) {
   syncDirectory(parent);
 }
 
+function homePagePath(args) {
+  return path.resolve(path.dirname(args.reportPage), 'index.html');
+}
+
 function allowedTarget(target, args) {
   const resolved = path.resolve(target);
   if (resolved === path.resolve(args.sitemap) || resolved === path.resolve(args.reportPage)
+      || resolved === homePagePath(args)
       || resolved === path.resolve(path.dirname(args.sitemap), 'rss.xml')) return true;
   return path.dirname(resolved) === path.resolve(args.outputDir)
     && resolved.endsWith('.html')
@@ -980,6 +1013,14 @@ async function main() {
     }
     specifications.push({ kind: 'replace', target: args.sitemap, content: nextSitemap });
     specifications.push({ kind: 'replace', target: args.reportPage, content: nextReportPage });
+    const homePage = homePagePath(args);
+    if (fs.existsSync(homePage)) {
+      const homeText = fs.readFileSync(homePage, 'utf8');
+      const nextHome = updateHomeReportLinks(homeText, reports);
+      if (nextHome !== null && nextHome !== homeText) {
+        specifications.push({ kind: 'replace', target: homePage, content: nextHome });
+      }
+    }
     const feedEntries = [...rendered.entries()]
       .map(([filename, html]) => readReportEntry(html, filename))
       .filter(Boolean);
