@@ -176,13 +176,35 @@
   document.head.appendChild(script);
 
   // Naver Analytics shows Naver search inflow, which GA4 does not. Same consent gate.
+  // wcslog.js reads location.href and document.referrer itself and has no override, so
+  // the query strings are hidden only while wcs_do() builds and sends its beacon
+  // (synchronously), matching what GA4 receives.
+  function sendNaverPageview() {
+    if (!window.wcs) return;
+    const fullUrl = window.location.href;
+    const cleanUrl = window.location.pathname + window.location.hash;
+    let ownReferrer = false;
+    try {
+      ownReferrer = new URL(document.referrer).origin === window.location.origin;
+    } catch (_) {
+      // No or unparsable referrer: nothing to hide.
+    }
+    if (window.location.search) window.history.replaceState(window.history.state, '', cleanUrl);
+    const cleanReferrer = sanitizedReferrer();
+    if (ownReferrer) Object.defineProperty(document, 'referrer', { configurable: true, get: () => cleanReferrer });
+    try {
+      window.wcs_do();
+    } finally {
+      if (ownReferrer) delete document.referrer;
+      if (window.location.href !== fullUrl) window.history.replaceState(window.history.state, '', fullUrl);
+    }
+  }
+
   window.wcs_add = window.wcs_add || {};
   window.wcs_add.wa = NAVER_WA;
   const naverScript = document.createElement('script');
   naverScript.async = true;
   naverScript.src = 'https://wcs.pstatic.net/wcslog.js';
-  naverScript.addEventListener('load', () => {
-    if (window.wcs) window.wcs_do();
-  }, { once: true });
+  naverScript.addEventListener('load', sendNaverPageview, { once: true });
   document.head.appendChild(naverScript);
 })();

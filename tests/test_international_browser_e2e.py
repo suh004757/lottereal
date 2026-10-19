@@ -29,6 +29,8 @@ if E2E_REQUIRED and not sync_playwright:
 if E2E_REQUIRED and not CHROME:
     raise RuntimeError('LOTTEREAL_E2E_REQUIRED=1 but no Chromium executable is available')
 SENSITIVE_MARKER = 'SENSITIVE_SEARCH_MARKER_94821'
+# wcslog.js also injects Naver's ad-identifier sync; the CSP blocks it on purpose.
+NAVER_AD_ID_SYNC = 'ssl.pstatic.net/melona/libs/gfp-nac-module/'
 
 
 class QuietHandler(SimpleHTTPRequestHandler):
@@ -39,6 +41,11 @@ class QuietHandler(SimpleHTTPRequestHandler):
 def is_tracking_url(url):
     host = urlparse(url).netloc
     return 'googletagmanager.com' in host or 'google-analytics.com' in host or 'wcs' in host
+
+
+def tracking_record(request):
+    # Naver's wcslog sends with navigator.sendBeacon, so the page URL travels in the body.
+    return f'{request.url} {request.post_data or ""}'
 
 
 @unittest.skipUnless(sync_playwright and CHROME, 'Playwright and a Chromium executable are required for browser E2E')
@@ -95,7 +102,7 @@ class InternationalGuideBrowserE2ETest(unittest.TestCase):
             page = context.new_page()
             tracking_requests = []
             console_errors = []
-            page.on('request', lambda request: tracking_requests.append(request.url) if is_tracking_url(request.url) else None)
+            page.on('request', lambda request: tracking_requests.append(tracking_record(request)) if is_tracking_url(request.url) else None)
             page.on('console', lambda message: console_errors.append(message.text) if message.type == 'error' else None)
 
             page.goto(f'{self.base}/EN.html?private_test={SENSITIVE_MARKER}', wait_until='domcontentloaded')
@@ -107,6 +114,8 @@ class InternationalGuideBrowserE2ETest(unittest.TestCase):
                 page.locator('[data-notice-allow]').click()
             page.locator('[data-open-rental-safety]').first.wait_for()
             self.assertTrue(any('googletagmanager.com' in url for url in tracking_requests))
+            page.wait_for_timeout(1500)
+            self.assertTrue(any('wcs.pstatic.net' in url for url in tracking_requests))
             self.assertTrue(all(SENSITIVE_MARKER not in url for url in tracking_requests))
 
             trigger = page.locator('[data-open-rental-safety]').first
@@ -151,7 +160,10 @@ class InternationalGuideBrowserE2ETest(unittest.TestCase):
             consent_form.locator('input[name="privacyConsent"]').check()
             self.assertTrue(consent_form.evaluate('(form) => form.checkValidity()'))
             self.assertEqual(
-                [text for text in console_errors if 'Content Security Policy' in text or 'Refused to' in text],
+                [
+                    text for text in console_errors
+                    if ('Content Security Policy' in text or 'Refused to' in text) and NAVER_AD_ID_SYNC not in text
+                ],
                 [],
             )
             context.close()
@@ -159,7 +171,7 @@ class InternationalGuideBrowserE2ETest(unittest.TestCase):
             context = self.new_context(browser, analytics_choice='required-only')
             page = context.new_page()
             tracking_requests = []
-            page.on('request', lambda request: tracking_requests.append(request.url) if is_tracking_url(request.url) else None)
+            page.on('request', lambda request: tracking_requests.append(tracking_record(request)) if is_tracking_url(request.url) else None)
             page.goto(f'{self.base}/EN.html', wait_until='domcontentloaded')
             page.locator('[data-open-rental-safety]').first.click()
             search = page.locator('.lr-knowledge-widget__form input')
