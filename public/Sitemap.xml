@@ -56,7 +56,7 @@
   <!-- 계약·분쟁 사례 -->
   <url>
     <loc>https://lottes.co.kr/disputes.html</loc>
-    <lastmod>2026-10-17</lastmod>
+    <lastmod>2026-10-20</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.88</priority>
   </url>
@@ -98,7 +98,7 @@
   <!-- 송파 리포트 허브 -->
   <url>
     <loc>https://lottes.co.kr/songpa-market-report.html</loc>
-    <lastmod>2026-09-22</lastmod>
+    <lastmod>2026-09-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.80</priority>
   </url>
@@ -106,7 +106,7 @@
   <!-- 잠실 리포트 허브 -->
   <url>
     <loc>https://lottes.co.kr/jamsil-market-report.html</loc>
-    <lastmod>2026-09-22</lastmod>
+    <lastmod>2026-10-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.80</priority>
   </url>
@@ -349,7 +349,7 @@
   </url>
   <url>
     <loc>https://lottes.co.kr/reports/2026-08-25-rental-renewal-landlord-actual-residence-proof.html</loc>
-    <lastmod>2026-09-22</lastmod>
+    <lastmod>2026-10-20</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
