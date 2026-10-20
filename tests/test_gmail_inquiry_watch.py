@@ -1,7 +1,7 @@
 import io
 import json
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import subprocess
 import sys
@@ -240,6 +240,27 @@ class GmailInquiryWatchTest(unittest.TestCase):
             self.assertEqual(state['seen_keys'], [])
             self.assertEqual(state['fallback_keys'], ['f' * 64])
 
+    def test_fallback_reemits_on_bounded_cooldown_until_item_is_resolved(self):
+        key = 'd' * 64
+        item = {'key': key, 'platform': '직방'}
+        now = datetime(2026, 8, 30, 12, 0, tzinfo=timezone.utc)
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory) / 'gmail-state.json'
+            state_path.write_text(json.dumps({
+                'initialized': True, 'seen_keys': [], 'fallback_keys': [],
+                'parse_failures': {}, 'dead_keys': [],
+            }), encoding='utf-8')
+            self.assertTrue(record_fallback(state_path, [item], now=now))
+            self.assertEqual(record_fallback(
+                state_path, [item], now=now + timedelta(minutes=5)
+            ), '')
+            self.assertTrue(record_fallback(
+                state_path, [item], now=now + timedelta(hours=6)
+            ))
+            gmail_watch.mark_delivered(state_path, key)
+            state = json.loads(state_path.read_text(encoding='utf-8'))
+            self.assertNotIn(key, state.get('fallback_last_warned_at', {}))
+
     def test_discord_fallback_contains_safe_listing_summary_without_access_token(self):
         key = '9' * 64
         token = '123e4567-e89b-12d3-a456-426614174000'
@@ -312,7 +333,7 @@ class GmailInquiryWatchTest(unittest.TestCase):
                 self.assertEqual(gmail_watch.main(), 0)
                 self.assertEqual(gmail_watch.main(), 0)
             fallback_output = output.getvalue()
-            self.assertEqual(fallback_output.count('카카오 전송 지연'), 1)
+            self.assertEqual(fallback_output.count('카카오 전송 결과 수동 확인'), 1)
             self.assertIn('매물번호 50181019', fallback_output)
             self.assertIn('전세 1억 6,300만원', fallback_output)
             self.assertNotIn('http', fallback_output)
@@ -320,8 +341,9 @@ class GmailInquiryWatchTest(unittest.TestCase):
             state = json.loads(state_path.read_text(encoding='utf-8'))
             self.assertEqual(state['seen_keys'], [])
             self.assertEqual(state['fallback_keys'], [key])
-            self.assertEqual(state['pending'][key]['attempt_count'], 1)
-            self.assertEqual(state['pending'][key]['last_error'], 'kakao_transport')
+            self.assertEqual(state['pending'][key]['attempt_count'], 0)
+            self.assertEqual(state['pending'][key]['status'], 'ambiguous')
+            self.assertEqual(state['pending'][key]['last_error'], 'kakao_ambiguous')
 
     def test_retried_fallbacks_do_not_starve_newer_inquiries(self):
         # 2026-09-30..10-19: ten inquiries whose Kakao alert kept failing filled every
@@ -373,7 +395,7 @@ class GmailInquiryWatchTest(unittest.TestCase):
             published = [call.args[1]['source_message_hash'] for call in publish.call_args_list]
             self.assertIn('a1' * 32, published)
             self.assertIn('b2' * 32, published)
-            self.assertEqual(output.getvalue(), '⚠️ 직방 문의 처리 지연 2건. Gmail에서 확인하세요.\n')
+            self.assertEqual(output.getvalue(), '⚠️ 직방 문의 처리 지연 12건. Gmail에서 확인하세요.\n')
             state = json.loads(state_path.read_text(encoding='utf-8'))
             self.assertIn('a1' * 32, state['fallback_keys'])
             self.assertIn('b2' * 32, state['fallback_keys'])
@@ -915,10 +937,11 @@ class GmailInquiryWatchTest(unittest.TestCase):
                 mock.patch.dict(os.environ, environment),
                 mock.patch.object(gmail_watch, 'fetch_verified_messages', return_value=[item]),
                 mock.patch.object(gmail_watch, 'fetch_zigbang_detail', return_value=detail),
-                mock.patch.object(gmail_watch, 'publish_public_receipt'),
-                mock.patch.object(gmail_watch, 'send_kakao_owner_alert', side_effect=RuntimeError('temporary')),
+                mock.patch.object(gmail_watch, 'publish_public_receipt', side_effect=RuntimeError('temporary')),
+                mock.patch.object(gmail_watch, 'send_kakao_owner_alert') as first_send,
             ):
                 self.assertEqual(gmail_watch.main(), 0)
+            first_send.assert_not_called()
 
             pending = json.loads(state_path.read_text(encoding='utf-8'))['pending']
             self.assertEqual(list(pending), [key])
@@ -930,14 +953,14 @@ class GmailInquiryWatchTest(unittest.TestCase):
                 mock.patch.dict(os.environ, environment),
                 mock.patch.object(gmail_watch, '_utc_now', return_value=later),
                 mock.patch.object(gmail_watch, 'fetch_verified_messages', return_value=[]),
-                mock.patch.object(gmail_watch, 'fetch_zigbang_detail') as fetch_detail,
+                mock.patch.object(gmail_watch, 'fetch_zigbang_detail', return_value=detail) as fetch_detail,
                 mock.patch.object(gmail_watch, 'publish_public_receipt'),
                 mock.patch.object(gmail_watch, 'send_kakao_owner_alert', return_value={}) as send,
                 mock.patch.object(gmail_watch, 'update_private_env'),
             ):
                 self.assertEqual(gmail_watch.main(), 0)
             self.assertEqual(send.call_count, 1)
-            fetch_detail.assert_not_called()
+            fetch_detail.assert_called_once()
             state = json.loads(state_path.read_text(encoding='utf-8'))
             self.assertNotIn(key, state['pending'])
             self.assertIn(key, state['seen_keys'])
@@ -1150,6 +1173,10 @@ class GmailInquiryWatchTest(unittest.TestCase):
                 }),
                 mock.patch.object(gmail_watch, '_utc_now', return_value=now),
                 mock.patch.object(gmail_watch, 'fetch_verified_messages', return_value=[]),
+                mock.patch.object(
+                    gmail_watch, 'fetch_zigbang_detail',
+                    return_value=['• 등록번호 50181019', '• 전세 16300'],
+                ),
                 mock.patch.object(gmail_watch, 'publish_public_receipt') as publish,
                 mock.patch.object(gmail_watch, 'send_kakao_owner_alert', return_value={}) as send,
                 mock.patch.object(gmail_watch, 'update_private_env'),
@@ -1158,6 +1185,149 @@ class GmailInquiryWatchTest(unittest.TestCase):
             publish.assert_not_called()
             self.assertEqual(send.call_count, 1)
             self.assertIn(key, json.loads(state_path.read_text(encoding='utf-8'))['seen_keys'])
+
+    def test_kakao_exception_after_dispatch_is_ambiguous_and_not_retried(self):
+        key = 'd6' * 32
+        token = '123e4567-e89b-12d3-a456-426614174000'
+        item = {
+            'key': key, 'platform': '직방', 'uid': '606',
+            'received_at': '2026-08-29T03:34:56Z', 'title': ZIGBANG_SUBJECT,
+        }
+        now = datetime(2026, 8, 30, 12, 0, tzinfo=timezone.utc)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            env_path = root / '.env'
+            state_path = root / 'state.json'
+            heartbeat_path = root / 'heartbeat.json'
+            env_path.write_text(
+                'LOTTEREAL_GMAIL_ADDRESS=owner@example.com\n'
+                'LOTTEREAL_GMAIL_APP_PASSWORD=secret\n', encoding='utf-8'
+            )
+            state_path.write_text(json.dumps({
+                'initialized': True, 'seen_keys': [], 'fallback_keys': [],
+                'parse_failures': {}, 'dead_keys': [],
+            }), encoding='utf-8')
+            environment = {
+                'LOTTEREAL_ENV_PATH': str(env_path),
+                'LOTTEREAL_GMAIL_WATCH_STATE': str(state_path),
+                'LOTTEREAL_GMAIL_WATCH_HEARTBEAT': str(heartbeat_path),
+            }
+            output = io.StringIO()
+            detail = [
+                '• 등록번호 50181019', '• 전세 16300',
+                f'• 문의링크 https://sp.zigbang.com/inquiry/list?token={token}',
+            ]
+            with (
+                mock.patch.dict(os.environ, environment),
+                mock.patch.object(gmail_watch, '_utc_now', return_value=now),
+                mock.patch.object(gmail_watch, 'fetch_verified_messages', return_value=[item]),
+                mock.patch.object(gmail_watch, 'fetch_zigbang_detail', return_value=detail),
+                mock.patch.object(gmail_watch, 'publish_public_receipt'),
+                mock.patch.object(gmail_watch, 'send_kakao_owner_alert', side_effect=TimeoutError('unknown')) as send,
+                mock.patch('sys.stdout', output),
+            ):
+                self.assertEqual(gmail_watch.main(), 0)
+                self.assertEqual(gmail_watch.main(), 0)
+            self.assertEqual(send.call_count, 1)
+            with (
+                mock.patch.dict(os.environ, environment),
+                mock.patch.object(
+                    gmail_watch, '_utc_now', return_value=now + timedelta(hours=6)
+                ),
+                mock.patch.object(gmail_watch, 'fetch_verified_messages', return_value=[]),
+                mock.patch('sys.stdout', output),
+            ):
+                self.assertEqual(gmail_watch.main(), 0)
+            self.assertEqual(output.getvalue().count('카카오 전송 결과 수동 확인'), 2)
+            persisted_text = state_path.read_text(encoding='utf-8')
+            state = json.loads(persisted_text)
+            queued = state['pending'][key]
+            self.assertEqual(queued['status'], 'ambiguous')
+            self.assertEqual(queued['last_error'], 'kakao_ambiguous')
+            self.assertNotIn(token, persisted_text)
+            self.assertNotIn('https://sp.zigbang.com/inquiry/', persisted_text)
+            heartbeat = json.loads(heartbeat_path.read_text(encoding='utf-8'))
+            self.assertEqual(heartbeat['pending_errors'], {'kakao_ambiguous': 1})
+
+    def test_unknown_queue_schema_fails_closed_without_quarantine_or_rewrite(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'state.json'
+            original = json.dumps({
+                'initialized': True, 'seen_keys': [], 'fallback_keys': [],
+                'parse_failures': {}, 'dead_keys': [], 'queue_version': 3,
+                'pending': {'future': {'private_future_field': 'preserve'}},
+            })
+            path.write_text(original, encoding='utf-8')
+            with self.assertRaises(gmail_watch.UnsupportedQueueVersion):
+                gmail_watch.load_state(path)
+            self.assertEqual(path.read_text(encoding='utf-8'), original)
+            self.assertEqual(list(Path(directory).glob('state.json.corrupt*')), [])
+
+    def test_v2_queue_migrates_legacy_inquiry_url_out_of_durable_state(self):
+        key = 'e7' * 32
+        token = '123e4567-e89b-12d3-a456-426614174000'
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'state.json'
+            path.write_text(json.dumps({
+                'initialized': True, 'seen_keys': [], 'fallback_keys': [],
+                'parse_failures': {}, 'dead_keys': [], 'queue_version': 2,
+                'pending': {key: {
+                    'key': key, 'platform': '직방', 'title': ZIGBANG_SUBJECT,
+                    'uid': '707', 'received_at': '2026-08-29T03:00:00Z',
+                    'detail_lines': [
+                        '• 등록번호 50181019',
+                        f'• 문의링크 https://sp.zigbang.com/inquiry/list?token={token}',
+                    ],
+                    'status': 'pending', 'discovered_at': '2026-08-30T11:00:00Z',
+                    'first_failed_at': None, 'attempt_count': 0,
+                    'next_retry_at': '2026-08-30T11:00:00Z', 'last_error': None,
+                }},
+            }), encoding='utf-8')
+            state = gmail_watch.load_state(path)
+            self.assertEqual(state['pending'][key]['detail_lines'], ['• 등록번호 50181019'])
+            self.assertNotIn(token, path.read_text(encoding='utf-8'))
+            self.assertEqual(list(Path(directory).glob('state.json.corrupt*')), [])
+
+    def test_queue_replace_fsyncs_file_and_parent_directory(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'state.json'
+            real_fsync = os.fsync
+            calls = []
+
+            def recording_fsync(fd):
+                calls.append(fd)
+                return real_fsync(fd)
+
+            with mock.patch.object(gmail_watch.os, 'fsync', side_effect=recording_fsync):
+                gmail_watch.write_state(path, {
+                    'initialized': True, 'seen_keys': [], 'fallback_keys': [],
+                    'parse_failures': {}, 'dead_keys': [],
+                })
+            self.assertGreaterEqual(len(calls), 2)
+
+    def test_corrupt_queue_quarantine_is_private(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'state.json'
+            path.write_text('{bad json', encoding='utf-8')
+            os.chmod(path, 0o644)
+            self.assertFalse(gmail_watch.load_state(path)['initialized'])
+            quarantine = next(Path(directory).glob('state.json.corrupt*'))
+            self.assertEqual(quarantine.stat().st_mode & 0o777, 0o600)
+
+    def test_queue_runbook_requires_atomic_runtime_promotion_and_state_safe_rollback(self):
+        runbook = (
+            Path(__file__).resolve().parents[1]
+            / 'docs/engineering/gmail-inquiry-delivery-queue.md'
+        ).read_text(encoding='utf-8')
+        for required in (
+            'scripts/lottereal_gmail_inquiry_watch.py',
+            'scripts/lottereal_inquiry_anomaly_watch.py',
+            'same atomic rename',
+            'must not run against queue_version: 2',
+            'restore the pre-promotion state snapshot',
+            'fsync',
+        ):
+            self.assertIn(required, runbook)
     def test_attempt_heartbeat_preserves_oldest_pending_age(self):
         now = datetime(2026, 8, 30, 12, 0, tzinfo=timezone.utc)
         with tempfile.TemporaryDirectory() as directory:

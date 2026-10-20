@@ -36,6 +36,11 @@ SONGPA_LEGAL_DONGS = frozenset({
 MAX_DELIVERY_BATCH = 10
 RETRY_RESERVE = 5
 MAX_RETRY_DELAY = timedelta(hours=6)
+FALLBACK_WARNING_COOLDOWN = timedelta(hours=6)
+
+
+class UnsupportedQueueVersion(RuntimeError):
+    """State belongs to a newer or incompatible queue runtime."""
 
 
 def _utc_now() -> datetime:
@@ -650,8 +655,14 @@ def load_state(path: Path) -> dict:
         }
     try:
         payload = json.loads(path.read_text(encoding='utf-8'))
+        queue_version = payload.get('queue_version') if isinstance(payload, dict) else None
+        if queue_version not in (None, 2) or (
+            isinstance(payload, dict) and 'pending' in payload and queue_version != 2
+        ):
+            raise UnsupportedQueueVersion('unsupported inquiry queue state version')
         keys = payload.get('seen_keys') if isinstance(payload, dict) else None
         fallback_keys = payload.get('fallback_keys', []) if isinstance(payload, dict) else None
+        fallback_last_warned = payload.get('fallback_last_warned_at', {}) if isinstance(payload, dict) else None
         parse_failures = payload.get('parse_failures', {}) if isinstance(payload, dict) else None
         dead_keys = payload.get('dead_keys', []) if isinstance(payload, dict) else None
         initialized = payload.get('initialized') if isinstance(payload, dict) else None
@@ -659,6 +670,7 @@ def load_state(path: Path) -> dict:
             initialized is not True
             or not isinstance(keys, list)
             or not isinstance(fallback_keys, list)
+            or not isinstance(fallback_last_warned, dict)
             or not isinstance(parse_failures, dict)
             or not isinstance(dead_keys, list)
         ):
@@ -667,6 +679,13 @@ def load_state(path: Path) -> dict:
             raise ValueError('invalid state key')
         if not all(isinstance(key, str) and re.fullmatch(r'[0-9a-f]{64}', key) for key in fallback_keys):
             raise ValueError('invalid fallback key')
+        if not all(
+            isinstance(key, str)
+            and re.fullmatch(r'[0-9a-f]{64}', key)
+            and _parse_timestamp(value) is not None
+            for key, value in fallback_last_warned.items()
+        ):
+            raise ValueError('invalid fallback warning time')
         if not all(
             isinstance(key, str)
             and re.fullmatch(r'[0-9a-f]{64}', key)
@@ -679,8 +698,11 @@ def load_state(path: Path) -> dict:
             raise ValueError('invalid dead key')
         pending = payload.get('pending', {})
         if payload.get('queue_version') == 2:
-            allowed_errors = {None, 'detail_fetch', 'parse_invalid', 'receipt_publish', 'kakao_transport'}
-            allowed_statuses = {'pending', 'dispatching', 'accepted'}
+            allowed_errors = {
+                None, 'detail_fetch', 'parse_invalid', 'receipt_publish',
+                'kakao_transport', 'kakao_ambiguous',
+            }
+            allowed_statuses = {'pending', 'dispatching', 'accepted', 'ambiguous'}
             if not isinstance(pending, dict):
                 raise ValueError('invalid pending queue')
             for pending_key, item in pending.items():
@@ -715,8 +737,21 @@ def load_state(path: Path) -> dict:
             'parse_failures': dict(parse_failures),
             'dead_keys': list(dict.fromkeys(dead_keys)),
         }
+        migrated = False
         if payload.get('queue_version') == 2 and isinstance(payload.get('pending'), dict):
-            result.update({'queue_version': 2, 'pending': payload['pending']})
+            sanitized_pending = {}
+            for key, item in payload['pending'].items():
+                sanitized = dict(item)
+                safe_lines = _queue_safe_detail_lines(item['detail_lines'])
+                if safe_lines != item['detail_lines']:
+                    migrated = True
+                sanitized['detail_lines'] = safe_lines
+                sanitized_pending[key] = sanitized
+            result.update({'queue_version': 2, 'pending': sanitized_pending})
+        if fallback_last_warned:
+            result['fallback_last_warned_at'] = dict(fallback_last_warned)
+        if payload.get('queue_version') == 2 and migrated:
+            write_state(path, result)
         return result
     except (json.JSONDecodeError, UnicodeDecodeError, ValueError):
         quarantine = path.with_name(path.name + '.corrupt')
@@ -724,6 +759,7 @@ def load_state(path: Path) -> dict:
         while quarantine.exists():
             quarantine = path.with_name(f'{path.name}.corrupt-{suffix}')
             suffix += 1
+        os.chmod(path, 0o600)
         os.replace(path, quarantine)
         return {
             'initialized': False,
@@ -737,12 +773,17 @@ def load_state(path: Path) -> dict:
 def write_state(path: Path, state: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(f'.{path.name}.{os.getpid()}.tmp')
-    temporary.write_text(
-        json.dumps(state, ensure_ascii=False, sort_keys=True),
-        encoding='utf-8',
-    )
-    os.chmod(temporary, 0o600)
+    with temporary.open('w', encoding='utf-8') as output:
+        json.dump(state, output, ensure_ascii=False, sort_keys=True)
+        output.flush()
+        os.fchmod(output.fileno(), 0o600)
+        os.fsync(output.fileno())
     os.replace(temporary, path)
+    directory_fd = os.open(path.parent, os.O_RDONLY | getattr(os, 'O_DIRECTORY', 0))
+    try:
+        os.fsync(directory_fd)
+    finally:
+        os.close(directory_fd)
 
 
 def write_heartbeat(
@@ -752,6 +793,7 @@ def write_heartbeat(
     now: datetime | None = None,
     pending_alerts: int | None = None,
     oldest_pending_at: str | None = None,
+    pending_errors: dict[str, int] | None = None,
     delivered: bool = False,
 ) -> None:
     instant = now or _utc_now()
@@ -767,6 +809,8 @@ def write_heartbeat(
         payload['pending_alerts'] = pending_alerts
         if pending_alerts > 0 and oldest_pending_at:
             payload['oldest_pending_at'] = oldest_pending_at
+    if pending_errors is not None:
+        payload['pending_errors'] = pending_errors
     if path.exists():
         # Fields this write does not decide are carried over, so the watchdog can tell
         # "running" from "delivering" (lottereal_inquiry_anomaly_watch.py).
@@ -804,34 +848,68 @@ def write_heartbeat(
 
 
 def build_discord_fallback(items: list[dict]) -> str:
+    errors = {item.get('last_error') for item in items}
     if len(items) == 1:
         summary = build_alert(items).replace(
             '고객 연락처: 아래 버튼에서 확인',
             '고객 연락처: Gmail에서 확인',
         )
         if '매물번호 ' in summary:
-            return f'⚠️ 카카오 전송 지연—Discord 임시 알림\n{summary}'
+            if errors == {'kakao_ambiguous'}:
+                prefix = '⚠️ 카카오 전송 결과 수동 확인—자동 재전송 안 함'
+            elif errors == {'receipt_publish'}:
+                prefix = '⚠️ 공개 접수 처리 지연—Discord 임시 알림'
+            elif errors & {'detail_fetch', 'parse_invalid'}:
+                prefix = '⚠️ 문의 상세 처리 지연—Discord 임시 알림'
+            else:
+                prefix = '⚠️ 카카오 전송 지연—Discord 임시 알림'
+            return f'{prefix}\n{summary}'
+    if errors == {'kakao_ambiguous'}:
+        return (
+            f'⚠️ 카카오 전송 결과 수동 확인 {len(items)}건. '
+            'Gmail과 카카오 발송 내역을 대조하세요.'
+        )
     return f'⚠️ 직방 문의 처리 지연 {len(items)}건. Gmail에서 확인하세요.'
 
 
-def record_fallback(state_path: Path, items: list[dict]) -> str:
+def record_fallback(
+    state_path: Path,
+    items: list[dict],
+    *,
+    now: datetime | None = None,
+) -> str:
+    instant = (now or _utc_now()).astimezone(timezone.utc)
     state = load_state(state_path)
     valid_keys = [
         item.get('key') for item in items
         if isinstance(item.get('key'), str) and re.fullmatch(r'[0-9a-f]{64}', item['key'])
     ]
-    previous = set(state['fallback_keys'])
-    new_keys = [key for key in valid_keys if key not in previous]
+    warning_times = dict(state.get('fallback_last_warned_at', {}))
+    due_keys = []
+    for key in valid_keys:
+        last_warned = _parse_timestamp(warning_times.get(key))
+        if (
+            last_warned is None
+            or instant - last_warned >= FALLBACK_WARNING_COOLDOWN
+            or instant < last_warned
+        ):
+            due_keys.append(key)
+            warning_times[key] = _timestamp(instant)
     merged_fallbacks = list(dict.fromkeys(state['fallback_keys'] + valid_keys))[-500:]
+    retained = set(merged_fallbacks)
     write_state(state_path, {
         **state,
         'initialized': True,
         'fallback_keys': merged_fallbacks,
+        'fallback_last_warned_at': {
+            key: value for key, value in warning_times.items() if key in retained
+        },
     })
-    if not new_keys:
+    if not due_keys:
         return ''
-    new_items = [item for item in items if item.get('key') in set(new_keys)]
-    return build_discord_fallback(new_items)
+    due = set(due_keys)
+    due_items = [item for item in items if item.get('key') in due]
+    return build_discord_fallback(due_items)
 
 
 def record_parse_failure(state_path: Path, item: dict) -> str:
@@ -877,6 +955,11 @@ def mark_delivered(state_path: Path, key: str) -> None:
         'initialized': True,
         'seen_keys': list(dict.fromkeys(state['seen_keys'] + [key]))[-500:],
         'fallback_keys': [value for value in state['fallback_keys'] if value != key],
+        'fallback_last_warned_at': {
+            value: warned
+            for value, warned in state.get('fallback_last_warned_at', {}).items()
+            if value != key
+        },
         'parse_failures': parse_failures,
         'dead_keys': [value for value in state['dead_keys'] if value != key],
         **({'queue_version': 2, 'pending': pending} if 'pending' in state else {}),
@@ -899,6 +982,13 @@ def _parse_timestamp(value: object) -> datetime | None:
 
 def _save_pending(state_path: Path, state: dict, pending: dict[str, dict]) -> None:
     write_state(state_path, {**state, 'queue_version': 2, 'pending': pending})
+
+
+def _queue_safe_detail_lines(lines: list[str]) -> list[str]:
+    return [
+        line for line in lines
+        if _is_safe_detail_line(line) and not line.startswith('• 문의링크 ')
+    ]
 
 
 def enqueue_pending(state_path: Path, items: list[dict], *, now: datetime | None = None) -> dict:
@@ -963,7 +1053,29 @@ def _record_delivery_failure(
         'last_error': error_code,
     })
     if detail_lines is not None:
-        item['detail_lines'] = detail_lines
+        item['detail_lines'] = _queue_safe_detail_lines(detail_lines)
+    pending[key] = item
+    _save_pending(state_path, state, pending)
+
+
+def _record_ambiguous_dispatch(
+    state_path: Path,
+    key: str,
+    *,
+    now: datetime | None = None,
+    detail_lines: list[str] | None = None,
+) -> None:
+    instant = now or _utc_now()
+    state = load_state(state_path)
+    pending = dict(state.get('pending', {}))
+    item = dict(pending[key])
+    item.update({
+        'status': 'ambiguous',
+        'first_failed_at': item.get('first_failed_at') or _timestamp(instant),
+        'last_error': 'kakao_ambiguous',
+    })
+    if detail_lines is not None:
+        item['detail_lines'] = _queue_safe_detail_lines(detail_lines)
     pending[key] = item
     _save_pending(state_path, state, pending)
 
@@ -994,15 +1106,20 @@ def select_pending(state: dict, *, now: datetime | None = None) -> list[dict]:
     return selected[:MAX_DELIVERY_BATCH]
 
 
-def _pending_metrics(state: dict) -> tuple[int, str | None]:
+def _pending_metrics(state: dict) -> tuple[int, str | None, dict[str, int]]:
     pending = list(state.get('pending', {}).values())
     if not pending:
-        return 0, None
+        return 0, None, {}
     instants = [
         parsed for parsed in (_parse_timestamp(item.get('discovered_at')) for item in pending)
         if parsed is not None
     ]
-    return len(pending), _timestamp(min(instants)) if instants else None
+    errors: dict[str, int] = {}
+    for item in pending:
+        error = item.get('last_error')
+        if isinstance(error, str):
+            errors[error] = errors.get(error, 0) + 1
+    return len(pending), _timestamp(min(instants)) if instants else None, errors
 
 
 def process_items(items: list[dict], state_path: Path) -> str:
@@ -1091,17 +1208,16 @@ def main() -> int:
         delivered_any = bool(accepted_keys)
         for queued in selected:
             item = dict(queued)
-            if not item.get('detail_lines'):
-                try:
-                    item['detail_lines'] = fetch_zigbang_detail(
-                        address,
-                        password,
-                        str(item.get('uid') or ''),
-                    )
-                except Exception:
-                    _record_delivery_failure(state_path, item['key'], 'detail_fetch')
-                    delayed.append(item)
-                    continue
+            try:
+                item['detail_lines'] = fetch_zigbang_detail(
+                    address,
+                    password,
+                    str(item.get('uid') or ''),
+                )
+            except Exception:
+                _record_delivery_failure(state_path, item['key'], 'detail_fetch')
+                delayed.append(item)
+                continue
             delivery_receipt = build_public_receipt_payload(item, allow_historical=True)
             if delivery_receipt is None:
                 _record_delivery_failure(
@@ -1127,7 +1243,7 @@ def main() -> int:
             dispatch_pending = dict(dispatch_state.get('pending', {}))
             dispatch_item = dict(dispatch_pending[item['key']])
             dispatch_item.update({
-                'detail_lines': item['detail_lines'],
+                'detail_lines': _queue_safe_detail_lines(item['detail_lines']),
                 'status': 'dispatching',
                 'dispatch_started_at': _timestamp(_utc_now()),
                 'delivery_key': item['key'],
@@ -1141,8 +1257,8 @@ def main() -> int:
                     inquiry_link=inquiry_link,
                 )
             except Exception:
-                _record_delivery_failure(
-                    state_path, item['key'], 'kakao_transport', detail_lines=item['detail_lines']
+                _record_ambiguous_dispatch(
+                    state_path, item['key'], detail_lines=item['detail_lines']
                 )
                 delayed.append(item)
                 continue
@@ -1161,16 +1277,21 @@ def main() -> int:
 
             mark_delivered(state_path, item['key'])
             delivered_any = True
-        if delayed:
-            # One message per run: a backlog must not become a burst of Discord posts.
-            fallback = record_fallback(state_path, delayed)
+        unresolved = [
+            queued for queued in load_state(state_path).get('pending', {}).values()
+            if queued.get('last_error') is not None
+        ]
+        if unresolved:
+            # One message per run: warnings repeat only on the bounded cooldown.
+            fallback = record_fallback(state_path, unresolved)
             if fallback:
                 print(fallback, flush=True)
-        pending, oldest = _pending_metrics(load_state(state_path))
+        pending, oldest, pending_errors = _pending_metrics(load_state(state_path))
         write_heartbeat(
             heartbeat_path,
             pending_alerts=pending,
             oldest_pending_at=oldest,
+            pending_errors=pending_errors,
             delivered=delivered_any,
         )
     return 0

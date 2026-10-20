@@ -51,31 +51,27 @@ class InquiryAnomalyWatchTest(unittest.TestCase):
             self._delivery_heartbeat(heartbeat_path, now, pending=12, delivered_ago=timedelta(hours=7))
 
             first = run_once(heartbeat_path, state_path, now=now)
-            handoff_id = json.loads(state_path.read_text(encoding='utf-8'))['handoff']['id']
             second = run_once(
                 heartbeat_path,
                 state_path,
                 now=now + timedelta(minutes=5),
-                ack_id=handoff_id,
             )
             self.assertEqual(first, (
                 '⚠️ LotteReal 문의 알림 전달 실패\n'
-                '카카오 알림 대기: 12건, 6시간 이상 전달 없음\n'
+                '알림 대기: 12건, 가장 오래된 대기: 6시간 이상\n'
                 '카카오 재인증이 필요할 수 있습니다. 문의 원본은 Gmail에서 확인하세요.'
             ))
             self.assertEqual(second, '')
-            self.assertEqual(
-                json.loads(state_path.read_text(encoding='utf-8')),
-                {'stale_alerted': False, 'delivery_alerted': True},
+            self.assertTrue(
+                json.loads(state_path.read_text(encoding='utf-8'))['delivery_alerted']
             )
 
             later = now + timedelta(minutes=10)
             self._delivery_heartbeat(heartbeat_path, later, pending=0, delivered_ago=timedelta(minutes=1))
             recovered = run_once(heartbeat_path, state_path, now=later)
             self.assertEqual(recovered, '✅ LotteReal 카카오 문의 알림 전달 복구')
-            recovery_id = json.loads(state_path.read_text(encoding='utf-8'))['handoff']['id']
             self.assertEqual(
-                run_once(heartbeat_path, state_path, now=later, ack_id=recovery_id),
+                run_once(heartbeat_path, state_path, now=later),
                 '',
             )
             self.assertEqual(
@@ -91,7 +87,7 @@ class InquiryAnomalyWatchTest(unittest.TestCase):
             heartbeat_path = root / 'heartbeat.json'
             now = datetime(2026, 10, 19, 12, 0, tzinfo=timezone.utc)
             self._delivery_heartbeat(heartbeat_path, now, pending=1)
-            self.assertIn('카카오 알림 대기: 1건', run_once(heartbeat_path, root / 's.json', now=now))
+            self.assertIn('알림 대기: 1건', run_once(heartbeat_path, root / 's.json', now=now))
 
     def test_recent_delivery_or_empty_queue_stays_silent(self):
         from scripts.lottereal_inquiry_anomaly_watch import run_once
@@ -124,12 +120,10 @@ class InquiryAnomalyWatchTest(unittest.TestCase):
             }), encoding='utf-8')
 
             first = run_once(heartbeat_path, state_path, now=now)
-            handoff_id = json.loads(state_path.read_text(encoding='utf-8'))['handoff']['id']
             second = run_once(
                 heartbeat_path,
                 state_path,
                 now=now + timedelta(minutes=1),
-                ack_id=handoff_id,
             )
             self.assertEqual(first, (
                 '⚠️ LotteReal 문의 알림 점검 필요\n'
@@ -140,10 +134,7 @@ class InquiryAnomalyWatchTest(unittest.TestCase):
             self.assertEqual(second, '')
             self.assertNotIn('010-1234-5678', first)
             self.assertNotIn('private-token', first)
-            self.assertEqual(
-                json.loads(state_path.read_text(encoding='utf-8')),
-                {'stale_alerted': True},
-            )
+            self.assertTrue(json.loads(state_path.read_text(encoding='utf-8'))['stale_alerted'])
     def test_recovery_alerts_once_after_stale_state(self):
         from scripts.lottereal_inquiry_anomaly_watch import run_once
 
@@ -158,12 +149,10 @@ class InquiryAnomalyWatchTest(unittest.TestCase):
             state_path.write_text(json.dumps({'stale_alerted': True}), encoding='utf-8')
 
             first = run_once(heartbeat_path, state_path, now=now)
-            handoff_id = json.loads(state_path.read_text(encoding='utf-8'))['handoff']['id']
             second = run_once(
                 heartbeat_path,
                 state_path,
                 now=now + timedelta(minutes=1),
-                ack_id=handoff_id,
             )
             self.assertEqual(first, (
                 '✅ LotteReal 문의 watcher 정상 복구\n'
@@ -184,12 +173,10 @@ class InquiryAnomalyWatchTest(unittest.TestCase):
             now = datetime(2026, 8, 30, 12, 0, tzinfo=timezone.utc)
 
             first = run_once(heartbeat_path, state_path, now=now)
-            handoff_id = json.loads(state_path.read_text(encoding='utf-8'))['handoff']['id']
             second = run_once(
                 heartbeat_path,
                 state_path,
                 now=now + timedelta(minutes=1),
-                ack_id=handoff_id,
             )
             self.assertIn('Gmail watcher 실행 지연', first)
             self.assertEqual(second, '')
@@ -252,13 +239,11 @@ class InquiryAnomalyWatchTest(unittest.TestCase):
                 now=now + timedelta(minutes=1),
                 supabase_ok=False,
             )
-            handoff_id = json.loads(state_path.read_text(encoding='utf-8'))['handoff']['id']
             third = run_once(
                 heartbeat_path,
                 state_path,
                 now=now + timedelta(minutes=2),
                 supabase_ok=False,
-                ack_id=handoff_id,
             )
             recovery_pending = run_once(
                 heartbeat_path,
@@ -272,13 +257,11 @@ class InquiryAnomalyWatchTest(unittest.TestCase):
                 now=now + timedelta(minutes=4),
                 supabase_ok=True,
             )
-            recovery_id = json.loads(state_path.read_text(encoding='utf-8'))['handoff']['id']
             stable = run_once(
                 heartbeat_path,
                 state_path,
                 now=now + timedelta(minutes=5),
                 supabase_ok=True,
-                ack_id=recovery_id,
             )
 
             self.assertEqual(first, '')
@@ -408,12 +391,8 @@ class InquiryAnomalyWatchTest(unittest.TestCase):
                 '마지막 정상 확인: 7분 이상 전\n'
                 '고객정보·메일 본문·직방 링크는 포함하지 않았습니다.'
             ))
-            handoff_id = json.loads(state_path.read_text(encoding='utf-8'))['handoff']['id']
-            self.assertEqual(run_once(heartbeat_path, state_path, now=now, ack_id=handoff_id), '')
-            self.assertEqual(
-                json.loads(state_path.read_text(encoding='utf-8')),
-                {'stale_alerted': True},
-            )
+            self.assertEqual(run_once(heartbeat_path, state_path, now=now), '')
+            self.assertTrue(json.loads(state_path.read_text(encoding='utf-8'))['stale_alerted'])
     def test_future_heartbeat_fails_closed_as_stale(self):
         from scripts.lottereal_inquiry_anomaly_watch import run_once
 
@@ -506,7 +485,7 @@ class InquiryAnomalyWatchTest(unittest.TestCase):
             target.server_close()
             redirect_thread.join(timeout=2)
             target_thread.join(timeout=2)
-    def test_delivery_alert_state_waits_for_external_handoff_ack(self):
+    def test_unresolved_warning_reemits_on_six_hour_cooldown_without_ack(self):
         from scripts.lottereal_inquiry_anomaly_watch import run_once
 
         with tempfile.TemporaryDirectory() as directory:
@@ -521,16 +500,54 @@ class InquiryAnomalyWatchTest(unittest.TestCase):
             }), encoding='utf-8')
 
             first = run_once(heartbeat, state_path, now=now)
-            state = json.loads(state_path.read_text(encoding='utf-8'))
             self.assertIn('문의 알림 전달 실패', first)
-            self.assertNotIn('delivery_alerted', state)
-            handoff_id = state['handoff']['id']
-            self.assertEqual(run_once(heartbeat, state_path, now=now, ack_id=None), first)
-            self.assertEqual(run_once(heartbeat, state_path, now=now, ack_id='wrong'), first)
-            self.assertEqual(run_once(heartbeat, state_path, now=now, ack_id=handoff_id), '')
-            acknowledged = json.loads(state_path.read_text(encoding='utf-8'))
-            self.assertTrue(acknowledged['delivery_alerted'])
-            self.assertNotIn('handoff', acknowledged)
+            self.assertEqual(run_once(heartbeat, state_path, now=now + timedelta(minutes=5)), '')
+            repeated = run_once(heartbeat, state_path, now=now + timedelta(hours=6))
+            self.assertIn('문의 알림 전달 실패', repeated)
+            state = json.loads(state_path.read_text(encoding='utf-8'))
+            self.assertTrue(state['delivery_alerted'])
+            self.assertNotIn('handoff', state)
+
+    def test_old_handoff_does_not_block_recovery(self):
+        from scripts.lottereal_inquiry_anomaly_watch import run_once
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            now = datetime(2026, 10, 19, 12, 0, tzinfo=timezone.utc)
+            heartbeat = root / 'heartbeat.json'
+            state_path = root / 'state.json'
+            heartbeat.write_text(json.dumps({
+                'last_success_at': (now - timedelta(minutes=1)).isoformat(),
+                'pending_alerts': 0,
+            }), encoding='utf-8')
+            state_path.write_text(json.dumps({'handoff': {
+                'id': 'a' * 64,
+                'message': 'obsolete warning',
+                'next_state': {'stale_alerted': False, 'delivery_alerted': True},
+            }}), encoding='utf-8')
+
+            self.assertEqual(
+                run_once(heartbeat, state_path, now=now),
+                '✅ LotteReal 카카오 문의 알림 전달 복구',
+            )
+            self.assertNotIn('handoff', json.loads(state_path.read_text(encoding='utf-8')))
+
+    def test_unknown_pending_age_and_error_classification_are_truthful(self):
+        from scripts.lottereal_inquiry_anomaly_watch import run_once
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            now = datetime(2026, 10, 19, 12, 0, tzinfo=timezone.utc)
+            heartbeat = root / 'heartbeat.json'
+            heartbeat.write_text(json.dumps({
+                'last_success_at': (now - timedelta(minutes=1)).isoformat(),
+                'pending_alerts': 1,
+                'pending_errors': {'kakao_ambiguous': 1},
+            }), encoding='utf-8')
+            message = run_once(heartbeat, root / 'state.json', now=now)
+            self.assertIn('카카오 전송 결과 수동 확인 필요', message)
+            self.assertIn('대기 시간: 확인 불가', message)
+            self.assertNotIn('6시간 이상', message)
     def test_oldest_pending_age_controls_delivery_warning(self):
         from scripts.lottereal_inquiry_anomaly_watch import run_once
 
