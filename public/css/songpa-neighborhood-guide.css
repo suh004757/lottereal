@@ -108,7 +108,7 @@
 .nh-method__grid h3 { margin: 24px 0 10px; }
 .nh-method__grid p { margin: 0; color: rgba(255,255,255,.88); line-height: 1.72; }
 .nh-area-cards { display: grid; grid-template-columns: repeat(auto-fill,minmax(280px,1fr)); gap: 16px; margin-top: 36px; }
-.nh-area-card { padding: 24px 22px; border: 1px solid var(--nh-line); color: var(--nh-ink); background: #fff; }
+.nh-area-card { padding: 24px 22px; border: 1px solid var(--nh-line); color: var(--nh-ink); background: #fff; scroll-margin-top: 96px; }
 .nh-area-card__eyebrow { margin: 0; color: var(--nh-gold); font-size: .9rem; font-weight: 700; }
 .nh-area-card h3 { margin: 6px 0 10px; font-size: 1.35rem; }
 .nh-area-card p { margin: 0 0 10px; line-height: 1.7; }

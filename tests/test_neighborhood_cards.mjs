@@ -11,6 +11,11 @@ test('published guide page carries the cards rendered from the current data', ()
     'run node scripts/render_neighborhood_guide.mjs after editing the neighborhood JSON');
 });
 
+test('area-card deep links clear the sticky mobile and desktop navigation', () => {
+  const css = fs.readFileSync(new URL('../public/css/songpa-neighborhood-guide.css', import.meta.url), 'utf8');
+  assert.match(css, /\.nh-area-card\s*\{[^}]*scroll-margin-top:\s*(?:var\(|\d)/s);
+});
+
 test('every neighborhood gets one card with its name, summary and field checks', () => {
   const html = renderNeighborhoodCards(config.neighborhoods);
   for (const area of config.neighborhoods) {
@@ -30,13 +35,17 @@ test('missing markers leave the page alone', () => {
   assert.equal(replaceNeighborhoodCards('<main></main>', config.neighborhoods), null);
 });
 
-test('report titles link to the guide card of every 동 they name, except 송파', async () => {
+test('report neighborhood matching distinguishes legal-dong names and metadata aliases', async () => {
   const { neighborhoodsInTitle } = await import('../scripts/export_static_reports.mjs');
-  const ids = (title) => neighborhoodsInTitle(title, config.neighborhoods).map((area) => area.id);
+  const ids = (title, metadata = {}) => neighborhoodsInTitle(title, config.neighborhoods, metadata).map((area) => area.id);
   assert.deepEqual(ids('삼전·석촌 빌라 엘리베이터 확인'), ['samjeon', 'seokchon']);
-  assert.deepEqual(ids('송파 실수요자 확인사항'), []);
+  assert.deepEqual(ids('송파동 빌라 계약 확인'), ['songpa']);
+  assert.deepEqual(ids('송파구 실수요자 확인사항'), []);
   assert.deepEqual(ids('서울 아파트 지수'), []);
-  for (const area of config.neighborhoods.filter((item) => item.id !== 'songpa')) {
+  assert.deepEqual(ids('생활권 계약 확인', { legal_dong: '송파동' }), ['songpa']);
+  assert.deepEqual(ids('생활권 계약 확인', { neighborhood_aliases: ['문정법조단지'] }), ['munjeong']);
+  assert.deepEqual(ids('잠실새내역 인근 확인'), [], 'a longer place name must not match a bare stem');
+  for (const area of config.neighborhoods) {
     assert.deepEqual(ids(`${area.name} 계약 확인`), [area.id]);
   }
 });

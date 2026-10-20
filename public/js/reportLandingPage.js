@@ -1,4 +1,4 @@
-import { getLatestReport, listPublishedReports } from './services/reportAdapter.js';
+import { getLatestReport, listPublishedKnowledgeReports } from './services/reportAdapter.js';
 import { buildAbsoluteUrl, renderJsonLd, updateSeoMeta } from './utils/seo.js';
 import { getReportLandingConfigByKey, selectLandingReports } from './config/reportLandingConfig.js';
 import { formatReportDateMeta } from './utils/reportDates.mjs';
@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function initializeLanding() {
-  const reports = await listPublishedReports({ limit: 50 });
+  const reports = await listPublishedKnowledgeReports();
   const relatedReports = selectLandingReports(reports, config);
   const featuredReport = relatedReports[0] || await getLatestReport();
 
@@ -24,7 +24,7 @@ async function initializeLanding() {
   renderIntro();
   renderFocusPoints();
   renderFeaturedReport(featuredReport);
-  const listReports = relatedReports.filter((report) => report?.slug !== featuredReport?.slug);
+  const listReports = relatedReports;
   const listLimit = config.key === 'dispute-cases' ? listReports.length : 6;
   renderReportList(listReports.slice(0, listLimit));
   renderInsights();
@@ -95,12 +95,7 @@ function renderReportList(reports) {
   const container = document.getElementById('report-landing-list');
   if (!container) return;
 
-  if (!reports.length) {
-    container.innerHTML = '<div class="lr-report-hub__empty">추가 리포트가 아직 없습니다.</div>';
-    return;
-  }
-
-  container.innerHTML = reports.map((report) => `
+  const html = reports.length ? reports.map((report) => `
     <article class="lr-report-hub__report-card">
       <p class="lr-badge">리포트</p>
       <h3>${escapeHtml(report.title || '')}</h3>
@@ -111,7 +106,11 @@ function renderReportList(reports) {
       </div>
       <a class="lr-btn lr-btn--ghost" href="${reportStaticHref(report.slug)}">리포트 읽기</a>
     </article>
-  `).join('');
+  `).join('') : '<div class="lr-report-hub__empty">추가 리포트가 아직 없습니다.</div>';
+  const template = document.createElement('template');
+  template.innerHTML = html;
+  const fragment = template.content;
+  container.replaceChildren(fragment);
 }
 
 function renderInsights() {
@@ -150,6 +149,15 @@ function renderCta() {
 function applySeo(featuredReport, reports) {
   const canonical = buildAbsoluteUrl(config.path);
   const image = buildAbsoluteUrl('img/bg-img/lotte_street_view.png');
+  const breadcrumbName = config.breadcrumbName || '시장·정책';
+  const breadcrumbPath = config.key === 'dispute-cases' ? config.path : 'report.html';
+  const breadcrumbItems = [
+    { '@type': 'ListItem', position: 1, name: '롯데부동산', item: buildAbsoluteUrl('/') },
+    { '@type': 'ListItem', position: 2, name: breadcrumbName, item: buildAbsoluteUrl(`/${breadcrumbPath}`) }
+  ];
+  if (breadcrumbPath !== config.path) {
+    breadcrumbItems.push({ '@type': 'ListItem', position: 3, name: config.heroTitle, item: canonical });
+  }
 
   updateSeoMeta({
     title: config.title,
@@ -166,11 +174,7 @@ function applySeo(featuredReport, reports) {
     data: {
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: buildAbsoluteUrl('/') },
-        { '@type': 'ListItem', position: 2, name: 'Market Report', item: buildAbsoluteUrl('/report.html') },
-        { '@type': 'ListItem', position: 3, name: config.heroTitle, item: canonical }
-      ]
+      itemListElement: breadcrumbItems
     }
   });
 

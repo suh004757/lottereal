@@ -5,7 +5,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { readReportEntry, renderFeed } from './build_report_feed.mjs';
-import { getReportLandingConfigByKey, selectLandingReports } from '../public/js/config/reportLandingConfig.js';
+import { getReportLandingConfigByKey, reportBreadcrumbSection, selectLandingReports } from '../public/js/config/reportLandingConfig.js';
 
 const require = createRequire(import.meta.url);
 const { Marked, Renderer } = require('../public/js/vendor/marked-18.0.11.min.js');
@@ -216,9 +216,8 @@ function reportCategory(report) {
 
 // The top-menu section a report belongs to; dispute cases live under the 계약 사례 hub.
 function reportSection(report) {
-  return reportCategory(report).key === 'dispute'
-    ? { href: 'disputes.html', name: '계약 사례' }
-    : { href: 'report.html', name: '시장·정책' };
+  const section = reportBreadcrumbSection(report?.metadata);
+  return { href: section.path, name: section.name };
 }
 
 function shareImageName(report) {
@@ -290,15 +289,45 @@ export function selectRelatedReports(report, reports = [], limit = 4) {
 
 const NEIGHBORHOODS = JSON.parse(fs.readFileSync(path.join(REPO, 'public', 'Data', 'songpa-neighborhood-guide.v1.json'), 'utf8')).neighborhoods;
 
-// 동 named in a report title, matched by stem ("삼전" for 삼전동). 송파 is skipped: in titles
-// it nearly always means 송파구, not 송파동.
-export function neighborhoodsInTitle(title = '', neighborhoods = NEIGHBORHOODS) {
+const NEIGHBORHOOD_ALIASES = {
+  jamsil: ['잠실동', '잠실'],
+  samjeon: ['삼전동', '삼전'],
+  seokchon: ['석촌동', '석촌'],
+  songpa: ['송파동'],
+  bangi: ['방이동', '방이'],
+  garak: ['가락동', '가락', '가락시장'],
+  munjeong: ['문정동', '문정', '문정법조단지', '문정법조타운'],
+};
+
+function containsBoundedKoreanTerm(text, term) {
+  const escaped = String(term).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(^|[^가-힣A-Za-z0-9])${escaped}(?=$|[^가-힣A-Za-z0-9])`).test(text);
+}
+
+export function neighborhoodsInTitle(title = '', neighborhoods = NEIGHBORHOODS, metadata = {}) {
   const text = String(title);
-  return neighborhoods.filter((area) => area.id !== 'songpa' && text.includes(String(area.name).replace(/동$/, '')));
+  const metadataAliases = [
+    metadata?.legal_dong,
+    metadata?.legalDong,
+    metadata?.neighborhood,
+    ...(Array.isArray(metadata?.neighborhoods) ? metadata.neighborhoods : []),
+    ...(Array.isArray(metadata?.neighborhood_aliases) ? metadata.neighborhood_aliases : []),
+    ...(Array.isArray(metadata?.neighborhoodAliases) ? metadata.neighborhoodAliases : []),
+  ].filter(Boolean).map((value) => String(value).trim().toLowerCase());
+
+  return neighborhoods.filter((area) => {
+    const aliases = NEIGHBORHOOD_ALIASES[area.id] || [area.name];
+    const titleTerms = area.id === 'songpa' ? [area.name] : [area.name, String(area.name).replace(/동$/, '')];
+    const titleMatch = titleTerms.some((term) => containsBoundedKoreanTerm(text, term));
+    const metadataMatch = metadataAliases.some((value) => aliases.some((alias) => (
+      value === String(alias).toLowerCase() || value === String(area.id).toLowerCase()
+    )));
+    return titleMatch || metadataMatch;
+  });
 }
 
 function renderAreaGuide(report) {
-  const areas = neighborhoodsInTitle(report?.title);
+  const areas = neighborhoodsInTitle(report?.title, NEIGHBORHOODS, report?.metadata);
   if (!areas.length) return '';
   const links = areas.map((area) => (
     `<a class="lr-link" href="../songpa-neighborhood-guide.html#area-${escapeHtml(area.id)}">${escapeHtml(area.name)} 생활권 안내</a>`
@@ -308,15 +337,16 @@ function renderAreaGuide(report) {
     + '</div></section>';
 }
 
-function renderRelatedReports(related = []) {
+function renderRelatedReports(report, related = []) {
   if (!related.length) return '';
   const items = related.map((other) => (
     `<li><a href="${other.slug}.html">${escapeHtml(String(other.title).trim())}</a></li>`
   )).join('');
+  const section = reportSection(report);
   return '<section class="lr-section lr-related-reports" aria-labelledby="related-reports-title"><div class="lr-container">'
     + '<h2 id="related-reports-title">함께 보면 좋은 자료</h2>'
     + `<ul class="lr-report-archive-all__list">${items}</ul>`
-    + '<p><a href="../report.html">전체 자료 보기</a></p>'
+    + `<p><a href="../${section.href}">전체 자료 보기</a></p>`
     + '</div></section>';
 }
 
@@ -417,7 +447,7 @@ export function renderStaticReport(report, siteUrl = 'https://lottes.co.kr', opt
     <section class="lr-section"><div class="lr-container"><article class="lr-report-body">${body}</article></div></section>
     <section class="lr-section lr-section--muted"><div class="lr-container"><div class="lr-disclaimer"><strong>자료 출처</strong><ul>${renderEvidence(report?.evidence_json)}</ul><p>공개 자료를 바탕으로 정리한 정보 제공용 자료이며, 특정 거래나 수익을 보장하지 않습니다. 실제 계약 전에는 최신 서류와 현장을 다시 확인해 주세요.</p></div></div></section>
     ${renderAreaGuide(report)}
-    ${renderRelatedReports(options.related || [])}
+    ${renderRelatedReports(report, options.related || [])}
     ${renderReportCta(report)}
   </main>
   <footer class="lr-footer"><div class="lr-container lr-footer__content"><div><p class="lr-kicker">롯데부동산</p><p class="lr-text">서울시 송파구 백제고분로27길 27 1층</p><p class="lr-text">문의전화: 0507-1402-5055 | 중개사무소등록번호 11710-2018-00141</p></div><div class="lr-footer__links"><a href="../privacy.html">개인정보처리방침</a><a href="../EN.html">ENGLISH</a></div></div><p class="lr-footer__copy">© ${COPYRIGHT_YEAR} 롯데부동산. All rights reserved.</p></footer>
@@ -463,6 +493,23 @@ function updateSitemap(sitemapText, reports, siteUrl, modifiedDates = new Map())
   return next.replace(/\s*<\/urlset>\s*$/, `\n${entries}\n</urlset>\n`);
 }
 
+function updateSitemapPageLastmod(sitemapText, loc, modified) {
+  const escaped = loc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = new RegExp(`(<url>\\s*<loc>${escaped}</loc>)([\\s\\S]*?</url>)`);
+  const match = sitemapText.match(pattern);
+  if (!match) throw new Error(`sitemap URL missing for rewritten page: ${loc}`);
+  const tail = /<lastmod>[^<]*<\/lastmod>/.test(match[2])
+    ? match[2].replace(/<lastmod>[^<]*<\/lastmod>/, `<lastmod>${modified}</lastmod>`)
+    : `\n    <lastmod>${modified}</lastmod>${match[2]}`;
+  return sitemapText.replace(pattern, `${match[1]}${tail}`);
+}
+
+function renderSlugManifest(reports) {
+  const slugs = reports.map((report) => String(report.slug || '')).sort();
+  for (const slug of slugs) if (!SAFE_SLUG.test(slug)) throw new Error(`unsafe report slug: ${slug}`);
+  return `// Generated by scripts/export_static_reports.mjs. Do not edit.\nexport const EXPORTED_REPORT_SLUGS = new Set(${JSON.stringify(slugs, null, 2)});\n`;
+}
+
 function newestFirst(reports) {
   return [...reports].sort((left, right) => {
     const instantOrder = parseRequiredTimestamp(right, 'created_at')
@@ -476,23 +523,30 @@ function newestFirst(reports) {
 // Crawlers that skip JavaScript (Naver's Yeti) see these links where the page script
 // later renders its cards. A hub page (data-report-landing) lists the same reports its
 // script selects; other pages list the newest. Returns null when the page has no markers.
+function linkedPageReports(pageText, reports, limit = 6) {
+  const landingKey = pageText.match(/data-report-landing="([a-z-]+)"/)?.[1] || '';
+  const config = landingKey ? getReportLandingConfigByKey(landingKey) : null;
+  return {
+    config,
+    selected: config
+      ? selectLandingReports(reports, config).slice(0, landingKey === 'dispute-cases' ? undefined : limit)
+      : newestFirst(reports).slice(0, limit),
+  };
+}
+
 function updateLinkedReportPage(pageText, reports, limit = 6) {
   const start = pageText.indexOf(LINKS_START);
   const end = pageText.indexOf(LINKS_END);
   if (start < 0 || end < 0 || end <= start) return null;
-  const landingKey = pageText.match(/data-report-landing="([a-z-]+)"/)?.[1] || '';
-  const config = landingKey ? getReportLandingConfigByKey(landingKey) : null;
-  const selected = config
-    ? selectLandingReports(reports, config).slice(0, landingKey === 'dispute-cases' ? undefined : limit)
-    : newestFirst(reports).slice(0, limit);
+  const { config, selected } = linkedPageReports(pageText, reports, limit);
   const items = selected.map((report) => (
     `<li><a href="reports/${report.slug}.html">${escapeHtml(String(report.title || '').trim())}</a></li>`
   )).join('');
   const block = selected.length
-    ? `<p class="lr-kicker">${config ? '관련 자료' : '최근 자료'}</p>`
+    ? `<div data-server-report-fallback><p class="lr-kicker">${config ? '관련 자료' : '최근 자료'}</p>`
       + `<ul class="lr-report-archive-all__list">${items}</ul>`
-      + '<p><a href="report.html">전체 자료 보기</a></p>'
-    : '';
+      + '<p><a href="report.html">전체 자료 보기</a></p></div>'
+    : '<div class="lr-report-hub__empty" data-server-report-fallback>선택 기준에 맞는 관련 리포트가 아직 없습니다.</div>';
   return pageText.slice(0, start) + LINKS_START + block + pageText.slice(end);
 }
 
@@ -556,18 +610,20 @@ async function fetchPublishedReports(envFile) {
 }
 
 function parseArgs(argv) {
-  const args = { outputDir: path.join(REPO, 'public', 'reports'), sitemap: path.join(REPO, 'public', 'Sitemap.xml'), reportPage: path.join(REPO, 'public', 'report.html'), siteUrl: 'https://lottes.co.kr', env: '/opt/data/.env', allowShrink: false };
+  const args = { outputDir: path.join(REPO, 'public', 'reports'), sitemap: path.join(REPO, 'public', 'Sitemap.xml'), reportPage: path.join(REPO, 'public', 'report.html'), slugManifest: null, siteUrl: 'https://lottes.co.kr', env: '/opt/data/.env', allowShrink: false };
   for (let index = 0; index < argv.length; index += 1) {
     const value = argv[index];
     if (value === '--input') args.input = argv[++index];
     else if (value === '--output-dir') args.outputDir = argv[++index];
     else if (value === '--sitemap') args.sitemap = argv[++index];
     else if (value === '--report-page') args.reportPage = argv[++index];
+    else if (value === '--slug-manifest') args.slugManifest = argv[++index];
     else if (value === '--site-url') args.siteUrl = argv[++index];
     else if (value === '--env') args.env = argv[++index];
     else if (value === '--allow-shrink') args.allowShrink = true;
     else throw new Error(`unknown argument: ${value}`);
   }
+  if (!args.slugManifest) args.slugManifest = path.join(path.dirname(args.reportPage), 'js', 'generated', 'reportSlugs.mjs');
   return args;
 }
 
@@ -808,6 +864,7 @@ function linkedPagePaths(args) {
 function allowedTarget(target, args) {
   const resolved = path.resolve(target);
   if (resolved === path.resolve(args.sitemap) || resolved === path.resolve(args.reportPage)
+      || resolved === path.resolve(args.slugManifest)
       || linkedPagePaths(args).includes(resolved)
       || resolved === path.resolve(path.dirname(args.sitemap), 'rss.xml')) return true;
   return path.dirname(resolved) === path.resolve(args.outputDir)
@@ -1063,7 +1120,7 @@ async function main() {
       throw new Error(`refusing to remove published report snapshots without --allow-shrink${detail}`);
     }
     const sitemap = fs.readFileSync(args.sitemap, 'utf8');
-    const nextSitemap = updateSitemap(sitemap, reports, args.siteUrl, modifiedDates);
+    let nextSitemap = updateSitemap(sitemap, reports, args.siteUrl, modifiedDates);
     const reportPage = fs.readFileSync(args.reportPage, 'utf8');
     const nextReportPage = updateReportArchive(reportPage, reports);
     const specifications = [];
@@ -1073,16 +1130,30 @@ async function main() {
     for (const filename of missing) {
       specifications.push({ kind: 'delete', target: path.join(args.outputDir, filename) });
     }
-    specifications.push({ kind: 'replace', target: args.sitemap, content: nextSitemap });
-    specifications.push({ kind: 'replace', target: args.reportPage, content: nextReportPage });
+    const linkedSpecifications = [];
     for (const linkedPage of linkedPagePaths(args)) {
       if (!fs.existsSync(linkedPage)) continue;
       const pageText = fs.readFileSync(linkedPage, 'utf8');
       const nextPage = updateLinkedReportPage(pageText, reports);
       if (nextPage !== null && nextPage !== pageText) {
-        specifications.push({ kind: 'replace', target: linkedPage, content: nextPage });
+        linkedSpecifications.push({ kind: 'replace', target: linkedPage, content: nextPage });
+        const { selected } = linkedPageReports(pageText, reports);
+        const linkedReports = selected.length ? selected : reports;
+        const linkedModified = linkedReports
+          .map((report) => modifiedDates.get(report.slug) || sourceModifiedDate(report))
+          .sort()
+          .at(-1);
+        if (linkedModified) {
+          const pageName = path.basename(linkedPage);
+          const loc = `${String(args.siteUrl).replace(/\/$/, '')}/${pageName === 'index.html' ? '' : pageName}`;
+          nextSitemap = updateSitemapPageLastmod(nextSitemap, loc, linkedModified);
+        }
       }
     }
+    specifications.push({ kind: 'replace', target: args.sitemap, content: nextSitemap });
+    specifications.push({ kind: 'replace', target: args.reportPage, content: nextReportPage });
+    specifications.push({ kind: 'replace', target: args.slugManifest, content: renderSlugManifest(reports) });
+    specifications.push(...linkedSpecifications);
     const feedEntries = [...rendered.entries()]
       .map(([filename, html]) => readReportEntry(html, filename))
       .filter(Boolean);

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { getReportLandingConfigByKey, selectLandingReports } from '../public/js/config/reportLandingConfig.js';
+import { findMatchingLandingConfigs, getReportLandingConfigByKey, reportBreadcrumbSection, selectLandingReports } from '../public/js/config/reportLandingConfig.js';
 
 const report = (slug, title, contentType, createdAt) => ({
   slug, title, summary: '', created_at: createdAt, metadata: { content_type: contentType },
@@ -23,4 +23,39 @@ test('area hub matches by keyword and drops unrelated reports', () => {
     report('busan', '부산 해운대 시세', 'market_report', '2026-10-02T00:00:00Z'),
   ], config);
   assert.deepEqual(selected.map((item) => item.slug), ['jamsil']);
+});
+
+test('Gangnam office hub requires office or commercial relevance', () => {
+  const config = getReportLandingConfigByKey('gangnam-office-report');
+  const housing = report('gangnam-home', '강남 아파트 매매 흐름', 'market_report', '2026-10-03T00:00:00Z');
+  housing.metadata.region = 'gangnam';
+  const office = report('gangnam-office', '강남 사무실 임대 조건', 'market_report', '2026-10-01T00:00:00Z');
+  office.metadata.region = 'gangnam';
+  const otherOffice = report('jamsil-office', '잠실 사무실 임대 조건', 'market_report', '2026-10-02T00:00:00Z');
+  otherOffice.metadata.region = 'jamsil';
+  assert.deepEqual(selectLandingReports([housing, office, otherOffice], config).map((item) => item.slug), ['gangnam-office']);
+  assert.equal(
+    findMatchingLandingConfigs(housing).some((item) => item.key === 'gangnam-office-report'),
+    false,
+  );
+});
+
+test('hub relevance score is applied before publication recency', () => {
+  const config = getReportLandingConfigByKey('jamsil-market-report');
+  const newerWeak = report('newer-weak', '잠실 생활권 소식', 'market_report', '2026-10-03T00:00:00Z');
+  const olderStrong = report('older-strong', '잠실 송파 아파트 시장', 'market_report', '2026-10-01T00:00:00Z');
+  olderStrong.metadata.region = 'jamsil';
+  assert.deepEqual(
+    selectLandingReports([newerWeak, olderStrong], config).map((item) => item.slug),
+    ['older-strong', 'newer-weak'],
+  );
+});
+
+test('dispute breadcrumb taxonomy is shared by landing and report paths', () => {
+  const dispute = reportBreadcrumbSection({ content_type: 'dispute_case' });
+  assert.deepEqual(dispute, { name: '계약·분쟁 사례', path: 'disputes.html' });
+  assert.equal(getReportLandingConfigByKey('dispute-cases').breadcrumbName, dispute.name);
+  assert.deepEqual(reportBreadcrumbSection({ content_type: 'market_report' }), {
+    name: '시장·정책', path: 'report.html',
+  });
 });

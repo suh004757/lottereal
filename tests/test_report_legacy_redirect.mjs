@@ -2,38 +2,26 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { legacyReportRedirectHref } from '../public/js/utils/reportUrls.mjs';
 
-function fakeFetch(okPaths) {
-  const calls = [];
-  const impl = async (href, options) => {
-    calls.push({ href, method: options?.method });
-    return { ok: okPaths.includes(href) };
-  };
-  return { impl, calls };
-}
-
-test('legacy slug moves to its static page when the page exists', async () => {
-  const { impl, calls } = fakeFetch(['/reports/2026-04-13-korea-market-report.html']);
+test('legacy slug moves immediately when it is in the local export manifest', () => {
+  let networkCalls = 0;
   assert.equal(
-    await legacyReportRedirectHref('?slug=2026-04-13-korea-market-report', impl),
+    legacyReportRedirectHref(
+      '?slug=2026-04-13-korea-market-report',
+      new Set(['2026-04-13-korea-market-report']),
+      () => { networkCalls += 1; },
+    ),
     '/reports/2026-04-13-korea-market-report.html'
   );
-  assert.deepEqual(calls, [{ href: '/reports/2026-04-13-korea-market-report.html', method: 'HEAD' }]);
+  assert.equal(networkCalls, 0);
 });
 
-test('missing static page keeps the dynamic report', async () => {
-  const { impl } = fakeFetch([]);
-  assert.equal(await legacyReportRedirectHref('?slug=not-exported-yet', impl), null);
+test('slug absent from the manifest keeps the dynamic report', () => {
+  assert.equal(legacyReportRedirectHref('?slug=not-exported-yet', new Set()), null);
 });
 
-test('no slug or an unsafe slug never fetches', async () => {
-  const { impl, calls } = fakeFetch(['/reports/x.html']);
-  assert.equal(await legacyReportRedirectHref('', impl), null);
-  assert.equal(await legacyReportRedirectHref('?slug=../admin/index', impl), null);
-  assert.equal(await legacyReportRedirectHref('?slug=https://evil.example', impl), null);
-  assert.equal(calls.length, 0);
-});
-
-test('network failure keeps the dynamic report', async () => {
-  const failing = async () => { throw new Error('offline'); };
-  assert.equal(await legacyReportRedirectHref('?slug=2026-04-13-korea-market-report', failing), null);
+test('no slug or an unsafe slug is rejected locally', () => {
+  const exported = new Set(['x']);
+  assert.equal(legacyReportRedirectHref('', exported), null);
+  assert.equal(legacyReportRedirectHref('?slug=../admin/index', exported), null);
+  assert.equal(legacyReportRedirectHref('?slug=https://evil.example', exported), null);
 });

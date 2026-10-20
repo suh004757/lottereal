@@ -7,6 +7,7 @@ export const REPORT_LANDING_CONFIG = {
     title: '부동산 계약·분쟁 사례 | 곰팡이·누수·보증금 | 롯데부동산',
     description: '전월세 곰팡이, 누수, 보증금 반환, 계약금과 원상복구처럼 자주 생기는 부동산 분쟁을 법령·판례·공식 조정사례로 쉽게 설명합니다.',
     heroKicker: '계약 · 분쟁 사례',
+    breadcrumbName: '계약·분쟁 사례',
     heroTitle: '계약 전에 읽어두면 좋은 부동산 분쟁 사례',
     heroBody: '곰팡이·누수·보증금·계약금처럼 실제로 자주 묻는 상황을 골라, 책임이 갈리는 기준과 미리 남겨야 할 자료를 쉬운 말로 정리합니다.',
     introSections: [
@@ -201,6 +202,8 @@ export const REPORT_LANDING_CONFIG = {
     ],
     reportMatch: {
       keywords: ['강남', '사무실', '오피스', '서울'],
+      requiredKeywordsAny: ['사무실', '오피스', '업무시설', '상업용', '상가'],
+      requiredLocationAny: ['강남', 'gangnam'],
       metadataRegion: ['gangnam', 'seoul']
     },
     insightSlugs: ['gangnam-apt-trends'],
@@ -213,6 +216,12 @@ export const REPORT_LANDING_LIST = Object.values(REPORT_LANDING_CONFIG);
 
 export function getReportLandingConfigByKey(key) {
   return REPORT_LANDING_LIST.find((config) => config.key === key) || null;
+}
+
+export function reportBreadcrumbSection(metadata = {}) {
+  return String(metadata?.content_type || '').toLowerCase() === 'dispute_case'
+    ? { name: '계약·분쟁 사례', path: 'disputes.html' }
+    : { name: '시장·정책', path: 'report.html' };
 }
 
 export function findMatchingLandingConfigs(report) {
@@ -243,8 +252,19 @@ function scoreLandingMatch(config, haystack, report) {
   const keywords = config.reportMatch?.keywords || [];
   const regions = config.reportMatch?.metadataRegion || [];
   const requiredContentTypes = config.reportMatch?.requiredContentTypes || [];
+  const requiredKeywordsAny = config.reportMatch?.requiredKeywordsAny || [];
+  const requiredLocationAny = config.reportMatch?.requiredLocationAny || [];
   const reportType = String(report.metadata?.content_type || '').toLowerCase();
   const reportRegion = String(report.metadata?.region || '').toLowerCase();
+
+  if (requiredKeywordsAny.length
+      && !requiredKeywordsAny.some((keyword) => haystack.includes(String(keyword).toLowerCase()))) {
+    return 0;
+  }
+  if (requiredLocationAny.length
+      && !requiredLocationAny.some((keyword) => haystack.includes(String(keyword).toLowerCase()))) {
+    return 0;
+  }
 
   if (requiredContentTypes.length && !requiredContentTypes.includes(reportType)) {
     return 0;
@@ -278,8 +298,9 @@ export function selectLandingReports(reports, landingConfig) {
       score: scoreReport(report, landingConfig)
     }))
     .filter((entry) => entry.score > 0)
-    .map((entry) => entry.report)
-    .sort(compareReportsByPublication);
+    .sort((left, right) => right.score - left.score
+      || compareReportsByPublication(left.report, right.report))
+    .map((entry) => entry.report);
 }
 
 function scoreReport(report, landingConfig) {
@@ -306,6 +327,17 @@ function scoreReport(report, landingConfig) {
     .toLowerCase();
   const regions = landingConfig.reportMatch?.metadataRegion || [];
   const keywords = landingConfig.reportMatch?.keywords || [];
+  const requiredKeywordsAny = landingConfig.reportMatch?.requiredKeywordsAny || [];
+  const requiredLocationAny = landingConfig.reportMatch?.requiredLocationAny || [];
+
+  if (requiredKeywordsAny.length
+      && !requiredKeywordsAny.some((keyword) => haystack.includes(String(keyword).toLowerCase()))) {
+    return 0;
+  }
+  if (requiredLocationAny.length
+      && !requiredLocationAny.some((keyword) => haystack.includes(String(keyword).toLowerCase()))) {
+    return 0;
+  }
 
   keywords.forEach((keyword) => {
     if (haystack.includes(String(keyword).toLowerCase())) {

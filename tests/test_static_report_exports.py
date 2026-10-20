@@ -121,6 +121,16 @@ class StaticReportExportTests(unittest.TestCase):
         self.assertIn(f"<loc>{canonical}</loc>", sitemap)
         self.assertIn("<lastmod>2026-09-26</lastmod>", sitemap)
         self.assertNotIn(f"report.html?slug={self.report['slug']}", sitemap)
+        manifest = (self.base / "js" / "generated" / "reportSlugs.mjs").read_text(encoding="utf-8")
+        self.assertIn(self.report["slug"], manifest)
+
+    def test_legacy_dynamic_page_is_noindex_while_snapshots_are_indexable(self):
+        source = (ROOT / "public" / "report.html").read_text(encoding="utf-8")
+        self.assertIn('<meta name="robots" content="noindex,follow">', source)
+        result = self.run_export([self.report])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        snapshot = (self.output_dir / f"{self.report['slug']}.html").read_text(encoding="utf-8")
+        self.assertIn('<meta name="robots" content="index,follow">', snapshot)
 
     def related_report(self, slug, day, content_type="legal_checklist"):
         return dict(
@@ -166,6 +176,15 @@ class StaticReportExportTests(unittest.TestCase):
         html = (self.output_dir / f"{self.report['slug']}.html").read_text(encoding="utf-8")
         self.assertNotIn("lr-related-reports", html)
 
+    def test_dispute_related_report_link_returns_to_dispute_hub(self):
+        case = dict(self.report, metadata={"content_type": "dispute_case"})
+        other = self.related_report("2026-09-25-other-dispute", 25, "dispute_case")
+        result = self.run_export([case, other])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        html = (self.output_dir / f"{case['slug']}.html").read_text(encoding="utf-8")
+        self.assertIn('<a href="../disputes.html">전체 자료 보기</a>', html)
+        self.assertNotIn('<a href="../report.html">전체 자료 보기</a>', html)
+
     def test_new_related_report_does_not_advance_existing_modified_date(self):
         first = self.run_export([self.report])
         self.assertEqual(first.returncode, 0, first.stderr)
@@ -202,6 +221,8 @@ class StaticReportExportTests(unittest.TestCase):
         self.assertLess(newest, html.index('href="reports/2026-09-20-older-check.html"'))
         self.assertIn("이전 &lt;확인&gt; 자료", html)
         self.assertIn('href="report.html">전체 자료 보기</a>', html)
+        sitemap = self.sitemap.read_text(encoding="utf-8")
+        self.assertRegex(sitemap, r"<loc>https://lottes\.co\.kr/</loc>\s*<lastmod>2026-09-26</lastmod>")
 
     def test_report_breadcrumb_follows_its_menu_section(self):
         case = dict(
@@ -221,6 +242,7 @@ class StaticReportExportTests(unittest.TestCase):
             ]
             crumbs = next(b for b in blocks if b["@type"] == "BreadcrumbList")["itemListElement"]
             self.assertEqual(crumbs[1]["item"], f"https://lottes.co.kr/{section}")
+            self.assertEqual(crumbs[1]["name"], "계약·분쟁 사례" if section == "disputes.html" else "시장·정책")
             self.assertEqual(crumbs[-1]["item"], f"https://lottes.co.kr/reports/{slug}.html")
             self.assertIn(f'<a href="../{section}" class="active">', html)
 
@@ -229,6 +251,13 @@ class StaticReportExportTests(unittest.TestCase):
         hub.write_text(
             '<html><body data-report-landing="dispute-cases"><div id="report-landing-list">'
             '<!-- REPORT_LINKS_START --><!-- REPORT_LINKS_END --></div></body></html>\n',
+            encoding="utf-8",
+        )
+        self.sitemap.write_text(
+            self.sitemap.read_text(encoding="utf-8").replace(
+                "</urlset>",
+                "  <url><loc>https://lottes.co.kr/disputes.html</loc><lastmod>2026-01-01</lastmod></url>\n</urlset>",
+            ),
             encoding="utf-8",
         )
         case = dict(
@@ -243,6 +272,18 @@ class StaticReportExportTests(unittest.TestCase):
         self.assertIn('href="reports/2026-09-21-mold-dispute.html"', html)
         self.assertNotIn(self.report["slug"], html)
         self.assertIn("관련 자료", html)
+        sitemap = self.sitemap.read_text(encoding="utf-8")
+        self.assertRegex(sitemap, r"<loc>https://lottes\.co\.kr/disputes\.html</loc>\s*<lastmod>2026-09-26</lastmod>")
+
+    def test_hub_client_loads_all_reports_and_keeps_server_fallback_until_render(self):
+        script = (ROOT / "public" / "js" / "reportLandingPage.js").read_text(encoding="utf-8")
+        self.assertIn("listPublishedKnowledgeReports", script)
+        self.assertNotIn("listPublishedReports({ limit: 50 })", script)
+        self.assertIn("replaceChildren(fragment)", script)
+        self.assertIn("const listReports = relatedReports;", script)
+        for name in ("disputes.html", "songpa-market-report.html", "jamsil-market-report.html", "gangnam-office-report.html"):
+            page = (ROOT / "public" / name).read_text(encoding="utf-8")
+            self.assertIn('data-server-report-fallback', page)
 
     def test_home_page_without_markers_is_left_untouched(self):
         home = self.base / "index.html"

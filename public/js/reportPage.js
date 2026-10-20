@@ -7,7 +7,7 @@ import {
 import { buildSanitizedReportHtml } from './reportRenderSecurity.mjs';
 import { isAutomatedBrowser } from './utils/automatedBrowser.mjs';
 import { safeExternalHttpUrl } from './publicRenderSecurity.mjs';
-import { findMatchingLandingConfigs } from './config/reportLandingConfig.js';
+import { findMatchingLandingConfigs, reportBreadcrumbSection } from './config/reportLandingConfig.js';
 import { buildAbsoluteUrl, renderJsonLd, updateSeoMeta } from './utils/seo.js';
 import { legacyReportRedirectHref, reportStaticHref, reportStaticUrl } from './utils/reportUrls.mjs';
 import {
@@ -59,7 +59,7 @@ if (document.readyState === 'loading') {
 
 async function loadReport() {
   if (reportSlug) {
-    const staticHref = await legacyReportRedirectHref(window.location.search);
+    const staticHref = legacyReportRedirectHref(window.location.search);
     if (staticHref) {
       window.location.replace(staticHref);
       return;
@@ -464,6 +464,7 @@ function applySeo() {
   const image = buildAbsoluteUrl('img/bg-img/lotte_street_view.png');
   const publishedTime = currentReport.created_at || currentReport.updated_at;
   const modifiedTime = currentReport.updated_at || currentReport.created_at;
+  const breadcrumbSection = reportBreadcrumbSection(currentReport.metadata);
 
   updateSeoMeta({
     title,
@@ -490,8 +491,8 @@ function applySeo() {
         {
           '@type': 'ListItem',
           position: 2,
-          name: 'Market Report',
-          item: buildAbsoluteUrl('/report.html')
+          name: breadcrumbSection.name,
+          item: buildAbsoluteUrl(`/${breadcrumbSection.path}`)
         },
         {
           '@type': 'ListItem',

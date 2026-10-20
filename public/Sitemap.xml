@@ -8,7 +8,7 @@
   <!-- 홈 -->
   <url>
     <loc>https://lottes.co.kr/</loc>
-    <lastmod>2026-03-07</lastmod>
+    <lastmod>2026-10-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.00</priority>
   </url>
@@ -56,7 +56,7 @@
   <!-- 계약·분쟁 사례 -->
   <url>
     <loc>https://lottes.co.kr/disputes.html</loc>
-    <lastmod>2026-08-25</lastmod>
+    <lastmod>2026-10-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.88</priority>
   </url>
@@ -98,7 +98,7 @@
   <!-- 송파 리포트 허브 -->
   <url>
     <loc>https://lottes.co.kr/songpa-market-report.html</loc>
-    <lastmod>2026-08-28</lastmod>
+    <lastmod>2026-09-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.80</priority>
   </url>
@@ -106,7 +106,7 @@
   <!-- 잠실 리포트 허브 -->
   <url>
     <loc>https://lottes.co.kr/jamsil-market-report.html</loc>
-    <lastmod>2026-08-28</lastmod>
+    <lastmod>2026-09-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.80</priority>
   </url>
@@ -114,7 +114,7 @@
   <!-- 강남 오피스 리포트 허브 -->
   <url>
     <loc>https://lottes.co.kr/gangnam-office-report.html</loc>
-    <lastmod>2026-08-28</lastmod>
+    <lastmod>2026-10-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.80</priority>
   </url>
