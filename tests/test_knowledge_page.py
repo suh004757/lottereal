@@ -1,3 +1,4 @@
+import re
 import unittest
 from pathlib import Path
 
@@ -47,6 +48,26 @@ class KnowledgeSearchPageTest(unittest.TestCase):
         self.assertIn('listPublishedKnowledgeReports', text)
         self.assertIn('report_md', text)
         self.assertIn('evidence_json', text)
+
+    def test_production_adapter_never_substitutes_mocks_when_supabase_is_unavailable(self):
+        text = (PUBLIC / 'js/services/reportAdapter.js').read_text(encoding='utf-8')
+        self.assertIn('requireSupabaseClient', text)
+        self.assertNotIn('if (!supabase) return listReportsMock', text)
+        self.assertNotIn('if (!supabase || !slug) return getReportBySlugMock', text)
+        self.assertNotIn('if (!supabase) return saveReportMock', text)
+
+    def test_development_published_mocks_only_link_to_exported_pages(self):
+        text = (PUBLIC / 'js/services/reportAdapter.js').read_text(encoding='utf-8')
+        mock_section = text.split('const MOCK_REPORTS = [', 1)[1].split('];', 1)[0]
+        published_slugs = re.findall(
+            r"slug: '([^']+)'[\s\S]*?status: 'published'",
+            mock_section,
+        )
+        self.assertTrue(published_slugs)
+        missing = [slug for slug in published_slugs if not (PUBLIC / 'reports' / f'{slug}.html').is_file()]
+        self.assertEqual(missing, [])
+        self.assertIn("import { EXPORTED_REPORT_SLUGS }", text)
+        self.assertIn("EXPORTED_REPORT_SLUGS.has(report.slug)", text)
 
     def test_knowledge_page_is_in_sitemap(self):
         text = (PUBLIC / 'Sitemap.xml').read_text(encoding='utf-8')

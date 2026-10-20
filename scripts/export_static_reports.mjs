@@ -6,6 +6,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { readReportEntry, renderFeed } from './build_report_feed.mjs';
 import { getReportLandingConfigByKey, reportBreadcrumbSection, selectLandingReports } from '../public/js/config/reportLandingConfig.js';
+import { compareReportsByPublication } from '../public/js/utils/reportDates.mjs';
 
 const require = createRequire(import.meta.url);
 const { Marked, Renderer } = require('../public/js/vendor/marked-18.0.11.min.js');
@@ -511,13 +512,7 @@ function renderSlugManifest(reports) {
 }
 
 function newestFirst(reports) {
-  return [...reports].sort((left, right) => {
-    const instantOrder = parseRequiredTimestamp(right, 'created_at')
-      - parseRequiredTimestamp(left, 'created_at');
-    const leftSlug = String(left.slug);
-    const rightSlug = String(right.slug);
-    return instantOrder || (leftSlug < rightSlug ? -1 : leftSlug > rightSlug ? 1 : 0);
-  });
+  return [...reports].sort(compareReportsByPublication);
 }
 
 // Crawlers that skip JavaScript (Naver's Yeti) see these links where the page script
@@ -558,13 +553,7 @@ function updateReportArchive(reportPageText, reports) {
       || reportPageText.lastIndexOf(ARCHIVE_END) !== end) {
     throw new Error('invalid report archive markers');
   }
-  const ordered = [...reports].sort((left, right) => {
-    const instantOrder = parseRequiredTimestamp(right, 'created_at')
-      - parseRequiredTimestamp(left, 'created_at');
-    const leftSlug = String(left.slug);
-    const rightSlug = String(right.slug);
-    return instantOrder || (leftSlug < rightSlug ? -1 : leftSlug > rightSlug ? 1 : 0);
-  });
+  const ordered = [...reports].sort(compareReportsByPublication);
   const items = ordered.map((report) => (
     `                        <li><a href="reports/${report.slug}.html">${escapeHtml(String(report.title || '').trim())}</a></li>`
   )).join('\n');
@@ -1135,19 +1124,19 @@ async function main() {
       if (!fs.existsSync(linkedPage)) continue;
       const pageText = fs.readFileSync(linkedPage, 'utf8');
       const nextPage = updateLinkedReportPage(pageText, reports);
-      if (nextPage !== null && nextPage !== pageText) {
+      if (nextPage === null) continue;
+      const { selected } = linkedPageReports(pageText, reports);
+      if (nextPage !== pageText) {
         linkedSpecifications.push({ kind: 'replace', target: linkedPage, content: nextPage });
-        const { selected } = linkedPageReports(pageText, reports);
-        const linkedReports = selected.length ? selected : reports;
-        const linkedModified = linkedReports
-          .map((report) => modifiedDates.get(report.slug) || sourceModifiedDate(report))
-          .sort()
-          .at(-1);
-        if (linkedModified) {
-          const pageName = path.basename(linkedPage);
-          const loc = `${String(args.siteUrl).replace(/\/$/, '')}/${pageName === 'index.html' ? '' : pageName}`;
-          nextSitemap = updateSitemapPageLastmod(nextSitemap, loc, linkedModified);
-        }
+      }
+      const linkedModified = selected
+        .map((report) => modifiedDates.get(report.slug) || sourceModifiedDate(report))
+        .sort()
+        .at(-1);
+      if (linkedModified) {
+        const pageName = path.basename(linkedPage);
+        const loc = `${String(args.siteUrl).replace(/\/$/, '')}/${pageName === 'index.html' ? '' : pageName}`;
+        nextSitemap = updateSitemapPageLastmod(nextSitemap, loc, linkedModified);
       }
     }
     specifications.push({ kind: 'replace', target: args.sitemap, content: nextSitemap });

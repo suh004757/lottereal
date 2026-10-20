@@ -21,7 +21,7 @@ export function compareReportsByPublication(a = {}, b = {}) {
   const aTime = getPublicationDate(a)?.getTime() ?? 0;
   const bTime = getPublicationDate(b)?.getTime() ?? 0;
   if (bTime !== aTime) return bTime - aTime;
-  return String(b.id ?? '').localeCompare(String(a.id ?? ''), 'en');
+  return String(a.slug ?? '').localeCompare(String(b.slug ?? ''), 'en');
 }
 
 export function formatReportDateMeta(report = {}, { locale = 'ko-KR', timeZone = 'Asia/Seoul' } = {}) {

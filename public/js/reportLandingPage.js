@@ -1,4 +1,4 @@
-import { getLatestReport, listPublishedKnowledgeReports } from './services/reportAdapter.js';
+import { listPublishedKnowledgeReports } from './services/reportAdapter.js';
 import { buildAbsoluteUrl, renderJsonLd, updateSeoMeta } from './utils/seo.js';
 import { getReportLandingConfigByKey, selectLandingReports } from './config/reportLandingConfig.js';
 import { formatReportDateMeta } from './utils/reportDates.mjs';
@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function initializeLanding() {
   const reports = await listPublishedKnowledgeReports();
   const relatedReports = selectLandingReports(reports, config);
-  const featuredReport = relatedReports[0] || await getLatestReport();
+  const featuredReport = relatedReports[0] || null;
 
   renderHero(featuredReport);
   renderIntro();

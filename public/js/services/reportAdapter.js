@@ -2,13 +2,14 @@ import { getSupabaseClient } from '../config/supabaseConfig.js';
 import { APP_CONFIG } from '../config/appConfig.js';
 import { collectPaginatedReports } from './knowledgeReportPager.mjs';
 import { compareReportsByPublication } from '../utils/reportDates.mjs';
+import { EXPORTED_REPORT_SLUGS } from '../generated/reportSlugs.mjs';
 
 const VIEWED_REPORTS_KEY = 'lottereal:viewedReports';
 
 const MOCK_REPORTS = [
   {
     id: 'mock-1',
-    slug: '2026-03-seoul-market-report',
+    slug: '2026-03-12-ai-real-estate-report-methodology',
     title: '2026 3월 서울 부동산 시장 리포트',
     summary: '서울 주요 권역의 매매·임대 흐름과 거래량 변화를 정리한 최신 시장 브리프입니다.',
     report_md: `## 1. 시장 요약
@@ -44,7 +45,7 @@ const MOCK_REPORTS = [
   },
   {
     id: 'mock-2',
-    slug: '2026-02-seoul-market-report',
+    slug: '2026-03-08-korea-real-estate-policy-report',
     title: '2026 2월 서울 부동산 시장 리포트',
     summary: '거래량, 전세가율, 공급 계획을 기준으로 서울 부동산 흐름을 정리했습니다.',
     report_md: `## 1. 거래 흐름
@@ -60,7 +61,7 @@ const MOCK_REPORTS = [
   },
   {
     id: 'mock-3',
-    slug: '2026-01-seoul-market-report',
+    slug: '2025-12-30-market-report-seoul',
     title: '2026 1월 서울 부동산 시장 리포트',
     summary: '연초 시장 심리와 권역별 가격 움직임을 중심으로 정리한 월간 리포트입니다.',
     report_md: `## 1. 연초 동향
@@ -132,8 +133,7 @@ export async function listPublishedKnowledgeReports({ batchSize = 200 } = {}) {
     return listReportsMock({ status: 'published', limit: safeBatchSize });
   }
 
-  const supabase = getSupabaseClient();
-  if (!supabase) return listReportsMock({ status: 'published', limit: safeBatchSize });
+  const supabase = requireSupabaseClient();
 
   return collectPaginatedReports({
     batchSize: safeBatchSize,
@@ -142,7 +142,7 @@ export async function listPublishedKnowledgeReports({ batchSize = 200 } = {}) {
       .select('id, slug, title, summary, report_md, evidence_json, status, view_count, updated_at, created_at, metadata')
       .eq('status', 'published')
       .order('created_at', { ascending: false })
-      .order('id', { ascending: false })
+      .order('slug', { ascending: true })
       .range(from, to)
   });
 }
@@ -161,6 +161,12 @@ function getProvider() {
   return (APP_CONFIG.BACKEND_PROVIDER || 'mock').toLowerCase();
 }
 
+function requireSupabaseClient() {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase client is unavailable.');
+  return supabase;
+}
+
 function normalizeReportPayload(reportData = {}) {
   return {
     id: reportData.id,
@@ -177,8 +183,8 @@ function normalizeReportPayload(reportData = {}) {
 }
 
 async function getReportBySlugSupabase(slug) {
-  const supabase = getSupabaseClient();
-  if (!supabase || !slug) return getReportBySlugMock(slug, { publishedOnly: true });
+  if (!slug) return null;
+  const supabase = requireSupabaseClient();
 
   const { data, error } = await supabase
     .from('market_reports')
@@ -195,8 +201,8 @@ async function getReportBySlugSupabase(slug) {
 }
 
 async function getReportAdminSupabase({ id, slug } = {}) {
-  const supabase = getSupabaseClient();
-  if (!supabase || (!id && !slug)) return getReportAdminMock({ id, slug });
+  if (!id && !slug) return null;
+  const supabase = requireSupabaseClient();
 
   let query = supabase.from('market_reports').select('*').limit(1);
   query = id ? query.eq('id', id) : query.eq('slug', slug);
@@ -210,9 +216,8 @@ async function getReportAdminSupabase({ id, slug } = {}) {
 }
 
 async function saveReportSupabase(reportData) {
-  const supabase = getSupabaseClient();
+  const supabase = requireSupabaseClient();
   const payload = normalizeReportPayload(reportData);
-  if (!supabase) return saveReportMock(payload);
 
   const persistedPayload = {
     slug: payload.slug,
@@ -254,13 +259,13 @@ async function saveReportSupabase(reportData) {
 }
 
 async function listReportsSupabase({ status, limit, excludeSlug }) {
-  const supabase = getSupabaseClient();
-  if (!supabase) return listReportsMock({ status, limit, excludeSlug });
+  const supabase = requireSupabaseClient();
 
   let query = supabase
     .from('market_reports')
     .select('id, slug, title, summary, status, updated_at, created_at, view_count, metadata')
     .order('created_at', { ascending: false })
+    .order('slug', { ascending: true })
     .limit(limit);
 
   if (status) {
@@ -279,8 +284,7 @@ async function listReportsSupabase({ status, limit, excludeSlug }) {
 }
 
 async function incrementReportViewsSupabase(slug) {
-  const supabase = getSupabaseClient();
-  if (!supabase) return;
+  const supabase = requireSupabaseClient();
 
   const { error } = await supabase.rpc('increment_report_view_count', {
     report_slug: slug
@@ -292,7 +296,9 @@ async function incrementReportViewsSupabase(slug) {
 }
 
 function listReportsMock({ status, limit = 10, excludeSlug } = {}) {
-  let reports = [...MOCK_REPORTS];
+  let reports = MOCK_REPORTS.filter((report) => (
+    report.status !== 'published' || EXPORTED_REPORT_SLUGS.has(report.slug)
+  ));
   if (status) {
     reports = reports.filter((report) => report.status === status);
   }
@@ -304,7 +310,8 @@ function listReportsMock({ status, limit = 10, excludeSlug } = {}) {
 }
 
 function getReportBySlugMock(slug, { publishedOnly = false } = {}) {
-  const report = MOCK_REPORTS.find((item) => item.slug === slug && (!publishedOnly || item.status === 'published'));
+  const report = MOCK_REPORTS.find((item) => item.slug === slug
+    && (!publishedOnly || item.status === 'published' && EXPORTED_REPORT_SLUGS.has(item.slug)));
   return report ? cloneReport(report) : null;
 }
 

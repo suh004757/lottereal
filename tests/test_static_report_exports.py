@@ -275,6 +275,43 @@ class StaticReportExportTests(unittest.TestCase):
         sitemap = self.sitemap.read_text(encoding="utf-8")
         self.assertRegex(sitemap, r"<loc>https://lottes\.co\.kr/disputes\.html</loc>\s*<lastmod>2026-09-26</lastmod>")
 
+    def test_hub_sitemap_advances_when_selected_report_material_changes_but_link_text_does_not(self):
+        hub = self.base / "disputes.html"
+        hub.write_text(
+            '<html><body data-report-landing="dispute-cases"><div id="report-landing-list">'
+            '<!-- REPORT_LINKS_START --><!-- REPORT_LINKS_END --></div></body></html>\n',
+            encoding="utf-8",
+        )
+        self.sitemap.write_text(
+            self.sitemap.read_text(encoding="utf-8").replace(
+                "</urlset>",
+                "  <url><loc>https://lottes.co.kr/disputes.html</loc><lastmod>2026-01-01</lastmod></url>\n</urlset>",
+            ),
+            encoding="utf-8",
+        )
+        case = dict(
+            self.report,
+            slug="2026-09-21-mold-dispute",
+            title="곰팡이 분쟁 사례",
+            metadata={"content_type": "dispute_case"},
+        )
+        first = self.run_export([case])
+        self.assertEqual(first.returncode, 0, first.stderr)
+        unchanged_link_block = hub.read_text(encoding="utf-8")
+
+        revised = dict(
+            case,
+            summary="같은 제목과 주소를 유지한 채 공개 내용이 실제로 수정됐습니다.",
+            updated_at="2026-09-28T04:00:00+00:00",
+            metadata={"content_type": "dispute_case", "modified_at": "2026-09-30"},
+        )
+        second = self.run_export([revised])
+
+        self.assertEqual(second.returncode, 0, second.stderr)
+        self.assertEqual(hub.read_text(encoding="utf-8"), unchanged_link_block)
+        sitemap = self.sitemap.read_text(encoding="utf-8")
+        self.assertRegex(sitemap, r"<loc>https://lottes\.co\.kr/disputes\.html</loc>\s*<lastmod>2026-09-30</lastmod>")
+
     def test_hub_client_loads_all_reports_and_keeps_server_fallback_until_render(self):
         script = (ROOT / "public" / "js" / "reportLandingPage.js").read_text(encoding="utf-8")
         self.assertIn("listPublishedKnowledgeReports", script)
@@ -284,6 +321,11 @@ class StaticReportExportTests(unittest.TestCase):
         for name in ("disputes.html", "songpa-market-report.html", "jamsil-market-report.html", "gangnam-office-report.html"):
             page = (ROOT / "public" / name).read_text(encoding="utf-8")
             self.assertIn('data-server-report-fallback', page)
+
+    def test_hub_with_no_relevant_reports_does_not_feature_global_latest(self):
+        script = (ROOT / "public" / "js" / "reportLandingPage.js").read_text(encoding="utf-8")
+        self.assertNotIn("getLatestReport", script)
+        self.assertIn("const featuredReport = relatedReports[0] || null;", script)
 
     def test_home_page_without_markers_is_left_untouched(self):
         home = self.base / "index.html"

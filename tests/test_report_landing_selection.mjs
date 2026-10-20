@@ -51,6 +51,18 @@ test('hub relevance score is applied before publication recency', () => {
   );
 });
 
+test('equal publication instants use the exporter slug tie-breaker', () => {
+  const config = getReportLandingConfigByKey('jamsil-market-report');
+  const alpha = report('alpha-report', '잠실 아파트 시장 A', 'market_report', '2026-10-03T00:00:00Z');
+  const zulu = report('zulu-report', '잠실 아파트 시장 Z', 'market_report', '2026-10-03T00:00:00Z');
+  alpha.id = '1';
+  zulu.id = '9';
+  assert.deepEqual(
+    selectLandingReports([zulu, alpha], config).map((item) => item.slug),
+    ['alpha-report', 'zulu-report'],
+  );
+});
+
 test('dispute breadcrumb taxonomy is shared by landing and report paths', () => {
   const dispute = reportBreadcrumbSection({ content_type: 'dispute_case' });
   assert.deepEqual(dispute, { name: '계약·분쟁 사례', path: 'disputes.html' });
