@@ -38,13 +38,14 @@ The production unit consists of these reviewed files:
 
 - `scripts/lottereal_gmail_inquiry_watch.py`
 - `scripts/lottereal_inquiry_anomaly_watch.py`
+- `scripts/reconcile_lottereal_legacy_queue.py` (required only for snapshot-grounded v1→v2 reconciliation)
 - `docs/engineering/gmail-inquiry-delivery-queue.md` (operator reference; it is not runtime state)
 
 Promotion must follow these steps without reading or printing private state contents:
 
 1. Stop or disable both cron entries and acquire both watcher lock files so no old process remains active.
 2. Record only file hashes/modes, then make a mode-`0600` pre-promotion snapshot of the Gmail queue, heartbeat, and anomaly state on the same protected filesystem.
-3. Stage both Python files in one versioned runtime directory on the destination filesystem; verify the reviewed SHA-256 hashes, set their intended modes, `fsync` both files, and `fsync` the staged directory.
+3. Stage all three Python files in one versioned runtime directory on the destination filesystem; verify the reviewed SHA-256 hashes, set their intended modes, `fsync` every file, and `fsync` the staged directory.
 4. Expose that complete runtime generation with the same atomic rename (or an atomic replacement of one stable generation symlink). Do not copy either watcher over its live path independently. `fsync` the parent directory after the rename.
 5. If a queue-v2 dry run was already created from a pre-v2 state, run `scripts/reconcile_lottereal_legacy_queue.py --state <live-state> --legacy-snapshot <protected-pre-v2-snapshot>` while the cron remains stopped and the queue lock is held by the tool. This exact snapshot-key migration changes only matching `pending` outcomes to `ambiguous`; require `remaining_retryable_legacy: 0` before proceeding.
 6. Run syntax checks and the focused tests against the promoted generation, then re-enable both cron entries together. Confirm one healthy run and verify only schema/version, counts, timestamps, and file modes—not customer data or URLs.

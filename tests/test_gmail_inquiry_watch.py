@@ -12,6 +12,7 @@ from email.header import Header
 from urllib.parse import parse_qs
 
 import scripts.lottereal_gmail_inquiry_watch as gmail_watch
+import scripts.reconcile_lottereal_legacy_queue as legacy_reconcile
 from scripts.lottereal_gmail_inquiry_watch import (
     ZIGBANG_SUBJECT,
     authentication_passes,
@@ -1119,6 +1120,29 @@ class GmailInquiryWatchTest(unittest.TestCase):
             self.assertEqual(state['pending'][ordinary_key]['status'], 'pending')
             selected = gmail_watch.select_pending(state, now=now)
             self.assertEqual([item['key'] for item in selected], [ordinary_key])
+
+    def test_legacy_snapshot_reader_fails_closed_without_mutating_input(self):
+        key = 'a2' * 32
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            missing = root / 'missing.json'
+            with self.assertRaises(FileNotFoundError):
+                legacy_reconcile.load_legacy_snapshot_strict(missing)
+
+            corrupt = root / 'corrupt.json'
+            corrupt.write_text('{not json', encoding='utf-8')
+            before = corrupt.read_bytes()
+            with self.assertRaises(ValueError):
+                legacy_reconcile.load_legacy_snapshot_strict(corrupt)
+            self.assertEqual(corrupt.read_bytes(), before)
+            self.assertEqual([path.name for path in root.iterdir()], ['corrupt.json'])
+
+            valid = root / 'legacy.json'
+            valid.write_text(json.dumps({
+                'initialized': True, 'seen_keys': [], 'fallback_keys': [key],
+                'parse_failures': {}, 'dead_keys': [],
+            }), encoding='utf-8')
+            self.assertEqual(legacy_reconcile.load_legacy_snapshot_strict(valid), {key})
 
     def test_retry_metadata_uses_bounded_exponential_backoff(self):
         key = 'a3' * 32
