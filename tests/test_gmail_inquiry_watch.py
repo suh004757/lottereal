@@ -1403,6 +1403,8 @@ class GmailInquiryWatchTest(unittest.TestCase):
         for required in (
             'scripts/lottereal_gmail_inquiry_watch.py',
             'scripts/lottereal_inquiry_anomaly_watch.py',
+            'scripts/reconcile_lottereal_legacy_queue.py',
+            'replacing all three Python files',
             'same atomic rename',
             'must not run against queue_version: 2',
             'restore the pre-promotion state snapshot',
