@@ -110,8 +110,7 @@ class InternationalGuideBrowserE2ETest(unittest.TestCase):
             self.assertEqual(tracking_requests, [])
             self.assertTrue(page.locator('[data-analytics-notice]').is_visible())
 
-            with page.expect_navigation(wait_until='domcontentloaded'):
-                page.locator('[data-notice-allow]').click()
+            page.locator('[data-notice-allow]').click()
             page.locator('[data-open-rental-safety]').first.wait_for()
             self.assertTrue(any('googletagmanager.com' in url for url in tracking_requests))
             page.wait_for_timeout(1500)

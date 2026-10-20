@@ -347,6 +347,7 @@ function attachMobileAction(openPanel) {
 
   const inquiryLink = actionbar.querySelector('a[href*="contact.html#inquiry-options"]');
   if (inquiryLink) {
+    if (inquiryLink.hasAttribute('data-listing-chat-open')) return;
     inquiryLink.setAttribute('aria-haspopup', 'dialog');
     inquiryLink.addEventListener('click', (event) => {
       event.preventDefault();

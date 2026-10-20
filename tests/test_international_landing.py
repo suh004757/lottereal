@@ -1,4 +1,6 @@
 from pathlib import Path
+import json
+import re
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -192,6 +194,21 @@ class InternationalLandingTests(unittest.TestCase):
         self.assertIn("startsWith('ja')", source)
         self.assertIn('JP.html#privacy', source)
         self.assertIn('アクセス解析', source)
+
+    def test_international_agent_schema_uses_the_shared_site_identity(self):
+        for filename in ('EN.html', 'JP.html'):
+            html = (PUBLIC / filename).read_text(encoding='utf-8')
+            match = re.search(
+                r'<script type="application/ld\+json">\s*(\{.*?\})\s*</script>',
+                html,
+                re.DOTALL,
+            )
+            if match is None:
+                self.fail(f'{filename}: missing RealEstateAgent JSON-LD')
+            schema = json.loads(match.group(1))
+            self.assertEqual(schema['@type'], 'RealEstateAgent', filename)
+            self.assertEqual(schema['@id'], 'https://lottes.co.kr/#agent', filename)
+            self.assertEqual(schema['url'], 'https://lottes.co.kr/', filename)
 
 
 if __name__ == '__main__':

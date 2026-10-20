@@ -130,6 +130,37 @@ class ListingUiTest(unittest.TestCase):
         self.assertNotIn('repeat(4, 1fr)', widget_block)
         self.assertIn('grid-auto-columns: minmax(0, 1fr);', widget_block)
 
+    def test_mobile_actionbar_respects_safe_area_and_has_visible_keyboard_focus(self):
+        css = (PUBLIC / 'style.css').read_text(encoding='utf-8')
+        media_start = css.index('@media (max-width: 720px)')
+        media_end = css.index('/* Search-intent conversion panel */', media_start)
+        mobile = css[media_start:media_end]
+        self.assertIn('bottom: calc(12px + env(safe-area-inset-bottom, 0px));', mobile)
+        self.assertIn('left: max(12px, env(safe-area-inset-left, 0px));', mobile)
+        self.assertIn('right: max(12px, env(safe-area-inset-right, 0px));', mobile)
+        self.assertIn('padding-bottom: calc(86px + env(safe-area-inset-bottom, 0px));', mobile)
+        self.assertIn('.lr-mobile-actionbar a:focus-visible', mobile)
+        self.assertIn('outline: 3px solid', mobile)
+
+    def test_compact_mobile_report_metadata_stays_at_least_twelve_pixels(self):
+        css = (PUBLIC / 'css' / 'insights.css').read_text(encoding='utf-8')
+        self.assertIn('.lr-report-archive__item .lr-card__meta,', css)
+        self.assertIn('font-size: 12px;', css)
+        mobile = (PUBLIC / 'css' / 'mobile.css').read_text(encoding='utf-8')
+        updated_start = mobile.index('.lr-updated {')
+        updated_end = mobile.index('}', updated_start)
+        updated = mobile[updated_start:updated_end]
+        self.assertIn('font-size: 12px;', updated)
+        self.assertNotIn('font-size: 11px;', updated)
+
+    def test_listing_detail_mobile_inquiry_uses_the_listing_context_handler(self):
+        html = (PUBLIC / 'listing-detail.html').read_text(encoding='utf-8')
+        mobile = html.split('<div class="lr-mobile-actionbar"', 1)[1]
+        inquiry_link = mobile.split('문의하기</strong></a>', 1)[0]
+        self.assertIn('data-listing-chat-open', inquiry_link)
+        widget = (PUBLIC / 'js' / 'knowledgeWidget.js').read_text(encoding='utf-8')
+        self.assertIn("if (inquiryLink.hasAttribute('data-listing-chat-open')) return;", widget)
+
 
 if __name__ == '__main__':
     unittest.main()

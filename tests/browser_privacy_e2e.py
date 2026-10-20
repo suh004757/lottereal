@@ -50,8 +50,7 @@ try:
         assert not requests, requests
         assert page.locator('[data-analytics-notice]').is_visible()
         out['before_choice'] = {'tracking_requests': 0, 'notice_visible': True}
-        with page.expect_navigation(wait_until='domcontentloaded'):
-            page.locator('[data-notice-allow]').click()
+        page.locator('[data-notice-allow]').click()
         page.wait_for_timeout(2500)
         config = page.evaluate("""() => (window.dataLayer || []).map(x => Array.from(x)).find(x => x[0] === 'config')""")
         assert config and config[2]['page_location'] == BASE + '/index.html', config
@@ -66,8 +65,7 @@ try:
         assert not requests, requests
         assert page.locator('[data-analytics-disable]').is_enabled()
         assert '사용하고 있습니다' in page.locator('[data-analytics-status]').inner_text()
-        with page.expect_navigation(wait_until='domcontentloaded'):
-            page.locator('[data-analytics-disable]').click()
+        page.locator('[data-analytics-disable]').click()
         assert page.evaluate("localStorage.getItem('lr_analytics_choice')") == 'required-only'
         assert page.locator('[data-analytics-enable]').is_enabled()
         requests.clear()

@@ -65,8 +65,14 @@
     if (!enabled) {
       window[`ga-disable-${GA_ID}`] = true;
       deleteAnalyticsCookies();
+    } else if (saved) {
+      window[`ga-disable-${GA_ID}`] = false;
+      initializeAnalytics();
     }
-    if (saved) window.location.reload();
+    if (saved) {
+      document.querySelector('[data-analytics-notice]')?.remove();
+      updateControls();
+    }
   }
 
   window.LotteRealPrivacy = Object.freeze({
@@ -111,11 +117,11 @@
     }
     document.querySelectorAll('[data-analytics-disable]').forEach((button) => {
       button.disabled = choice === ANALYTICS_REQUIRED_ONLY || doNotTrack();
-      button.addEventListener('click', () => setAnalyticsEnabled(false));
+      button.onclick = () => setAnalyticsEnabled(false);
     });
     document.querySelectorAll('[data-analytics-enable]').forEach((button) => {
       button.disabled = enabled || doNotTrack();
-      button.addEventListener('click', () => setAnalyticsEnabled(true));
+      button.onclick = () => setAnalyticsEnabled(true);
     });
   }
 
@@ -136,7 +142,7 @@
         : '<p><strong>사이트 개선용 방문 분석을 허용할까요?</strong> 검색 문장·전화번호·문의 내용은 보내지 않습니다. <a href="/privacy.html#analytics-control">방문 분석 자세히 보기</a></p><div><button type="button" data-notice-required>필수 기능만</button><button type="button" data-notice-allow>방문 분석 허용</button></div>';
     const style = document.createElement('style');
     style.id = 'lr-analytics-notice-style';
-    style.textContent = '.lr-analytics-notice{position:fixed;z-index:10000;left:max(12px,env(safe-area-inset-left));right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));max-width:720px;margin:auto;padding:12px 14px;background:#fff;color:#1f2937;border:1px solid #cbd5e1;border-radius:12px;box-shadow:0 8px 28px rgba(15,23,42,.16);font:14px/1.5 system-ui,sans-serif}.lr-analytics-notice p{margin:0 0 8px}.lr-analytics-notice p a{color:#334155;text-underline-offset:3px;white-space:nowrap}.lr-analytics-notice div{display:flex;align-items:center;flex-wrap:wrap;gap:8px}.lr-analytics-notice button{min-height:44px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;padding:9px 13px;border-radius:8px;font:inherit}.lr-analytics-notice button{border:1px solid #475569;background:#fff;color:#1f2937;cursor:pointer}.lr-analytics-notice [data-notice-allow]{background:#1f2937;color:#fff}.lr-analytics-notice button:focus-visible,.lr-analytics-notice p a:focus-visible{outline:3px solid #8a5b28;outline-offset:2px}@media(max-width:768px){body:has(.lr-mobile-actionbar) .lr-analytics-notice{bottom:calc(96px + env(safe-area-inset-bottom))}body.intl-page:not(:has(.intl-mobile-actionbar.is-visible)) .lr-analytics-notice{bottom:max(12px,env(safe-area-inset-bottom))}}@media(max-width:480px){.lr-analytics-notice div{display:grid;grid-template-columns:1fr 1fr}}';
+    style.textContent = '.lr-analytics-notice{position:fixed;z-index:10000;left:max(12px,env(safe-area-inset-left));right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));max-width:720px;margin:auto;padding:12px 14px;background:#fff;color:#1f2937;border:1px solid #cbd5e1;border-radius:12px;box-shadow:0 8px 28px rgba(15,23,42,.16);font:14px/1.5 system-ui,sans-serif}.lr-analytics-notice p{margin:0 0 8px}.lr-analytics-notice p a{color:#334155;text-underline-offset:3px;white-space:nowrap}.lr-analytics-notice div{display:flex;align-items:center;flex-wrap:wrap;gap:8px}.lr-analytics-notice button{min-height:44px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;padding:9px 13px;border-radius:8px;font:inherit}.lr-analytics-notice button{border:1px solid #475569;background:#fff;color:#1f2937;cursor:pointer}.lr-analytics-notice [data-notice-allow]{background:#1f2937;color:#fff}.lr-analytics-notice button:focus-visible,.lr-analytics-notice p a:focus-visible{outline:3px solid #8a5b28;outline-offset:2px}body.knowledge-widget-open .lr-analytics-notice{display:none}@media(max-width:768px){body:has(.lr-mobile-actionbar) .lr-analytics-notice{bottom:calc(96px + env(safe-area-inset-bottom))}body.intl-page:not(:has(.intl-mobile-actionbar.is-visible)) .lr-analytics-notice{bottom:max(12px,env(safe-area-inset-bottom))}}@media(max-width:480px){.lr-analytics-notice div{display:grid;grid-template-columns:1fr 1fr}}';
     if (!document.getElementById(style.id)) document.head.appendChild(style);
     document.body.appendChild(notice);
     notice.querySelector('[data-notice-required]').addEventListener('click', () => setAnalyticsEnabled(false));
@@ -150,46 +156,55 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', onReady, { once: true });
   else onReady();
 
-  if (!analyticsEnabled()) {
-    window[`ga-disable-${GA_ID}`] = true;
-    deleteAnalyticsCookies();
-    return;
+  let analyticsStarted = false;
+
+  function initializeAnalytics() {
+    if (analyticsStarted || !analyticsEnabled()) return;
+    analyticsStarted = true;
+    window[`ga-disable-${GA_ID}`] = false;
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+    window.gtag('js', new Date());
+    window.gtag('config', GA_ID, {
+      page_path: window.location.pathname,
+      page_location: window.location.origin + window.location.pathname,
+      page_referrer: sanitizedReferrer(),
+      anonymize_ip: true,
+      allow_google_signals: false,
+      allow_ad_personalization_signals: false,
+      cookie_expires: 7776000,
+      cookie_update: false
+    });
+
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(GA_ID)}`;
+    document.head.appendChild(script);
+
+    window.wcs_add = window.wcs_add || {};
+    window.wcs_add.wa = NAVER_WA;
+    const naverScript = document.createElement('script');
+    naverScript.async = true;
+    naverScript.src = 'https://wcs.pstatic.net/wcslog.js';
+    naverScript.addEventListener('load', sendNaverPageview, { once: true });
+    document.head.appendChild(naverScript);
   }
-
-  window.dataLayer = window.dataLayer || [];
-  window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
-  window.gtag('js', new Date());
-  window.gtag('config', GA_ID, {
-    page_path: window.location.pathname,
-    page_location: window.location.origin + window.location.pathname,
-    page_referrer: sanitizedReferrer(),
-    anonymize_ip: true,
-    allow_google_signals: false,
-    allow_ad_personalization_signals: false,
-    cookie_expires: 7776000,
-    cookie_update: false
-  });
-
-  const script = document.createElement('script');
-  script.async = true;
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(GA_ID)}`;
-  document.head.appendChild(script);
 
   // Naver Analytics shows Naver search inflow, which GA4 does not. Same consent gate.
   // wcslog.js reads location.href and document.referrer itself and has no override, so
-  // the query strings are hidden only while wcs_do() builds and sends its beacon
+  // the query and fragment are hidden while wcs_do() builds and sends its beacon
   // (synchronously), matching what GA4 receives.
   function sendNaverPageview() {
     if (!window.wcs) return;
     const fullUrl = window.location.href;
-    const cleanUrl = window.location.pathname + window.location.hash;
+    const cleanUrl = window.location.pathname;
     let ownReferrer = false;
     try {
       ownReferrer = new URL(document.referrer).origin === window.location.origin;
     } catch (_) {
       // No or unparsable referrer: nothing to hide.
     }
-    if (window.location.search) window.history.replaceState(window.history.state, '', cleanUrl);
+    if (window.location.search || window.location.hash) window.history.replaceState(window.history.state, '', cleanUrl);
     const cleanReferrer = sanitizedReferrer();
     if (ownReferrer) Object.defineProperty(document, 'referrer', { configurable: true, get: () => cleanReferrer });
     try {
@@ -200,11 +215,9 @@
     }
   }
 
-  window.wcs_add = window.wcs_add || {};
-  window.wcs_add.wa = NAVER_WA;
-  const naverScript = document.createElement('script');
-  naverScript.async = true;
-  naverScript.src = 'https://wcs.pstatic.net/wcslog.js';
-  naverScript.addEventListener('load', sendNaverPageview, { once: true });
-  document.head.appendChild(naverScript);
+  if (analyticsEnabled()) initializeAnalytics();
+  else {
+    window[`ga-disable-${GA_ID}`] = true;
+    deleteAnalyticsCookies();
+  }
 })();

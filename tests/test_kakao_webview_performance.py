@@ -25,6 +25,13 @@ class KakaoWebviewPerformanceTest(unittest.TestCase):
         self.assertIn("animation-timeline: auto !important", css)
         self.assertIn(".lr-kakao-webview .lr-mobile-actionbar", css)
 
+    def test_async_korean_font_uses_its_measured_x_height_for_fallback_scaling(self):
+        css = (ROOT / "public" / "style.css").read_text(encoding="utf-8")
+        async_loader = (ROOT / "public" / "js" / "asyncStyles.js").read_text(encoding="utf-8")
+        self.assertIn("font-size-adjust: 0.543", css)
+        self.assertIn("Noto Sans KR OS/2 x-height: 543 / 1000 UPM", css)
+        self.assertIn("media=\"print\"", async_loader)
+
 
 if __name__ == "__main__":
     unittest.main()

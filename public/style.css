@@ -2345,6 +2345,8 @@ img {
 
 body {
   font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* Noto Sans KR OS/2 x-height: 543 / 1000 UPM; scale fallback text before async swap. */
+  font-size-adjust: 0.543;
   background-color: #FAFAF9;
   color: var(--lr-text);
   line-height: 1.7;
@@ -4375,9 +4377,9 @@ h1 {
 
   .lr-mobile-actionbar {
     position: fixed;
-    left: 12px;
-    right: 12px;
-    bottom: 12px;
+    left: max(12px, env(safe-area-inset-left, 0px));
+    right: max(12px, env(safe-area-inset-right, 0px));
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
     z-index: 1200;
     display: grid;
     grid-template-columns: none;
@@ -4404,13 +4406,18 @@ h1 {
     background: rgba(255, 255, 255, 0.08);
   }
 
+  .lr-mobile-actionbar a:focus-visible {
+    outline: 3px solid var(--lr-yellow-text, #FFD43B);
+    outline-offset: 2px;
+  }
+
   .lr-mobile-actionbar a:first-child {
     background: var(--lr-yellow);
     color: var(--lr-ink-on-yellow);
   }
 
   body {
-    padding-bottom: 86px;
+    padding-bottom: calc(86px + env(safe-area-inset-bottom, 0px));
   }
 }
 
