@@ -984,6 +984,28 @@ def _save_pending(state_path: Path, state: dict, pending: dict[str, dict]) -> No
     write_state(state_path, {**state, 'queue_version': 2, 'pending': pending})
 
 
+def reconcile_legacy_pending(state_path: Path, legacy_keys: set[str]) -> int:
+    """Quarantine exact pre-v2 outcomes using keys from a protected snapshot."""
+    if not all(isinstance(key, str) and re.fullmatch(r'[0-9a-f]{64}', key) for key in legacy_keys):
+        raise ValueError('invalid legacy fallback key')
+    state = load_state(state_path)
+    if state.get('queue_version') != 2:
+        raise UnsupportedQueueVersion('queue v2 is required for reconciliation')
+    pending = dict(state.get('pending', {}))
+    changed = 0
+    for key in legacy_keys:
+        current = pending.get(key)
+        if not isinstance(current, dict) or current.get('status') != 'pending':
+            continue
+        item = dict(current)
+        item.update({'status': 'ambiguous', 'last_error': 'kakao_ambiguous'})
+        pending[key] = item
+        changed += 1
+    if changed:
+        _save_pending(state_path, state, pending)
+    return changed
+
+
 def _queue_safe_detail_lines(lines: list[str]) -> list[str]:
     return [
         line for line in lines

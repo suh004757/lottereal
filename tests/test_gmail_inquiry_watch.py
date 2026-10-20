@@ -1086,6 +1086,40 @@ class GmailInquiryWatchTest(unittest.TestCase):
             self.assertEqual(item['last_error'], 'kakao_ambiguous')
             self.assertEqual(gmail_watch.select_pending(state, now=now), [])
 
+    def test_promoted_v2_legacy_keys_are_explicitly_quarantined_from_retry(self):
+        legacy_key = 'a2' * 32
+        ordinary_key = 'b3' * 32
+        now = datetime(2026, 8, 30, 12, 0, tzinfo=timezone.utc)
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory) / 'state.json'
+            def pending_item(key):
+                return {
+                    'key': key, 'platform': '직방', 'uid': '302',
+                    'received_at': '2026-08-29T03:34:56Z',
+                    'title': ZIGBANG_SUBJECT, 'detail_lines': [],
+                    'status': 'pending', 'discovered_at': '2026-08-30T11:00:00Z',
+                    'first_failed_at': '2026-08-30T11:00:00Z',
+                    'attempt_count': 1, 'next_retry_at': '2026-08-30T11:01:00Z',
+                    'last_error': 'kakao_transport',
+                }
+            state_path.write_text(json.dumps({
+                'initialized': True, 'seen_keys': [],
+                'fallback_keys': [legacy_key, ordinary_key],
+                'parse_failures': {}, 'dead_keys': [], 'queue_version': 2,
+                'pending': {
+                    legacy_key: pending_item(legacy_key),
+                    ordinary_key: pending_item(ordinary_key),
+                },
+            }), encoding='utf-8')
+            changed = gmail_watch.reconcile_legacy_pending(state_path, {legacy_key})
+            self.assertEqual(changed, 1)
+            state = gmail_watch.load_state(state_path)
+            self.assertEqual(state['pending'][legacy_key]['status'], 'ambiguous')
+            self.assertEqual(state['pending'][legacy_key]['last_error'], 'kakao_ambiguous')
+            self.assertEqual(state['pending'][ordinary_key]['status'], 'pending')
+            selected = gmail_watch.select_pending(state, now=now)
+            self.assertEqual([item['key'] for item in selected], [ordinary_key])
+
     def test_retry_metadata_uses_bounded_exponential_backoff(self):
         key = 'a3' * 32
         now = datetime(2026, 8, 30, 12, 0, tzinfo=timezone.utc)

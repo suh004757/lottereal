@@ -46,7 +46,8 @@ Promotion must follow these steps without reading or printing private state cont
 2. Record only file hashes/modes, then make a mode-`0600` pre-promotion snapshot of the Gmail queue, heartbeat, and anomaly state on the same protected filesystem.
 3. Stage both Python files in one versioned runtime directory on the destination filesystem; verify the reviewed SHA-256 hashes, set their intended modes, `fsync` both files, and `fsync` the staged directory.
 4. Expose that complete runtime generation with the same atomic rename (or an atomic replacement of one stable generation symlink). Do not copy either watcher over its live path independently. `fsync` the parent directory after the rename.
-5. Run syntax checks and the focused tests against the promoted generation, then re-enable both cron entries together. Confirm one healthy run and verify only schema/version, counts, timestamps, and file modes—not customer data or URLs.
+5. If a queue-v2 dry run was already created from a pre-v2 state, run `scripts/reconcile_lottereal_legacy_queue.py --state <live-state> --legacy-snapshot <protected-pre-v2-snapshot>` while the cron remains stopped and the queue lock is held by the tool. This exact snapshot-key migration changes only matching `pending` outcomes to `ambiguous`; require `remaining_retryable_legacy: 0` before proceeding.
+6. Run syntax checks and the focused tests against the promoted generation, then re-enable both cron entries together. Confirm one healthy run and verify only schema/version, counts, timestamps, and file modes—not customer data or URLs.
 
 If the host layout cannot publish a generation directory, keep both cron entries stopped while replacing both files from a fully staged set, `fsync` each file and parent directory, verify both hashes, and start neither cron until both files match the reviewed generation. The stopped interval is the transaction boundary.
 
