@@ -7,11 +7,11 @@ REPORT = ROOT / "public" / "reports" / "2026-03-08-korea-real-estate-policy-repo
 
 
 class PolicyReportSnippetTests(unittest.TestCase):
-    def test_policy_report_title_matches_observed_search_intent_without_stale_month(self):
+    def test_policy_report_title_targets_broad_policy_overview_without_stale_month(self):
         html = REPORT.read_text(encoding="utf-8")
 
         self.assertIn(
-            "<title>2026년 이재명 정부 부동산 정책 정리: 대출 규제·공급·청년 주거지원 | 롯데부동산</title>",
+            "<title>2026년 주택정책 큰 흐름: 대출 규제와 공급 계획 | 롯데부동산</title>",
             html,
         )
         self.assertNotIn("<title>2026년 3월 이재명 정부 부동산 정책 정리", html)

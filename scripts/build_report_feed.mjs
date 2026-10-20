@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // RSS 2.0 feed of the published static reports, for Naver Search Advisor / Google feed
 // submission. Built from public/reports/*.html (what is actually live), not from the CMS,
-// and dated from the reports themselves so an unchanged set produces a byte-identical file.
+// and ordered/dated from authoritative Article dateModified values so material revisions
+// re-enter the feed while stable canonical GUIDs keep the item identity unchanged.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -38,20 +39,26 @@ export function readReportEntry(html, filename) {
   const description = html.match(/<meta name="description" content="([^"]*)"/)?.[1];
   const link = html.match(/<link rel="canonical" href="([^"]+)"/)?.[1];
   let published = '';
+  let modified = '';
   for (const block of html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {
     try {
       const data = JSON.parse(block[1]);
-      if (data?.['@type'] === 'Article' && data.datePublished) published = String(data.datePublished).slice(0, 10);
+      if (data?.['@type'] === 'Article' && data.datePublished) {
+        published = String(data.datePublished).slice(0, 10);
+        modified = String(data.dateModified || data.datePublished).slice(0, 10);
+      }
     } catch {
       // A malformed block only costs this field; the page is still listed if the rest is there.
     }
   }
   if (!title || !link || !/^\d{4}-\d{2}-\d{2}$/.test(published)) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(modified)) modified = published;
   return {
     title: htmlText(title),
     description: htmlText(description || ''),
     link: htmlText(link),
     published,
+    modified,
     slug: path.basename(filename, '.html')
   };
 }
@@ -59,16 +66,17 @@ export function readReportEntry(html, filename) {
 export function renderFeed(entries, siteUrl = 'https://lottes.co.kr') {
   const base = String(siteUrl).replace(/\/$/, '');
   const items = [...entries]
-    .sort((a, b) => b.published.localeCompare(a.published) || a.slug.localeCompare(b.slug))
+    .sort((a, b) => (b.modified || b.published).localeCompare(a.modified || a.published)
+      || b.published.localeCompare(a.published) || a.slug.localeCompare(b.slug))
     .slice(0, MAX_ITEMS);
-  const lastBuild = items[0] ? rfc822(items[0].published) : '';
+  const lastBuild = items[0] ? rfc822(items[0].modified || items[0].published) : '';
   const body = items.map((item) => [
     '    <item>',
     `      <title>${xml(item.title)}</title>`,
     `      <link>${xml(item.link)}</link>`,
     `      <guid isPermaLink="true">${xml(item.link)}</guid>`,
     `      <description>${xml(item.description)}</description>`,
-    `      <pubDate>${rfc822(item.published)}</pubDate>`,
+    `      <pubDate>${rfc822(item.modified || item.published)}</pubDate>`,
     '    </item>'
   ].join('\n')).join('\n');
   return [

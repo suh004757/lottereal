@@ -7,8 +7,14 @@ import test from 'node:test';
 import { buildReportFeed, readReportEntry, renderFeed } from '../scripts/build_report_feed.mjs';
 import { searchTitle } from '../scripts/export_static_reports.mjs';
 
-function page({ title, slug, published, description = '요약 & 설명' }) {
-  const schema = { '@context': 'https://schema.org', '@type': 'Article', headline: title, datePublished: published };
+function page({ title, slug, published, modified = published, description = '요약 & 설명' }) {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: title,
+    datePublished: published,
+    dateModified: modified
+  };
   return [
     `<title>${title} | 롯데부동산</title>`,
     `<meta name="description" content="${description}">`,
@@ -31,6 +37,39 @@ test('feed lists newest reports first with escaped text and RFC 822 dates', () =
   assert.match(xml, /<title>주차 &amp; 관리비<\/title>/);
   assert.match(xml, /<pubDate>Sat, 17 Oct 2026 00:00:00 \+0000<\/pubDate>/);
   assert.match(xml, /<lastBuildDate>Sat, 17 Oct 2026 00:00:00 \+0000<\/lastBuildDate>/);
+});
+
+test('material revisions use dateModified for inclusion, order, item date, and lastBuildDate', () => {
+  const routine = Array.from({ length: 40 }, (_, index) => readReportEntry(page({
+    title: `새 글 ${String(index).padStart(2, '0')}`,
+    slug: `new-${String(index).padStart(2, '0')}`,
+    published: '2026-10-18'
+  }), `new-${String(index).padStart(2, '0')}.html`));
+  const revised = readReportEntry(page({
+    title: '수정된 옛 보고서',
+    slug: 'old-revised',
+    published: '2026-03-08',
+    modified: '2026-10-19'
+  }), 'old-revised.html');
+
+  const xml = renderFeed([...routine.reverse(), revised]);
+
+  assert.equal((xml.match(/<item>/g) || []).length, 40);
+  assert.ok(xml.indexOf('old-revised') < xml.indexOf('new-00'));
+  assert.match(xml, /<lastBuildDate>Mon, 19 Oct 2026 00:00:00 \+0000<\/lastBuildDate>/);
+  assert.match(xml, /<guid isPermaLink="true">https:\/\/lottes\.co\.kr\/reports\/old-revised\.html<\/guid>[\s\S]*?<pubDate>Mon, 19 Oct 2026 00:00:00 \+0000<\/pubDate>/);
+  assert.ok(!xml.includes('/reports/new-39.html'));
+});
+
+test('neighbor-link-only HTML changes do not become feed revisions', () => {
+  const original = page({ title: '기존 글', slug: 'stable', published: '2026-09-01', modified: '2026-10-12' });
+  const withDifferentNeighbors = `${original}\n<section class="lr-related-reports">새 이웃 링크</section>`;
+  const before = readReportEntry(original, 'stable.html');
+  const after = readReportEntry(withDifferentNeighbors, 'stable.html');
+
+  assert.deepEqual(after, before);
+  assert.equal(renderFeed([after]), renderFeed([before]));
+  assert.match(renderFeed([after]), /<pubDate>Mon, 12 Oct 2026 00:00:00 \+0000<\/pubDate>/);
 });
 
 test('pages without a canonical or publication date are left out', () => {
