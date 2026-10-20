@@ -345,9 +345,9 @@ class GmailInquiryWatchTest(unittest.TestCase):
             self.assertEqual(state['pending'][key]['status'], 'ambiguous')
             self.assertEqual(state['pending'][key]['last_error'], 'kakao_ambiguous')
 
-    def test_retried_fallbacks_do_not_starve_newer_inquiries(self):
-        # 2026-09-30..10-19: ten inquiries whose Kakao alert kept failing filled every
-        # 10-item batch, so 56 newer inquiries were never published or announced.
+    def test_legacy_fallbacks_require_reconciliation_without_starving_new_inquiries(self):
+        # A pre-v2 fallback cannot prove whether Kakao accepted the old dispatch.
+        # Preserve it for reconciliation without retrying; fresh work still runs.
         base = {
             'platform': '직방',
             'received_at': '2026-08-29T12:34:56+09:00',
@@ -390,12 +390,14 @@ class GmailInquiryWatchTest(unittest.TestCase):
                 self.assertEqual(gmail_watch.main(), 0)
 
             attempted = [call.args[2] for call in detail.call_args_list]
-            self.assertEqual(attempted[:2], ['401', '402'])
-            self.assertEqual(len(attempted), 10)
+            self.assertEqual(attempted, ['401', '402'])
             published = [call.args[1]['source_message_hash'] for call in publish.call_args_list]
             self.assertIn('a1' * 32, published)
             self.assertIn('b2' * 32, published)
-            self.assertEqual(output.getvalue(), '⚠️ 직방 문의 처리 지연 12건. Gmail에서 확인하세요.\n')
+            self.assertEqual(
+                output.getvalue(),
+                '⚠️ 카카오 전송 결과 수동 확인 12건. Gmail과 카카오 발송 내역을 대조하세요.\n',
+            )
             state = json.loads(state_path.read_text(encoding='utf-8'))
             self.assertIn('a1' * 32, state['fallback_keys'])
             self.assertIn('b2' * 32, state['fallback_keys'])
@@ -1062,6 +1064,27 @@ class GmailInquiryWatchTest(unittest.TestCase):
         self.assertEqual(len(selected), 10)
         self.assertEqual(sum(item['attempt_count'] == 0 for item in selected), 5)
         self.assertEqual(sum(item['attempt_count'] > 0 for item in selected), 5)
+
+    def test_legacy_fallback_is_manual_reconciliation_not_automatic_retry(self):
+        key = 'a2' * 32
+        now = datetime(2026, 8, 30, 12, 0, tzinfo=timezone.utc)
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory) / 'state.json'
+            state_path.write_text(json.dumps({
+                'initialized': True,
+                'seen_keys': [],
+                'fallback_keys': [key],
+                'parse_failures': {},
+                'dead_keys': [],
+            }), encoding='utf-8')
+            state = gmail_watch.enqueue_pending(state_path, [{
+                'key': key, 'platform': '직방', 'uid': '302',
+                'received_at': '2026-08-29T03:34:56Z',
+            }], now=now)
+            item = state['pending'][key]
+            self.assertEqual(item['status'], 'ambiguous')
+            self.assertEqual(item['last_error'], 'kakao_ambiguous')
+            self.assertEqual(gmail_watch.select_pending(state, now=now), [])
 
     def test_retry_metadata_uses_bounded_exponential_backoff(self):
         key = 'a3' * 32

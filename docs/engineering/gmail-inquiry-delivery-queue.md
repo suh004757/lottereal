@@ -16,7 +16,7 @@ Contact-access tokens and full inquiry URLs are never durable queue fields. The 
 
 The queue is not reconstructed from Gmail, so retryable work remains available after it leaves the Gmail `latest 100` / `30 day` discovery window. New and due-retry work each reserve five slots in the ten-item batch; unused slots are borrowed. Retry delay starts at 60 seconds, doubles per attempt, and is capped at six hours.
 
-`dispatching` is persisted before calling Kakao. `accepted` is persisted immediately after Kakao returns `result_code: 0`, before token-file maintenance. On restart, `accepted` work is finalized without another Kakao request. Once dispatch begins, an exception has an unknown provider outcome: the item becomes `ambiguous` with `last_error: kakao_ambiguous`, is not automatically retried, and requires manual reconciliation. This avoids converting a possible Kakao acceptance into an unsafe duplicate send.
+`dispatching` is persisted before calling Kakao. `accepted` is persisted immediately after Kakao returns `result_code: 0`, before token-file maintenance. On restart, `accepted` work is finalized without another Kakao request. Once dispatch begins, an exception has an unknown provider outcome: the item becomes `ambiguous` with `last_error: kakao_ambiguous`, is not automatically retried, and requires manual reconciliation. This avoids converting a possible Kakao acceptance into an unsafe duplicate send. Pre-v2 `fallback_keys` are also migrated as `ambiguous`, because the legacy state cannot prove whether Kakao accepted the prior dispatch; they must never be replayed automatically during queue-v2 promotion.
 
 ## Alerts under `no_agent` cron
 

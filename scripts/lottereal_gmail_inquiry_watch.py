@@ -997,6 +997,7 @@ def enqueue_pending(state_path: Path, items: list[dict], *, now: datetime | None
     state = load_state(state_path)
     pending = dict(state.get('pending', {}))
     excluded = set(state['seen_keys']) | set(state['dead_keys'])
+    legacy_state = state.get('queue_version') != 2
     changed = 'pending' not in state
     for item in items:
         key = item.get('key')
@@ -1011,6 +1012,7 @@ def enqueue_pending(state_path: Path, items: list[dict], *, now: datetime | None
         if _parse_timestamp(received_at) is None:
             received_at = _timestamp(instant)
         is_retry = key in set(state['fallback_keys'])
+        requires_reconciliation = is_retry and legacy_state
         pending[key] = {
             'key': key,
             'platform': '직방',
@@ -1018,12 +1020,16 @@ def enqueue_pending(state_path: Path, items: list[dict], *, now: datetime | None
             'title': ZIGBANG_SUBJECT,
             'uid': str(item.get('uid') or ''),
             'detail_lines': [],
-            'status': 'pending',
+            'status': 'ambiguous' if requires_reconciliation else 'pending',
             'discovered_at': _timestamp(instant),
             'first_failed_at': _timestamp(instant) if is_retry else None,
             'attempt_count': 1 if is_retry else 0,
             'next_retry_at': _timestamp(instant),
-            'last_error': 'kakao_transport' if is_retry else None,
+            'last_error': (
+                'kakao_ambiguous' if requires_reconciliation
+                else 'kakao_transport' if is_retry
+                else None
+            ),
         }
         changed = True
     if changed:
