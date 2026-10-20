@@ -4,9 +4,12 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+import fcntl
+import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import sys
 from urllib.parse import urlparse
 from urllib.request import HTTPRedirectHandler, Request, build_opener
@@ -98,25 +101,43 @@ def run_once(
     *,
     now: datetime | None = None,
     supabase_ok: bool | None = None,
+    ack_id: str | None = None,
 ) -> str:
     instant = now or datetime.now(timezone.utc)
     if instant.tzinfo is None:
         raise ValueError('current time must be timezone-aware')
+    if state_path.exists():
+        try:
+            raw_state = json.loads(state_path.read_text(encoding='utf-8'))
+            handoff = raw_state.get('handoff') if isinstance(raw_state, dict) else None
+            if handoff is not None:
+                if (
+                    not isinstance(handoff, dict)
+                    or not re.fullmatch(r'[0-9a-f]{64}', str(handoff.get('id') or ''))
+                    or not isinstance(handoff.get('message'), str)
+                    or not isinstance(handoff.get('next_state'), dict)
+                ):
+                    raise ValueError('invalid alert handoff')
+                if ack_id != handoff['id']:
+                    return handoff['message']
+                _write_state(state_path, handoff['next_state'])
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError, TypeError, ValueError):
+            _quarantine(state_path)
     recorded = None
     pending_alerts = 0
-    last_delivered = None
+    oldest_pending = None
     if heartbeat_path.exists():
         try:
             payload = json.loads(heartbeat_path.read_text(encoding='utf-8'))
             raw_pending = payload.get('pending_alerts', 0)
             if isinstance(raw_pending, int) and not isinstance(raw_pending, bool) and raw_pending > 0:
                 pending_alerts = raw_pending
-            raw_delivered = payload.get('last_delivered_at')
-            if isinstance(raw_delivered, str):
+            raw_oldest = payload.get('oldest_pending_at')
+            if isinstance(raw_oldest, str):
                 try:
-                    parsed_delivered = datetime.fromisoformat(raw_delivered.replace('Z', '+00:00'))
-                    if parsed_delivered.tzinfo is not None:
-                        last_delivered = parsed_delivered
+                    parsed_oldest = datetime.fromisoformat(raw_oldest.replace('Z', '+00:00'))
+                    if parsed_oldest.tzinfo is not None:
+                        oldest_pending = parsed_oldest
                 except ValueError:
                     pass
             raw_recorded = payload.get('last_success_at', payload.get('last_attempt_at'))
@@ -133,6 +154,7 @@ def run_once(
     supabase_successes = 0
     supabase_alerted = False
     state_has_supabase = supabase_ok is not None
+    previous_state: dict[str, object] = {}
     if state_path.exists():
         try:
             previous = json.loads(state_path.read_text(encoding='utf-8'))
@@ -168,6 +190,7 @@ def run_once(
                 supabase_failures = previous['supabase_failures']
                 supabase_successes = previous_successes
                 state_has_supabase = True
+            previous_state = dict(previous)
         except (json.JSONDecodeError, UnicodeDecodeError, KeyError, TypeError, ValueError):
             _quarantine(state_path)
             state_has_supabase = supabase_ok is not None
@@ -193,8 +216,8 @@ def run_once(
     # A running watcher is not a working one: Kakao can reject every alert while the
     # heartbeat stays fresh (2026-09-30..10-19, KOE322).
     undelivered = pending_alerts > 0 and (
-        last_delivered is None
-        or instant.astimezone(timezone.utc) - last_delivered.astimezone(timezone.utc)
+        oldest_pending is None
+        or instant.astimezone(timezone.utc) - oldest_pending.astimezone(timezone.utc)
         >= timedelta(hours=6)
     )
     if undelivered and not delivery_alerted:
@@ -204,7 +227,7 @@ def run_once(
             '카카오 재인증이 필요할 수 있습니다. 문의 원본은 Gmail에서 확인하세요.'
         )
         delivery_alerted = True
-    elif not undelivered and delivery_alerted:
+    elif pending_alerts == 0 and delivery_alerted:
         messages.append('✅ LotteReal 카카오 문의 알림 전달 복구')
         delivery_alerted = False
 
@@ -243,8 +266,22 @@ def run_once(
             'supabase_failures': supabase_failures,
             'supabase_successes': supabase_successes,
         })
-    _write_state(state_path, state)
-    return '\n\n'.join(messages)
+    message = '\n\n'.join(messages)
+    if message:
+        handoff_id = hashlib.sha256(
+            (message + json.dumps(state, sort_keys=True)).encode('utf-8')
+        ).hexdigest()
+        _write_state(state_path, {
+            **previous_state,
+            'handoff': {
+                'id': handoff_id,
+                'message': message,
+                'next_state': state,
+            },
+        })
+    else:
+        _write_state(state_path, state)
+    return message
 
 
 def main(*, environ=None, probe=probe_supabase) -> int:
@@ -256,13 +293,22 @@ def main(*, environ=None, probe=probe_supabase) -> int:
     state_path = Path(
         environment.get('LOTTEREAL_INQUIRY_ANOMALY_STATE', DEFAULT_STATE_PATH)
     )
-    message = run_once(
-        heartbeat_path,
-        state_path,
-        supabase_ok=probe(env_path),
-    )
-    if message:
-        print(message)
+    lock_path = state_path.with_suffix(state_path.suffix + '.lock')
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with lock_path.open('a+', encoding='utf-8') as lock_file:
+        os.chmod(lock_path, 0o600)
+        try:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            return 0
+        message = run_once(
+            heartbeat_path,
+            state_path,
+            supabase_ok=probe(env_path),
+            ack_id=environment.get('LOTTEREAL_INQUIRY_ANOMALY_ACK_ID'),
+        )
+        if message:
+            print(message)
     return 0
 
 

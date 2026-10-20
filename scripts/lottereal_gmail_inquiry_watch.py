@@ -33,6 +33,9 @@ SONGPA_LEGAL_DONGS = frozenset({
     '가락동', '거여동', '마천동', '문정동', '방이동', '삼전동', '석촌동',
     '송파동', '신천동', '오금동', '잠실동', '장지동', '풍납동',
 })
+MAX_DELIVERY_BATCH = 10
+RETRY_RESERVE = 5
+MAX_RETRY_DELAY = timedelta(hours=6)
 
 
 def _utc_now() -> datetime:
@@ -338,7 +341,7 @@ def parse_zigbang_detail(html_body: str) -> list[str]:
     return candidates[0] if len(candidates) == 1 else []
 
 
-def build_public_receipt_payload(item: dict) -> dict | None:
+def build_public_receipt_payload(item: dict, *, allow_historical: bool = False) -> dict | None:
     key = item.get('key')
     details = item.get('detail_lines')
     if (
@@ -381,7 +384,7 @@ def build_public_receipt_payload(item: dict) -> dict | None:
         received_utc = received.astimezone(timezone.utc)
         if received_utc > now_utc + timedelta(minutes=5):
             return None
-        if received_utc < now_utc - timedelta(days=30):
+        if received_utc < now_utc - timedelta(days=30) and not allow_historical:
             return None
     except (TypeError, ValueError, OverflowError):
         return None
@@ -622,6 +625,20 @@ def build_alert(items: list[dict]) -> str:
     return f'📨 {platform} 새 고객 문의 {count}건\nGmail에서 문의 내용을 확인하세요.'
 
 
+def _is_safe_detail_line(line: object) -> bool:
+    if not isinstance(line, str) or len(line) > 160:
+        return False
+    return bool(
+        re.fullmatch(r'• 등록번호 [0-9]{5,20}', line)
+        or _normalize_zigbang_location_line(line)
+        or _normalize_zigbang_transaction_line(line)
+        or (
+            line.startswith('• 문의링크 ')
+            and normalize_zigbang_inquiry_link(line.removeprefix('• 문의링크 '))
+        )
+    )
+
+
 def load_state(path: Path) -> dict:
     if not path.exists():
         return {
@@ -660,13 +677,47 @@ def load_state(path: Path) -> dict:
             raise ValueError('invalid parse failure')
         if not all(isinstance(key, str) and re.fullmatch(r'[0-9a-f]{64}', key) for key in dead_keys):
             raise ValueError('invalid dead key')
-        return {
+        pending = payload.get('pending', {})
+        if payload.get('queue_version') == 2:
+            allowed_errors = {None, 'detail_fetch', 'parse_invalid', 'receipt_publish', 'kakao_transport'}
+            allowed_statuses = {'pending', 'dispatching', 'accepted'}
+            if not isinstance(pending, dict):
+                raise ValueError('invalid pending queue')
+            for pending_key, item in pending.items():
+                if (
+                    not isinstance(pending_key, str)
+                    or not re.fullmatch(r'[0-9a-f]{64}', pending_key)
+                    or not isinstance(item, dict)
+                    or item.get('key') != pending_key
+                    or item.get('platform') != '직방'
+                    or item.get('title') != ZIGBANG_SUBJECT
+                    or not re.fullmatch(r'\d{1,20}', str(item.get('uid') or ''))
+                    or item.get('status') not in allowed_statuses
+                    or not isinstance(item.get('attempt_count'), int)
+                    or isinstance(item.get('attempt_count'), bool)
+                    or not 0 <= item['attempt_count'] <= 100_000
+                    or item.get('last_error') not in allowed_errors
+                    or _parse_timestamp(item.get('received_at')) is None
+                    or _parse_timestamp(item.get('discovered_at')) is None
+                    or _parse_timestamp(item.get('next_retry_at')) is None
+                    or (
+                        item.get('first_failed_at') is not None
+                        and _parse_timestamp(item.get('first_failed_at')) is None
+                    )
+                    or not isinstance(item.get('detail_lines'), list)
+                    or not all(_is_safe_detail_line(line) for line in item['detail_lines'])
+                ):
+                    raise ValueError('invalid pending item')
+        result = {
             'initialized': True,
             'seen_keys': list(dict.fromkeys(keys)),
             'fallback_keys': list(dict.fromkeys(fallback_keys)),
             'parse_failures': dict(parse_failures),
             'dead_keys': list(dict.fromkeys(dead_keys)),
         }
+        if payload.get('queue_version') == 2 and isinstance(payload.get('pending'), dict):
+            result.update({'queue_version': 2, 'pending': payload['pending']})
+        return result
     except (json.JSONDecodeError, UnicodeDecodeError, ValueError):
         quarantine = path.with_name(path.name + '.corrupt')
         suffix = 1
@@ -700,6 +751,7 @@ def write_heartbeat(
     success: bool = True,
     now: datetime | None = None,
     pending_alerts: int | None = None,
+    oldest_pending_at: str | None = None,
     delivered: bool = False,
 ) -> None:
     instant = now or _utc_now()
@@ -713,6 +765,8 @@ def write_heartbeat(
         payload['last_delivered_at'] = timestamp
     if pending_alerts is not None:
         payload['pending_alerts'] = pending_alerts
+        if pending_alerts > 0 and oldest_pending_at:
+            payload['oldest_pending_at'] = oldest_pending_at
     if path.exists():
         # Fields this write does not decide are carried over, so the watchdog can tell
         # "running" from "delivering" (lottereal_inquiry_anomaly_watch.py).
@@ -732,6 +786,11 @@ def write_heartbeat(
                 and previous_pending >= 0
             ):
                 payload['pending_alerts'] = previous_pending
+                previous_oldest = previous.get('oldest_pending_at')
+                if previous_pending > 0 and isinstance(previous_oldest, str):
+                    parsed_oldest = datetime.fromisoformat(previous_oldest.replace('Z', '+00:00'))
+                    if parsed_oldest.tzinfo is not None:
+                        payload['oldest_pending_at'] = previous_oldest
         except (OSError, AttributeError, json.JSONDecodeError, UnicodeDecodeError, TypeError, ValueError):
             pass
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -811,6 +870,8 @@ def mark_delivered(state_path: Path, key: str) -> None:
     state = load_state(state_path)
     parse_failures = dict(state['parse_failures'])
     parse_failures.pop(key, None)
+    pending = dict(state.get('pending', {}))
+    pending.pop(key, None)
     write_state(state_path, {
         **state,
         'initialized': True,
@@ -818,7 +879,130 @@ def mark_delivered(state_path: Path, key: str) -> None:
         'fallback_keys': [value for value in state['fallback_keys'] if value != key],
         'parse_failures': parse_failures,
         'dead_keys': [value for value in state['dead_keys'] if value != key],
+        **({'queue_version': 2, 'pending': pending} if 'pending' in state else {}),
     })
+
+
+def _timestamp(value: datetime) -> str:
+    return value.astimezone(timezone.utc).isoformat().replace('+00:00', 'Z')
+
+
+def _parse_timestamp(value: object) -> datetime | None:
+    if not isinstance(value, str):
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace('Z', '+00:00'))
+        return parsed.astimezone(timezone.utc) if parsed.tzinfo is not None else None
+    except (ValueError, OverflowError):
+        return None
+
+
+def _save_pending(state_path: Path, state: dict, pending: dict[str, dict]) -> None:
+    write_state(state_path, {**state, 'queue_version': 2, 'pending': pending})
+
+
+def enqueue_pending(state_path: Path, items: list[dict], *, now: datetime | None = None) -> dict:
+    """Durably capture privacy-safe delivery work before attempting transports."""
+    instant = now or _utc_now()
+    state = load_state(state_path)
+    pending = dict(state.get('pending', {}))
+    excluded = set(state['seen_keys']) | set(state['dead_keys'])
+    changed = 'pending' not in state
+    for item in items:
+        key = item.get('key')
+        if (
+            not isinstance(key, str)
+            or not re.fullmatch(r'[0-9a-f]{64}', key)
+            or key in excluded
+            or key in pending
+        ):
+            continue
+        received_at = str(item.get('received_at') or '')
+        if _parse_timestamp(received_at) is None:
+            received_at = _timestamp(instant)
+        is_retry = key in set(state['fallback_keys'])
+        pending[key] = {
+            'key': key,
+            'platform': '직방',
+            'received_at': received_at,
+            'title': ZIGBANG_SUBJECT,
+            'uid': str(item.get('uid') or ''),
+            'detail_lines': [],
+            'status': 'pending',
+            'discovered_at': _timestamp(instant),
+            'first_failed_at': _timestamp(instant) if is_retry else None,
+            'attempt_count': 1 if is_retry else 0,
+            'next_retry_at': _timestamp(instant),
+            'last_error': 'kakao_transport' if is_retry else None,
+        }
+        changed = True
+    if changed:
+        _save_pending(state_path, state, pending)
+    return load_state(state_path)
+
+
+def _record_delivery_failure(
+    state_path: Path,
+    key: str,
+    error_code: str,
+    *,
+    now: datetime | None = None,
+    detail_lines: list[str] | None = None,
+) -> None:
+    instant = now or _utc_now()
+    state = load_state(state_path)
+    pending = dict(state.get('pending', {}))
+    item = dict(pending[key])
+    attempts = int(item.get('attempt_count', 0)) + 1
+    delay_seconds = min(int(MAX_RETRY_DELAY.total_seconds()), 60 * (2 ** min(attempts - 1, 16)))
+    item.update({
+        'status': 'pending',
+        'first_failed_at': item.get('first_failed_at') or _timestamp(instant),
+        'attempt_count': attempts,
+        'next_retry_at': _timestamp(instant + timedelta(seconds=delay_seconds)),
+        'last_error': error_code,
+    })
+    if detail_lines is not None:
+        item['detail_lines'] = detail_lines
+    pending[key] = item
+    _save_pending(state_path, state, pending)
+
+
+def select_pending(state: dict, *, now: datetime | None = None) -> list[dict]:
+    """Reserve capacity for both first attempts and due retries, borrowing spare slots."""
+    instant = (now or _utc_now()).astimezone(timezone.utc)
+    candidates = [
+        item for item in state.get('pending', {}).values()
+        if item.get('status') == 'pending'
+        and (_parse_timestamp(item.get('next_retry_at')) or instant) <= instant
+    ]
+    fresh = sorted(
+        (item for item in candidates if item.get('attempt_count') == 0),
+        key=lambda item: (item.get('discovered_at', ''), item['key']),
+    )
+    retries = sorted(
+        (item for item in candidates if item.get('attempt_count', 0) > 0),
+        key=lambda item: (item.get('next_retry_at', ''), item.get('discovered_at', ''), item['key']),
+    )
+    if fresh and retries:
+        selected = fresh[:MAX_DELIVERY_BATCH - RETRY_RESERVE] + retries[:RETRY_RESERVE]
+        if len(selected) < MAX_DELIVERY_BATCH:
+            used = {item['key'] for item in selected}
+            selected.extend(item for item in fresh + retries if item['key'] not in used)
+    else:
+        selected = fresh + retries
+    return selected[:MAX_DELIVERY_BATCH]
+
+
+def _pending_metrics(state: dict) -> tuple[int, str | None]:
+    pending = list(state.get('pending', {}).values())
+    if not pending:
+        return 0, None
+    instants = [
+        parsed for parsed in (_parse_timestamp(item.get('discovered_at')) for item in pending)
+        if parsed is not None
+    ]
+    return len(pending), _timestamp(min(instants)) if instants else None
 
 
 def process_items(items: list[dict], state_path: Path) -> str:
@@ -874,6 +1058,7 @@ def main() -> int:
     lock_path = state_path.with_suffix(state_path.suffix + '.lock')
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     with lock_path.open('a+', encoding='utf-8') as lock_file:
+        os.chmod(lock_path, 0o600)
         try:
             fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
@@ -892,59 +1077,87 @@ def main() -> int:
             process_items(items, state_path)
             write_heartbeat(heartbeat_path)
             return 0
-        seen = set(state['seen_keys'])
-        dead = set(state['dead_keys'])
-        unseen = [
-            item for item in items
-            if item.get('key') not in seen and item.get('key') not in dead
+        state = enqueue_pending(state_path, items)
+        accepted_keys = [
+            key for key, queued in state.get('pending', {}).items()
+            if queued.get('status') == 'accepted'
         ]
-        fetched_keys = {item.get('key') for item in items}
-        if not unseen:
-            write_heartbeat(heartbeat_path, pending_alerts=0)
-            return 0
-        # Inquiries that already fell back are retried after first attempts, so a run of
-        # persistent failures (an expired Kakao grant) cannot take every batch slot.
-        retried = set(state['fallback_keys'])
-        unseen.sort(key=lambda item: item.get('key') in retried)
+        for key in accepted_keys:
+            mark_delivered(state_path, key)
+        state = load_state(state_path)
+        selected = select_pending(state)
 
         delayed: list[dict] = []
-        delivered_any = False
-        for item in unseen[:10]:
-            try:
-                item['detail_lines'] = fetch_zigbang_detail(
-                    address,
-                    password,
-                    str(item.get('uid') or ''),
+        delivered_any = bool(accepted_keys)
+        for queued in selected:
+            item = dict(queued)
+            if not item.get('detail_lines'):
+                try:
+                    item['detail_lines'] = fetch_zigbang_detail(
+                        address,
+                        password,
+                        str(item.get('uid') or ''),
+                    )
+                except Exception:
+                    _record_delivery_failure(state_path, item['key'], 'detail_fetch')
+                    delayed.append(item)
+                    continue
+            delivery_receipt = build_public_receipt_payload(item, allow_historical=True)
+            if delivery_receipt is None:
+                _record_delivery_failure(
+                    state_path, item['key'], 'parse_invalid', detail_lines=item['detail_lines']
                 )
-            except Exception:
                 delayed.append(item)
                 continue
             receipt = build_public_receipt_payload(item)
-            if receipt is None:
-                fallback = record_parse_failure(state_path, item)
-                if fallback:
-                    print(fallback, flush=True)
-                continue
 
-            try:
-                publish_public_receipt(values, receipt)
-            except Exception:
-                delayed.append(item)
-                continue
+            if receipt is not None:
+                try:
+                    publish_public_receipt(values, receipt)
+                except Exception:
+                    _record_delivery_failure(
+                        state_path, item['key'], 'receipt_publish', detail_lines=item['detail_lines']
+                    )
+                    delayed.append(item)
+                    continue
 
             alert = build_alert([item])
             inquiry_link = extract_zigbang_inquiry_link(item['detail_lines'])
+            dispatch_state = load_state(state_path)
+            dispatch_pending = dict(dispatch_state.get('pending', {}))
+            dispatch_item = dict(dispatch_pending[item['key']])
+            dispatch_item.update({
+                'detail_lines': item['detail_lines'],
+                'status': 'dispatching',
+                'dispatch_started_at': _timestamp(_utc_now()),
+                'delivery_key': item['key'],
+            })
+            dispatch_pending[item['key']] = dispatch_item
+            _save_pending(state_path, dispatch_state, dispatch_pending)
             try:
                 token_updates = send_kakao_owner_alert(
                     values,
                     alert,
                     inquiry_link=inquiry_link,
                 )
+            except Exception:
+                _record_delivery_failure(
+                    state_path, item['key'], 'kakao_transport', detail_lines=item['detail_lines']
+                )
+                delayed.append(item)
+                continue
+
+            accepted_state = load_state(state_path)
+            accepted_pending = dict(accepted_state.get('pending', {}))
+            accepted_item = dict(accepted_pending[item['key']])
+            accepted_item.update({'status': 'accepted', 'accepted_at': _timestamp(_utc_now())})
+            accepted_pending[item['key']] = accepted_item
+            _save_pending(state_path, accepted_state, accepted_pending)
+            try:
                 update_private_env(env_path, token_updates)
                 values.update(token_updates)
             except Exception:
-                delayed.append(item)
-                continue
+                pass
 
             mark_delivered(state_path, item['key'])
             delivered_any = True
@@ -953,8 +1166,13 @@ def main() -> int:
             fallback = record_fallback(state_path, delayed)
             if fallback:
                 print(fallback, flush=True)
-        pending = len(fetched_keys & set(load_state(state_path)['fallback_keys']))
-        write_heartbeat(heartbeat_path, pending_alerts=pending, delivered=delivered_any)
+        pending, oldest = _pending_metrics(load_state(state_path))
+        write_heartbeat(
+            heartbeat_path,
+            pending_alerts=pending,
+            oldest_pending_at=oldest,
+            delivered=delivered_any,
+        )
     return 0
 
 

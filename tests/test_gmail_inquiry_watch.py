@@ -316,10 +316,12 @@ class GmailInquiryWatchTest(unittest.TestCase):
             self.assertIn('매물번호 50181019', fallback_output)
             self.assertIn('전세 1억 6,300만원', fallback_output)
             self.assertNotIn('http', fallback_output)
-            self.assertEqual(send.call_count, 2)
+            self.assertEqual(send.call_count, 1)
             state = json.loads(state_path.read_text(encoding='utf-8'))
             self.assertEqual(state['seen_keys'], [])
             self.assertEqual(state['fallback_keys'], [key])
+            self.assertEqual(state['pending'][key]['attempt_count'], 1)
+            self.assertEqual(state['pending'][key]['last_error'], 'kakao_transport')
 
     def test_retried_fallbacks_do_not_starve_newer_inquiries(self):
         # 2026-09-30..10-19: ten inquiries whose Kakao alert kept failing filled every
@@ -487,15 +489,15 @@ class GmailInquiryWatchTest(unittest.TestCase):
 
             self.assertEqual(publish.call_count, 1)
             self.assertEqual(send.call_count, 1)
-            self.assertEqual(fetch_detail.call_count, 4)
+            self.assertEqual(fetch_detail.call_count, 2)
             state = json.loads(state_path.read_text(encoding='utf-8'))
             self.assertEqual(state['seen_keys'], [good_key])
-            self.assertEqual(state['dead_keys'], [bad_key])
-            self.assertEqual(state['parse_failures'], {})
+            self.assertEqual(state['dead_keys'], [])
+            self.assertEqual(state['pending'][bad_key]['attempt_count'], 1)
+            self.assertEqual(state['pending'][bad_key]['last_error'], 'parse_invalid')
             self.assertEqual(
                 output.getvalue(),
-                '⚠️ 직방 문의 처리 지연 1건. Gmail에서 확인하세요.\n'
-                '⚠️ 직방 문의 자동 처리 제외 1건. Gmail에서 확인하세요.\n',
+                '⚠️ 직방 문의 처리 지연 1건. Gmail에서 확인하세요.\n',
             )
 
     def test_successful_mailbox_check_writes_private_heartbeat(self):
@@ -876,6 +878,299 @@ class GmailInquiryWatchTest(unittest.TestCase):
                 {**safe, 'message': '고객 전화 02-123-4567'},
                 opener=lambda *_a, **_k: Response(b''),
             )
+
+    def test_pending_inquiry_retries_after_it_leaves_gmail_search_window(self):
+        key = '7' * 64
+        item = {
+            'key': key,
+            'platform': '직방',
+            'received_at': '2026-08-29T12:34:56+09:00',
+            'title': ZIGBANG_SUBJECT,
+            'uid': '701',
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            env_path = root / '.env'
+            state_path = root / 'state.json'
+            heartbeat_path = root / 'heartbeat.json'
+            env_path.write_text(
+                'LOTTEREAL_GMAIL_ADDRESS=owner@example.com\n'
+                'LOTTEREAL_GMAIL_APP_PASSWORD=secret\n',
+                encoding='utf-8',
+            )
+            state_path.write_text(json.dumps({
+                'initialized': True,
+                'seen_keys': [],
+                'fallback_keys': [],
+                'parse_failures': {},
+                'dead_keys': [],
+            }), encoding='utf-8')
+            environment = {
+                'LOTTEREAL_ENV_PATH': str(env_path),
+                'LOTTEREAL_GMAIL_WATCH_STATE': str(state_path),
+                'LOTTEREAL_GMAIL_WATCH_HEARTBEAT': str(heartbeat_path),
+            }
+            detail = ['• 등록번호 50181019', '• 전세 16300']
+            with (
+                mock.patch.dict(os.environ, environment),
+                mock.patch.object(gmail_watch, 'fetch_verified_messages', return_value=[item]),
+                mock.patch.object(gmail_watch, 'fetch_zigbang_detail', return_value=detail),
+                mock.patch.object(gmail_watch, 'publish_public_receipt'),
+                mock.patch.object(gmail_watch, 'send_kakao_owner_alert', side_effect=RuntimeError('temporary')),
+            ):
+                self.assertEqual(gmail_watch.main(), 0)
+
+            pending = json.loads(state_path.read_text(encoding='utf-8'))['pending']
+            self.assertEqual(list(pending), [key])
+            self.assertEqual(pending[key]['uid'], '701')
+            self.assertEqual(pending[key]['detail_lines'], detail)
+
+            later = datetime(2026, 8, 30, 12, 2, tzinfo=timezone.utc)
+            with (
+                mock.patch.dict(os.environ, environment),
+                mock.patch.object(gmail_watch, '_utc_now', return_value=later),
+                mock.patch.object(gmail_watch, 'fetch_verified_messages', return_value=[]),
+                mock.patch.object(gmail_watch, 'fetch_zigbang_detail') as fetch_detail,
+                mock.patch.object(gmail_watch, 'publish_public_receipt'),
+                mock.patch.object(gmail_watch, 'send_kakao_owner_alert', return_value={}) as send,
+                mock.patch.object(gmail_watch, 'update_private_env'),
+            ):
+                self.assertEqual(gmail_watch.main(), 0)
+            self.assertEqual(send.call_count, 1)
+            fetch_detail.assert_not_called()
+            state = json.loads(state_path.read_text(encoding='utf-8'))
+            self.assertNotIn(key, state['pending'])
+            self.assertIn(key, state['seen_keys'])
+    def test_pending_state_rejects_error_text_that_could_contain_pii(self):
+        key = '8' * 64
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'state.json'
+            path.write_text(json.dumps({
+                'initialized': True,
+                'seen_keys': [],
+                'fallback_keys': [],
+                'parse_failures': {},
+                'dead_keys': [],
+                'queue_version': 2,
+                'pending': {key: {
+                    'key': key,
+                    'platform': '직방',
+                    'received_at': '2026-08-29T03:34:56Z',
+                    'title': ZIGBANG_SUBJECT,
+                    'uid': '801',
+                    'detail_lines': [],
+                    'status': 'pending',
+                    'discovered_at': '2026-08-30T12:00:00Z',
+                    'first_failed_at': '2026-08-30T12:00:00Z',
+                    'attempt_count': 1,
+                    'next_retry_at': '2026-08-30T12:01:00Z',
+                    'last_error': 'customer 010-1234-5678 failed',
+                }},
+            }), encoding='utf-8')
+            state = gmail_watch.load_state(path)
+            self.assertFalse(state['initialized'])
+            self.assertFalse(path.exists())
+            self.assertEqual(len(list(Path(directory).glob('state.json.corrupt*'))), 1)
+    def test_confirmed_kakao_acceptance_is_finalized_after_restart_without_resend(self):
+        key = '9' * 64
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            env_path = root / '.env'
+            state_path = root / 'state.json'
+            heartbeat_path = root / 'heartbeat.json'
+            env_path.write_text(
+                'LOTTEREAL_GMAIL_ADDRESS=owner@example.com\n'
+                'LOTTEREAL_GMAIL_APP_PASSWORD=secret\n',
+                encoding='utf-8',
+            )
+            now = datetime(2026, 8, 30, 12, 0, tzinfo=timezone.utc)
+            pending_item = {
+                'key': key, 'platform': '직방',
+                'received_at': '2026-08-29T03:34:56Z', 'title': ZIGBANG_SUBJECT,
+                'uid': '901', 'detail_lines': ['• 등록번호 50181019', '• 전세 16300'],
+                'status': 'accepted', 'discovered_at': '2026-08-30T11:00:00Z',
+                'first_failed_at': None, 'attempt_count': 0,
+                'next_retry_at': '2026-08-30T11:00:00Z', 'last_error': None,
+                'dispatch_started_at': '2026-08-30T11:01:00Z',
+                'delivery_key': key, 'accepted_at': '2026-08-30T11:01:01Z',
+            }
+            state_path.write_text(json.dumps({
+                'initialized': True, 'seen_keys': [], 'fallback_keys': [],
+                'parse_failures': {}, 'dead_keys': [], 'queue_version': 2,
+                'pending': {key: pending_item},
+            }), encoding='utf-8')
+            with (
+                mock.patch.dict(os.environ, {
+                    'LOTTEREAL_ENV_PATH': str(env_path),
+                    'LOTTEREAL_GMAIL_WATCH_STATE': str(state_path),
+                    'LOTTEREAL_GMAIL_WATCH_HEARTBEAT': str(heartbeat_path),
+                }),
+                mock.patch.object(gmail_watch, '_utc_now', return_value=now),
+                mock.patch.object(gmail_watch, 'fetch_verified_messages', return_value=[]),
+                mock.patch.object(gmail_watch, 'send_kakao_owner_alert') as send,
+            ):
+                self.assertEqual(gmail_watch.main(), 0)
+            send.assert_not_called()
+            state = json.loads(state_path.read_text(encoding='utf-8'))
+            self.assertEqual(state['pending'], {})
+            self.assertEqual(state['seen_keys'], [key])
+    def test_scheduler_reserves_half_batch_for_new_and_retry_work(self):
+        now = datetime(2026, 8, 30, 12, 0, tzinfo=timezone.utc)
+        pending = {}
+        for index in range(12):
+            key = f'{index + 16:02x}' * 32
+            pending[key] = {
+                'key': key,
+                'status': 'pending',
+                'attempt_count': 0,
+                'discovered_at': f'2026-08-30T11:{index:02d}:00Z',
+                'next_retry_at': '2026-08-30T11:00:00Z',
+            }
+        for index in range(12):
+            key = f'{index + 64:02x}' * 32
+            pending[key] = {
+                'key': key,
+                'status': 'pending',
+                'attempt_count': index + 1,
+                'discovered_at': f'2026-08-29T11:{index:02d}:00Z',
+                'next_retry_at': '2026-08-30T11:00:00Z',
+            }
+        selected = gmail_watch.select_pending({'pending': pending}, now=now)
+        self.assertEqual(len(selected), 10)
+        self.assertEqual(sum(item['attempt_count'] == 0 for item in selected), 5)
+        self.assertEqual(sum(item['attempt_count'] > 0 for item in selected), 5)
+
+    def test_retry_metadata_uses_bounded_exponential_backoff(self):
+        key = 'a3' * 32
+        now = datetime(2026, 8, 30, 12, 0, tzinfo=timezone.utc)
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory) / 'state.json'
+            state_path.write_text(json.dumps({
+                'initialized': True, 'seen_keys': [], 'fallback_keys': [],
+                'parse_failures': {}, 'dead_keys': [],
+            }), encoding='utf-8')
+            gmail_watch.enqueue_pending(state_path, [{
+                'key': key, 'platform': '직방', 'uid': '303',
+                'received_at': '2026-08-29T03:34:56Z',
+            }], now=now)
+            expected_delays = [60, 120, 240, 480]
+            for expected in expected_delays:
+                gmail_watch._record_delivery_failure(
+                    state_path, key, 'kakao_transport', now=now
+                )
+                item = json.loads(state_path.read_text(encoding='utf-8'))['pending'][key]
+                retry_at = datetime.fromisoformat(item['next_retry_at'].replace('Z', '+00:00'))
+                self.assertEqual((retry_at - now).total_seconds(), expected)
+            for _ in range(20):
+                gmail_watch._record_delivery_failure(
+                    state_path, key, 'kakao_transport', now=now
+                )
+            item = json.loads(state_path.read_text(encoding='utf-8'))['pending'][key]
+            retry_at = datetime.fromisoformat(item['next_retry_at'].replace('Z', '+00:00'))
+            self.assertEqual(retry_at - now, gmail_watch.MAX_RETRY_DELAY)
+            self.assertEqual(item['first_failed_at'], '2026-08-30T12:00:00Z')
+            self.assertEqual(item['last_error'], 'kakao_transport')
+            self.assertNotIn('010-', json.dumps(item, ensure_ascii=False))
+
+    def test_uncertain_dispatch_is_not_automatically_resent_after_crash(self):
+        key = 'b4' * 32
+        now = datetime(2026, 8, 30, 12, 0, tzinfo=timezone.utc)
+        queued = {
+            'key': key, 'status': 'dispatching', 'attempt_count': 0,
+            'discovered_at': '2026-08-30T11:00:00Z',
+            'next_retry_at': '2026-08-30T11:00:00Z',
+            'delivery_key': key,
+        }
+        self.assertEqual(
+            gmail_watch.select_pending({'pending': {key: queued}}, now=now),
+            [],
+        )
+
+    def test_main_keeps_queue_heartbeat_and_lock_files_private(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            env_path = root / '.env'
+            state_path = root / 'state.json'
+            heartbeat_path = root / 'heartbeat.json'
+            env_path.write_text(
+                'LOTTEREAL_GMAIL_ADDRESS=owner@example.com\n'
+                'LOTTEREAL_GMAIL_APP_PASSWORD=secret\n',
+                encoding='utf-8',
+            )
+            state_path.write_text(json.dumps({
+                'initialized': True, 'seen_keys': [], 'fallback_keys': [],
+                'parse_failures': {}, 'dead_keys': [],
+            }), encoding='utf-8')
+            with (
+                mock.patch.dict(os.environ, {
+                    'LOTTEREAL_ENV_PATH': str(env_path),
+                    'LOTTEREAL_GMAIL_WATCH_STATE': str(state_path),
+                    'LOTTEREAL_GMAIL_WATCH_HEARTBEAT': str(heartbeat_path),
+                }),
+                mock.patch.object(gmail_watch, 'fetch_verified_messages', return_value=[]),
+            ):
+                self.assertEqual(gmail_watch.main(), 0)
+            self.assertEqual(state_path.stat().st_mode & 0o777, 0o600)
+            self.assertEqual(heartbeat_path.stat().st_mode & 0o777, 0o600)
+            self.assertEqual(
+                state_path.with_suffix('.json.lock').stat().st_mode & 0o777,
+                0o600,
+            )
+    def test_verified_pending_can_deliver_after_thirty_day_gmail_window(self):
+        key = 'c5' * 32
+        now = datetime(2026, 8, 30, 12, 0, tzinfo=timezone.utc)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            env_path = root / '.env'
+            state_path = root / 'state.json'
+            heartbeat_path = root / 'heartbeat.json'
+            env_path.write_text(
+                'LOTTEREAL_GMAIL_ADDRESS=owner@example.com\n'
+                'LOTTEREAL_GMAIL_APP_PASSWORD=secret\n',
+                encoding='utf-8',
+            )
+            pending_item = {
+                'key': key, 'platform': '직방', 'received_at': '2026-07-01T03:00:00Z',
+                'title': ZIGBANG_SUBJECT, 'uid': '505',
+                'detail_lines': ['• 등록번호 50181019', '• 전세 16300'],
+                'status': 'pending', 'discovered_at': '2026-07-01T03:00:00Z',
+                'first_failed_at': '2026-07-01T03:01:00Z', 'attempt_count': 8,
+                'next_retry_at': '2026-08-30T11:00:00Z', 'last_error': 'kakao_transport',
+            }
+            state_path.write_text(json.dumps({
+                'initialized': True, 'seen_keys': [], 'fallback_keys': [key],
+                'parse_failures': {}, 'dead_keys': [], 'queue_version': 2,
+                'pending': {key: pending_item},
+            }), encoding='utf-8')
+            with (
+                mock.patch.dict(os.environ, {
+                    'LOTTEREAL_ENV_PATH': str(env_path),
+                    'LOTTEREAL_GMAIL_WATCH_STATE': str(state_path),
+                    'LOTTEREAL_GMAIL_WATCH_HEARTBEAT': str(heartbeat_path),
+                }),
+                mock.patch.object(gmail_watch, '_utc_now', return_value=now),
+                mock.patch.object(gmail_watch, 'fetch_verified_messages', return_value=[]),
+                mock.patch.object(gmail_watch, 'publish_public_receipt') as publish,
+                mock.patch.object(gmail_watch, 'send_kakao_owner_alert', return_value={}) as send,
+                mock.patch.object(gmail_watch, 'update_private_env'),
+            ):
+                self.assertEqual(gmail_watch.main(), 0)
+            publish.assert_not_called()
+            self.assertEqual(send.call_count, 1)
+            self.assertIn(key, json.loads(state_path.read_text(encoding='utf-8'))['seen_keys'])
+    def test_attempt_heartbeat_preserves_oldest_pending_age(self):
+        now = datetime(2026, 8, 30, 12, 0, tzinfo=timezone.utc)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'heartbeat.json'
+            path.write_text(json.dumps({
+                'last_success_at': '2026-08-30T11:59:00Z',
+                'pending_alerts': 2,
+                'oldest_pending_at': '2026-08-30T11:30:00Z',
+            }), encoding='utf-8')
+            gmail_watch.write_heartbeat(path, success=False, now=now)
+            heartbeat = json.loads(path.read_text(encoding='utf-8'))
+            self.assertEqual(heartbeat['pending_alerts'], 2)
+            self.assertEqual(heartbeat['oldest_pending_at'], '2026-08-30T11:30:00Z')
 
 
 if __name__ == '__main__':
