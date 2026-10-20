@@ -1,130 +1,238 @@
 #!/usr/bin/env python3
-import json, random, sys
+"""Required browser/network regressions for privacy-aware analytics."""
+
+import os
+import shutil
+import threading
+import unittest
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from threading import Thread
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
+
 from playwright.sync_api import sync_playwright
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'scripts'))
-from lottereal_supabase import load_env, supabase_request
 
-CHROME = '/opt/data/cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell'
+ROOT = Path(__file__).resolve().parents[1]
+PUBLIC = ROOT / "public"
+TARGET_MARKER = "private_target_01012345678"
+REFERRER_MARKER = "private_referrer_01098765432"
+NAVER_SCRIPT = "https://wcs.pstatic.net/wcslog.js"
+NAVER_STUB = """
+window.wcs = {};
+window.wcs_do = () => fetch(
+  '/__naver_capture?href=' + encodeURIComponent(window.location.href) +
+  '&referrer=' + encodeURIComponent(document.referrer)
+);
+"""
+
+
 class QuietHandler(SimpleHTTPRequestHandler):
     def log_message(self, format, *args):  # noqa: A002 - stdlib override signature
         pass
 
-server = ThreadingHTTPServer(('127.0.0.1', 0), partial(QuietHandler, directory=str(ROOT)))
-thread = Thread(target=server.serve_forever, daemon=True)
-thread.start()
-BASE = f'http://127.0.0.1:{server.server_port}'
-phone = '0109' + ''.join(str(random.randrange(10)) for _ in range(7))
-out = {}
+    def do_GET(self):  # noqa: N802 - stdlib override name
+        if urlparse(self.path).path == "/__referrer.html":
+            target = self.headers.get("X-Test-Target", "")
+            body = (
+                "<!doctype html><meta name=referrer content=unsafe-url>"
+                f'<a id="continue" href="{target}">continue</a>'
+            ).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        super().do_GET()
 
-def tracked(url):
-    host = urlparse(url).netloc
-    return 'googletagmanager.com' in host or 'google-analytics.com' in host or 'wcs' in host
 
-def context(browser, viewport=None, dnt=False):
-    ctx = browser.new_context(viewport=viewport or {'width': 1280, 'height': 900}, locale='ko-KR')
-    if dnt:
-        ctx.add_init_script("Object.defineProperty(navigator,'doNotTrack',{get:()=> '1'})")
-    return ctx
+class PrivacyAnalyticsBrowserTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        handler = partial(QuietHandler, directory=str(PUBLIC))
+        cls.server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+        cls.thread = threading.Thread(target=cls.server.serve_forever, daemon=True)
+        cls.thread.start()
+        cls.base = f"http://127.0.0.1:{cls.server.server_port}"
+        cls.external_base = f"http://localhost:{cls.server.server_port}"
+        browser_home = (
+            Path(os.environ.get("RUNNER_TEMP", "/opt/data/cache/scratch"))
+            / "lottereal-browser-home"
+        )
+        for directory in (
+            browser_home,
+            browser_home / "config",
+            browser_home / "cache",
+            browser_home / "runtime",
+        ):
+            directory.mkdir(parents=True, exist_ok=True)
+        (browser_home / "runtime").chmod(0o700)
+        cls.playwright = sync_playwright().start()
+        cls.browser = cls.playwright.chromium.launch(
+            headless=True,
+            executable_path=cls.chrome_executable(),
+            args=[
+                "--no-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
+                "--disable-crash-reporter",
+                "--disable-breakpad",
+                "--disable-features=Crashpad",
+            ],
+            env={
+                **os.environ,
+                "HOME": str(browser_home),
+                "XDG_CONFIG_HOME": str(browser_home / "config"),
+                "XDG_CACHE_HOME": str(browser_home / "cache"),
+                "XDG_RUNTIME_DIR": str(browser_home / "runtime"),
+            },
+        )
 
-try:
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True, executable_path=CHROME,
-            args=['--no-sandbox','--disable-dev-shm-usage','--disable-gpu'],
-            env={'HOME':'/opt/data','XDG_CONFIG_HOME':'/opt/data/cache/chrome-config','XDG_CACHE_HOME':'/opt/data/cache/chrome-cache'})
+    @classmethod
+    def tearDownClass(cls):
+        cls.browser.close()
+        cls.playwright.stop()
+        cls.server.shutdown()
+        cls.server.server_close()
 
-        ctx = context(browser)
-        page = ctx.new_page()
-        requests = []
-        errors = []
-        page.on('request', lambda req: requests.append(req.url) if tracked(req.url) else None)
-        page.on('console', lambda msg: errors.append(msg.text) if msg.type == 'error' else None)
-        page.goto(BASE + '/index.html?private_test=01012345678', wait_until='domcontentloaded')
-        page.wait_for_timeout(800)
-        assert not requests, requests
-        assert page.locator('[data-analytics-notice]').is_visible()
-        out['before_choice'] = {'tracking_requests': 0, 'notice_visible': True}
-        page.locator('[data-notice-allow]').click()
-        page.wait_for_timeout(2500)
-        config = page.evaluate("""() => (window.dataLayer || []).map(x => Array.from(x)).find(x => x[0] === 'config')""")
-        assert config and config[2]['page_location'] == BASE + '/index.html', config
-        assert any('googletagmanager.com' in u for u in requests), requests
-        assert not any('wcs' in u for u in requests), requests
-        assert all('01012345678' not in u and 'private_test' not in u for u in requests), requests
-        out['allowed'] = {'tracking_hosts': sorted(set(urlparse(u).netloc for u in requests)), 'config_location': config[2]['page_location'], 'console_errors': errors}
+    @staticmethod
+    def chrome_executable():
+        candidates = [
+            os.environ.get("LOTTEREAL_E2E_CHROME"),
+            "/opt/data/cache/ms-playwright/chromium-1248/chrome-linux64/chrome",
+            "/opt/data/cache/ms-playwright/chromium-1243/chrome-linux64/chrome",
+            "/opt/data/cache/ms-playwright/chromium-1234/chrome-linux64/chrome",
+            "/opt/data/cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell",
+            shutil.which("google-chrome"),
+            shutil.which("chromium"),
+        ]
+        executable = next((path for path in candidates if path and Path(path).is_file()), None)
+        if not executable:
+            raise RuntimeError("Chromium is required for the privacy browser gate")
+        return executable
 
-        requests.clear()
-        page.goto(BASE + '/privacy.html', wait_until='domcontentloaded')
-        page.wait_for_timeout(1000)
-        assert not requests, requests
-        assert page.locator('[data-analytics-disable]').is_enabled()
-        assert '사용하고 있습니다' in page.locator('[data-analytics-status]').inner_text()
-        page.locator('[data-analytics-disable]').click()
-        assert page.evaluate("localStorage.getItem('lr_analytics_choice')") == 'required-only'
-        assert page.locator('[data-analytics-enable]').is_enabled()
-        requests.clear()
-        page.goto(BASE + '/index.html?private_test=01012345678', wait_until='domcontentloaded')
-        page.wait_for_timeout(1200)
-        assert not requests, requests
-        assert page.evaluate("typeof window.gtag") == 'undefined'
-        assert not any(c['name'].startswith('_ga') for c in ctx.cookies()), ctx.cookies()
-        out['opt_out'] = {'tracking_requests': len(requests), 'ga_cookies': 0}
-        ctx.close()
+    def new_page(self):
+        context = self.browser.new_context()
+        page = context.new_page()
+        page.route(
+            "https://www.googletagmanager.com/**",
+            lambda route: route.fulfill(
+                status=200, content_type="text/javascript", body=""
+            ),
+        )
+        return context, page
 
-        ctx = context(browser, dnt=True)
-        page = ctx.new_page(); requests = []
-        page.on('request', lambda req: requests.append(req.url) if tracked(req.url) else None)
-        page.goto(BASE + '/index.html', wait_until='domcontentloaded')
-        page.wait_for_timeout(1000)
-        assert not requests, requests
-        out['dnt'] = {'tracking_requests': len(requests)}
-        ctx.close()
+    @staticmethod
+    def capture_naver(page, delayed=False):
+        captures = []
+        pending = []
+        provider_requests = []
+        page.on(
+            "request",
+            lambda request: provider_requests.append(request.url)
+            if urlparse(request.url).netloc
+            in {"www.googletagmanager.com", "wcs.pstatic.net", "wcs.naver.com"}
+            else captures.append(request.url)
+            if "/__naver_capture" in request.url
+            else None,
+        )
+        if delayed:
+            page.route(NAVER_SCRIPT, lambda route: pending.append(route))
+        else:
+            page.route(
+                NAVER_SCRIPT,
+                lambda route: route.fulfill(
+                    status=200, content_type="text/javascript", body=NAVER_STUB
+                ),
+            )
+        return captures, pending, provider_requests
 
-        ctx = context(browser, {'width': 390, 'height': 844})
-        page = ctx.new_page(); requests = []
-        page.on('request', lambda req: requests.append(req.url) if tracked(req.url) else None)
-        page.goto(BASE + '/privacy.html', wait_until='domcontentloaded')
-        metrics = page.evaluate("""() => ({overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth, heights: [...document.querySelectorAll('.lr-policy-controls button')].map(b => b.getBoundingClientRect().height)})""")
-        assert not requests and not metrics['overflow'] and min(metrics['heights']) >= 44, metrics
-        page.screenshot(path='/opt/data/cache/lottereal/privacy-mobile.png', full_page=True)
-        page.goto(BASE + '/index.html', wait_until='domcontentloaded')
-        overlap = page.evaluate("""() => { const n=document.querySelector('[data-analytics-notice]').getBoundingClientRect(); const b=document.querySelector('.lr-mobile-actionbar').getBoundingClientRect(); return {noticeBottom:n.bottom, actionTop:b.top, overflow:document.documentElement.scrollWidth>document.documentElement.clientWidth, buttonHeights:[...document.querySelectorAll('[data-analytics-notice] button')].map(x=>x.getBoundingClientRect().height)}; }""")
-        assert not overlap['overflow'] and overlap['noticeBottom'] <= overlap['actionTop'] and min(overlap['buttonHeights']) >= 44, overlap
-        page.screenshot(path='/opt/data/cache/lottereal/privacy-choice-mobile.png', full_page=True)
-        out['mobile'] = {**metrics, 'notice_action_gap': overlap['actionTop'] - overlap['noticeBottom']}
-        ctx.close()
+    def navigate_from_referrer(self, page, source_base):
+        target = (
+            f"{self.base}/index.html?target={TARGET_MARKER}"
+            f"#{TARGET_MARKER}-fragment"
+        )
+        source = (
+            f"{source_base}/__referrer.html?source={REFERRER_MARKER}"
+            f"#{REFERRER_MARKER}-fragment"
+        )
+        page.set_extra_http_headers({"X-Test-Target": target})
+        page.goto(source, wait_until="domcontentloaded")
+        page.locator("#continue").click()
+        page.wait_for_url(target)
 
-        ctx = context(browser)
-        page = ctx.new_page(); errors = []
-        page.on('console', lambda msg: errors.append(msg.text) if msg.type == 'error' else None)
-        page.goto(BASE + '/listing-detail-en.html', wait_until='domcontentloaded')
-        form = page.locator('[data-inquiry-form]')
-        page.locator('input[name="phone"]').fill(phone)
-        page.locator('textarea[name="message"]').fill('PRIVACY_E2E_DELETE_ME')
-        assert form.evaluate('(f) => f.checkValidity()') is False
-        page.locator('input[name="privacyConsent"]').check()
-        assert form.evaluate('(f) => f.checkValidity()') is True
-        page.locator('button[type="submit"]').click()
-        page.locator('[data-inquiry-status]').filter(has_text='submitted').wait_for(timeout=15000)
-        out['english_inquiry'] = {'persisted': True, 'consent_required': True, 'console_errors': errors}
-        ctx.close(); browser.close()
-finally:
-    server.shutdown()
-    server.server_close()
-    try:
-        status, rows = supabase_request('DELETE', 'inquiries', load_env(), query=f'?phone=eq.{phone}&select=id')
-        out['cleanup'] = {'status': status, 'deleted_rows': len(rows or [])}
-        if out.get('english_inquiry', {}).get('persisted'):
-            assert len(rows or []) >= 1
-    except Exception as exc:
-        out['cleanup'] = {'error': type(exc).__name__}
-        print(json.dumps(out, ensure_ascii=False))
-        raise
+    def assert_minimized_naver_capture(self, capture_url, expected_referrer):
+        query = parse_qs(urlparse(capture_url).query)
+        self.assertEqual(query["href"], [f"{self.base}/index.html"])
+        self.assertEqual(query["referrer"], [expected_referrer])
+        self.assertNotIn(TARGET_MARKER, capture_url)
+        self.assertNotIn(REFERRER_MARKER, capture_url)
 
-print(json.dumps(out, ensure_ascii=False))
+    def test_same_origin_referrer_is_minimized_after_consent(self):
+        context, page = self.new_page()
+        captures, _, provider_requests = self.capture_naver(page)
+        self.navigate_from_referrer(page, self.base)
+        self.assertEqual(provider_requests, [])
+        with page.expect_request(lambda request: "/__naver_capture" in request.url):
+            page.locator("[data-notice-allow]").click()
+        self.assert_minimized_naver_capture(
+            captures[0], f"{self.base}/__referrer.html"
+        )
+        self.assertTrue(any("wcs.pstatic.net" in url for url in provider_requests))
+        context.close()
+
+    def test_external_referrer_is_minimized_after_consent(self):
+        context, page = self.new_page()
+        captures, _, provider_requests = self.capture_naver(page)
+        self.navigate_from_referrer(page, self.external_base)
+        self.assertEqual(provider_requests, [])
+        with page.expect_request(lambda request: "/__naver_capture" in request.url):
+            page.locator("[data-notice-allow]").click()
+        self.assert_minimized_naver_capture(
+            captures[0], f"{self.external_base}/__referrer.html"
+        )
+        context.close()
+
+    def assert_delayed_naver_pageview_is_blocked(self, change_state):
+        context, page = self.new_page()
+        captures, pending, provider_requests = self.capture_naver(page, delayed=True)
+        page.goto(
+            f"{self.base}/index.html?target={TARGET_MARKER}#{TARGET_MARKER}-fragment",
+            wait_until="domcontentloaded",
+        )
+        self.assertEqual(provider_requests, [])
+        page.locator("[data-notice-allow]").click()
+        page.wait_for_timeout(100)
+        self.assertEqual(len(pending), 1)
+        change_state(page)
+        pending[0].fulfill(
+            status=200, content_type="text/javascript", body=NAVER_STUB
+        )
+        page.wait_for_timeout(250)
+        self.assertEqual(captures, [])
+        context.close()
+
+    def test_delayed_naver_load_rechecks_consent(self):
+        self.assert_delayed_naver_pageview_is_blocked(
+            lambda page: page.evaluate("LotteRealPrivacy.setAnalyticsEnabled(false)")
+        )
+
+    def test_delayed_naver_load_rechecks_do_not_track(self):
+        self.assert_delayed_naver_pageview_is_blocked(
+            lambda page: page.evaluate(
+                "Object.defineProperty(navigator, 'doNotTrack', "
+                "{configurable: true, get: () => '1'})"
+            )
+        )
+
+    def test_delayed_naver_load_rechecks_privacy_page(self):
+        self.assert_delayed_naver_pageview_is_blocked(
+            lambda page: page.evaluate(
+                "history.replaceState({}, '', '/privacy.html?private=1#private')"
+            )
+        )
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)

@@ -43,6 +43,11 @@ class PrivacyFrontendTests(unittest.TestCase):
         self.assertIn('function showAnalyticsNotice()', text)
         self.assertIn('data-analytics-notice', text)
 
+    def test_privacy_browser_gate_is_explicitly_required_in_ci(self):
+        workflow = (ROOT / '.github/workflows/deploy-pages.yml').read_text(encoding='utf-8')
+        self.assertIn('tests/browser_privacy_e2e.py', workflow)
+        self.assertIn('LOTTEREAL_E2E_CHROME="$chrome_path"', workflow)
+
     def test_custom_analytics_never_send_full_url_or_phone_link(self):
         text = (PUBLIC / 'js/analyticsEvents.js').read_text(encoding='utf-8')
         self.assertNotIn('window.location.href', text)

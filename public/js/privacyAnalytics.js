@@ -7,8 +7,11 @@
   const ANALYTICS_ALLOWED = 'allowed';
   const ANALYTICS_REQUIRED_ONLY = 'required-only';
   const PRIVACY_PAGES = new Set(['/privacy.html', '/privacy_EN.html']);
-  const path = window.location.pathname || '/';
-  const privacyPage = PRIVACY_PAGES.has(path) || PRIVACY_PAGES.has(`/${path.split('/').pop()}`);
+
+  function isPrivacyPage() {
+    const path = window.location.pathname || '/';
+    return PRIVACY_PAGES.has(path) || PRIVACY_PAGES.has(`/${path.split('/').pop()}`);
+  }
 
   function analyticsChoice() {
     try {
@@ -38,7 +41,7 @@
   }
 
   function analyticsEnabled() {
-    return !privacyPage && analyticsPreferenceEnabled();
+    return !isPrivacyPage() && analyticsPreferenceEnabled();
   }
 
   function sanitizedReferrer() {
@@ -126,7 +129,7 @@
   }
 
   function showAnalyticsNotice() {
-    if (privacyPage || doNotTrack() || analyticsChoice() || document.querySelector('[data-analytics-notice]')) return;
+    if (isPrivacyPage() || doNotTrack() || analyticsChoice() || document.querySelector('[data-analytics-notice]')) return;
     const language = document.documentElement.lang?.toLowerCase() || 'ko';
     const isEnglish = language.startsWith('en');
     const isJapanese = language.startsWith('ja');
@@ -195,22 +198,21 @@
   // the query and fragment are hidden while wcs_do() builds and sends its beacon
   // (synchronously), matching what GA4 receives.
   function sendNaverPageview() {
-    if (!window.wcs) return;
+    if (!analyticsEnabled() || !window.wcs) return;
     const fullUrl = window.location.href;
     const cleanUrl = window.location.pathname;
-    let ownReferrer = false;
-    try {
-      ownReferrer = new URL(document.referrer).origin === window.location.origin;
-    } catch (_) {
-      // No or unparsable referrer: nothing to hide.
-    }
     if (window.location.search || window.location.hash) window.history.replaceState(window.history.state, '', cleanUrl);
     const cleanReferrer = sanitizedReferrer();
-    if (ownReferrer) Object.defineProperty(document, 'referrer', { configurable: true, get: () => cleanReferrer });
+    const referrerDescriptor = Object.getOwnPropertyDescriptor(document, 'referrer');
+    const hideReferrerDetails = Boolean(document.referrer);
+    if (hideReferrerDetails) Object.defineProperty(document, 'referrer', { configurable: true, get: () => cleanReferrer });
     try {
       window.wcs_do();
     } finally {
-      if (ownReferrer) delete document.referrer;
+      if (hideReferrerDetails) {
+        if (referrerDescriptor) Object.defineProperty(document, 'referrer', referrerDescriptor);
+        else delete document.referrer;
+      }
       if (window.location.href !== fullUrl) window.history.replaceState(window.history.state, '', fullUrl);
     }
   }
