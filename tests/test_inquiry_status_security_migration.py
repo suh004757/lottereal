@@ -4,82 +4,88 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-MIGRATION = ROOT / "supabase" / "migrations" / "030_harden_inquiry_status_updates.sql"
+EXPAND = ROOT / "supabase" / "migrations" / "030_harden_inquiry_status_updates.sql"
+CONTRACT = ROOT / "supabase" / "migrations" / "031_contract_inquiry_status_writes.sql"
 ADAPTER = ROOT / "public" / "js" / "services" / "backendAdapter.js"
+RUNBOOK = ROOT / "docs" / "engineering" / "inquiry-status-hardening-rollout.md"
 
 
 class InquiryStatusSecurityMigrationTests(unittest.TestCase):
-    def setUp(self):
-        self.assertTrue(MIGRATION.exists(), "missing forward-only inquiry permission migration")
-        self.sql = MIGRATION.read_text(encoding="utf-8").lower()
+    @classmethod
+    def setUpClass(cls):
+        cls.expand = EXPAND.read_text(encoding="utf-8").lower()
+        cls.adapter = ADAPTER.read_text(encoding="utf-8")
 
-    def test_browser_delete_and_direct_update_are_revoked_but_retention_delete_is_preserved(self):
-        self.assertRegex(
-            self.sql,
-            r"revoke\s+delete\s+on\s+table\s+public\.inquiries\s+from\s+authenticated",
-        )
-        self.assertRegex(
-            self.sql,
-            r"revoke\s+update\s+on\s+table\s+public\.inquiries\s+from\s+authenticated",
+    def test_030_is_expand_only_and_keeps_legacy_authenticated_update(self):
+        self.assertIn("grant update on table public.inquiries to authenticated", self.expand)
+        self.assertNotRegex(
+            self.expand,
+            r"revoke\s+(?:all privileges|update|delete)[^;]*on\s+table\s+public\.inquiries",
         )
         self.assertNotRegex(
-            self.sql,
-            r"grant\s+update(?:\s*\([^)]*\))?\s+on\s+table\s+public\.inquiries\s+to\s+authenticated",
+            self.expand,
+            r"drop\s+policy[^;]*on\s+public\.inquiries",
         )
-        self.assertRegex(
-            self.sql,
-            r"grant\s+delete\s+on\s+table\s+public\.inquiries\s+to\s+service_role",
-        )
-        self.assertIn("drop policy if exists inquiries_admin_update on public.inquiries", self.sql)
-        self.assertIn("drop policy if exists inquiries_admin_delete on public.inquiries", self.sql)
 
-    def test_status_rpc_is_admin_only_fixed_path_and_exactly_scoped(self):
-        self.assertIn("create or replace function public.admin_set_inquiry_status", self.sql)
-        self.assertIn("security definer", self.sql)
-        self.assertIn("set search_path = pg_catalog, public, auth", self.sql)
-        self.assertIn("auth.uid()", self.sql)
-        self.assertIn("auth.jwt() -> 'app_metadata' ->> 'role'", self.sql)
-        self.assertIn("p_status is null or p_status not in ('unread', 'read')", self.sql)
-        self.assertIn("update public.inquiries", self.sql)
-        self.assertIn("set status = p_status", self.sql)
-        self.assertRegex(
-            self.sql,
-            r"revoke\s+all\s+on\s+function\s+public\.admin_set_inquiry_status\(uuid,\s*text\)\s+from\s+public,\s*anon,\s*authenticated",
+    def test_030_validates_the_audit_shape_and_cascade_contract(self):
+        self.assertIn("create table if not exists public.inquiry_status_audit", self.expand)
+        self.assertIn("references public.inquiries(id) on delete cascade", self.expand)
+        self.assertIn("pg_get_serial_sequence('public.inquiry_status_audit', 'id')", self.expand)
+        self.assertIn("confdeltype = 'c'", self.expand)
+        self.assertIn(
+            "conname in (\n         'inquiry_status_audit_previous_status_check',",
+            self.expand,
+        )
+        self.assertIn("having count(*) = 3", self.expand)
+        self.assertIn("column_default = 'now()'", self.expand)
+        self.assertIn("raise exception 'inquiry_status_audit schema validation failed'", self.expand)
+        self.assertIn("alter table public.inquiry_status_audit owner to postgres", self.expand)
+
+    def test_030_repairs_private_table_and_sequence_acls_deterministically(self):
+        self.assertIn(
+            "revoke all privileges on table public.inquiry_status_audit from public, anon, authenticated, service_role",
+            self.expand,
+        )
+        self.assertIn(
+            "grant select on table public.inquiry_status_audit to authenticated, service_role",
+            self.expand,
+        )
+        self.assertIn(
+            "revoke all privileges on sequence public.inquiry_status_audit_id_seq from public, anon, authenticated, service_role",
+            self.expand,
+        )
+        self.assertNotRegex(
+            self.expand,
+            r"grant\s+(?:insert|update|delete|truncate)[^;]*inquiry_status_audit",
+        )
+        self.assertNotRegex(self.expand, r"grant\s+[^;]*inquiry_status_audit_id_seq")
+
+    def test_030_rpc_has_fixed_owner_path_and_exact_execute_acl(self):
+        self.assertIn("create or replace function public.admin_set_inquiry_status", self.expand)
+        self.assertIn("security definer", self.expand)
+        self.assertIn("set search_path = ''", self.expand)
+        self.assertIn("auth.uid()", self.expand)
+        self.assertIn("auth.jwt() -> 'app_metadata' ->> 'role'", self.expand)
+        self.assertIn("p_status is null or p_status not in ('unread', 'read')", self.expand)
+        self.assertIn("update public.inquiries", self.expand)
+        self.assertIn("insert into public.inquiry_status_audit", self.expand)
+        self.assertIn(
+            "alter function public.admin_set_inquiry_status(uuid, text) owner to postgres",
+            self.expand,
         )
         self.assertRegex(
-            self.sql,
+            self.expand,
+            r"revoke\s+all\s+on\s+function\s+public\.admin_set_inquiry_status\(uuid,\s*text\)\s+from\s+public,\s*anon,\s*authenticated,\s*service_role",
+        )
+        self.assertRegex(
+            self.expand,
             r"grant\s+execute\s+on\s+function\s+public\.admin_set_inquiry_status\(uuid,\s*text\)\s+to\s+authenticated",
         )
-        self.assertNotRegex(
-            self.sql,
-            r"grant\s+execute\s+on\s+function\s+public\.admin_set_inquiry_status\(uuid,\s*text\)\s+to\s+(?:anon|public)",
-        )
 
-    def test_status_changes_have_private_append_only_audit_history(self):
-        self.assertIn("create table if not exists public.inquiry_status_audit", self.sql)
-        self.assertIn("references public.inquiries(id) on delete cascade", self.sql)
-        self.assertIn("actor_id uuid not null", self.sql)
-        self.assertIn("previous_status text not null", self.sql)
-        self.assertIn("new_status text not null", self.sql)
-        self.assertIn("created_at timestamptz not null default now()", self.sql)
-        self.assertIn("alter table public.inquiry_status_audit enable row level security", self.sql)
-        self.assertIn(
-            "revoke all privileges on table public.inquiry_status_audit from public, anon, authenticated",
-            self.sql,
-        )
-        self.assertIn("grant select on table public.inquiry_status_audit to authenticated", self.sql)
-        self.assertIn("create policy inquiry_status_audit_admin_select", self.sql)
-        self.assertIn("insert into public.inquiry_status_audit", self.sql)
-        self.assertNotRegex(
-            self.sql,
-            r"grant\s+(?:update|delete|insert)[^;]*public\.inquiry_status_audit\s+to\s+authenticated",
-        )
-
-    def test_frontend_uses_the_audited_rpc_instead_of_direct_table_update(self):
-        source = ADAPTER.read_text(encoding="utf-8")
+    def test_frontend_uses_the_audited_rpc(self):
         match = re.search(
             r"async function updateInquiryStatusSupabase\(id, status\) \{(?P<body>.*?)\n\}",
-            source,
+            self.adapter,
             re.DOTALL,
         )
         self.assertIsNotNone(match, "missing Supabase inquiry status adapter")
@@ -88,6 +94,62 @@ class InquiryStatusSecurityMigrationTests(unittest.TestCase):
         self.assertIn(".rpc('admin_set_inquiry_status', { p_inquiry_id: id, p_status: status })", body)
         self.assertNotIn(".from('inquiries')", body)
         self.assertNotIn(".update({ status })", body)
+
+    def test_031_contract_repairs_parent_acl_and_drops_direct_write_policies(self):
+        self.assertTrue(CONTRACT.exists(), "missing contract migration 031")
+        sql = CONTRACT.read_text(encoding="utf-8").lower()
+        self.assertIn(
+            "revoke all privileges on table public.inquiries from public, anon, authenticated, service_role",
+            sql,
+        )
+        self.assertIn("grant insert on table public.inquiries to anon", sql)
+        self.assertIn("grant select on table public.inquiries to authenticated", sql)
+        self.assertIn("grant select, delete on table public.inquiries to service_role", sql)
+        self.assertIn("cmd in ('all', 'update', 'delete')", sql)
+        self.assertNotRegex(sql, r"grant\s+update[^;]*public\.inquiries")
+        self.assertNotRegex(sql, r"grant\s+delete[^;]*public\.inquiries\s+to\s+(?:public|anon|authenticated)")
+
+    def test_031_blocks_direct_audit_mutation_but_preserves_retention_cascade(self):
+        sql = CONTRACT.read_text(encoding="utf-8").lower()
+        self.assertIn(
+            "revoke all privileges on table public.inquiry_status_audit from public, anon, authenticated, service_role",
+            sql,
+        )
+        self.assertIn(
+            "grant select on table public.inquiry_status_audit to authenticated, service_role",
+            sql,
+        )
+        self.assertIn(
+            "revoke all privileges on sequence public.inquiry_status_audit_id_seq from public, anon, authenticated, service_role",
+            sql,
+        )
+        self.assertIn("on delete cascade", sql)
+        self.assertNotRegex(
+            sql,
+            r"grant\s+(?:insert|update|delete|truncate)[^;]*inquiry_status_audit",
+        )
+
+    def test_runbook_enforces_order_no_pii_probes_and_forward_only_rollback(self):
+        self.assertTrue(RUNBOOK.exists(), "missing inquiry hardening rollout runbook")
+        text = RUNBOOK.read_text(encoding="utf-8")
+        lower = text.lower()
+        ordered = [
+            "apply migration 030",
+            "verify 030 readiness",
+            "deploy the rpc frontend",
+            "verify the admin rpc",
+            "apply migration 031",
+            "verify the live role matrix",
+        ]
+        positions = [lower.index(step) for step in ordered]
+        self.assertEqual(positions, sorted(positions))
+        self.assertIn("rollback;", lower)
+        self.assertIn("no customer row or identifier is printed", lower)
+        self.assertIn("do not revert 031", lower)
+        self.assertIn("fix forward", lower)
+        self.assertIn("has_table_privilege", lower)
+        self.assertIn("has_sequence_privilege", lower)
+        self.assertIn("admin rpc probe: ok", lower)
 
 
 if __name__ == "__main__":
