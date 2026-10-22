@@ -142,7 +142,11 @@ node --test tests/*.mjs
 python3 scripts/maintenance_check.py
 python3 scripts/build_pages_artifact.py \
   --output /tmp/lottereal-site \
-  --manifest /tmp/lottereal-manifest.json
+  --manifest /tmp/lottereal-manifest.json \
+  --revision "$(git rev-parse HEAD)"
+python3 scripts/scan_pages_artifact.py \
+  --artifact /tmp/lottereal-site \
+  --allowlist security/pages-artifact-allowlist.json
 git diff --check
 ```
 

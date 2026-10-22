@@ -4,7 +4,9 @@
 
 Production is deployed by GitHub Actions from the `public/` artifact built with `scripts/build_pages_artifact.py`. The workflow preserves existing public relative paths while excluding repository-only source and operations directories: `scripts/`, `tests/`, `supabase/`, `content/`, `scss/`.
 
-The deployment workflow runs the Python and Node regression suites, builds the artifact outside the checkout, and uploads only that artifact. It does not use repository secrets. Roll back the deployment mechanism by reverting the workflow commit and changing the Pages build type back to the `main /` legacy source.
+The deployment workflow runs the Python and Node regression suites, builds the artifact outside the checkout, scans every built file for credentials and private/PII-shaped exports, and uploads only an artifact that passes. The one expected browser anon JWT is allowlisted only by its SHA-256 digest in `security/pages-artifact-allowlist.json`; service/private credentials remain forbidden.
+
+The artifact publishes `pages-manifest.json` with the exact source revision and every built file hash. After `actions/deploy-pages`, `scripts/verify_pages_deployment.py` waits for that exact manifest, verifies every live hash and the homepage health, and rejects stale deployments. The workflow does not use repository secrets. Roll back the deployment mechanism by reverting the workflow commit and changing the Pages build type back to the `main /` legacy source.
 
 ## Security Checklist
 Before deploying or zipping this project for distribution, please ensure the following:

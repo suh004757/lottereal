@@ -123,13 +123,26 @@ def run_local_verification() -> list[dict[str, str | int]]:
     return failures
 
 
-def rollback(reason: list[dict], env_values: dict[str, str]) -> dict:
+def rollback(reason: list[dict], env_values: dict[str, str], expected_revision: str) -> dict:
     git_env, askpass = git_env_with_token(env_values)
     try:
-        code, output = run(["git", "revert", "--no-edit", "HEAD"], timeout=180, env=git_env)
+        code, output = run(["git", "fetch", "origin", "main"], timeout=180, env=git_env)
+        if code != 0:
+            return {"rolled_back": False, "stage": "git_fetch", "exit_code": code, "output_tail": redact(output, env_values), "reason": reason}
+        local_code, local_head = run(["git", "rev-parse", "HEAD"], timeout=30, env=git_env)
+        if local_code != 0 or local_head.strip() != expected_revision:
+            return {"rolled_back": False, "stage": "revision_precondition", "reason": reason}
+        remote_code, remote_head = run(["git", "rev-parse", "refs/remotes/origin/main"], timeout=30, env=git_env)
+        if remote_code != 0 or remote_head.strip() != expected_revision:
+            return {"rolled_back": False, "stage": "revision_precondition", "reason": reason}
+        code, output = run(["git", "revert", "--no-edit", expected_revision], timeout=180, env=git_env)
         if code != 0:
             return {"rolled_back": False, "stage": "git_revert", "exit_code": code, "output_tail": redact(output, env_values), "reason": reason}
-        code, output = run(["git", "push", "origin", "main"], timeout=240, env=git_env)
+        code, output = run(
+            ["git", "push", f"--force-with-lease=refs/heads/main:{expected_revision}", "origin", "HEAD:main"],
+            timeout=240,
+            env=git_env,
+        )
         if code != 0:
             return {"rolled_back": False, "stage": "git_push_revert", "exit_code": code, "output_tail": redact(output, env_values), "reason": reason}
         head_code, head = run(["git", "rev-parse", "--short", "HEAD"], timeout=30, env=git_env)
@@ -172,11 +185,16 @@ def main() -> int:
     args = parser.parse_args()
 
     env_values = load_env(args.env)
+    revision_code, expected_revision = run(["git", "rev-parse", "HEAD"], timeout=30)
+    expected_revision = expected_revision.strip()
+    if revision_code != 0 or not expected_revision:
+        print(json.dumps({"ok": False, "phase": "revision", "error": "unable_to_resolve_head"}, sort_keys=True))
+        return 1
     first_failures = check_once(args.live_config_url, env_values)
     if first_failures:
         result = {"ok": False, "phase": "immediate", "failures": first_failures}
         if not args.no_rollback:
-            result["rollback"] = rollback(first_failures, env_values)
+            result["rollback"] = rollback(first_failures, env_values, expected_revision)
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 1
 
@@ -186,7 +204,7 @@ def main() -> int:
         if delayed_failures:
             result = {"ok": False, "phase": "delayed", "wait_seconds": args.wait_seconds, "failures": delayed_failures}
             if not args.no_rollback:
-                result["rollback"] = rollback(delayed_failures, env_values)
+                result["rollback"] = rollback(delayed_failures, env_values, expected_revision)
             print(json.dumps(result, ensure_ascii=False, indent=2))
             return 1
 

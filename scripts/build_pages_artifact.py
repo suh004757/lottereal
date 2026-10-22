@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shutil
 import tempfile
 from pathlib import Path
@@ -46,7 +47,9 @@ def collect_public_sources() -> list[Path]:
     return sources
 
 
-def build(output: Path, manifest_path: Path) -> dict[str, object]:
+def build(output: Path, manifest_path: Path, revision: str) -> dict[str, object]:
+    if not re.fullmatch(r"[0-9a-f]{40}", revision):
+        raise RuntimeError("revision must be a lowercase 40-character Git commit SHA")
     output = Path(os.path.abspath(output.expanduser()))
     manifest_path = Path(os.path.abspath(manifest_path.expanduser()))
     if output.is_symlink():
@@ -71,12 +74,14 @@ def build(output: Path, manifest_path: Path) -> dict[str, object]:
         for path in sorted(p for p in stage.rglob("*") if p.is_file()):
             relative = path.relative_to(stage).as_posix()
             files[relative] = {"bytes": path.stat().st_size, "sha256": sha256(path)}
-        manifest = {"schema": 1, "files": files}
+        manifest = {"schema": 2, "revision": revision, "files": files}
+        manifest_bytes = (json.dumps(manifest, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode("utf-8")
+        (stage / "pages-manifest.json").write_bytes(manifest_bytes)
         os.replace(stage, output)
         stage = None
         manifest_path.parent.mkdir(parents=True, exist_ok=True)
         temp_manifest = manifest_path.with_name(f".{manifest_path.name}.tmp")
-        temp_manifest.write_text(json.dumps(manifest, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+        temp_manifest.write_bytes(manifest_bytes)
         os.replace(temp_manifest, manifest_path)
         return manifest
     finally:
@@ -88,8 +93,9 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--manifest", required=True, type=Path)
+    parser.add_argument("--revision", required=True)
     args = parser.parse_args()
-    manifest = build(args.output, args.manifest)
+    manifest = build(args.output, args.manifest, args.revision)
     print(json.dumps({"ok": True, "files": len(manifest["files"])}, sort_keys=True))
 
 

@@ -23,6 +23,7 @@ REQUIRED_ROOT_FILES = (
 )
 PINNED_ACTIONS = {
     "actions/checkout": "11d5960a326750d5838078e36cf38b85af677262",
+    "actions/setup-python": "a26af69be951a213d495a4c3e4e4022e16d87065",
     "actions/configure-pages": "983d7736d9b0ae728b81ab479565c72886d7745b",
     "actions/upload-pages-artifact": "56afc609e74202658d3ffba0e8f6dda462b719fa",
     "actions/deploy-pages": "d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e",
@@ -34,9 +35,18 @@ def digest(path):
 
 
 class PagesArtifactTests(unittest.TestCase):
-    def build(self, output, manifest):
+    def build(self, output, manifest, revision="a" * 40):
         return subprocess.run(
-            ["python3", str(BUILD_SCRIPT), "--output", str(output), "--manifest", str(manifest)],
+            [
+                "python3",
+                str(BUILD_SCRIPT),
+                "--output",
+                str(output),
+                "--manifest",
+                str(manifest),
+                "--revision",
+                revision,
+            ],
             cwd=ROOT,
             text=True,
             capture_output=True,
@@ -55,7 +65,7 @@ class PagesArtifactTests(unittest.TestCase):
             artifact_files = sorted(
                 path.relative_to(output)
                 for path in output.rglob("*")
-                if path.is_file() and path.name != ".nojekyll"
+                if path.is_file() and path.name not in {".nojekyll", "pages-manifest.json"}
             )
             self.assertEqual(source_files, artifact_files)
             for relative in source_files:
@@ -67,6 +77,8 @@ class PagesArtifactTests(unittest.TestCase):
             for name in ("README.md", "DEPLOY.md", "AGENTS.md", ".env.example"):
                 self.assertFalse((output / name).exists(), name)
             self.assertTrue((output / ".nojekyll").is_file())
+            self.assertEqual(manifest.read_bytes(), (output / "pages-manifest.json").read_bytes())
+            self.assertEqual("a" * 40, json.loads(manifest.read_bytes())["revision"])
 
     def test_manifest_is_deterministic_across_fresh_outputs(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -137,12 +149,33 @@ class PagesArtifactTests(unittest.TestCase):
         self.assertNotIn("github.event_name != 'pull_request'", deploy)
         self.assertNotIn("pages: write", build)
         self.assertNotIn("id-token: write", build)
-        self.assertNotIn("actions/checkout", deploy)
+        self.assertIn("actions/checkout", deploy)
+        self.assertIn("ref: ${{ github.sha }}", deploy)
         self.assertIn("python3 scripts/build_pages_artifact.py", text)
+        self.assertIn('--revision "${GITHUB_SHA}"', text)
+        scan_at = text.index("python3 scripts/scan_pages_artifact.py")
+        upload_at = text.index("actions/upload-pages-artifact")
+        self.assertLess(scan_at, upload_at)
+        self.assertIn("security/pages-artifact-allowlist.json", text)
+        self.assertIn("scripts/verify_pages_deployment.py", text)
+        self.assertIn("needs.build.outputs.manifest_sha256", text)
+        self.assertIn("python-version: '3.12'", text)
+        self.assertIn("install --require-hashes --only-binary=:all:", text)
+        self.assertIn("security/playwright-requirements.txt", text)
+        self.assertNotIn('pip" install --disable-pip-version-check "playwright==', text)
         self.assertIn("path: ${{ runner.temp }}/site", text)
         self.assertNotIn("secrets.", text)
         for action, sha in PINNED_ACTIONS.items():
             self.assertIn(f"{action}@{sha}", text)
+
+    def test_playwright_lock_pins_every_dependency_with_a_hash(self):
+        lock = (ROOT / "security" / "playwright-requirements.txt").read_text(encoding="utf-8")
+        requirements = [line.removesuffix(" \\") for line in lock.splitlines() if line and not line.startswith((" ", "#", "--"))]
+        self.assertEqual(
+            ["greenlet==3.2.5", "playwright==1.55.0", "pyee==13.0.1", "typing-extensions==4.16.0"],
+            requirements,
+        )
+        self.assertEqual(4, lock.count("--hash=sha256:"))
 
 
 if __name__ == "__main__":
