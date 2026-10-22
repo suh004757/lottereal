@@ -65,11 +65,12 @@ function runtime({
     window,
   });
   vm.runInContext(source, context);
+  const googleScript = scripts.find((script) => script.src?.startsWith('https://www.googletagmanager.com/gtag/js'));
   const naverScript = scripts.find((script) => script.src === 'https://wcs.pstatic.net/wcslog.js');
   if (expectAnalytics) {
     assert.ok(naverScript, 'Naver script should be queued for an allowed preference');
   }
-  return { document, navigator, naverScript, scripts, storage, window };
+  return { document, googleScript, navigator, naverScript, scripts, storage, window };
 }
 
 const privacyEnglish = fs.readFileSync(new URL('../public/privacy_EN.html', import.meta.url), 'utf8');
@@ -125,6 +126,38 @@ for (const [state, changeState] of [
     assert.equal(pageviews, 0);
   });
 }
+
+for (const [state, changeState] of [
+  ['consent', (env) => env.window.LotteRealPrivacy.setAnalyticsEnabled(false)],
+  ['Do Not Track', (env) => Object.defineProperty(env.navigator, 'doNotTrack', { configurable: true, get: () => '1' })],
+  ['privacy page', (env) => env.window.history.replaceState({}, '', '/privacy.html?private=1#private')],
+]) {
+  test(`Google delayed load re-checks current ${state} state before config`, () => {
+    const env = runtime();
+    changeState(env);
+
+    assert.ok(env.googleScript?.loadListener, 'Google config must wait for the provider load');
+    env.googleScript.loadListener();
+
+    const commands = (env.window.dataLayer || []).map((entry) => entry[0]);
+    assert.equal(env.window[`ga-disable-${GA_ID}`], true);
+    assert.equal(commands.includes('config'), false);
+  });
+}
+
+test('Google waits for provider load and sends only minimized page data with consent', () => {
+  const env = runtime();
+
+  assert.equal(env.window.dataLayer.length, 0);
+  env.googleScript.loadListener();
+
+  const config = env.window.dataLayer.find((entry) => entry[0] === 'config');
+  assert.ok(config);
+  assert.equal(config[1], GA_ID);
+  assert.equal(config[2].page_path, '/index.html');
+  assert.equal(config[2].page_location, 'https://lottes.example/index.html');
+  assert.equal(config[2].page_referrer, 'https://search.example/results');
+});
 
 test('opt-out still disables the configured Google property', () => {
   const env = runtime();

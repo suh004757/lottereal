@@ -18,6 +18,21 @@ PUBLIC = ROOT / "public"
 TARGET_MARKER = "private_target_01012345678"
 REFERRER_MARKER = "private_referrer_01098765432"
 NAVER_SCRIPT = "https://wcs.pstatic.net/wcslog.js"
+GOOGLE_SCRIPT = "https://www.googletagmanager.com/gtag/js**"
+GOOGLE_STUB = """
+window.dataLayer = window.dataLayer || [];
+const captureGoogleConfig = (entry) => {
+  if (entry && entry[0] === 'config') {
+    fetch('/__google_capture?id=' + encodeURIComponent(entry[1]));
+  }
+};
+window.dataLayer.forEach(captureGoogleConfig);
+const originalDataLayerPush = window.dataLayer.push.bind(window.dataLayer);
+window.dataLayer.push = (entry) => {
+  captureGoogleConfig(entry);
+  return originalDataLayerPush(entry);
+};
+"""
 NAVER_STUB = """
 window.wcs = {};
 window.wcs_do = () => fetch(
@@ -230,6 +245,42 @@ class PrivacyAnalyticsBrowserTests(unittest.TestCase):
         self.assertEqual(captures, [])
         context.close()
 
+    def assert_delayed_google_pageview_is_blocked(self, change_state):
+        context, page = self.new_page()
+        page.unroute("https://www.googletagmanager.com/**")
+        pending = []
+        captures = []
+        page.on(
+            "request",
+            lambda request: captures.append(request.url)
+            if "/__google_capture" in request.url
+            else None,
+        )
+        page.route(GOOGLE_SCRIPT, lambda route: pending.append(route))
+
+        page.goto(
+            f"{self.base}/index.html?target={TARGET_MARKER}#{TARGET_MARKER}-fragment",
+            wait_until="domcontentloaded",
+        )
+        page.locator("[data-notice-allow]").click()
+        page.wait_for_timeout(100)
+        self.assertEqual(len(pending), 1)
+        change_state(page)
+        pending[0].fulfill(
+            status=200, content_type="text/javascript", body=GOOGLE_STUB
+        )
+        page.wait_for_timeout(250)
+
+        self.assertFalse(page.evaluate("LotteRealPrivacy.analyticsEnabled()"))
+        self.assertTrue(page.evaluate("window['ga-disable-G-VPG00DG5V1']"))
+        self.assertFalse(
+            page.evaluate(
+                "(window.dataLayer || []).some(entry => entry[0] === 'config')"
+            )
+        )
+        self.assertEqual(captures, [])
+        context.close()
+
     def test_delayed_naver_load_rechecks_consent(self):
         self.assert_delayed_naver_pageview_is_blocked(
             lambda page: page.evaluate("LotteRealPrivacy.setAnalyticsEnabled(false)")
@@ -245,6 +296,26 @@ class PrivacyAnalyticsBrowserTests(unittest.TestCase):
 
     def test_delayed_naver_load_rechecks_privacy_page(self):
         self.assert_delayed_naver_pageview_is_blocked(
+            lambda page: page.evaluate(
+                "history.replaceState({}, '', '/privacy.html?private=1#private')"
+            )
+        )
+
+    def test_delayed_google_load_rechecks_consent_before_pageview(self):
+        self.assert_delayed_google_pageview_is_blocked(
+            lambda page: page.evaluate("LotteRealPrivacy.setAnalyticsEnabled(false)")
+        )
+
+    def test_delayed_google_load_rechecks_do_not_track_before_pageview(self):
+        self.assert_delayed_google_pageview_is_blocked(
+            lambda page: page.evaluate(
+                "Object.defineProperty(navigator, 'doNotTrack', "
+                "{configurable: true, get: () => '1'})"
+            )
+        )
+
+    def test_delayed_google_load_rechecks_privacy_page_before_pageview(self):
+        self.assert_delayed_google_pageview_is_blocked(
             lambda page: page.evaluate(
                 "history.replaceState({}, '', '/privacy.html?private=1#private')"
             )
