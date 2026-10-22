@@ -8,7 +8,7 @@
   <!-- 홈 -->
   <url>
     <loc>https://lottes.co.kr/</loc>
-    <lastmod>2026-10-21</lastmod>
+    <lastmod>2026-10-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.00</priority>
   </url>
@@ -151,6 +151,11 @@
     <lastmod>2026-03-07</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.30</priority>
+  </url>
+  <url>
+    <loc>https://lottes.co.kr/reports/2026-10-23-songpa-jeonse-loan-rate-before-balance.html</loc>
+    <lastmod>2026-10-23</lastmod>
+    <changefreq>monthly</changefreq>
   </url>
   <url>
     <loc>https://lottes.co.kr/reports/2026-10-21-songpa-real-estate-broker-registration-check.html</loc>
@@ -349,7 +354,7 @@
   </url>
   <url>
     <loc>https://lottes.co.kr/reports/2026-08-26-songpa-jeonse-monthly-rent-cost-guide.html</loc>
-    <lastmod>2026-10-07</lastmod>
+    <lastmod>2026-10-23</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
