@@ -9,6 +9,7 @@ const GA_ID = 'G-VPG00DG5V1';
 function runtime({
   href = 'https://lottes.example/index.html?private=target#fragment',
   referrer = 'https://search.example/results?private=referrer#fragment',
+  expectAnalytics = true,
 } = {}) {
   let current = new URL(href);
   const storage = new Map([['lr_analytics_choice', 'allowed']]);
@@ -65,9 +66,26 @@ function runtime({
   });
   vm.runInContext(source, context);
   const naverScript = scripts.find((script) => script.src === 'https://wcs.pstatic.net/wcslog.js');
-  assert.ok(naverScript, 'Naver script should be queued for an allowed preference');
-  return { document, navigator, naverScript, storage, window };
+  if (expectAnalytics) {
+    assert.ok(naverScript, 'Naver script should be queued for an allowed preference');
+  }
+  return { document, navigator, naverScript, scripts, storage, window };
 }
+
+const privacyEnglish = fs.readFileSync(new URL('../public/privacy_EN.html', import.meta.url), 'utf8');
+
+test('legacy English privacy route remains analytics-suppressed after redirect', () => {
+  const redirect = privacyEnglish.match(/http-equiv="refresh" content="0; url=([^";]+)"/i);
+  assert.ok(redirect, 'privacy_EN.html should retain a redirect for legacy links');
+
+  const destination = new URL(redirect[1], 'https://lottes.example/privacy_EN.html');
+  const env = runtime({ href: destination.href, expectAnalytics: false });
+
+  assert.equal(destination.pathname, '/EN.html');
+  assert.equal(destination.hash, '#privacy');
+  assert.equal(env.window.LotteRealPrivacy.analyticsEnabled(), false);
+  assert.deepEqual(env.scripts, []);
+});
 
 test('Naver minimizes an external referrer before the provider reads it', () => {
   const env = runtime();

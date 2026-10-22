@@ -169,6 +169,23 @@ class PrivacyAnalyticsBrowserTests(unittest.TestCase):
         self.assertNotIn(TARGET_MARKER, capture_url)
         self.assertNotIn(REFERRER_MARKER, capture_url)
 
+    def test_legacy_english_privacy_redirect_stays_untracked_with_consent(self):
+        context, page = self.new_page()
+        context.add_init_script(
+            "localStorage.setItem('lr_analytics_choice', 'allowed')"
+        )
+        _, _, provider_requests = self.capture_naver(page)
+
+        page.goto(f"{self.base}/privacy_EN.html", wait_until="domcontentloaded")
+        page.wait_for_url(f"{self.base}/EN.html#privacy")
+        page.wait_for_load_state("networkidle")
+
+        self.assertEqual(page.url, f"{self.base}/EN.html#privacy")
+        self.assertTrue(page.locator("#privacy").is_visible())
+        self.assertEqual(provider_requests, [])
+        self.assertFalse(page.evaluate("LotteRealPrivacy.analyticsEnabled()"))
+        context.close()
+
     def test_same_origin_referrer_is_minimized_after_consent(self):
         context, page = self.new_page()
         captures, _, provider_requests = self.capture_naver(page)

@@ -137,10 +137,11 @@ class InternationalLandingTests(unittest.TestCase):
 
         for filename in legacy_pages:
             html = (PUBLIC / filename).read_text(encoding='utf-8')
+            destination = 'EN.html#privacy' if filename == 'privacy_EN.html' else 'EN.html'
             self.assertIn('<meta name="robots" content="noindex,follow">', html, filename)
             self.assertIn('<link rel="canonical" href="https://lottes.co.kr/EN.html">', html, filename)
-            self.assertIn('<meta http-equiv="refresh" content="0; url=EN.html">', html, filename)
-            self.assertIn('href="EN.html"', html, filename)
+            self.assertIn(f'<meta http-equiv="refresh" content="0; url={destination}">', html, filename)
+            self.assertIn(f'href="{destination}"', html, filename)
             self.assertIn('js/privacyAnalytics.js', html, filename)
             for marker in forbidden:
                 self.assertNotIn(marker, html, f'{filename}: {marker}')

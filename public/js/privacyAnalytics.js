@@ -7,10 +7,13 @@
   const ANALYTICS_ALLOWED = 'allowed';
   const ANALYTICS_REQUIRED_ONLY = 'required-only';
   const PRIVACY_PAGES = new Set(['/privacy.html', '/privacy_EN.html']);
+  const PRIVACY_SECTION_PAGES = new Set(['/EN.html']);
 
   function isPrivacyPage() {
     const path = window.location.pathname || '/';
-    return PRIVACY_PAGES.has(path) || PRIVACY_PAGES.has(`/${path.split('/').pop()}`);
+    const page = `/${path.split('/').pop()}`;
+    return PRIVACY_PAGES.has(path) || PRIVACY_PAGES.has(page) ||
+      (PRIVACY_SECTION_PAGES.has(page) && window.location.hash === '#privacy');
   }
 
   function analyticsChoice() {
