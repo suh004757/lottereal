@@ -37,7 +37,27 @@ select 'retention_cascade',
            and confrelid = 'public.inquiries'::regclass
            and contype = 'f'
            and confdeltype = 'c'
+           and conkey = array[
+             (select attnum from pg_attribute
+              where attrelid = 'public.inquiry_status_audit'::regclass
+                and attname = 'inquiry_id')
+           ]::smallint[]
+           and confkey = array[
+             (select attnum from pg_attribute
+              where attrelid = 'public.inquiries'::regclass
+                and attname = 'id')
+           ]::smallint[]
        )
+union all
+select 'table_owner_postgres',
+       (select c.relowner = 'postgres'::regrole
+        from pg_class c
+        where c.oid = 'public.inquiry_status_audit'::regclass)
+union all
+select 'sequence_owner_postgres',
+       (select c.relowner = 'postgres'::regrole
+        from pg_class c
+        where c.oid = 'public.inquiry_status_audit_id_seq'::regclass)
 union all
 select 'rpc_owner_postgres',
        pg_get_userbyid(
@@ -113,7 +133,8 @@ First exercise one status change from the live dashboard with a freshly refreshe
 admin session and confirm the UI succeeds. Then run this transactional SQL probe.
 It selects its target internally, prints only `admin RPC probe: ok`, and rolls the
 status change and audit insert back. If there is no admin or no inquiry, it fails
-closed without printing either identifier.
+closed without printing either identifier. The caller performs only a plain read;
+the row lock is acquired inside the `SECURITY DEFINER` RPC.
 
 ```sql
 begin;
@@ -161,8 +182,7 @@ begin
   from public.inquiries
   where status in ('unread', 'read')
   order by created_at
-  limit 1
-  for update;
+  limit 1;
 
   if probe_inquiry is null then
     raise exception 'admin RPC probe prerequisites missing';
@@ -251,18 +271,44 @@ with expected_table(role_name, object_name, privilege_name, expected) as (
   select role_name,
          'public.inquiry_status_audit_id_seq'::text as object_name,
          privilege_name,
-         has_sequence_privilege(
+         not has_sequence_privilege(
            role_name,
            'public.inquiry_status_audit_id_seq',
            privilege_name
-         ) = false as matches_expected
+         ) as matches_expected
   from (values ('anon'), ('authenticated'), ('service_role')) roles(role_name)
   cross join (values ('USAGE'), ('SELECT'), ('UPDATE')) privileges(privilege_name)
-), public_acl as (
-  select 'PUBLIC'::text as role_name,
+), function_results as (
+  select role_name,
+         'public.admin_set_inquiry_status(uuid,text)'::text as object_name,
+         'EXECUTE'::text as privilege_name,
+         has_function_privilege(
+           role_name,
+           'public.admin_set_inquiry_status(uuid,text)',
+           'EXECUTE'
+         ) = expected as matches_expected
+  from (values
+    ('anon', false),
+    ('authenticated', true),
+    ('service_role', false)
+  ) roles(role_name, expected)
+), allowed_acl(object_kind, object_oid, grantee, privilege_name) as (
+  values
+    ('relation', 'public.inquiries'::regclass::oid, 'anon'::regrole::oid, 'INSERT'),
+    ('relation', 'public.inquiries'::regclass::oid, 'authenticated'::regrole::oid, 'SELECT'),
+    ('relation', 'public.inquiries'::regclass::oid, 'service_role'::regrole::oid, 'SELECT'),
+    ('relation', 'public.inquiries'::regclass::oid, 'service_role'::regrole::oid, 'DELETE'),
+    ('relation', 'public.inquiry_status_audit'::regclass::oid, 'authenticated'::regrole::oid, 'SELECT'),
+    ('relation', 'public.inquiry_status_audit'::regclass::oid, 'service_role'::regrole::oid, 'SELECT'),
+    ('function', 'public.admin_set_inquiry_status(uuid,text)'::regprocedure::oid,
+      'authenticated'::regrole::oid, 'EXECUTE')
+), actual_acl as (
+  select 'relation'::text as object_kind,
+         c.oid as object_oid,
          n.nspname || '.' || c.relname as object_name,
+         a.grantee,
          a.privilege_type as privilege_name,
-         false as matches_expected
+         a.is_grantable
   from pg_class c
   join pg_namespace n on n.oid = c.relnamespace
   cross join lateral aclexplode(coalesce(c.relacl, acldefault(c.relkind, c.relowner))) a
@@ -272,40 +318,117 @@ with expected_table(role_name, object_name, privilege_name, expected) as (
       'inquiry_status_audit',
       'inquiry_status_audit_id_seq'
     )
-    and a.grantee = 0
+    and a.grantee <> c.relowner
+
+  union all
+
+  select 'function',
+         p.oid,
+         'public.admin_set_inquiry_status(uuid,text)',
+         a.grantee,
+         a.privilege_type,
+         a.is_grantable
+  from pg_proc p
+  cross join lateral aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a
+  where p.oid = 'public.admin_set_inquiry_status(uuid,text)'::regprocedure
+    and a.grantee <> p.proowner
+), unexpected_acl as (
+  select coalesce(pg_get_userbyid(a.grantee), 'PUBLIC') as role_name,
+         a.object_name,
+         a.privilege_name,
+         false as matches_expected
+  from actual_acl a
+  where a.is_grantable
+     or not exists (
+       select 1
+       from allowed_acl e
+       where e.object_kind = a.object_kind
+         and e.object_oid = a.object_oid
+         and e.grantee = a.grantee
+         and e.privilege_name = a.privilege_name
+     )
 )
 select * from table_results
 union all
 select * from sequence_results
 union all
-select * from public_acl
+select * from function_results
+union all
+select * from unexpected_acl
 order by object_name, role_name, privilege_name;
 ```
 
-The query must return no `f` values. `public_acl` should return no rows. Finally,
-re-run the admin RPC transaction from step 4 and the retention schema checks:
+The query must return no `f` values. `unexpected_acl` must return no rows; this
+rejects direct grants to `PUBLIC` and every other non-owner role, not only the
+three application roles. Then re-run the admin RPC transaction from step 4 and
+run this rolled-back behavioral retention probe. It uses an existing audit row,
+keeps identifiers internal, and prints only one fixed success notice:
 
 ```sql
-select
-  has_table_privilege('service_role', 'public.inquiries', 'DELETE')
-    as service_parent_delete,
-  not has_table_privilege(
-    'service_role',
-    'public.inquiry_status_audit',
-    'DELETE,TRUNCATE'
-  ) as service_direct_audit_delete_denied,
-  exists (
+begin;
+set local role service_role;
+
+do $retention_probe$
+declare
+  probe_inquiry uuid;
+  parent_deleted bigint;
+begin
+  select a.inquiry_id
+  into probe_inquiry
+  from public.inquiry_status_audit a
+  join public.inquiries i on i.id = a.inquiry_id
+  order by a.created_at
+  limit 1;
+
+  if probe_inquiry is null then
+    raise exception 'service_role retention cascade probe prerequisites missing';
+  end if;
+
+  begin
+    update public.inquiry_status_audit
+    set new_status = new_status
+    where inquiry_id = probe_inquiry;
+    raise exception 'service_role direct audit update unexpectedly allowed';
+  exception
+    when insufficient_privilege then
+      null;
+  end;
+
+  begin
+    delete from public.inquiry_status_audit
+    where inquiry_id = probe_inquiry;
+    raise exception 'service_role direct audit delete unexpectedly allowed';
+  exception
+    when insufficient_privilege then
+      null;
+  end;
+
+  delete from public.inquiries
+  where id = probe_inquiry;
+  get diagnostics parent_deleted = row_count;
+
+  if parent_deleted <> 1 then
+    raise exception 'service_role parent retention delete failed';
+  end if;
+
+  if exists (
     select 1
-    from pg_constraint
-    where conrelid = 'public.inquiry_status_audit'::regclass
-      and confrelid = 'public.inquiries'::regclass
-      and contype = 'f'
-      and confdeltype = 'c'
-  ) as retention_cascade_present;
+    from public.inquiry_status_audit
+    where inquiry_id = probe_inquiry
+  ) then
+    raise exception 'service_role parent delete did not cascade';
+  end if;
+
+  raise notice 'service_role retention cascade probe: ok';
+end
+$retention_probe$;
+
+rollback;
 ```
 
-All three values must be `t`. This establishes that retention can delete the
-parent and invoke the referential cascade without granting direct audit deletion.
+The probe must emit its fixed success notice and then roll back. This demonstrates
+that service-role parent retention deletion cascades while direct child update and
+delete remain denied.
 
 ## Forward-only rollback
 

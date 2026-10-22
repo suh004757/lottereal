@@ -10,6 +10,10 @@ ADAPTER = ROOT / "public" / "js" / "services" / "backendAdapter.js"
 RUNBOOK = ROOT / "docs" / "engineering" / "inquiry-status-hardening-rollout.md"
 
 
+def sql_fences(markdown):
+    return re.findall(r"```sql\n(.*?)```", markdown, re.DOTALL | re.IGNORECASE)
+
+
 class InquiryStatusSecurityMigrationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -41,6 +45,37 @@ class InquiryStatusSecurityMigrationTests(unittest.TestCase):
         self.assertIn("raise exception 'inquiry_status_audit schema validation failed'", self.expand)
         self.assertIn("alter table public.inquiry_status_audit owner to postgres", self.expand)
 
+    def test_migrations_require_the_exact_retention_foreign_key_mapping(self):
+        for path in (EXPAND, CONTRACT):
+            sql = path.read_text(encoding="utf-8").lower()
+            with self.subTest(migration=path.name):
+                self.assertRegex(
+                    sql,
+                    r"conkey\s*=\s*array\[\s*\(select attnum from pg_attribute\s*"
+                    r"where attrelid = 'public\.inquiry_status_audit'::regclass\s*"
+                    r"and attname = 'inquiry_id'\)\s*\]::smallint\[\]",
+                )
+                self.assertRegex(
+                    sql,
+                    r"confkey\s*=\s*array\[\s*\(select attnum from pg_attribute\s*"
+                    r"where attrelid = 'public\.inquiries'::regclass\s*"
+                    r"and attname = 'id'\)\s*\]::smallint\[\]",
+                )
+
+    def test_migrations_set_and_verify_audit_object_owners(self):
+        for path in (EXPAND, CONTRACT):
+            sql = path.read_text(encoding="utf-8").lower()
+            with self.subTest(migration=path.name):
+                self.assertIn("alter table public.inquiry_status_audit owner to postgres", sql)
+                self.assertIn("alter sequence public.inquiry_status_audit_id_seq owner to postgres", sql)
+                self.assertIn(
+                    "alter function public.admin_set_inquiry_status(uuid, text) owner to postgres",
+                    sql,
+                )
+                self.assertIn("raise exception 'inquiry hardening owner validation failed'", sql)
+                self.assertIn("c.relowner <> 'postgres'::regrole", sql)
+                self.assertIn("p.proowner <> 'postgres'::regrole", sql)
+
     def test_030_repairs_private_table_and_sequence_acls_deterministically(self):
         self.assertIn(
             "revoke all privileges on table public.inquiry_status_audit from public, anon, authenticated, service_role",
@@ -59,6 +94,23 @@ class InquiryStatusSecurityMigrationTests(unittest.TestCase):
             r"grant\s+(?:insert|update|delete|truncate)[^;]*inquiry_status_audit",
         )
         self.assertNotRegex(self.expand, r"grant\s+[^;]*inquiry_status_audit_id_seq")
+
+    def test_030_revokes_unexpected_audit_object_acl_grantees(self):
+        self.assertIn("aclexplode", self.expand)
+        self.assertIn("a.grantee <> c.relowner", self.expand)
+        self.assertIn("a.grantee <> p.proowner", self.expand)
+        self.assertIn(
+            "revoke all privileges on table public.inquiry_status_audit from %i",
+            self.expand,
+        )
+        self.assertIn(
+            "revoke all privileges on sequence public.inquiry_status_audit_id_seq from %i",
+            self.expand,
+        )
+        self.assertIn(
+            "revoke all privileges on function public.admin_set_inquiry_status(uuid, text) from %i",
+            self.expand,
+        )
 
     def test_030_rpc_has_fixed_owner_path_and_exact_execute_acl(self):
         self.assertIn("create or replace function public.admin_set_inquiry_status", self.expand)
@@ -128,6 +180,48 @@ class InquiryStatusSecurityMigrationTests(unittest.TestCase):
             sql,
             r"grant\s+(?:insert|update|delete|truncate)[^;]*inquiry_status_audit",
         )
+
+    def test_031_revokes_every_unexpected_non_owner_acl_grantee(self):
+        sql = CONTRACT.read_text(encoding="utf-8").lower()
+        self.assertIn("aclexplode", sql)
+        self.assertIn("a.grantee <> c.relowner", sql)
+        self.assertIn("a.grantee <> p.proowner", sql)
+        self.assertIn("revoke all privileges on table public.%i from %i", sql)
+        self.assertIn("revoke all privileges on sequence public.inquiry_status_audit_id_seq from %i", sql)
+        self.assertIn("revoke all privileges on function public.admin_set_inquiry_status(uuid, text) from %i", sql)
+
+    def test_runbook_rpc_probe_never_locks_as_the_caller(self):
+        runbook = RUNBOOK.read_text(encoding="utf-8").lower()
+        probe = next(block for block in sql_fences(runbook) if "admin rpc probe: ok" in block)
+        self.assertNotIn("for update", probe)
+        self.assertEqual(self.expand.count("for update"), 1)
+
+    def test_runbook_has_rolled_back_service_role_cascade_behavior_probe(self):
+        runbook = RUNBOOK.read_text(encoding="utf-8").lower()
+        probe = next(
+            block for block in sql_fences(runbook)
+            if "service_role retention cascade probe: ok" in block
+        )
+        self.assertIn("begin;", probe)
+        self.assertIn("set local role service_role", probe)
+        self.assertIn("update public.inquiry_status_audit", probe)
+        self.assertIn("delete from public.inquiry_status_audit", probe)
+        self.assertGreaterEqual(probe.count("when insufficient_privilege then"), 2)
+        self.assertIn("delete from public.inquiries", probe)
+        self.assertIn("if exists", probe)
+        self.assertIn("rollback;", probe)
+        self.assertNotRegex(probe, r"raise\s+(?:notice|warning|log).*%")
+
+    def test_runbook_verifies_owners_exact_fk_and_all_non_owner_acl_grantees(self):
+        runbook = RUNBOOK.read_text(encoding="utf-8").lower()
+        self.assertIn("table_owner_postgres", runbook)
+        self.assertIn("sequence_owner_postgres", runbook)
+        self.assertIn("rpc_owner_postgres", runbook)
+        self.assertIn("conkey", runbook)
+        self.assertIn("confkey", runbook)
+        self.assertIn("unexpected_acl", runbook)
+        self.assertIn("a.grantee <> c.relowner", runbook)
+        self.assertIn("a.grantee <> p.proowner", runbook)
 
     def test_runbook_enforces_order_no_pii_probes_and_forward_only_rollback(self):
         self.assertTrue(RUNBOOK.exists(), "missing inquiry hardening rollout runbook")
