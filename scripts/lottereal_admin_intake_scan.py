@@ -1,12 +1,5 @@
 #!/usr/bin/env python3
-"""Read-only scanner for private LotteReal ADMIN chat drafts.
-
-This helper is invoked by the assistant from the owner's private Discord DM
-when asked to review backend drafts. It never sends to Discord itself. Because
-its output is only fetched on demand for owner review, it returns the full
-private draft while excluding any system credentials (which are not stored in
-the report row).
-"""
+"""Read-only, metadata-only scanner for private ADMIN chat drafts."""
 
 from __future__ import annotations
 
@@ -14,6 +7,7 @@ import argparse
 import json
 from typing import Any
 from urllib.parse import urlencode
+from uuid import UUID
 
 from lottereal_supabase import load_env, supabase_request
 
@@ -30,6 +24,15 @@ def is_admin_chat_intake(item: dict) -> bool:
     return item.get('status') == 'draft' and metadata.get('intake_source') == 'admin-chat'
 
 
+def normalize_draft_id(value: object) -> str | None:
+    if not isinstance(value, str):
+        return None
+    try:
+        return str(UUID(value))
+    except (ValueError, AttributeError):
+        return None
+
+
 def fetch_admin_intakes(page_size: int = DEFAULT_PAGE_SIZE) -> list[dict]:
     env = load_env()
     page_size = max(1, min(int(page_size), 1000))
@@ -37,7 +40,7 @@ def fetch_admin_intakes(page_size: int = DEFAULT_PAGE_SIZE) -> list[dict]:
     collected: list[dict] = []
     while True:
         query = urlencode({
-            'select': 'id,slug,title,summary,report_md,evidence_json,status,metadata,created_at,updated_at',
+            'select': 'id,status,metadata',
             'status': 'eq.draft',
             'order': 'created_at.asc,id.asc',
             'limit': str(page_size),
@@ -54,16 +57,31 @@ def fetch_admin_intakes(page_size: int = DEFAULT_PAGE_SIZE) -> list[dict]:
     return collected
 
 
-def full_scan_item(item: dict) -> dict[str, Any]:
-    fields = (
-        'id', 'slug', 'title', 'summary', 'report_md', 'evidence_json',
-        'status', 'metadata', 'created_at', 'updated_at'
-    )
-    return {field: item.get(field) for field in fields}
+def safe_image_count(value: object) -> int:
+    try:
+        count = int(str(value)) if value is not None else 0
+    except (TypeError, ValueError, OverflowError):
+        return 0
+    return max(0, min(count, 30))
+
+
+def scan_item(item: dict) -> dict[str, Any]:
+    metadata = intake_metadata(item)
+    intake_type = metadata.get('intake_type')
+    photo_state = metadata.get('photo_upload_state')
+    return {
+        'id': normalize_draft_id(item.get('id')),
+        'intake_type': intake_type if intake_type in {'listing', 'article'} else 'unknown',
+        'image_count': safe_image_count(metadata.get('image_count')),
+        'photo_upload_state': photo_state if photo_state == 'complete' else 'unknown',
+    }
 
 
 def build_scan_payload(items: list[dict]) -> dict[str, Any]:
-    drafts = [full_scan_item(item) for item in items if is_admin_chat_intake(item)]
+    drafts = [
+        scan_item(item) for item in items
+        if is_admin_chat_intake(item) and normalize_draft_id(item.get('id'))
+    ]
     return {'draft_count': len(drafts), 'drafts': drafts}
 
 

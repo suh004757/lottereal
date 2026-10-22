@@ -1,11 +1,14 @@
 from pathlib import Path
 import sys
 import unittest
+from unittest import mock
+from urllib.parse import parse_qs
 
 REPO = Path(__file__).resolve().parents[1]
 SCRIPTS = REPO / 'scripts'
 sys.path.insert(0, str(SCRIPTS))
 
+import lottereal_admin_intake_scan as scanner
 from lottereal_admin_intake_scan import build_scan_payload, is_admin_chat_intake
 
 
@@ -24,9 +27,9 @@ class AdminIntakeScanTest(unittest.TestCase):
             'metadata': {'intake_source': 'other'}
         }))
 
-    def test_scan_payload_returns_full_private_draft_for_owner_review(self):
+    def test_scan_payload_returns_only_bounded_allowlisted_metadata(self):
         item = {
-            'id': '12345678-abcd-efgh',
+            'id': '12345678-abcd-4abc-8def-123456789abc',
             'slug': 'admin-intake-listing-12345678',
             'created_at': '2026-08-29T01:00:00Z',
             'updated_at': '2026-08-29T01:00:01Z',
@@ -44,14 +47,50 @@ class AdminIntakeScanTest(unittest.TestCase):
             }
         }
         payload = build_scan_payload([item])
-        self.assertEqual(payload['draft_count'], 1)
-        draft = payload['drafts'][0]
-        self.assertEqual(draft['id'], item['id'])
-        self.assertEqual(draft['title'], item['title'])
-        self.assertEqual(draft['summary'], item['summary'])
-        self.assertEqual(draft['report_md'], item['report_md'])
-        self.assertEqual(draft['metadata'], item['metadata'])
-        self.assertEqual(draft['status'], 'draft')
+        self.assertEqual(payload, {
+            'draft_count': 1,
+            'drafts': [{
+                'id': '12345678-abcd-4abc-8def-123456789abc',
+                'intake_type': 'listing',
+                'image_count': 0,
+                'photo_upload_state': 'unknown',
+            }],
+        })
+        serialized = str(payload)
+        for private_value in (
+            item['title'], item['summary'], item['report_md'], 'private-user-id',
+            '010-1234-5678', '101동', '1203호', 'access_code',
+        ):
+            self.assertNotIn(private_value, serialized)
+
+    def test_fetch_projects_no_free_text_or_evidence_columns(self):
+        queries = []
+
+        def request(_method, _table, _env, *, query):
+            queries.append(parse_qs(query.removeprefix('?')))
+            return 200, []
+
+        with (
+            mock.patch.object(scanner, 'load_env', return_value={}),
+            mock.patch.object(scanner, 'supabase_request', side_effect=request),
+        ):
+            self.assertEqual(scanner.fetch_admin_intakes(), [])
+
+        self.assertEqual(len(queries), 1)
+        selected = queries[0]['select'][0].split(',')
+        self.assertEqual(selected, ['id', 'status', 'metadata'])
+        for forbidden in ('slug', 'title', 'summary', 'report_md', 'evidence_json'):
+            self.assertNotIn(forbidden, selected)
+
+    def test_non_uuid_identifier_cannot_escape_as_metadata(self):
+        item = {
+            'id': 'customer-홍길동-010-1234-5678',
+            'status': 'draft',
+            'metadata': {'intake_source': 'admin-chat', 'intake_type': 'listing'},
+        }
+        payload = build_scan_payload([item])
+        self.assertEqual(payload, {'draft_count': 0, 'drafts': []})
+        self.assertNotIn('홍길동', str(payload))
 
     def test_scan_has_no_discord_delivery_or_seen_state(self):
         source = (SCRIPTS / 'lottereal_admin_intake_scan.py').read_text(encoding='utf-8')

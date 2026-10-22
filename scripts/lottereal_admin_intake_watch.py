@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-"""Token-free watcher for new private LotteReal ADMIN intake drafts.
+"""Durable metadata-only watcher for private ADMIN intake drafts.
 
-The script prints one metadata-only alert when unseen draft IDs appear. Hermes
-owns Discord delivery; this file contains no Discord credentials or transport.
+Stdout has no delivery acknowledgement, so active drafts remain pending and are
+re-emitted on a bounded cooldown until they leave the draft query.
 """
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
 import fcntl
 import json
 import os
 from pathlib import Path
 import sys
-from typing import Iterable
 from uuid import UUID
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -24,33 +24,33 @@ from lottereal_admin_intake_scan import fetch_admin_intakes
 
 DEFAULT_STATE_PATH = Path('/opt/data/state/lottereal-admin-intake-watch.json')
 MAX_ALERT_DRAFTS = 3
+QUEUE_VERSION = 1
+REEMIT_COOLDOWN = timedelta(hours=1)
+RECOVERY_SIGNAL = '⚠️ ADMIN intake watcher state recovered; active drafts will be replayed.'
 
 
-def load_seen_ids(path: Path) -> set[str]:
-    if not path.exists():
-        return set()
+class UnsupportedQueueVersion(RuntimeError):
+    """State belongs to a newer or incompatible watcher runtime."""
+
+
+def _utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _timestamp(value: datetime) -> str:
+    if value.tzinfo is None:
+        raise ValueError('watcher time must be timezone-aware')
+    return value.astimezone(timezone.utc).isoformat().replace('+00:00', 'Z')
+
+
+def _parse_timestamp(value: object) -> datetime | None:
+    if not isinstance(value, str):
+        return None
     try:
-        payload = json.loads(path.read_text(encoding='utf-8'))
-        values = payload.get('seen_ids') if isinstance(payload, dict) else None
-        if not isinstance(values, list) or not all(isinstance(value, str) for value in values):
-            raise ValueError('Invalid ADMIN intake watcher state')
-        return set(values)
-    except (json.JSONDecodeError, UnicodeDecodeError, ValueError):
-        quarantine = path.with_name(path.name + '.corrupt')
-        suffix = 1
-        while quarantine.exists():
-            quarantine = path.with_name(f'{path.name}.corrupt-{suffix}')
-            suffix += 1
-        os.replace(path, quarantine)
-        return set()
-
-
-def write_seen_ids(path: Path, seen_ids: Iterable[str]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_name(f'.{path.name}.{os.getpid()}.tmp')
-    payload = {'seen_ids': sorted(set(seen_ids))}
-    temporary.write_text(json.dumps(payload, ensure_ascii=False, sort_keys=True), encoding='utf-8')
-    os.replace(temporary, path)
+        parsed = datetime.fromisoformat(value.replace('Z', '+00:00'))
+        return parsed.astimezone(timezone.utc) if parsed.tzinfo is not None else None
+    except (ValueError, OverflowError):
+        return None
 
 
 def normalize_draft_id(value: object) -> str | None:
@@ -62,15 +62,84 @@ def normalize_draft_id(value: object) -> str | None:
         return None
 
 
-def select_unseen(drafts: list[dict], seen_ids: set[str]) -> list[dict]:
-    normalized_seen = {normalized for value in seen_ids if (normalized := normalize_draft_id(value))}
-    unseen = []
-    for draft in drafts:
-        normalized_id = normalize_draft_id(draft.get('id'))
-        if normalized_id and normalized_id not in normalized_seen:
-            normalized_seen.add(normalized_id)
-            unseen.append({**draft, 'id': normalized_id})
-    return unseen
+def empty_state() -> dict:
+    return {'queue_version': QUEUE_VERSION, 'pending': {}}
+
+
+def _validate_state(payload: object) -> dict:
+    if not isinstance(payload, dict):
+        raise ValueError('invalid ADMIN intake watcher state')
+    version = payload.get('queue_version')
+    if version != QUEUE_VERSION:
+        if isinstance(version, int) and version > QUEUE_VERSION:
+            raise UnsupportedQueueVersion('unsupported ADMIN intake watcher state version')
+        raise ValueError('invalid ADMIN intake watcher state version')
+    pending = payload.get('pending')
+    if not isinstance(pending, dict):
+        raise ValueError('invalid ADMIN intake pending queue')
+    validated = {}
+    for key, item in pending.items():
+        if (
+            normalize_draft_id(key) != key
+            or not isinstance(item, dict)
+            or set(item) != {'id', 'discovered_at', 'last_emitted_at', 'emit_count'}
+            or item.get('id') != key
+            or _parse_timestamp(item.get('discovered_at')) is None
+            or (
+                item.get('last_emitted_at') is not None
+                and _parse_timestamp(item.get('last_emitted_at')) is None
+            )
+            or not isinstance(item.get('emit_count'), int)
+            or isinstance(item.get('emit_count'), bool)
+            or not 0 <= item['emit_count'] <= 1_000_000
+        ):
+            raise ValueError('invalid ADMIN intake pending item')
+        validated[key] = dict(item)
+    return {'queue_version': QUEUE_VERSION, 'pending': validated}
+
+
+def _fsync_directory(path: Path) -> None:
+    directory_fd = os.open(path, os.O_RDONLY | getattr(os, 'O_DIRECTORY', 0))
+    try:
+        os.fsync(directory_fd)
+    finally:
+        os.close(directory_fd)
+
+
+def load_state(path: Path) -> tuple[dict, bool]:
+    if not path.exists():
+        return empty_state(), False
+    try:
+        return _validate_state(json.loads(path.read_text(encoding='utf-8'))), False
+    except UnsupportedQueueVersion:
+        raise
+    except (json.JSONDecodeError, UnicodeDecodeError, ValueError):
+        quarantine = path.with_name(path.name + '.corrupt')
+        suffix = 1
+        while quarantine.exists():
+            quarantine = path.with_name(f'{path.name}.corrupt-{suffix}')
+            suffix += 1
+        os.chmod(path, 0o600)
+        os.replace(path, quarantine)
+        _fsync_directory(path.parent)
+        return empty_state(), True
+
+
+def write_state(path: Path, state: dict) -> None:
+    validated = _validate_state(state)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f'.{path.name}.{os.getpid()}.tmp')
+    try:
+        with temporary.open('w', encoding='utf-8') as output:
+            json.dump(validated, output, ensure_ascii=False, sort_keys=True)
+            output.flush()
+            os.fchmod(output.fileno(), 0o600)
+            os.fsync(output.fileno())
+        os.replace(temporary, path)
+        _fsync_directory(path.parent)
+    finally:
+        if temporary.exists():
+            temporary.unlink()
 
 
 def safe_image_count(value: object) -> int:
@@ -99,9 +168,55 @@ def build_alert(drafts: list[dict]) -> str:
             f'• 접수번호 {draft_id}',
         ])
     if count > MAX_ALERT_DRAFTS:
-        lines.extend(['', f'외 {count - MAX_ALERT_DRAFTS}건은 “초안 확인”이라고 요청하면 전체를 불러옵니다.'])
+        lines.extend(['', f'외 {count - MAX_ALERT_DRAFTS}건은 관리자 화면에서 확인하세요.'])
     lines.extend(['', '비공개 검토 대기 상태이며 자동 게시되지 않았습니다.'])
     return '\n'.join(lines)
+
+
+def process_drafts(
+    drafts: list[dict],
+    state_path: Path,
+    *,
+    now: datetime | None = None,
+) -> list[str]:
+    instant = (now or _utc_now()).astimezone(timezone.utc)
+    state, recovered = load_state(state_path)
+    current: dict[str, dict] = {}
+    for draft in drafts:
+        draft_id = normalize_draft_id(draft.get('id'))
+        if draft_id and draft_id not in current:
+            current[draft_id] = draft
+
+    previous = state['pending']
+    pending = {}
+    due_ids = []
+    for draft_id in current:
+        item = previous.get(draft_id)
+        if item is None:
+            item = {
+                'id': draft_id,
+                'discovered_at': _timestamp(instant),
+                'last_emitted_at': None,
+                'emit_count': 0,
+            }
+        else:
+            item = dict(item)
+        last_emitted = _parse_timestamp(item['last_emitted_at'])
+        if (
+            last_emitted is None
+            or instant < last_emitted
+            or instant - last_emitted >= REEMIT_COOLDOWN
+        ):
+            item['last_emitted_at'] = _timestamp(instant)
+            item['emit_count'] = min(item['emit_count'] + 1, 1_000_000)
+            due_ids.append(draft_id)
+        pending[draft_id] = item
+
+    write_state(state_path, {'queue_version': QUEUE_VERSION, 'pending': pending})
+    messages = [RECOVERY_SIGNAL] if recovered else []
+    if due_ids:
+        messages.append(build_alert([current[draft_id] for draft_id in due_ids]))
+    return messages
 
 
 def main() -> int:
@@ -109,20 +224,15 @@ def main() -> int:
     lock_path = state_path.with_suffix(state_path.suffix + '.lock')
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     with lock_path.open('a+', encoding='utf-8') as lock_file:
+        os.chmod(lock_path, 0o600)
         try:
             fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
             return 0
 
-        drafts = fetch_admin_intakes()
-        seen_ids = load_seen_ids(state_path)
-        unseen = select_unseen(drafts, seen_ids)
-        if not unseen:
-            return 0
-
-        print(build_alert(unseen), flush=True)
-        seen_ids.update(draft['id'] for draft in unseen)
-        write_seen_ids(state_path, seen_ids)
+        messages = process_drafts(fetch_admin_intakes(), state_path, now=_utc_now())
+        for message in messages:
+            print(message, flush=True)
     return 0
 
 
