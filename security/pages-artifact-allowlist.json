@@ -2,5 +2,6 @@
   "schema": 1,
   "supabase_browser_anon_sha256": [
     "ccb17c057bebeeb18bf619a6fec5ce4660d4168e205b2ac06823852056a3357a"
-  ]
+  ],
+  "google_browser_api_key_sha256": []
 }

@@ -55,6 +55,8 @@ class PostPushRollbackSafetyTests(unittest.TestCase):
                 return 0, ""
             if cmd in (["git", "rev-parse", "HEAD"], ["git", "rev-parse", "refs/remotes/origin/main"]):
                 return 0, EXPECTED + "\n"
+            if cmd == ["git", "rev-list", "--parents", "-n", "1", EXPECTED]:
+                return 0, EXPECTED + " " + OTHER + "\n"
             if cmd == ["git", "revert", "--no-edit", EXPECTED]:
                 return 0, ""
             if cmd == ["git", "push", f"--force-with-lease=refs/heads/main:{EXPECTED}", "origin", "HEAD:main"]:
@@ -71,6 +73,34 @@ class PostPushRollbackSafetyTests(unittest.TestCase):
             ["git", "push", f"--force-with-lease=refs/heads/main:{EXPECTED}", "origin", "HEAD:main"],
             calls,
         )
+
+    def test_reverts_merge_commit_using_first_parent_as_mainline(self):
+        calls = []
+        first_parent = "c" * 40
+        second_parent = "d" * 40
+        revert_head = "e" * 40
+
+        def fake_run(cmd, **_kwargs):
+            calls.append(cmd)
+            if cmd == ["git", "fetch", "origin", "main"]:
+                return 0, ""
+            if cmd in (["git", "rev-parse", "HEAD"], ["git", "rev-parse", "refs/remotes/origin/main"]):
+                return 0, EXPECTED + "\n"
+            if cmd == ["git", "rev-list", "--parents", "-n", "1", EXPECTED]:
+                return 0, f"{EXPECTED} {first_parent} {second_parent}\n"
+            if cmd == ["git", "revert", "--no-edit", "-m", "1", EXPECTED]:
+                return 0, ""
+            if cmd == ["git", "push", f"--force-with-lease=refs/heads/main:{EXPECTED}", "origin", "HEAD:main"]:
+                return 0, ""
+            if cmd == ["git", "rev-parse", "--short", "HEAD"]:
+                return 0, revert_head[:7] + "\n"
+            raise AssertionError(cmd)
+
+        with mock.patch.object(post_push_guard, "run", side_effect=fake_run):
+            result = post_push_guard.rollback([], {}, EXPECTED)
+        self.assertTrue(result["rolled_back"])
+        self.assertIn(["git", "revert", "--no-edit", "-m", "1", EXPECTED], calls)
+        self.assertNotIn(["git", "revert", "--no-edit", EXPECTED], calls)
 
 
 if __name__ == "__main__":

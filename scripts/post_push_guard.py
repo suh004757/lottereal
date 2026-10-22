@@ -135,7 +135,17 @@ def rollback(reason: list[dict], env_values: dict[str, str], expected_revision: 
         remote_code, remote_head = run(["git", "rev-parse", "refs/remotes/origin/main"], timeout=30, env=git_env)
         if remote_code != 0 or remote_head.strip() != expected_revision:
             return {"rolled_back": False, "stage": "revision_precondition", "reason": reason}
-        code, output = run(["git", "revert", "--no-edit", expected_revision], timeout=180, env=git_env)
+        parents_code, parents_output = run(
+            ["git", "rev-list", "--parents", "-n", "1", expected_revision], timeout=30, env=git_env
+        )
+        revision_and_parents = parents_output.strip().split()
+        if parents_code != 0 or not revision_and_parents or revision_and_parents[0] != expected_revision:
+            return {"rolled_back": False, "stage": "git_inspect_revision", "reason": reason}
+        revert_command = ["git", "revert", "--no-edit"]
+        if len(revision_and_parents) > 2:
+            revert_command.extend(["-m", "1"])
+        revert_command.append(expected_revision)
+        code, output = run(revert_command, timeout=180, env=git_env)
         if code != 0:
             return {"rolled_back": False, "stage": "git_revert", "exit_code": code, "output_tail": redact(output, env_values), "reason": reason}
         code, output = run(

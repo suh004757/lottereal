@@ -1,9 +1,11 @@
 import base64
 import hashlib
+import io
 import json
 import subprocess
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
 
 
@@ -22,7 +24,7 @@ def jwt(role: str) -> str:
 
 
 class PagesArtifactSecurityTests(unittest.TestCase):
-    def scan(self, files, allowed=()):
+    def scan(self, files, allowed=(), allowed_google=()):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             artifact = root / "site"
@@ -33,7 +35,17 @@ class PagesArtifactSecurityTests(unittest.TestCase):
                 path.write_bytes(body if isinstance(body, bytes) else body.encode())
             allowlist = root / "allowlist.json"
             allowlist.write_text(
-                json.dumps({"schema": 1, "supabase_browser_anon_sha256": [hashlib.sha256(value.encode()).hexdigest() for value in allowed]}),
+                json.dumps(
+                    {
+                        "schema": 1,
+                        "supabase_browser_anon_sha256": [
+                            hashlib.sha256(value.encode()).hexdigest() for value in allowed
+                        ],
+                        "google_browser_api_key_sha256": [
+                            hashlib.sha256(value.encode()).hexdigest() for value in allowed_google
+                        ],
+                    }
+                ),
                 encoding="utf-8",
             )
             return subprocess.run(
@@ -49,6 +61,16 @@ class PagesArtifactSecurityTests(unittest.TestCase):
         self.assertEqual(0, result.returncode, result.stderr)
         self.assertIn('"ok": true', result.stdout.lower())
         self.assertNotIn(token, result.stdout + result.stderr)
+
+    def test_only_digest_allowlisted_browser_google_key_is_accepted(self):
+        approved = "AIza" + "A" * 35
+        unapproved = "AIza" + "B" * 35
+        accepted = self.scan({"js/maps.js": f'const key = "{approved}";'}, allowed_google=(approved,))
+        self.assertEqual(0, accepted.returncode, accepted.stdout + accepted.stderr)
+        rejected = self.scan({"js/maps.js": f'const key = "{unapproved}";'}, allowed_google=(approved,))
+        self.assertNotEqual(0, rejected.returncode)
+        self.assertIn("unallowlisted_google_browser_key", rejected.stdout + rejected.stderr)
+        self.assertNotIn(unapproved, rejected.stdout + rejected.stderr)
 
     def test_unlisted_anon_and_service_role_jwts_are_rejected_without_values(self):
         anon = jwt("anon")
@@ -83,6 +105,86 @@ class PagesArtifactSecurityTests(unittest.TestCase):
         self.assertIn("pii_export_artifact", output)
         self.assertNotIn("person@example.test", output)
 
+    def test_neutral_json_name_with_customer_export_schema_is_rejected_without_values(self):
+        private_email = "private.person@example.test"
+        result = self.scan(
+            {
+                "backup.json": json.dumps(
+                    [{"customer_name": "Private Person", "email": private_email, "phone": "010-1234-5678"}]
+                )
+            }
+        )
+        self.assertNotEqual(0, result.returncode)
+        output = result.stdout + result.stderr
+        self.assertIn("pii_export_content", output)
+        self.assertNotIn(private_email, output)
+        self.assertNotIn("Private Person", output)
+        self.assertNotIn("010-1234-5678", output)
+
+    def test_disguised_delimited_customer_export_is_rejected_without_values(self):
+        private_email = "delimited.person@example.test"
+        body = f"customer_name,email,phone\nPrivate Person,{private_email},010-4567-8901\n"
+        result = self.scan({"assets/notes.txt": body})
+        self.assertNotEqual(0, result.returncode)
+        output = result.stdout + result.stderr
+        self.assertIn("pii_export_content", output)
+        self.assertNotIn(private_email, output)
+        self.assertNotIn("Private Person", output)
+
+    def test_zip_archive_with_customer_csv_is_rejected_without_extracting_values(self):
+        private_email = "zip.person@example.test"
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, "w") as archive:
+            archive.writestr("customer.csv", f"name,email\nPrivate Person,{private_email}\n")
+        result = self.scan({"assets/backup.zip": buffer.getvalue()})
+        self.assertNotEqual(0, result.returncode)
+        output = result.stdout + result.stderr
+        self.assertIn("unapproved_archive", output)
+        self.assertNotIn(private_email, output)
+        self.assertNotIn("Private Person", output)
+
+    def test_disguised_zip_archive_is_rejected_by_signature(self):
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, "w") as archive:
+            archive.writestr("safe.txt", "not actually safe")
+        result = self.scan({"assets/backup.bin": buffer.getvalue()})
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("unapproved_archive", result.stdout + result.stderr)
+
+    def test_korean_named_csv_export_is_rejected_without_printing_values(self):
+        private_phone = "010-9999-8888"
+        result = self.scan({"downloads/고객명단.csv": f"이름,전화번호\n홍길동,{private_phone}\n"})
+        self.assertNotEqual(0, result.returncode)
+        output = result.stdout + result.stderr
+        self.assertIn("unapproved_data_export", output)
+        self.assertNotIn(private_phone, output)
+        self.assertNotIn("홍길동", output)
+
+    def test_neutral_archive_spreadsheet_database_sql_and_csv_names_are_rejected(self):
+        files = {
+            "assets/a.zip": b"placeholder",
+            "assets/b.xlsx": b"placeholder",
+            "assets/c.sqlite": b"placeholder",
+            "assets/d.sql": b"placeholder",
+            "assets/e.csv": b"placeholder",
+        }
+        result = self.scan(files)
+        self.assertNotEqual(0, result.returncode)
+        output = result.stdout + result.stderr
+        self.assertIn("unapproved_archive", output)
+        self.assertIn("unapproved_data_export", output)
+        for relative in files:
+            self.assertIn(relative, output)
+
+    def test_sql_dump_disguised_as_text_is_rejected_without_printing_values(self):
+        private_email = "sql.person@example.test"
+        sql = f"CREATE TABLE contacts (name text, email text); INSERT INTO contacts VALUES ('Private', '{private_email}');"
+        result = self.scan({"assets/seed.txt": sql})
+        self.assertNotEqual(0, result.returncode)
+        output = result.stdout + result.stderr
+        self.assertIn("unapproved_data_export", output)
+        self.assertNotIn(private_email, output)
+
     def test_common_credentials_and_private_key_content_are_rejected_without_values(self):
         github = "ghp_" + "A" * 36
         aws = "AKIA" + "B" * 16
@@ -103,6 +205,22 @@ class PagesArtifactSecurityTests(unittest.TestCase):
         self.assertNotEqual(0, result.returncode)
         self.assertIn("slack_token", result.stdout + result.stderr)
         self.assertNotIn(token.decode(), result.stdout + result.stderr)
+
+    def test_utf16le_encoded_token_is_rejected_without_printing_value(self):
+        token = "ghp_" + "U" * 36
+        result = self.scan({"assets/localization.txt": ("safe prefix " + token).encode("utf-16le")})
+        self.assertNotEqual(0, result.returncode)
+        output = result.stdout + result.stderr
+        self.assertIn("github_token", output)
+        self.assertNotIn(token, output)
+
+    def test_executable_split_supabase_secret_construction_is_rejected_without_values(self):
+        suffix = "S" * 28
+        result = self.scan({"js/runtime.js": f'const key = "sb_" + "secret_" + "{suffix}";'})
+        self.assertNotEqual(0, result.returncode)
+        output = result.stdout + result.stderr
+        self.assertIn("split_secret_construction", output)
+        self.assertNotIn(suffix, output)
 
     def test_bearer_tokens_and_database_credentials_are_rejected(self):
         bearer = "Bearer " + "Z" * 32
@@ -144,6 +262,7 @@ class PagesArtifactSecurityTests(unittest.TestCase):
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
         allowlist = json.loads(PRODUCTION_ALLOWLIST.read_text(encoding="utf-8"))
         self.assertEqual(1, len(allowlist["supabase_browser_anon_sha256"]))
+        self.assertEqual([], allowlist["google_browser_api_key_sha256"])
         self.assertNotIn("eyJ", PRODUCTION_ALLOWLIST.read_text(encoding="utf-8"))
 
 

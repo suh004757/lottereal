@@ -143,14 +143,36 @@ class PagesArtifactTests(unittest.TestCase):
         self.assertIn("contents: read", text)
         self.assertIn("pages: write", text)
         self.assertIn("id-token: write", text)
+        self.assertIn("group: pages-${{ github.event_name == 'pull_request'", text)
+        self.assertIn("format('pr-{0}', github.event.pull_request.number)", text)
+        self.assertIn("|| github.ref }}", text)
         build = text.split("  build:", 1)[1].split("  deploy:", 1)[0]
-        deploy = text.split("  deploy:", 1)[1]
+        deploy = text.split("  deploy:", 1)[1].split("  verify:", 1)[0]
+        verify = text.split("  verify:", 1)[1]
         self.assertIn("if: github.ref == 'refs/heads/main'", deploy)
         self.assertNotIn("github.event_name != 'pull_request'", deploy)
         self.assertNotIn("pages: write", build)
         self.assertNotIn("id-token: write", build)
-        self.assertIn("actions/checkout", deploy)
-        self.assertIn("ref: ${{ github.sha }}", deploy)
+        self.assertNotIn("actions/checkout", deploy)
+        self.assertNotIn("actions/setup-python", deploy)
+        self.assertNotIn("run:", deploy)
+        self.assertNotIn("contents: read", deploy)
+        deploy_uses = [line.strip() for line in deploy.splitlines() if line.strip().startswith("uses:")]
+        self.assertEqual(
+            [
+                f"uses: actions/configure-pages@{PINNED_ACTIONS['actions/configure-pages']} # v5",
+                f"uses: actions/deploy-pages@{PINNED_ACTIONS['actions/deploy-pages']} # v4",
+            ],
+            deploy_uses,
+        )
+        self.assertIn("needs: [build, deploy]", verify)
+        self.assertIn("contents: read", verify)
+        self.assertNotIn("pages: write", verify)
+        self.assertNotIn("id-token: write", verify)
+        self.assertIn("actions/checkout", verify)
+        self.assertIn("ref: ${{ github.sha }}", verify)
+        self.assertIn("python3 scripts/verify_pages_deployment.py", verify)
+        self.assertIn("needs.deploy.outputs.page_url", verify)
         self.assertIn("python3 scripts/build_pages_artifact.py", text)
         self.assertIn('--revision "${GITHUB_SHA}"', text)
         scan_at = text.index("python3 scripts/scan_pages_artifact.py")
