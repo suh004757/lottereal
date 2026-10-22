@@ -3,56 +3,56 @@
   "source_url": "https://www.reb.or.kr/r-one/",
   "statbl_id": "T244183132827305",
   "metric": "주간 아파트 매매가격지수 → 전주 대비 변동률(%)",
-  "survey_date": "2026-10-12",
-  "previous_survey_date": "2026-10-05",
+  "survey_date": "2026-10-19",
+  "previous_survey_date": "2026-10-12",
   "regions": [
     {
       "label": "전국",
       "cls_fullnm": "전국",
-      "index": 101.209220657823,
-      "previous_index": 101.105389277472,
-      "change_pct": 0.1,
-      "previous_change_pct": 0.07
+      "index": 101.293500079459,
+      "previous_index": 101.209220657823,
+      "change_pct": 0.08,
+      "previous_change_pct": 0.1
     },
     {
       "label": "경기",
       "cls_fullnm": "경기",
-      "index": 102.603567051211,
-      "previous_index": 102.338641952501,
-      "change_pct": 0.26,
-      "previous_change_pct": 0.18
+      "index": 102.821980909367,
+      "previous_index": 102.603567051211,
+      "change_pct": 0.21,
+      "previous_change_pct": 0.26
     },
     {
       "label": "서울",
       "cls_fullnm": "서울",
-      "index": 102.910287113882,
-      "previous_index": 102.744045796114,
-      "change_pct": 0.16,
-      "previous_change_pct": 0.12
+      "index": 103.04305330477,
+      "previous_index": 102.910287113882,
+      "change_pct": 0.13,
+      "previous_change_pct": 0.16
     },
     {
       "label": "강남구",
       "cls_fullnm": "서울>강남지역>동남권>강남구",
-      "index": 97.4066398357364,
-      "previous_index": 97.7522981902305,
-      "change_pct": -0.35,
-      "previous_change_pct": -0.34
+      "index": 97.1016146180772,
+      "previous_index": 97.4066398357364,
+      "change_pct": -0.31,
+      "previous_change_pct": -0.35
     },
     {
       "label": "서초구",
       "cls_fullnm": "서울>강남지역>동남권>서초구",
-      "index": 98.0928179504894,
-      "previous_index": 98.3569094447375,
-      "change_pct": -0.27,
+      "index": 97.7801144039673,
+      "previous_index": 98.0928179504894,
+      "change_pct": -0.32,
       "previous_change_pct": -0.27
     },
     {
       "label": "송파구",
       "cls_fullnm": "서울>강남지역>동남권>송파구",
-      "index": 100.417202242025,
-      "previous_index": 100.624041593038,
-      "change_pct": -0.21,
-      "previous_change_pct": -0.19
+      "index": 100.28559952687,
+      "previous_index": 100.417202242025,
+      "change_pct": -0.13,
+      "previous_change_pct": -0.21
     }
   ]
 }
