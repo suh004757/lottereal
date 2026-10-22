@@ -523,11 +523,7 @@ async function updateInquiryStatusSupabase(id, status) {
   const supabase = getSupabaseClient();
   if (!supabase) return null;
   const { data, error } = await supabase
-    .from('inquiries')
-    .update({ status })
-    .eq('id', id)
-    .select()
-    .single();
+    .rpc('admin_set_inquiry_status', { p_inquiry_id: id, p_status: status });
   if (error) {
     console.error('Supabase updateInquiryStatus error', error);
     throw error;
