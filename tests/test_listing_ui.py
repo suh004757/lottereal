@@ -55,6 +55,12 @@ class ListingUiTest(unittest.TestCase):
         self.assertIn('<p class="lr-kicker">매물 유형 찾기</p>', home)
         self.assertNotIn('<strong>추천매물</strong>', listings)
 
+    def test_listing_search_does_not_hide_inventory_behind_default_location_filters(self):
+        html = (PUBLIC / 'listings.html').read_text(encoding='utf-8')
+        self.assertIn('name="city" type="text" placeholder="서울" value=""', html)
+        self.assertIn('name="district" type="text" placeholder="송파구" value=""', html)
+        self.assertNotIn('name="district" type="text" placeholder="송파구" value="송파구"', html)
+
     def test_korean_primary_navigation_omits_process_and_english_links(self):
         for path in korean_pages():
             html = path.read_text(encoding='utf-8')
