@@ -49,3 +49,14 @@ test('report neighborhood matching distinguishes legal-dong names and metadata a
     assert.deepEqual(ids(`${area.name} 계약 확인`), [area.id]);
   }
 });
+
+test('report pages link their matching topic hubs except the breadcrumb section', async () => {
+  const { hubLinksForReport } = await import('../scripts/export_static_reports.mjs');
+  const paths = (report) => hubLinksForReport(report).map((hub) => hub.path);
+  const songpaLease = { title: '송파 전세 계약 전 확인', summary: '', metadata: { region: 'songpa', content_type: 'legal_checklist' } };
+  assert.ok(paths(songpaLease).includes('songpa-market-report.html'));
+  assert.ok(!paths(songpaLease).includes('report.html'));
+  const dispute = { title: '누수 분쟁 보증금', summary: '', metadata: { region: 'songpa', content_type: 'dispute_case' } };
+  assert.ok(!paths(dispute).includes('disputes.html'), 'disputes hub is already the breadcrumb section');
+  assert.ok(paths({ title: '부산 상가', summary: '', metadata: {} }).length === 0);
+});

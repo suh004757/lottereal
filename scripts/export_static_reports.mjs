@@ -5,7 +5,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { readReportEntry, renderFeed } from './build_report_feed.mjs';
-import { getReportLandingConfigByKey, reportBreadcrumbSection, selectLandingReports } from '../public/js/config/reportLandingConfig.js';
+import { findMatchingLandingConfigs, getReportLandingConfigByKey, reportBreadcrumbSection, selectLandingReports } from '../public/js/config/reportLandingConfig.js';
 import { compareReportsByPublication } from '../public/js/utils/reportDates.mjs';
 
 const require = createRequire(import.meta.url);
@@ -338,6 +338,27 @@ function renderAreaGuide(report) {
     + '</div></section>';
 }
 
+// Server-rendered links to the topic hubs (songpa/jamsil/gangnam/disputes). The hubs had no
+// crawlable inbound link: report.html drew them with JavaScript only. Same matching as
+// report.html's renderRelatedHubs; the hub already named in the breadcrumb is skipped.
+export function hubLinksForReport(report, limit = 2) {
+  const section = reportBreadcrumbSection(report?.metadata);
+  return findMatchingLandingConfigs(report)
+    .filter((config) => config.path !== section.path)
+    .slice(0, limit);
+}
+
+function renderHubLinks(report) {
+  const hubs = hubLinksForReport(report);
+  if (!hubs.length) return '';
+  const links = hubs.map((hub) => (
+    `<a class="lr-link" href="../${escapeHtml(hub.path)}">${escapeHtml(hub.heroTitle || hub.path)}</a>`
+  )).join(' ');
+  return '<section class="lr-section lr-report-hub-guide"><div class="lr-container">'
+    + `<p class="lr-kicker">관련 지역 리포트</p><p>${links}</p>`
+    + '</div></section>';
+}
+
 function renderRelatedReports(report, related = []) {
   if (!related.length) return '';
   const items = related.map((other) => (
@@ -448,6 +469,7 @@ export function renderStaticReport(report, siteUrl = 'https://lottes.co.kr', opt
     <section class="lr-section"><div class="lr-container"><article class="lr-report-body">${body}</article></div></section>
     <section class="lr-section lr-section--muted"><div class="lr-container"><div class="lr-disclaimer"><strong>자료 출처</strong><ul>${renderEvidence(report?.evidence_json)}</ul><p>공개 자료를 바탕으로 정리한 정보 제공용 자료이며, 특정 거래나 수익을 보장하지 않습니다. 실제 계약 전에는 최신 서류와 현장을 다시 확인해 주세요.</p></div></div></section>
     ${renderAreaGuide(report)}
+    ${renderHubLinks(report)}
     ${renderRelatedReports(report, options.related || [])}
     ${renderReportCta(report)}
   </main>
