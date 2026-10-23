@@ -8,13 +8,15 @@ REPORT = ROOT / "public" / "reports" / "2026-03-08-korea-real-estate-policy-repo
 
 class PolicyReportSnippetTests(unittest.TestCase):
     def test_policy_report_title_targets_broad_policy_overview_without_stale_month(self):
+        # Search Console 2026-09-23..10-21: nearly every query reaching this page is a
+        # form of "이재명 (정부) 부동산 정책 정리", often with "2025 2026". The title keeps
+        # those words while describing the page as a two-year overview, not one month.
         html = REPORT.read_text(encoding="utf-8")
+        title = html.split("<title>", 1)[1].split("</title>", 1)[0]
 
-        self.assertIn(
-            "<title>2026년 주택정책 큰 흐름: 대출 규제와 공급 계획 | 롯데부동산</title>",
-            html,
-        )
-        self.assertNotIn("<title>2026년 3월 이재명 정부 부동산 정책 정리", html)
+        for term in ("이재명 정부", "부동산 정책 정리", "2025", "2026"):
+            self.assertIn(term, title)
+        self.assertNotIn("2026년 3월", title)
 
 
 if __name__ == "__main__":
