@@ -9,7 +9,7 @@ import { isAutomatedBrowser } from './utils/automatedBrowser.mjs';
 import { safeExternalHttpUrl } from './publicRenderSecurity.mjs';
 import { findMatchingLandingConfigs, reportBreadcrumbSection } from './config/reportLandingConfig.js';
 import { buildAbsoluteUrl, renderJsonLd, updateSeoMeta } from './utils/seo.js';
-import { legacyReportRedirectHref, reportStaticHref, reportStaticUrl } from './utils/reportUrls.mjs';
+import { legacyReportRedirectHref, legacyReportRobots, reportStaticHref, reportStaticUrl } from './utils/reportUrls.mjs';
 import {
   compareReportsByPublication,
   formatReportDateMeta,
@@ -19,6 +19,13 @@ import {
 
 const urlParams = new URLSearchParams(window.location.search);
 const reportSlug = urlParams.get('slug');
+const robotsDirective = legacyReportRobots(window.location.search);
+if (robotsDirective) {
+  const robots = document.createElement('meta');
+  robots.name = 'robots';
+  robots.content = robotsDirective;
+  document.head.appendChild(robots);
+}
 
 let currentReport = null;
 let publishedReports = [];

@@ -124,9 +124,11 @@ class StaticReportExportTests(unittest.TestCase):
         manifest = (self.base / "js" / "generated" / "reportSlugs.mjs").read_text(encoding="utf-8")
         self.assertIn(self.report["slug"], manifest)
 
-    def test_legacy_dynamic_page_is_noindex_while_snapshots_are_indexable(self):
+    def test_report_archive_and_snapshots_are_indexable(self):
+        # The legacy ?slug= view is kept out of indexes at runtime (legacyReportRobots,
+        # tests/test_report_urls.mjs); the archive page itself must stay indexable.
         source = (ROOT / "public" / "report.html").read_text(encoding="utf-8")
-        self.assertIn('<meta name="robots" content="noindex,follow">', source)
+        self.assertNotIn('noindex', source)
         result = self.run_export([self.report])
         self.assertEqual(result.returncode, 0, result.stderr)
         snapshot = (self.output_dir / f"{self.report['slug']}.html").read_text(encoding="utf-8")
