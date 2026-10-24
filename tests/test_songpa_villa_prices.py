@@ -109,16 +109,22 @@ class GeneratedSiteTest(unittest.TestCase):
     def test_pages_are_listed_canonical_tracked_and_linked(self):
         pages = [p for p in self.outputs if p.parent == villa.PAGES]
         self.assertGreater(len(pages), 0)
-        hub = (apt.PUBLIC / apt.HUB_NAME).read_text(encoding="utf-8")
+        hub = self.outputs[villa.HUB]
+        sitemap = self.outputs[villa.SITEMAP]
+        self.assertEqual(sitemap.count(f"<loc>{apt.SITE}/{villa.HUB_NAME}</loc>"), 1)
+        self.assertIn(f'href="{villa.HUB_NAME}"', (apt.PUBLIC / apt.HUB_NAME).read_text(encoding="utf-8"))
         for page in pages:
             html = self.outputs[page]
-            self.assertEqual(self.outputs[villa.SITEMAP].count(f"<loc>{apt.SITE}/villas/{page.name}</loc>"), 1)
+            self.assertEqual(sitemap.count(f"<loc>{apt.SITE}/villas/{page.name}</loc>"), 1)
             self.assertIn(f'<link rel="canonical" href="{apt.SITE}/villas/{page.name}">', html)
             self.assertIn('src="../js/privacyAnalytics.js"', html)
+            self.assertIn(f'href="../{villa.HUB_NAME}"', html)
             self.assertNotIn("noindex", html)
             self.assertIn(f'href="villas/{page.name}"', hub)
             for target in re.findall(r'href="\.\./([a-z0-9-]+\.html)', html):
-                self.assertTrue((apt.PUBLIC / target).exists(), target)
+                self.assertTrue((apt.PUBLIC / target).exists() or apt.PUBLIC / target in self.outputs, target)
+            for sibling in re.findall(r'<li><a href="([a-z0-9-]+\.html)"', html):
+                self.assertIn(villa.PAGES / sibling, self.outputs)
 
     def test_data_keeps_only_aggregatable_fields(self):
         for slot in self.data["areas"].values():

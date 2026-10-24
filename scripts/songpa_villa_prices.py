@@ -34,7 +34,11 @@ PAGES = apt.PUBLIC / "villas"
 SITEMAP = apt.SITEMAP
 RENT_ENDPOINT = "https://apis.data.go.kr/1613000/RTMSDataSvcRHRent/getRTMSDataSvcRHRent"
 TRADE_ENDPOINT = "https://apis.data.go.kr/1613000/RTMSDataSvcRHTrade/getRTMSDataSvcRHTrade"
-SITEMAP_PATTERN = re.escape(SITE) + r"/villas/[^<]+\.html"
+HUB_NAME = "songpa-villa-prices.html"
+HUB = apt.PUBLIC / HUB_NAME
+SITEMAP_PATTERN = re.escape(f"{SITE}/{HUB_NAME}") + "|" + re.escape(SITE) + r"/villas/[^<]+\.html"
+OFFICE_UMD = "삼전동"
+OFFICE_NEIGHBOURS = {"석촌동", "송파동", "잠실동"}
 MIN_COUNT = 3
 AREA_BANDS = [(0, 30, "30㎡ 미만", "주로 원룸·1.5룸"), (30, 50, "30~50㎡", "주로 투룸"),
               (50, 70, "50~70㎡", "주로 쓰리룸"), (70, 10 ** 6, "70㎡ 이상", "큰 평형")]
@@ -177,7 +181,7 @@ def _money(value: int | None) -> str:
     return e(format_price(value)) if value else "—"
 
 
-def render_area_page(area: dict, slot: dict, months: list[str], as_of: str) -> str:
+def render_area_page(area: dict, slot: dict, months: list[str], as_of: str, siblings: list[dict]) -> str:
     umd, slug = area["umd"], area["slug"]
     summary = summarize(slot, months, int(as_of[:4]))
     top = summary["top"]
@@ -187,15 +191,17 @@ def render_area_page(area: dict, slot: dict, months: list[str], as_of: str) -> s
     title = f"{umd} 빌라 {kinds} 실거래가 | 원룸·투룸 시세 | 송파구 | 롯데부동산"
     share = round(summary["wolse"] / summary["count"] * 100) if summary["count"] else 0
     lead = (f"최근 13개월({apt._period(months)}) 동안 송파구 {umd} 연립·다세대(빌라)에서 전월세 {summary['count']:,}건이 신고됐고, "
-            f"이 중 월세가 {share}%입니다. 가장 많이 계약된 면적대는 전용 {top['label']}({top['hint']})")
+            f"이 중 월세가 {share}%입니다. 가장 많이 계약된 면적대는 전용 {top['label']}({top['hint']})입니다.")
+    medians = []
     if top["wolse_monthly"]:
-        lead += f"로, 월세는 보증금 {format_price(top['wolse_deposit'])}에 월 {format_price(top['wolse_monthly'])}"
-        lead += f", 전세는 {format_price(top['jeonse'])}가 중간값입니다." if top["jeonse"] else "가 중간값입니다."
-    else:
-        lead += "입니다."
+        medians.append(f"월세 보증금 {format_price(top['wolse_deposit'])}·월 {format_price(top['wolse_monthly'])}")
+    if top["jeonse"]:
+        medians.append(f"전세 {format_price(top['jeonse'])}")
+    if medians:
+        lead += f" 이 면적대 중간값은 {', '.join(medians)}입니다."
     description = (f"송파구 {umd} 빌라(연립·다세대) 전월세 실거래 {summary['count']:,}건을 면적대·준공연도별 전세·월세 중간값과 "
                    "월별 계약 건수, 최근 계약 목록으로 정리했습니다. 국토교통부 공개자료 기준.")
-    ld = [apt._breadcrumb_ld([("롯데부동산", f"{SITE}/"), ("송파 동네 선택", f"{SITE}/songpa-neighborhood-guide.html"),
+    ld = [apt._breadcrumb_ld([("롯데부동산", f"{SITE}/"), ("송파 빌라 실거래가", f"{SITE}/{HUB_NAME}"),
                               (f"{umd} 빌라 실거래가", url)])]
 
     band_rows = "\n".join(
@@ -243,8 +249,15 @@ def render_area_page(area: dict, slot: dict, months: list[str], as_of: str) -> s
 
 """
     guide = apt.GUIDE_AREAS.get(umd)
+    sibling_links = "".join(f'<li><a href="{e(s["slug"])}.html">{e(s["umd"])} 빌라 실거래가</a><span>13개월 전월세 {s["count"]:,}건</span></li>' for s in siblings)
+    if umd == OFFICE_UMD:
+        cta_kicker, cta_title = f"{umd} 현장 사무소", f"{umd} 빌라, 걸어서 같이 보러 갑니다"
+        cta_where = f"롯데부동산은 {umd}(백제고분로27길)에 있습니다."
+    else:
+        cta_kicker, cta_title = "가까운 현장 사무소", f"{umd} 빌라, 가까이서 같이 보러 갑니다"
+        cta_where = f"롯데부동산은 {umd}과 맞닿은 {OFFICE_UMD}(백제고분로27길)에 있습니다." if umd in OFFICE_NEIGHBOURS else f"롯데부동산은 송파구 {OFFICE_UMD}(백제고분로27길)에 있습니다."
     body = f"""  <main>
-    <div class="lr-breadcrumb"><div class="lr-container"><nav aria-label="현재 위치"><a href="../">홈</a> › <a href="../songpa-neighborhood-guide.html">송파 동네 선택</a> › <span>{e(umd)} 빌라 실거래가</span></nav></div></div>
+    <div class="lr-breadcrumb"><div class="lr-container"><nav aria-label="현재 위치"><a href="../">홈</a> › <a href="../{HUB_NAME}">송파 빌라 실거래가</a> › <span>{e(umd)}</span></nav></div></div>
 
     <section class="lr-section ap-hero">
       <div class="lr-container">
@@ -333,10 +346,17 @@ def render_area_page(area: dict, slot: dict, months: list[str], as_of: str) -> s
       </div>
     </section>
 
+    <section class="lr-section">
+      <div class="lr-container">
+        <div class="lr-section__head"><div><p class="lr-kicker">다른 동 비교</p><h2>가까운 송파 빌라 실거래가</h2></div></div>
+        <ul class="ap-siblings">{sibling_links}</ul>
+      </div>
+    </section>
+
 {apt._sources_note(months, as_of).replace("국토교통부 아파트 매매·전월세 실거래가 공개자료", "국토교통부 연립다세대 전월세·매매 실거래가 공개자료")}
     <section class="lr-section">
       <div class="lr-container lr-cta">
-        <div><p class="lr-kicker">{e(umd)} 현장 사무소</p><h2>{e(umd)} 빌라, 걸어서 같이 보러 갑니다</h2><p class="lr-lead">롯데부동산은 {e(umd)}(백제고분로27길)에 있습니다. 실거래가에 없는 주차·엘리베이터·채광과 등기부 확인을 현장에서 함께 봐 드립니다. 주소·계약서 원문은 공개 입력창에 올리지 마세요.</p><div class="lr-actions"><a class="lr-btn lr-btn--primary" href="../contact.html#inquiry-options">{e(umd)} 빌라 상담 문의</a><a class="lr-btn lr-btn--ghost" href="../listings.html">현재 매물 보기</a></div></div>
+        <div><p class="lr-kicker">{e(cta_kicker)}</p><h2>{e(cta_title)}</h2><p class="lr-lead">{e(cta_where)} 실거래가에 없는 주차·엘리베이터·채광과 등기부 확인을 현장에서 함께 봐 드립니다. 주소·계약서 원문은 공개 입력창에 올리지 마세요.</p><div class="lr-actions"><a class="lr-btn lr-btn--primary" href="../contact.html#inquiry-options">{e(umd)} 빌라 상담 문의</a><a class="lr-btn lr-btn--ghost" href="../listings.html">현재 매물 보기</a></div></div>
       </div>
     </section>
   </main>
@@ -345,20 +365,85 @@ def render_area_page(area: dict, slot: dict, months: list[str], as_of: str) -> s
     return apt._head(title, description, url, "../", ld) + body + apt._foot("../")
 
 
+def render_hub(rows: list[dict], months: list[str], as_of: str) -> str:
+    url = f"{SITE}/{HUB_NAME}"
+    total = sum(r["summary"]["count"] for r in rows)
+    names = "·".join(r["umd"] for r in rows)
+    title = f"송파구 빌라 전세·월세 실거래가 | 동별 원룸·투룸 시세 ({names}) | 롯데부동산"
+    description = (f"송파구 {names} 연립·다세대(빌라) 전월세 실거래 {total:,}건을 동별·면적대별 월세와 전세 중간값으로 비교했습니다. "
+                   "국토교통부 공개자료 기준.")
+    ld = [apt._breadcrumb_ld([("롯데부동산", f"{SITE}/"), ("송파 빌라 실거래가", url)]),
+          {"@context": "https://schema.org", "@type": "ItemList", "name": "송파구 동별 빌라 실거래가",
+           "itemListElement": [{"@type": "ListItem", "position": i + 1, "name": f"{r['umd']} 빌라 실거래가",
+                                "url": f"{SITE}/villas/{r['slug']}.html"} for i, r in enumerate(rows)]}]
+
+    def cell(band: dict) -> str:
+        wolse = f'{_money(band["wolse_monthly"])}<small>보증금 {_money(band["wolse_deposit"])}</small>' if band["wolse_monthly"] else "—"
+        return f'<td class="ap-wrap">{wolse}</td><td class="ap-wrap">{_money(band["jeonse"])}</td>'
+
+    table_rows = "\n".join(
+        f'            <tr><th scope="row"><a href="villas/{e(r["slug"])}.html">{e(r["umd"])}</a><small>{r["summary"]["count"]:,}건 · 월세 {round(r["summary"]["wolse"] / r["summary"]["count"] * 100)}%</small></th>'
+        f'{cell(r["summary"]["bands"][0])}{cell(r["summary"]["bands"][1])}</tr>'
+        for r in rows)
+    body = f"""  <main>
+    <section class="lr-section ap-hero">
+      <div class="lr-container">
+        <p class="lr-kicker">국토교통부 공개자료</p>
+        <h1>송파구 빌라 전세·월세 실거래가</h1>
+        <p class="lr-lead">송파구 {e(names)} 연립·다세대(빌라)의 최근 13개월({e(apt._period(months))}) 전월세 신고 {total:,}건을 동별로 모았습니다. 동 이름을 누르면 면적대·준공연도별 시세와 최근 계약을 볼 수 있습니다.</p>
+      </div>
+    </section>
+
+    <section class="lr-section">
+      <div class="lr-container">
+        <div class="lr-section__head"><div><p class="lr-kicker">동별 비교</p><h2>원룸·투룸 동별 중간값</h2><p class="lr-lead">원룸은 전용 30㎡ 미만, 투룸은 30~50㎡ 기준의 대략적인 구분입니다. 월세는 보증금 수준이 제각각이라 보증금 중간값을 함께 봐야 합니다.</p></div></div>
+        <div class="ap-table-wrap">
+          <table class="ap-table ap-table--compact">
+            <thead><tr><th scope="col" rowspan="2">동</th><th scope="col" colspan="2">원룸 (30㎡ 미만)</th><th scope="col" colspan="2">투룸 (30~50㎡)</th></tr>
+            <tr><th scope="col">월세</th><th scope="col">전세</th><th scope="col">월세</th><th scope="col">전세</th></tr></thead>
+            <tbody>
+{table_rows}
+            </tbody>
+          </table>
+        </div>
+        <p class="ap-links">아파트를 찾으신다면 <a href="{apt.HUB_NAME}">송파 아파트 단지별 실거래가</a>를 함께 보세요.</p>
+      </div>
+    </section>
+
+{apt._sources_note(months, as_of).replace("국토교통부 아파트 매매·전월세 실거래가 공개자료", "국토교통부 연립다세대 전월세·매매 실거래가 공개자료")}
+    <section class="lr-section">
+      <div class="lr-container lr-cta">
+        <div><p class="lr-kicker">{OFFICE_UMD} 현장 사무소</p><h2>송파 빌라, 현장에서 같이 확인하세요</h2><p class="lr-lead">실거래가에 없는 주차·엘리베이터·채광과 등기부 선순위는 현장과 서류로 확인해야 합니다. 주소·계약서 원문은 공개 입력창에 올리지 마세요.</p><div class="lr-actions"><a class="lr-btn lr-btn--primary" href="contact.html#inquiry-options">빌라 전월세 상담 문의</a><a class="lr-btn lr-btn--ghost" href="songpa-neighborhood-guide.html">송파 동네 선택 도우미</a></div></div>
+      </div>
+    </section>
+  </main>
+
+"""
+    return apt._head(title, description, url, "", ld) + body + apt._foot("")
+
+
 def build_site(data: dict, config: dict) -> dict[Path, str]:
     """Pure: data + config -> {path: content} for every generated file."""
     months = data["months"]
     outputs: dict[Path, str] = {}
-    entries = []
+    rows = []
     for area in config["areas"]:
         if not apt.SAFE_SLUG.match(area["slug"]):
             raise RuntimeError(f"unsafe slug: {area['slug']}")
         slot = data["areas"].get(area["slug"])
         if not slot or not slot["rents"]:
             continue
-        as_of = max(rows[0][0] for rows in (slot["rents"], slot["trades"]) if rows)
-        outputs[PAGES / f"{area['slug']}.html"] = render_area_page(area, slot, months, as_of)
-        entries.append((f"{SITE}/villas/{area['slug']}.html", as_of))
+        as_of = max(r[0][0] for r in (slot["rents"], slot["trades"]) if r)
+        rows.append({**area, "slot": slot, "as_of": as_of, "summary": summarize(slot, months, int(as_of[:4]))})
+    if not rows:
+        return outputs
+    hub_as_of = max(r["as_of"] for r in rows)
+    entries = [(f"{SITE}/{HUB_NAME}", hub_as_of)]
+    for row in rows:
+        siblings = [{"slug": r["slug"], "umd": r["umd"], "count": r["summary"]["count"]} for r in rows if r is not row]
+        outputs[PAGES / f"{row['slug']}.html"] = render_area_page(row, row["slot"], months, row["as_of"], siblings)
+        entries.append((f"{SITE}/villas/{row['slug']}.html", row["as_of"]))
+    outputs[HUB] = render_hub(rows, months, hub_as_of)
     outputs[SITEMAP] = apt.update_sitemap(SITEMAP.read_text(encoding="utf-8"), entries, SITEMAP_PATTERN)
     return outputs
 

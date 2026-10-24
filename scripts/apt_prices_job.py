@@ -17,7 +17,7 @@ from weekly_market_chart_job import GIT_STATE, acquire_mutex, release_mutex, run
 
 MUTEX = GIT_STATE / "apt-prices-job.lock"
 OUTPUTS = ["data/songpa-apt-trades.v1.json", "data/songpa-villa-prices.v1.json", "public/apartments", "public/villas",
-           "public/songpa-apartment-prices.html", "public/Sitemap.xml"]
+           "public/songpa-apartment-prices.html", "public/songpa-villa-prices.html", "public/Sitemap.xml"]
 GENERATORS = ["scripts/songpa_apt_prices.py", "scripts/songpa_villa_prices.py"]
 TESTS = ["tests.test_songpa_apt_prices", "tests.test_songpa_villa_prices","tests.test_analytics_coverage", "tests.test_korean_labels", "tests.test_pages_artifact"]
 
