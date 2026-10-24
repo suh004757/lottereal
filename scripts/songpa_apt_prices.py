@@ -304,7 +304,7 @@ def _foot(prefix: str) -> str:
     return f"""  <footer class="lr-footer">
     <div class="lr-container lr-footer__content">
       <div><p class="lr-kicker">롯데부동산</p><p class="lr-text">서울시 송파구 백제고분로27길 27 1층</p><p class="lr-text">문의전화 0507-1402-5055</p></div>
-      <div class="lr-footer__links"><a href="{prefix}{HUB_NAME}">송파 아파트 실거래가</a><a href="{prefix}songpa-neighborhood-guide.html">송파 동네 선택</a><a href="{prefix}brokerage-fee-calculator.html">중개보수 계산기</a><a href="{prefix}privacy.html">개인정보처리방침</a><a href="{prefix}contact.html">문의</a></div>
+      <div class="lr-footer__links"><a href="{prefix}{HUB_NAME}">송파 아파트 실거래가</a><a href="{prefix}villas/samjeon.html">삼전동 빌라 전월세</a><a href="{prefix}songpa-neighborhood-guide.html">송파 동네 선택</a><a href="{prefix}brokerage-fee-calculator.html">중개보수 계산기</a><a href="{prefix}privacy.html">개인정보처리방침</a><a href="{prefix}contact.html">문의</a></div>
     </div>
   </footer>
   <script src="{prefix}js/analyticsEvents.js"></script>
@@ -526,6 +526,7 @@ def render_hub(rows: list[dict], months: list[str], as_of: str) -> str:
         <p class="lr-kicker">국토교통부 공개자료</p>
         <h1>송파구 아파트 실거래가</h1>
         <p class="lr-lead">송파구에서 거래가 많은 {len(rows)}개 단지의 최근 13개월({e(_period(months))}) 매매 신고 {total}건을 단지별로 모았습니다. 단지명을 누르면 면적별 매매·전세 중간값과 최근 거래 목록을 볼 수 있습니다.</p>
+        <p class="ap-links">빌라를 찾으신다면 <a href="villas/samjeon.html">삼전동 빌라 전세·월세 실거래가</a>도 함께 보세요.</p>
       </div>
     </section>
 
@@ -548,16 +549,24 @@ def render_hub(rows: list[dict], months: list[str], as_of: str) -> str:
     return _head(title, description, url, "", ld) + body + _foot("")
 
 
-def update_sitemap(text: str, entries: list[tuple[str, str]]) -> str:
-    """Replace this generator's URLs (hub + apartments/*) and append them before </urlset>."""
-    hub = re.escape(f"{SITE}/{HUB_NAME}")
-    pattern = rf"\s*<url>\s*<loc>(?:{hub}|{re.escape(SITE)}/apartments/[^<]+\.html)</loc>[\s\S]*?</url>"
-    text = re.sub(pattern, "", text)
+SITEMAP_PATTERN = rf"{re.escape(f'{SITE}/{HUB_NAME}')}|{re.escape(SITE)}/apartments/[^<]+\.html"
+
+
+def update_sitemap(text: str, entries: list[tuple[str, str]], loc_pattern: str = SITEMAP_PATTERN) -> str:
+    """Replace a generator's URLs (those matching loc_pattern) in place, or append them before </urlset>.
+
+    Keeping the block where it was lets several generators share one sitemap without
+    reordering each other's entries."""
     if "</urlset>" not in text:
         raise RuntimeError("invalid sitemap: missing </urlset>")
-    block = "\n".join(f"  <url>\n    <loc>{loc}</loc>\n    <lastmod>{lastmod}</lastmod>\n    <changefreq>weekly</changefreq>\n  </url>"
-                      for loc, lastmod in entries)
-    return re.sub(r"\s*</urlset>\s*$", f"\n{block}\n</urlset>\n", text)
+    pattern = rf"\s*<url>\s*<loc>(?:{loc_pattern})</loc>[\s\S]*?</url>"
+    block = "".join(f"\n  <url>\n    <loc>{loc}</loc>\n    <lastmod>{lastmod}</lastmod>\n    <changefreq>weekly</changefreq>\n  </url>"
+                    for loc, lastmod in entries)
+    first = re.search(pattern, text)
+    if first:
+        text = re.sub(pattern, "", text)
+        return text[:first.start()] + block + text[first.start():]
+    return re.sub(r"\s*</urlset>\s*$", f"{block}\n</urlset>\n", text)
 
 
 def build_site(data: dict, config: dict) -> dict[Path, str]:

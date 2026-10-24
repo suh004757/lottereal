@@ -94,6 +94,7 @@
 
 .ap-table td.ap-wrap {
   white-space: normal;
+  word-break: keep-all;
 }
 
 .ap-bars {
