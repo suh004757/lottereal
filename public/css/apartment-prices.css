@@ -10,7 +10,7 @@
 
 .ap-stats {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
   margin-top: 28px;
 }
@@ -86,6 +86,14 @@
 
 .ap-group-title:first-of-type {
   margin-top: 0;
+}
+
+.ap-group-title.ap-subhead {
+  margin-top: 2rem;
+}
+
+.ap-table td.ap-wrap {
+  white-space: normal;
 }
 
 .ap-bars {
@@ -181,10 +189,6 @@
     min-height: 0;
     padding: 14px;
     border-radius: 16px;
-  }
-
-  .ap-stats .lr-stat-pill:first-child {
-    grid-column: 1 / -1;
   }
 
   .ap-stats .lr-stat-pill strong {

@@ -17,6 +17,13 @@ SAMPLE_XML = """<?xml version="1.0" encoding="utf-8"?><response><header><resultC
 </items><numOfRows>10</numOfRows><pageNo>1</pageNo><totalCount>4</totalCount></body></response>""".encode("utf-8")
 
 
+RENT_XML = """<?xml version="1.0" encoding="utf-8"?><response><header><resultCode>000</resultCode><resultMsg>OK</resultMsg></header><body><items>
+<item><aptNm>잠실엘스</aptNm><buildYear>2008</buildYear><contractTerm>26.10~28.10</contractTerm><contractType>신규</contractType><dealDay>3</dealDay><dealMonth>9</dealMonth><dealYear>2026</dealYear><deposit>150,000</deposit><excluUseAr>84.8</excluUseAr><floor>12</floor><jibun>19</jibun><monthlyRent>0</monthlyRent><preDeposit> </preDeposit><useRRRight> </useRRRight><umdNm>잠실동</umdNm></item>
+<item><aptNm>잠실엘스</aptNm><buildYear>2008</buildYear><contractType>갱신</contractType><dealDay>9</dealDay><dealMonth>9</dealMonth><dealYear>2026</dealYear><deposit>50,000</deposit><excluUseAr>59.96</excluUseAr><floor>4</floor><monthlyRent>250</monthlyRent><preDeposit>50,000</preDeposit><useRRRight>사용</useRRRight><umdNm>잠실동</umdNm></item>
+<item><aptNm>없는단지</aptNm><buildYear>1990</buildYear><contractType> </contractType><dealDay>1</dealDay><dealMonth>9</dealMonth><dealYear>2026</dealYear><deposit>30,000</deposit><excluUseAr>59</excluUseAr><floor>1</floor><monthlyRent>0</monthlyRent><umdNm>잠실동</umdNm></item>
+</items><totalCount>3</totalCount></body></response>""".encode("utf-8")
+
+
 class ParseAndCollectTest(unittest.TestCase):
     def setUp(self):
         self.config = json.loads(sap.CONFIG.read_text(encoding="utf-8"))
@@ -41,6 +48,17 @@ class ParseAndCollectTest(unittest.TestCase):
         rows = collected["jamsil-els"]["trades"]
         self.assertEqual(rows, [["2026-09-21", 84.8, 18, 320000, "중개"], ["2026-08-05", 59.96, 7, 285500, "직거래"]])
         self.assertNotIn("개인", json.dumps(collected, ensure_ascii=False))
+
+    def test_rents_parse_and_keep_only_published_fields(self):
+        rents, total = sap.parse_rent_xml(RENT_XML)
+        self.assertEqual(total, 3)
+        self.assertEqual((rents[0]["deposit"], rents[0]["monthly"], rents[0]["kind"]), (150000, 0, "신규"))
+        self.assertEqual(rents[2]["kind"], "")
+        collected = sap.collect_rents(rents, self.config, {})
+        self.assertEqual(collected["jamsil-els"]["rents"],
+                         [["2026-09-09", 59.96, 4, 50000, 250, "갱신"], ["2026-09-03", 84.8, 12, 150000, 0, "신규"]])
+        self.assertEqual(collected["jamsil-els"]["trades"], [])
+        self.assertNotIn("사용", json.dumps(collected, ensure_ascii=False))
 
     def test_config_slugs_are_safe_and_unique(self):
         slugs = [c["slug"] for c in self.config["complexes"]]
@@ -71,6 +89,30 @@ class SummaryTest(unittest.TestCase):
         self.assertEqual(band84["latest"][0], "2026-09-02")
         self.assertEqual(summary["top_band"]["band"], 84)
         self.assertEqual(summary["monthly"], [("202607", 1), ("202608", 1), ("202609", 2)])
+
+
+class RentSummaryTest(unittest.TestCase):
+    def test_jeonse_median_prefers_new_contracts_when_enough(self):
+        rows = [["2026-09-0%d" % i, 84.9, 5, amount, 0, kind] for i, (amount, kind) in
+                enumerate([(150000, "신규"), (160000, "신규"), (170000, "신규"), (100000, "갱신"), (100000, "갱신")], 1)]
+        rows.append(["2026-08-01", 84.5, 3, 50000, 300, "신규"])
+        band = sap.summarize_rents(rows)["by_band"][84]
+        self.assertEqual((band["jeonse_median"], band["jeonse_basis"]), (160000, "신규"))
+        self.assertEqual((band["jeonse_count"], band["wolse_count"], band["wolse_monthly"]), (5, 1, 300))
+
+    def test_jeonse_median_falls_back_to_all_contracts(self):
+        rows = [["2026-09-01", 59.9, 5, 90000, 0, "신규"], ["2026-09-02", 59.9, 5, 70000, 0, "갱신"]]
+        band = sap.summarize_rents(rows)["by_band"][59]
+        self.assertEqual((band["jeonse_median"], band["jeonse_basis"]), (80000, "전체"))
+        self.assertIsNone(band["wolse_deposit"])
+
+    def test_ratio_and_format(self):
+        self.assertEqual(sap.jeonse_ratio(300000, 150000), 50)
+        self.assertIsNone(sap.jeonse_ratio(300000, None))
+        self.assertEqual(sap.format_rent(["2026-09-01", 84.9, 5, 150000, 0, "신규"]), "15억")
+        self.assertEqual(sap.format_rent(["2026-09-01", 84.9, 5, 50000, 250, ""]), "5억 / 250만")
+        self.assertEqual(sap.rent_label(["2026-09-01", 84.9, 5, 150000, 0, "신규"]), "전세 · 신규")
+        self.assertEqual(sap.rent_label(["2026-09-01", 84.9, 5, 50000, 250, ""]), "월세")
 
 
 class SitemapTest(unittest.TestCase):
@@ -126,6 +168,9 @@ class GeneratedSiteTest(unittest.TestCase):
             for row in slot["trades"]:
                 self.assertEqual(len(row), 5)
                 self.assertIn(row[4], ("중개", "직거래"))
+            for row in slot.get("rents", []):
+                self.assertEqual(len(row), 6)
+                self.assertIn(row[5], ("신규", "갱신", ""))
 
 
 if __name__ == "__main__":

@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Songpa apartment trade-price pages built from MOLIT's public RTMS open API.
 
-  fetch   pull the last 13 months of Songpa apartment trades into data/songpa-apt-trades.v1.json
+  fetch   pull the last 13 months of Songpa apartment trades and rents into data/songpa-apt-trades.v1.json
   render  write public/apartments/<slug>.html, the hub page and their sitemap entries from that file
   refresh fetch + render; prints one JSON line with "changed"
 
 The service key is read from Data_Gov in /opt/data/.env and never printed. Only the
 fields MOLIT already publishes per trade (contract date, exclusive area, floor, price,
-brokered/direct) are kept; buyer/seller types, unit numbers and cancelled trades are dropped.
+brokered/direct; for rents: contract date, area, floor, deposit, monthly rent, new/renewal)
+are kept; buyer/seller types, unit numbers, previous rents and cancelled trades are dropped.
 """
 from __future__ import annotations
 
@@ -35,6 +36,7 @@ SITEMAP = PUBLIC / "Sitemap.xml"
 SITE = "https://lottes.co.kr"
 HUB_NAME = "songpa-apartment-prices.html"
 ENDPOINT = "https://apis.data.go.kr/1613000/RTMSDataSvcAptTrade/getRTMSDataSvcAptTrade"
+RENT_ENDPOINT = "https://apis.data.go.kr/1613000/RTMSDataSvcAptRent/getRTMSDataSvcAptRent"
 MONTHS = 13
 SAFE_SLUG = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 GUIDE_AREAS = {"잠실동": "jamsil", "삼전동": "samjeon", "석촌동": "seokchon", "송파동": "songpa",
@@ -68,37 +70,53 @@ def _text(item: ET.Element, tag: str) -> str:
     return (item.findtext(tag) or "").strip()
 
 
-def parse_trade_xml(body: bytes) -> tuple[list[dict], int]:
+def _manwon(item: ET.Element, tag: str) -> int:
+    return int(_text(item, tag).replace(",", "") or 0)
+
+
+def _parse_items(body: bytes) -> tuple[ET.Element, list[tuple[ET.Element, dict]]]:
     root = ET.fromstring(body)
     code = (root.findtext(".//resultCode") or "").strip()
     if code not in ("000", "00"):
         raise RuntimeError(f"RTMS error {code}: {(root.findtext('.//resultMsg') or '').strip()}")
-    trades = []
+    rows = []
     for item in root.iter("item"):
-        trades.append({
+        rows.append((item, {
             "umd": _text(item, "umdNm"),
             "apt_nm": _text(item, "aptNm"),
             "build_year": _text(item, "buildYear"),
             "date": f"{int(_text(item, 'dealYear')):04d}-{int(_text(item, 'dealMonth')):02d}-{int(_text(item, 'dealDay')):02d}",
             "area": round(float(_text(item, "excluUseAr")), 2),
             "floor": int(_text(item, "floor") or 0),
-            "amount": int(_text(item, "dealAmount").replace(",", "")),
-            "direct": _text(item, "dealingGbn") == "직거래",
-            "cancelled": bool(_text(item, "cdealType")),
-        })
+        }))
+    return root, rows
+
+
+def parse_trade_xml(body: bytes) -> tuple[list[dict], int]:
+    root, rows = _parse_items(body)
+    trades = [{**base, "amount": _manwon(item, "dealAmount"), "direct": _text(item, "dealingGbn") == "직거래",
+               "cancelled": bool(_text(item, "cdealType"))} for item, base in rows]
     return trades, int(root.findtext(".//totalCount") or 0)
 
 
-def fetch_month(key: str, lawd_cd: str, ym: str) -> list[dict]:
+def parse_rent_xml(body: bytes) -> tuple[list[dict], int]:
+    root, rows = _parse_items(body)
+    rents = [{**base, "deposit": _manwon(item, "deposit"), "monthly": _manwon(item, "monthlyRent"),
+              "kind": _text(item, "contractType") if _text(item, "contractType") in ("신규", "갱신") else ""}
+             for item, base in rows]
+    return rents, int(root.findtext(".//totalCount") or 0)
+
+
+def fetch_month(key: str, lawd_cd: str, ym: str, endpoint: str = ENDPOINT, parser=parse_trade_xml) -> list[dict]:
     trades, page = [], 1
     while True:
         query = urllib.parse.urlencode({"LAWD_CD": lawd_cd, "DEAL_YMD": ym, "numOfRows": 1000, "pageNo": page})
-        url = f"{ENDPOINT}?serviceKey={urllib.parse.quote(key, safe='')}&{query}"
+        url = f"{endpoint}?serviceKey={urllib.parse.quote(key, safe='')}&{query}"
         try:
             body = urllib.request.urlopen(url, timeout=30).read()
         except Exception as error:  # keep the key out of tracebacks
             raise RuntimeError(f"RTMS request failed for {ym}: {type(error).__name__} {getattr(error, 'code', '')}") from None
-        batch, total = parse_trade_xml(body)
+        batch, total = parser(body)
         trades.extend(batch)
         if page * 1000 >= total or not batch:
             return trades
@@ -121,15 +139,29 @@ def collect(trades: list[dict], config: dict) -> dict:
     return complexes
 
 
+def collect_rents(rents: list[dict], config: dict, complexes: dict) -> dict:
+    by_key = {(c["umd"], c["apt_nm"]): c for c in config["complexes"]}
+    for rent in rents:
+        entry = by_key.get((rent["umd"], rent["apt_nm"]))
+        if not entry:
+            continue
+        slot = complexes.setdefault(entry["slug"], {"build_year": rent["build_year"], "trades": []})
+        slot.setdefault("rents", []).append([rent["date"], rent["area"], rent["floor"], rent["deposit"], rent["monthly"], rent["kind"]])
+    for slot in complexes.values():
+        slot.get("rents", []).sort(key=lambda row: (row[0], row[3], row[4]), reverse=True)
+    return complexes
+
+
 def fetch(env_path: Path, today: date) -> dict:
     config = json.loads(CONFIG.read_text(encoding="utf-8"))
     key = load_key(env_path)
     months = month_window(today)
-    trades = []
+    trades, rents = [], []
     for ym in months:
         trades.extend(fetch_month(key, config["lawd_cd"], ym))
-    return {"source": "국토교통부 아파트 매매 실거래가 공개자료", "lawd_cd": config["lawd_cd"],
-            "months": months, "complexes": collect(trades, config)}
+        rents.extend(fetch_month(key, config["lawd_cd"], ym, RENT_ENDPOINT, parse_rent_xml))
+    return {"source": "국토교통부 아파트 매매·전월세 실거래가 공개자료", "lawd_cd": config["lawd_cd"],
+            "months": months, "complexes": collect_rents(rents, config, collect(trades, config))}
 
 
 # ---------------------------------------------------------------- summarize
@@ -170,6 +202,43 @@ def summarize(trades: list[list], months: list[str]) -> dict:
         "top_band": max(band_rows, key=lambda b: (b["count"], b["band"])) if band_rows else None,
         "monthly": [(ym, per_month.get(ym, 0)) for ym in months],
     }
+
+
+def summarize_rents(rents: list[list]) -> dict:
+    """Per-area jeonse/wolse medians. Jeonse uses new contracts when there are at least
+    three, because renewals under the 5% renewal cap sit below the going rate."""
+    bands: dict[int, list[list]] = defaultdict(list)
+    for row in rents:
+        bands[area_band(row[1])].append(row)
+    band_rows = []
+    for band, rows in sorted(bands.items()):
+        jeonse = [r for r in rows if r[4] == 0]
+        fresh = [r for r in jeonse if r[5] == "신규"]
+        basis = fresh if len(fresh) >= 3 else jeonse
+        wolse = [r for r in rows if r[4] > 0]
+        band_rows.append({
+            "band": band, "count": len(rows), "jeonse_count": len(jeonse), "wolse_count": len(wolse),
+            "jeonse_median": int(statistics.median(r[3] for r in basis)) if basis else None,
+            "jeonse_basis": ("신규" if basis is fresh else "전체") if basis else "",
+            "wolse_deposit": int(statistics.median(r[3] for r in wolse)) if wolse else None,
+            "wolse_monthly": int(statistics.median(r[4] for r in wolse)) if wolse else None,
+        })
+    return {"count": len(rents), "jeonse": sum(b["jeonse_count"] for b in band_rows),
+            "wolse": sum(b["wolse_count"] for b in band_rows), "bands": band_rows,
+            "by_band": {b["band"]: b for b in band_rows}}
+
+
+def jeonse_ratio(sale_median: int | None, jeonse_median: int | None) -> int | None:
+    return round(jeonse_median / sale_median * 100) if jeonse_median and sale_median else None
+
+
+def format_rent(row: list) -> str:
+    deposit, monthly = row[3], row[4]
+    return format_price(deposit) if monthly == 0 else f"{format_price(deposit)} / {format_price(monthly)}"
+
+
+def rent_label(row: list) -> str:
+    return " · ".join(part for part in ("전세" if row[4] == 0 else "월세", row[5]) if part)
 
 
 # ---------------------------------------------------------------- render
@@ -261,7 +330,7 @@ def _breadcrumb_ld(items: list[tuple[str, str]]) -> dict:
 def _sources_note(months: list[str], as_of: str) -> str:
     return f"""    <section class="lr-section lr-section--muted">
       <div class="lr-container">
-        <div class="lr-disclaimer"><strong>자료 기준과 읽는 법</strong><br>국토교통부 실거래가 공개자료(송파구, {e(_period(months))} 계약분)를 {e(format_date(as_of))} 계약분까지 반영했습니다. 실거래 신고는 계약 후 30일 안에 하므로 최근 한 달은 건수가 적게 보일 수 있고, 해제(취소)된 거래는 뺐습니다. 동·호수와 향, 수리 상태는 공개자료에 없어 같은 면적이라도 가격 차이가 큽니다. 이 페이지는 정보 제공 목적이며 매수·매도 권유가 아닙니다. 계약 전에는 <a href="https://rt.molit.go.kr/" target="_blank" rel="noopener noreferrer">국토교통부 실거래가 공개시스템</a>에서 최신 신고분을 다시 확인하세요.</div>
+        <div class="lr-disclaimer"><strong>자료 기준과 읽는 법</strong><br>국토교통부 아파트 매매·전월세 실거래가 공개자료(송파구, {e(_period(months))} 계약분)를 {e(format_date(as_of))} 계약분까지 반영했습니다. 실거래 신고는 계약 후 30일 안에 하므로 최근 한 달은 건수가 적게 보일 수 있고, 해제(취소)된 매매는 뺐습니다. 전월세는 보증금 6천만 원 또는 월세 30만 원을 넘는 계약이 신고 대상이라 소액 계약은 빠질 수 있습니다. 계약갱신요구권을 쓴 갱신은 인상 폭이 5% 이내로 묶여 시세보다 낮게 나오므로, 전세 중간값은 신규 계약이 3건 이상이면 신규만으로 계산했습니다. 동·호수와 향, 수리 상태는 공개자료에 없어 같은 면적이라도 가격 차이가 큽니다. 이 페이지는 정보 제공 목적이며 매수·매도 권유가 아닙니다. 계약 전에는 <a href="https://rt.molit.go.kr/" target="_blank" rel="noopener noreferrer">국토교통부 실거래가 공개시스템</a>에서 최신 신고분을 다시 확인하세요.</div>
       </div>
     </section>
 """
@@ -272,13 +341,20 @@ def render_complex_page(complex_: dict, slot: dict, months: list[str], as_of: st
     trades = slot["trades"]
     summary = summarize(trades, months)
     latest, top = summary["latest"], summary["top_band"]
+    rents = slot.get("rents", [])
+    rent = summarize_rents(rents)
+    top_rent = rent["by_band"].get(top["band"], {})
+    ratio = jeonse_ratio(top["median"], top_rent.get("jeonse_median"))
     build_year = slot.get("build_year") or ""
     url = f"{SITE}/apartments/{slug}.html"
-    title = f"{name} 실거래가 | 송파구 {umd} 아파트 매매 시세 | 롯데부동산"
-    lead = (f"최근 13개월({_period(months)}) 동안 {name}에서 매매 {summary['count']}건이 신고됐습니다. "
-            f"가장 많이 거래된 전용 {top['band']}㎡는 중간값 {format_price(top['median'])}이고, "
+    title = f"{name} 실거래가 | 매매·전세 시세 | 송파구 {umd} 아파트 | 롯데부동산"
+    lead = (f"최근 13개월({_period(months)}) 동안 {name}에서 매매 {summary['count']}건, 전월세 {rent['count']}건이 신고됐습니다. "
+            f"가장 많이 거래된 전용 {top['band']}㎡는 매매 중간값 {format_price(top['median'])}이고, "
             f"최근 거래는 {format_date(top['latest'][0])} {format_price(top['latest'][3])}({top['latest'][2]}층)입니다.")
-    description = f"{name}({umd}{', ' + build_year + '년 준공' if build_year else ''}) 매매 실거래 {summary['count']}건을 면적별 중간값·최고·최저와 월별 거래량, 최근 거래 목록으로 정리했습니다. 국토교통부 공개자료 기준."
+    if ratio:
+        lead += f" 같은 면적 {top_rent['jeonse_basis']} 전세 중간값은 {format_price(top_rent['jeonse_median'])}(매매가의 약 {ratio}%)입니다."
+    description = (f"{name}({umd}{', ' + build_year + '년 준공' if build_year else ''}) 매매 실거래 {summary['count']}건과 전월세 {rent['count']}건을 "
+                   "면적별 매매·전세 중간값, 전세가율, 월별 거래량, 최근 거래 목록으로 정리했습니다. 국토교통부 공개자료 기준.")
     ld = [
         _breadcrumb_ld([("롯데부동산", f"{SITE}/"), ("송파 아파트 실거래가", f"{SITE}/{HUB_NAME}"), (f"{name} 실거래가", url)]),
         {"@context": "https://schema.org", "@type": "ApartmentComplex", "name": name, "url": url,
@@ -300,6 +376,48 @@ def render_complex_page(complex_: dict, slot: dict, months: list[str], as_of: st
     links.append('<a href="../jamsil-market-report.html">잠실 시장 리포트</a>' if umd in JAMSIL_AREA
                  else '<a href="../songpa-market-report.html">송파 시장 리포트</a>')
     links.append('<a href="../brokerage-fee-calculator.html">중개보수 계산기</a>')
+    sale_bands = {b["band"]: b for b in summary["bands"]}
+
+    def jeonse_cell(b: dict) -> str:
+        return f'{e(format_price(b["jeonse_median"]))}<small>{b["jeonse_basis"]} 기준</small>' if b["jeonse_median"] else "—"
+
+    def ratio_cell(b: dict) -> str:
+        value = jeonse_ratio((sale_bands.get(b["band"]) or {}).get("median"), b["jeonse_median"])
+        return f"{value}%" if value else "—"
+
+    def wolse_cell(b: dict) -> str:
+        return f'{e(format_price(b["wolse_deposit"]))} / {e(format_price(b["wolse_monthly"]))}<small>보증금 / 월세</small>' if b["wolse_count"] else "—"
+
+    rent_rows = "\n".join(
+        f'            <tr><th scope="row">전용 {b["band"]}㎡</th><td>{jeonse_cell(b)}</td><td>{ratio_cell(b)}</td><td>{wolse_cell(b)}</td><td>{b["jeonse_count"]} / {b["wolse_count"]}건</td></tr>'
+        for b in rent["bands"])
+    recent_rent_rows = "\n".join(
+        f'            <tr><td>{e(format_date(row[0]))}</td><td class="ap-wrap">{e(format_rent(row))}<small>{e(rent_label(row))}</small></td><td>{row[1]:g}㎡</td><td>{row[2]}층</td></tr>'
+        for row in rents[:15])
+    rent_section = f"""    <section class="lr-section lr-section--muted" id="rent">
+      <div class="lr-container">
+        <div class="lr-section__head"><div><p class="lr-kicker">전세·월세</p><h2>{e(name)} 전월세 실거래</h2><p class="lr-lead">전세가율은 같은 면적의 전세 중간값을 매매 중간값으로 나눈 값입니다. 월세는 보증금과 월세를 각각 중간값으로 보여드립니다.</p></div></div>
+        <div class="ap-table-wrap">
+          <table class="ap-table">
+            <thead><tr><th scope="col">면적</th><th scope="col">전세 중간값</th><th scope="col">전세가율</th><th scope="col">월세 중간값</th><th scope="col">전세 / 월세</th></tr></thead>
+            <tbody>
+{rent_rows}
+            </tbody>
+          </table>
+        </div>
+        <h3 class="ap-group-title ap-subhead">최근 전월세 {min(15, len(rents))}건</h3>
+        <div class="ap-table-wrap">
+          <table class="ap-table ap-table--compact">
+            <thead><tr><th scope="col">계약일</th><th scope="col">보증금 / 월세</th><th scope="col">전용</th><th scope="col">층</th></tr></thead>
+            <tbody>
+{recent_rent_rows}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+""" if rents else ""
     sibling_links = "".join(f'<li><a href="{e(s["slug"])}.html">{e(s["name"])}</a><span>{e(s["umd"])} · {s["count"]}건</span></li>' for s in siblings)
     body = f"""  <main>
     <div class="lr-breadcrumb"><div class="lr-container"><nav aria-label="현재 위치"><a href="../">홈</a> › <a href="../{HUB_NAME}">송파 아파트 실거래가</a> › <span>{e(name)}</span></nav></div></div>
@@ -311,7 +429,8 @@ def render_complex_page(complex_: dict, slot: dict, months: list[str], as_of: st
         <p class="lr-lead">{e(lead)}</p>
         <div class="ap-stats">
           <div class="lr-stat-pill"><span>13개월 매매</span><strong>{summary['count']}건</strong></div>
-          <div class="lr-stat-pill"><span>최근 계약</span><strong>{e(format_date(latest[0]))}</strong><small>전용 {latest[1]:g}㎡ · {e(format_price(latest[3]))}</small></div>
+          <div class="lr-stat-pill"><span>13개월 전월세</span><strong>{rent['count']}건</strong><small>전세 {rent['jeonse']} · 월세 {rent['wolse']}</small></div>
+          <div class="lr-stat-pill"><span>최근 매매</span><strong>{e(format_date(latest[0]))}</strong><small>전용 {latest[1]:g}㎡ · {e(format_price(latest[3]))}</small></div>
           <div class="lr-stat-pill"><span>준공</span><strong>{e(build_year)}년</strong><small>{e(umd)}</small></div>
         </div>
       </div>
@@ -355,7 +474,7 @@ def render_complex_page(complex_: dict, slot: dict, months: list[str], as_of: st
       </div>
     </section>
 
-{_sources_note(months, as_of)}
+{rent_section}{_sources_note(months, as_of)}
     <section class="lr-section">
       <div class="lr-container">
         <div class="lr-section__head"><div><p class="lr-kicker">함께 보는 단지</p><h2>가까운 송파 단지 실거래가</h2></div></div>
@@ -378,8 +497,8 @@ def render_hub(rows: list[dict], months: list[str], as_of: str) -> str:
     url = f"{SITE}/{HUB_NAME}"
     total = sum(r["count"] for r in rows)
     names = "·".join(r["name"] for r in sorted(rows, key=lambda r: -r["count"])[:3])
-    title = f"송파구 아파트 실거래가 | 단지별 매매 시세 ({names}) | 롯데부동산"
-    description = f"송파구 주요 아파트 {len(rows)}개 단지의 최근 13개월 매매 실거래 {total}건을 단지별 최근 거래가와 거래량으로 정리했습니다. 국토교통부 공개자료 기준."
+    title = f"송파구 아파트 실거래가 | 단지별 매매·전세 시세 ({names}) | 롯데부동산"
+    description = f"송파구 주요 아파트 {len(rows)}개 단지의 최근 13개월 매매 실거래 {total}건을 단지별 매매·전세 중간값과 최근 거래가로 정리했습니다. 국토교통부 공개자료 기준."
     ld = [_breadcrumb_ld([("롯데부동산", f"{SITE}/"), ("송파 아파트 실거래가", url)]),
           {"@context": "https://schema.org", "@type": "ItemList", "name": "송파구 아파트 단지별 실거래가",
            "itemListElement": [{"@type": "ListItem", "position": i + 1, "name": r["name"], "url": f"{SITE}/apartments/{r['slug']}.html"}
@@ -390,12 +509,12 @@ def render_hub(rows: list[dict], months: list[str], as_of: str) -> str:
     groups = []
     for umd in sorted(by_umd, key=lambda u: (-sum(r["count"] for r in by_umd[u]), u)):
         items = "\n".join(
-            f'            <tr><th scope="row"><a href="apartments/{e(r["slug"])}.html">{e(r["name"])}</a><small>{e(r["build_year"])}년 준공</small></th><td>{e(format_price(r["top"]["median"]))}<small>전용 {r["top"]["band"]}㎡ 중간값</small></td><td>{e(format_price(r["latest"][3]))}<small>{e(format_date(r["latest"][0]))} · 전용 {r["latest"][1]:g}㎡</small></td><td>{r["count"]}건</td></tr>'
+            f'            <tr><th scope="row"><a href="apartments/{e(r["slug"])}.html">{e(r["name"])}</a><small>{e(r["build_year"])}년 준공</small></th><td>{e(format_price(r["top"]["median"]))}<small>전용 {r["top"]["band"]}㎡ 매매 중간값</small></td><td>{e(format_price(r["jeonse"])) if r["jeonse"] else "—"}<small>{"같은 면적 전세" if r["jeonse"] else "전세 거래 없음"}</small></td><td>{e(format_price(r["latest"][3]))}<small>{e(format_date(r["latest"][0]))} · 전용 {r["latest"][1]:g}㎡</small></td><td>{r["count"]}건</td></tr>'
             for r in sorted(by_umd[umd], key=lambda r: -r["count"]))
         groups.append(f"""        <h3 class="ap-group-title" id="umd-{e(umd)}">{e(umd)}</h3>
         <div class="ap-table-wrap">
           <table class="ap-table">
-            <thead><tr><th scope="col">단지</th><th scope="col">주력 면적</th><th scope="col">최근 거래</th><th scope="col">13개월</th></tr></thead>
+            <thead><tr><th scope="col">단지</th><th scope="col">주력 면적</th><th scope="col">전세 중간값</th><th scope="col">최근 매매</th><th scope="col">13개월 매매</th></tr></thead>
             <tbody>
 {items}
             </tbody>
@@ -406,13 +525,13 @@ def render_hub(rows: list[dict], months: list[str], as_of: str) -> str:
       <div class="lr-container">
         <p class="lr-kicker">국토교통부 공개자료</p>
         <h1>송파구 아파트 실거래가</h1>
-        <p class="lr-lead">송파구에서 거래가 많은 {len(rows)}개 단지의 최근 13개월({e(_period(months))}) 매매 신고 {total}건을 단지별로 모았습니다. 단지명을 누르면 면적별 중간값과 최근 거래 목록을 볼 수 있습니다.</p>
+        <p class="lr-lead">송파구에서 거래가 많은 {len(rows)}개 단지의 최근 13개월({e(_period(months))}) 매매 신고 {total}건을 단지별로 모았습니다. 단지명을 누르면 면적별 매매·전세 중간값과 최근 거래 목록을 볼 수 있습니다.</p>
       </div>
     </section>
 
     <section class="lr-section">
       <div class="lr-container">
-        <div class="lr-section__head"><div><p class="lr-kicker">동별 단지</p><h2>동별 단지 실거래 요약</h2><p class="lr-lead">주력 면적은 13개월 동안 가장 많이 거래된 전용면적입니다.</p></div></div>
+        <div class="lr-section__head"><div><p class="lr-kicker">동별 단지</p><h2>동별 단지 실거래 요약</h2><p class="lr-lead">주력 면적은 13개월 동안 가장 많이 거래된 전용면적이고, 전세 중간값은 같은 면적의 신규 계약 기준입니다(신규가 3건 미만이면 전체).</p></div></div>
 {chr(10).join(groups)}
       </div>
     </section>
@@ -448,13 +567,17 @@ def build_site(data: dict, config: dict) -> dict[Path, str]:
     for c in complexes:
         if not SAFE_SLUG.match(c["slug"]):
             raise RuntimeError(f"unsafe slug: {c['slug']}")
-    as_of = max(data["complexes"][c["slug"]]["trades"][0][0] for c in complexes)
+    def last_contract(slot: dict) -> str:
+        return max(rows[0][0] for rows in (slot["trades"], slot.get("rents", [])) if rows)
+
+    as_of = max(last_contract(data["complexes"][c["slug"]]) for c in complexes)
     rows = []
     for c in complexes:
         slot = data["complexes"][c["slug"]]
         summary = summarize(slot["trades"], months)
+        rent_band = summarize_rents(slot.get("rents", []))["by_band"].get(summary["top_band"]["band"], {})
         rows.append({**c, "count": summary["count"], "latest": summary["latest"], "top": summary["top_band"],
-                     "build_year": slot.get("build_year") or ""})
+                     "jeonse": rent_band.get("jeonse_median"), "build_year": slot.get("build_year") or ""})
     outputs: dict[Path, str] = {}
     entries = [(f"{SITE}/{HUB_NAME}", as_of)]
     for c in complexes:
@@ -463,7 +586,7 @@ def build_site(data: dict, config: dict) -> dict[Path, str]:
         siblings = (sorted(same, key=lambda r: -r["count"]) + others)[:6]
         slot = data["complexes"][c["slug"]]
         outputs[PAGES / f"{c['slug']}.html"] = render_complex_page(c, slot, months, as_of, siblings)
-        entries.append((f"{SITE}/apartments/{c['slug']}.html", slot["trades"][0][0]))
+        entries.append((f"{SITE}/apartments/{c['slug']}.html", last_contract(slot)))
     outputs[HUB] = render_hub(rows, months, as_of)
     outputs[SITEMAP] = update_sitemap(SITEMAP.read_text(encoding="utf-8"), entries)
     return outputs
