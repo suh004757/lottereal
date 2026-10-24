@@ -276,7 +276,7 @@
 .building-stack h2 { margin: 0 0 20px; color: var(--hq-ink); font-family: 'Noto Sans KR', sans-serif; font-variant-numeric: tabular-nums; font-size: clamp(2.3rem,4vw,4rem); }
 .building-stack p { color: #4f5f59; line-height: 1.85; }
 .building-stack__table { border-top: 1px solid var(--hq-ink); }
-.building-stack__table > div { display: grid; grid-template-columns: 64px minmax(0,1fr) 120px; gap: 20px; padding: 20px 8px; border-bottom: 1px solid var(--hq-line); align-items: center; }
+.building-stack__table > div { display: grid; grid-template-columns: 64px minmax(0,1fr); gap: 20px; padding: 20px 8px; border-bottom: 1px solid var(--hq-line); align-items: center; }
 .building-stack__table span { color: var(--hq-brass-text); font-family: 'Noto Sans KR', sans-serif; font-variant-numeric: tabular-nums; font-size: 1.3rem; }
 .building-stack__table strong { color: var(--hq-ink); }
 .building-stack__table em { color: #4f5f59; font-style: normal; text-align: right; }

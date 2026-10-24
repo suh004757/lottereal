@@ -59,13 +59,15 @@ class CorporateBuildingsTest(unittest.TestCase):
             '자주식 주차 14대',
             '엘리베이터 없음',
             '1996년 9월 18일',
-            '지하 1층 92.25평',
+            '층별 면적 등 세부 내역은 매수 협의 단계에서',
             '주출입구 기준 남동향',
             '5호선 방이역',
         ):
             self.assertIn(approved, public_copy)
 
         self.assertNotIn('공동중개', public_copy)
+        # Per-floor areas are disclosed during negotiation, not on the public page.
+        self.assertNotIn('92.25평', public_copy)
         self.assertIn('기업 사옥 매매', hub)
         self.assertIn('최신 매물 상태와 답사 가능 여부', hub)
         assert_only_approved_public_amounts(self, public_copy)
