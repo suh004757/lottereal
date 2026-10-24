@@ -473,7 +473,7 @@ export function renderStaticReport(report, siteUrl = 'https://lottes.co.kr', opt
     ${renderRelatedReports(report, options.related || [])}
     ${renderReportCta(report)}
   </main>
-  <footer class="lr-footer"><div class="lr-container lr-footer__content"><div><p class="lr-kicker">롯데부동산</p><p class="lr-text">서울시 송파구 백제고분로27길 27 1층</p><p class="lr-text">문의전화: 0507-1402-5055 | 중개사무소등록번호 11710-2018-00141</p></div><div class="lr-footer__links"><a href="../privacy.html">개인정보처리방침</a><a href="../EN.html">ENGLISH</a></div></div><p class="lr-footer__copy">© ${COPYRIGHT_YEAR} 롯데부동산. All rights reserved.</p></footer>
+  <footer class="lr-footer"><div class="lr-container lr-footer__content"><div><p class="lr-kicker">롯데공인중개사사무소</p><p class="lr-text">서울특별시 송파구 백제고분로27길 27 101호</p><p class="lr-text">개업공인중개사 서봉현 · 중개사무소등록번호 11710-2018-00141</p><p class="lr-text">사업자등록번호 183-01-01408 · 대표전화 0507-1402-5055</p></div><div class="lr-footer__links"><a href="../privacy.html">개인정보처리방침</a><a href="../EN.html">ENGLISH</a></div></div><p class="lr-footer__copy">© ${COPYRIGHT_YEAR} 롯데부동산. All rights reserved.</p></footer>
   <div class="lr-mobile-actionbar" aria-label="빠른 상담 메뉴">
     <a href="tel:050714025055"><span><svg class="lr-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M5 4h3l2 5-2.5 1.5a11 11 0 0 0 6 6L15 14l5 2v3a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg></span><strong>전화상담</strong></a>
     <a href="../contact.html#inquiry-options"><span><svg class="lr-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M4 5h16v11H9l-5 4z"/></svg></span><strong>문의하기</strong></a>

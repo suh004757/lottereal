@@ -303,7 +303,7 @@ def _head(title: str, description: str, canonical: str, prefix: str, ld: list[di
 def _foot(prefix: str) -> str:
     return f"""  <footer class="lr-footer">
     <div class="lr-container lr-footer__content">
-      <div><p class="lr-kicker">롯데부동산</p><p class="lr-text">서울시 송파구 백제고분로27길 27 1층</p><p class="lr-text">문의전화 0507-1402-5055</p></div>
+      <div><p class="lr-kicker">롯데공인중개사사무소</p><p class="lr-text">서울특별시 송파구 백제고분로27길 27 101호</p><p class="lr-text">개업공인중개사 서봉현 · 중개사무소등록번호 11710-2018-00141</p><p class="lr-text">사업자등록번호 183-01-01408 · 대표전화 0507-1402-5055</p></div>
       <div class="lr-footer__links"><a href="{prefix}{HUB_NAME}">송파 아파트 실거래가</a><a href="{prefix}songpa-villa-prices.html">송파 빌라 전월세</a><a href="{prefix}songpa-neighborhood-guide.html">송파 동네 선택</a><a href="{prefix}brokerage-fee-calculator.html">중개보수 계산기</a><a href="{prefix}privacy.html">개인정보처리방침</a><a href="{prefix}contact.html">문의</a></div>
     </div>
   </footer>
