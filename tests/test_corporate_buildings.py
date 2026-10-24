@@ -52,8 +52,10 @@ class CorporateBuildingsTest(unittest.TestCase):
         for approved in (
             '350억',
             '서울특별시 송파구 위례성대로 98',
-            '대지 329.12평',
-            '연면적 586.33평',
+            '대지 1,088.00㎡',
+            '연면적 1,938.27㎡',
+            '329.12평',
+            '586.33평',
             '자주식 주차 14대',
             '엘리베이터 없음',
             '1996년 9월 18일',
@@ -85,7 +87,7 @@ class CorporateBuildingsTest(unittest.TestCase):
             self.assertIn(status, detail)
 
         hub_hero = hub[hub.index('<section class="hq-hero">'):hub.index('</section>', hub.index('<section class="hq-hero">'))]
-        for summary in ('현재 공개 1건', '방이동 삼공빌딩', '350억', '연면적 586.33평', '주차 14대', '엘리베이터 없음'):
+        for summary in ('현재 공개 1건', '방이동 삼공빌딩', '350억', '연면적 1,938.27㎡', '주차 14대', '엘리베이터 없음'):
             self.assertIn(summary, hub_hero)
 
     def test_fit_tool_is_local_private_and_flags_hard_constraints(self):
@@ -247,6 +249,11 @@ class CorporateBuildingsTest(unittest.TestCase):
         sitemap = (PUBLIC / 'Sitemap.xml').read_text(encoding='utf-8')
 
         self.assertIn('"price": "35000000000"', detail)
+        # Listing ads show area in ㎡ first (국토부 표시·광고 세부기준); 평 only as a secondary unit.
+        for headline in re.findall(r'<strong>(?:대지|연면적) [^<]+</strong>', detail):
+            self.assertIn('㎡', headline)
+        # No "in stock" signal to search engines until the seller's current status is confirmed.
+        self.assertNotIn('schema.org/InStock', detail)
         for broker_fact in (
             '롯데공인중개사사무소',
             '개업공인중개사 서봉현',
