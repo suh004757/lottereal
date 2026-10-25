@@ -3234,6 +3234,7 @@ h1 {
 .lr-detail__description ul {
   margin: 0 0 14px;
   padding-left: 20px;
+  list-style: disc;
 }
 
 .lr-detail__description li { margin-bottom: 6px; }
