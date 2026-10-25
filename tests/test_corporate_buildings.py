@@ -82,72 +82,27 @@ class CorporateBuildingsTest(unittest.TestCase):
         self.assertIn('5호선 방이역', hero)
         ledger = detail[detail.index('<section class="building-ledger">'):detail.index('</section>', detail.index('<section class="building-ledger">'))]
         self.assertEqual(ledger.count('<div>'), 6)
-        self.assertIn('class="building-jump"', detail)
-        for anchor in ('#building-facts', '#building-stack', '#fit-check', '#inquiry'):
-            self.assertIn(f'href="{anchor}"', detail)
-        for status in ('확인됨', '협의 필요', '공적장부 재확인', '현장 실사 필요'):
-            self.assertIn(status, detail)
+        self.assertIn('id="building-stack"', detail)
+        self.assertIn('id="inquiry"', detail)
 
         hub_hero = hub[hub.index('<section class="hq-hero">'):hub.index('</section>', hub.index('<section class="hq-hero">'))]
         for summary in ('현재 공개 1건', '방이동 삼공빌딩', '350억', '연면적 1,938.27㎡', '주차 14대', '엘리베이터 없음'):
             self.assertIn(summary, hub_hero)
 
-    def test_fit_tool_is_local_private_and_flags_hard_constraints(self):
+    def test_inquiry_links_open_the_samgong_listing_inquiry(self):
         detail = (PUBLIC / 'songpa-samgong-building.html').read_text(encoding='utf-8')
-        page_js_path = PUBLIC / 'js' / 'corporateBuildingFit.js'
-        evaluator_path = PUBLIC / 'js' / 'utils' / 'corporateBuildingFit.mjs'
-
-        self.assertIn('적합성 확인만으로 저장하거나 전송하지 않습니다', detail)
-        self.assertIn('검토하고 동의해 접수할 때만', detail)
-        self.assertNotIn('입력값은 저장하거나 전송하지 않습니다', detail)
-        self.assertIn('id="corporate-fit-form"', detail)
-        self.assertIn('id="corporate-fit-result"', detail)
-        self.assertIn('aria-live="polite"', detail)
-        self.assertIn('js/corporateBuildingFit.js', detail)
-        self.assertIn('data-corporate-inquiry', detail)
         hub = (PUBLIC / 'corporate-buildings.html').read_text(encoding='utf-8')
-        self.assertIn('js/corporateBuildingFit.js', hub)
-        self.assertIn('data-corporate-inquiry', hub)
-        self.assertTrue(page_js_path.exists())
-        self.assertTrue(evaluator_path.exists())
+        for page in (detail, hub):
+            self.assertIn('js/corporateBuildingFit.js', page)
+            self.assertIn('data-corporate-inquiry', page)
+        # The page stays a plain listing: no self-assessment form on the public page.
+        self.assertNotIn('<form', detail)
 
-        form = detail[detail.index('id="corporate-fit-form"'):detail.index('</form>', detail.index('id="corporate-fit-form"'))]
-        for private_field in ('name="name"', 'name="phone"', 'name="email"', 'name="company"'):
-            self.assertNotIn(private_field, form)
-
-        page_js = page_js_path.read_text(encoding='utf-8')
+        page_js = (PUBLIC / 'js' / 'corporateBuildingFit.js').read_text(encoding='utf-8')
         self.assertIn("'lottereal:open-inquiry'", page_js)
         self.assertIn("listingId: '4b2080fa-ebc5-4363-a801-ca1be33add3e'", page_js)
-        self.assertIn('삼공빌딩 문의하기', page_js)
-        self.assertNotIn('이 조건으로 문의하기', page_js)
-        self.assertIn('inquiryDraft:', page_js)
-        inquiry_chat = (PUBLIC / 'js' / 'inquiryChat.js').read_text(encoding='utf-8')
-        self.assertIn('event.detail?.inquiryDraft', inquiry_chat)
-        self.assertIn('renderMessageForm(state.values.message, view)', inquiry_chat)
-        self.assertIn('escapeHtml(initialValue)', inquiry_chat)
         for transport in ('fetch(', 'localStorage', 'sessionStorage', 'sendBeacon', 'XMLHttpRequest'):
             self.assertNotIn(transport, page_js)
-
-        import subprocess
-        script = """
-          import { assessCorporateFit } from './public/js/utils/corporateBuildingFit.mjs';
-          const elevator = assessCorporateFit({ useType: 'hq', parkingNeed: 10, elevatorRequired: true });
-          const showroom = assessCorporateFit({ useType: 'showroom', parkingNeed: 10, elevatorRequired: false });
-          const parking = assessCorporateFit({ useType: 'hq', parkingNeed: 20, elevatorRequired: false });
-          console.log(JSON.stringify({ elevator, showroom, parking }));
-        """
-        result = subprocess.run(
-            ['node', '--input-type=module', '--eval', script],
-            cwd=REPO,
-            text=True,
-            capture_output=True,
-            check=True,
-        )
-        import json
-        data = json.loads(result.stdout)
-        self.assertEqual(data['elevator']['status'], '우선순위 낮음')
-        self.assertEqual(data['showroom']['status'], '적합성 검토')
-        self.assertEqual(data['parking']['status'], '추가 확인')
 
     def test_corporate_listing_uses_dedicated_routes_mobile_cta_and_visible_focus(self):
         listings_js = (PUBLIC / 'js' / 'listingsPage.js').read_text(encoding='utf-8')
