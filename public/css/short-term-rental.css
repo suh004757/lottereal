@@ -1,0 +1,294 @@
+.shortstay-page {
+  --shortstay-card: #fffdf7;
+  --shortstay-warm: #efe4c9;
+}
+
+.shortstay-page .shortstay-hero {
+  padding: clamp(5rem, 9vw, 8rem) 0 clamp(3.5rem, 7vw, 6rem);
+  background: linear-gradient(105deg, rgba(247, 243, 233, 0.98) 46%, rgba(247, 243, 233, 0.55)), url("https://itcztvceelfvppjwhmvl.supabase.co/storage/v1/object/public/property-images/songpa-bangi-shortstay-20261025-73756206/01-living-dining.jpg") center/cover;
+}
+
+.shortstay-page .shortstay-hero__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+  gap: clamp(2rem, 6vw, 5rem);
+  align-items: end;
+}
+
+.shortstay-page .shortstay-hero h1 {
+  max-width: 820px;
+  margin: 0.45rem 0 1.25rem;
+  color: var(--intl-ink);
+  font-size: clamp(2.9rem, 7vw, 6.1rem);
+  line-height: 0.98;
+}
+
+.shortstay-page.shortstay-page--ja .shortstay-hero h1 {
+  font-size: clamp(2.45rem, 5.7vw, 4.9rem);
+  line-height: 1.16;
+}
+
+.shortstay-page .shortstay-lead {
+  max-width: 720px;
+  font-size: clamp(1.05rem, 2vw, 1.3rem);
+  line-height: 1.75;
+}
+
+.shortstay-page .shortstay-price {
+  padding: 1.5rem;
+  border: 1px solid rgba(167, 131, 61, 0.55);
+  background: rgba(255, 253, 247, 0.95);
+  box-shadow: 0 24px 70px rgba(21, 59, 45, 0.14);
+}
+
+.shortstay-page .shortstay-price span {
+  display: block;
+  color: var(--intl-gold-text);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.shortstay-page .shortstay-price > strong {
+  display: block;
+  margin: 0.3rem 0;
+  color: var(--intl-ink);
+  font-family: "Crimson Pro", serif;
+  font-size: clamp(2.2rem, 5vw, 3.8rem);
+  line-height: 1;
+}
+
+.shortstay-page.shortstay-page--ja .shortstay-price > strong {
+  font-family: "Noto Serif JP", serif;
+}
+
+.shortstay-page .shortstay-price p {
+  margin: 0.65rem 0 0;
+  line-height: 1.6;
+}
+
+.shortstay-page .shortstay-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+  border-top: 1px solid var(--intl-line);
+  border-bottom: 1px solid var(--intl-line);
+}
+
+.shortstay-page .shortstay-summary div {
+  min-width: 0;
+  padding: 1.5rem;
+  border-right: 1px solid var(--intl-line);
+}
+
+.shortstay-page .shortstay-summary div:last-child {
+  border-right: 0;
+}
+
+.shortstay-page .shortstay-summary dt {
+  color: #52665f;
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.shortstay-page .shortstay-summary dd {
+  margin: 0.45rem 0 0;
+  color: var(--intl-ink);
+  font-size: 1.12rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.shortstay-page .shortstay-section-heading {
+  max-width: 780px;
+  margin-bottom: 2rem;
+}
+
+.shortstay-page .shortstay-section-heading h2 {
+  margin: 0.35rem 0 0;
+  color: var(--intl-ink);
+  font-size: clamp(2.2rem, 5vw, 4rem);
+  line-height: 1.05;
+}
+
+.shortstay-page .shortstay-cost-grid,
+.shortstay-page .shortstay-detail-grid,
+.shortstay-page .shortstay-rules-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.shortstay-page .shortstay-card {
+  padding: clamp(1.35rem, 3vw, 2rem);
+  border: 1px solid var(--intl-line);
+  background: var(--shortstay-card);
+}
+
+.shortstay-page .shortstay-card h3 {
+  margin: 0 0 1rem;
+  color: var(--intl-ink);
+  font-size: 1.65rem;
+}
+
+.shortstay-page .shortstay-card p,
+.shortstay-page .shortstay-card li {
+  line-height: 1.75;
+}
+
+.shortstay-page .shortstay-card ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.shortstay-page .shortstay-gallery {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.shortstay-page .shortstay-gallery__item {
+  margin: 0;
+  background: #e9e2d3;
+  overflow: hidden;
+}
+
+.shortstay-page .shortstay-gallery__item:first-child {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+
+.shortstay-page .shortstay-gallery__item img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 220px;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  transition: transform 180ms ease;
+}
+
+.shortstay-page .shortstay-gallery__item:hover img {
+  transform: scale(1.015);
+}
+
+.shortstay-page .shortstay-transport {
+  background: var(--intl-ink);
+  color: #f7f3e9;
+}
+
+.shortstay-page .shortstay-transport .lr-kicker,
+.shortstay-page .shortstay-transport h2,
+.shortstay-page .shortstay-transport h3 {
+  color: #f7f3e9;
+}
+
+.shortstay-page .shortstay-transport .shortstay-card {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.shortstay-page .shortstay-transport .shortstay-card li {
+  color: rgba(247, 243, 233, 0.88);
+}
+
+.shortstay-page .shortstay-terms {
+  padding: 1.5rem;
+  border-left: 4px solid var(--intl-gold);
+  background: var(--shortstay-warm);
+}
+
+.shortstay-page .shortstay-terms p,
+.shortstay-page .shortstay-terms li {
+  line-height: 1.75;
+}
+
+.shortstay-page .shortstay-cta {
+  text-align: center;
+}
+
+.shortstay-page .shortstay-cta h2 {
+  max-width: 800px;
+  margin: 0 auto 1rem;
+  color: var(--intl-ink);
+  font-size: clamp(2.1rem, 5vw, 4rem);
+}
+
+.shortstay-page .shortstay-cta > p {
+  max-width: 720px;
+  margin: 0 auto 1.5rem;
+  line-height: 1.75;
+}
+
+.shortstay-page .shortstay-cta .lr-actions {
+  justify-content: center;
+}
+
+.shortstay-page .shortstay-source-note {
+  color: #52665f;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 900px) {
+  .shortstay-page .shortstay-hero__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .shortstay-page .shortstay-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .shortstay-page .shortstay-summary div:nth-child(2) {
+    border-right: 0;
+  }
+
+  .shortstay-page .shortstay-gallery {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .shortstay-page .shortstay-hero {
+    padding-top: 4rem;
+  }
+
+  .shortstay-page .shortstay-hero h1 {
+    font-size: clamp(2.55rem, 13vw, 4rem);
+  }
+
+  .shortstay-page.shortstay-page--ja .shortstay-hero h1 {
+    font-size: clamp(2.15rem, 10.5vw, 3.2rem);
+  }
+
+  .shortstay-page .shortstay-summary,
+  .shortstay-page .shortstay-cost-grid,
+  .shortstay-page .shortstay-detail-grid,
+  .shortstay-page .shortstay-rules-grid,
+  .shortstay-page .shortstay-gallery {
+    grid-template-columns: 1fr;
+  }
+
+  .shortstay-page .shortstay-summary div {
+    border-right: 0;
+    border-bottom: 1px solid var(--intl-line);
+  }
+
+  .shortstay-page .shortstay-summary div:last-child {
+    border-bottom: 0;
+  }
+
+  .shortstay-page .shortstay-gallery__item:first-child {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .shortstay-page .shortstay-gallery__item img {
+    min-height: 0;
+  }
+
+  .shortstay-page .lr-actions .lr-btn {
+    width: 100%;
+    min-height: 52px;
+  }
+}
