@@ -44,6 +44,55 @@ class ShortTermRentalBrowserTests(unittest.TestCase):
         cls.server.shutdown()
         cls.server.server_close()
 
+    def test_english_typography_is_balanced_without_viewport_overflow(self):
+        browser_home = Path(tempfile.mkdtemp(prefix="english-type-e2e-"))
+        self.addCleanup(shutil.rmtree, browser_home, True)
+        env = {
+            "HOME": str(browser_home),
+            "XDG_CONFIG_HOME": str(browser_home / "config"),
+            "XDG_CACHE_HOME": str(browser_home / "cache"),
+        }
+        sync_playwright = _sync_playwright
+        if sync_playwright is None:
+            self.skipTest("Playwright is unavailable")
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                headless=True,
+                executable_path=CHROME,
+                args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--disable-crash-reporter"],
+                env=env,
+            )
+            routes = (
+                ("EN.html", ".intl-hero h1", ".intl-intro"),
+                ("songpa-short-term-rental-en.html", ".shortstay-title", ".shortstay-lead"),
+                ("short-term-rentals-en.html", ".shortstay-title", ".shortstay-subtitle"),
+            )
+            for width, height in ((320, 700), (390, 844), (1440, 1000)):
+                for route, title_selector, lead_selector in routes:
+                    with self.subTest(route=route, width=width):
+                        page = browser.new_page(viewport={"width": width, "height": height})
+                        page.goto(f"{self.base}/{route}", wait_until="domcontentloaded")
+                        self.assertFalse(
+                            page.evaluate("document.documentElement.scrollWidth > document.documentElement.clientWidth"),
+                            (route, width),
+                        )
+                        metrics = page.locator(title_selector).evaluate("""element => {
+                            const style = getComputedStyle(element);
+                            const rect = element.getBoundingClientRect();
+                            return {
+                                fontSize: parseFloat(style.fontSize),
+                                lineHeight: parseFloat(style.lineHeight),
+                                height: rect.height,
+                            };
+                        }""")
+                        self.assertGreaterEqual(metrics["lineHeight"] / metrics["fontSize"], 1.04)
+                        self.assertLessEqual(metrics["fontSize"], 80 if width == 1440 else 52)
+                        self.assertLessEqual(metrics["height"], 240 if width == 1440 else 230)
+                        lead_width = page.locator(lead_selector).evaluate("element => element.getBoundingClientRect().width")
+                        self.assertLessEqual(lead_width, 720)
+                        page.close()
+            browser.close()
+
     def test_responsive_geometry_localized_routes_and_english_prefill(self):
         browser_home = Path(tempfile.mkdtemp(prefix="shortstay-e2e-"))
         self.addCleanup(shutil.rmtree, browser_home, True)
@@ -63,11 +112,14 @@ class ShortTermRentalBrowserTests(unittest.TestCase):
                 env=env,
             )
             for width, height in ((320, 700), (390, 844), (1440, 1000)):
-                for route in ("songpa-short-term-rental-en.html", "songpa-short-term-rental-ja.html"):
+                for route in ("songpa-short-term-rental-en.html", "songpa-short-term-rental-ja.html", "short-term-rentals-en.html", "short-term-rentals-ja.html"):
                     page = browser.new_page(viewport={"width": width, "height": height})
                     page.goto(f"{self.base}/{route}", wait_until="domcontentloaded")
                     self.assertFalse(page.evaluate("document.documentElement.scrollWidth > document.documentElement.clientWidth"), (route, width))
-                    self.assertEqual(page.locator(".shortstay-gallery__item").count(), 13)
+                    if route.startswith("songpa-"):
+                        self.assertEqual(page.locator(".shortstay-gallery__item").count(), 13)
+                    else:
+                        self.assertGreaterEqual(page.locator(".shortstay-listing").count(), 1)
                     page.close()
 
             page = browser.new_page(viewport={"width": 1280, "height": 900})

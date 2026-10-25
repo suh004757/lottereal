@@ -8,6 +8,27 @@ PUBLIC = ROOT / "public"
 
 
 class InternationalLandingTests(unittest.TestCase):
+    def test_english_pages_use_locale_scoped_customer_first_typography_and_copy(self):
+        guide = (PUBLIC / 'EN.html').read_text(encoding='utf-8')
+        listing = (PUBLIC / 'songpa-short-term-rental-en.html').read_text(encoding='utf-8')
+        japanese = (PUBLIC / 'JP.html').read_text(encoding='utf-8')
+        japanese_listing = (PUBLIC / 'songpa-short-term-rental-ja.html').read_text(encoding='utf-8')
+
+        for html in (guide, listing):
+            self.assertRegex(html, r'<body class="[^"]*\bintl-page--en\b[^"]*">')
+        for html in (japanese, japanese_listing):
+            self.assertNotIn('intl-page--en', html)
+
+        self.assertIn('<h1>Find your next home in Songpa, Seoul</h1>', guide)
+        self.assertIn(
+            'Ask about furnished short-term leases and longer-term rentals in Songpa. '
+            'Start with a written inquiry; availability and whether we can help are confirmed after contact.',
+            guide,
+        )
+        self.assertIn('Telephone and in-person service is generally provided in Korean.', guide)
+        self.assertNotIn('guaranteed', guide.lower())
+
+
     def test_english_guide_explains_proportionate_remote_inquiry_verification(self):
         html = (PUBLIC / 'EN.html').read_text(encoding='utf-8')
 
@@ -54,7 +75,7 @@ class InternationalLandingTests(unittest.TestCase):
         pages = {
             'EN.html': {
                 'lang': 'en',
-                'scope': 'This page is a concise guide for international clients.',
+                'scope': 'Ask about furnished short-term leases and longer-term rentals in Songpa.',
                 'translation': 'We use translation tools for written communication when needed.',
                 'sensitive': 'Do not send ID documents, bank details, access codes, or full contracts in your first message.',
             },

@@ -136,6 +136,35 @@ class ShortTermRentalLandingTests(unittest.TestCase):
         self.assertIn("listingTitle", js)
         self.assertIn("inquiryDraft", js)
 
+    def test_index_pages_list_every_detail_page_with_its_own_weekly_price(self):
+        sitemap = (PUBLIC / "Sitemap.xml").read_text(encoding="utf-8")
+        for lang, home in (("en", "EN.html"), ("ja", "JP.html")):
+            index = (PUBLIC / f"short-term-rentals-{lang}.html").read_text(encoding="utf-8")
+            self.assertIn(f'<html lang="{lang}">', index)
+            self.assertEqual(sitemap.count(f"https://lottes.co.kr/short-term-rentals-{lang}.html"), 1)
+            self.assertIn(f'href="short-term-rentals-{lang}.html"', (PUBLIC / home).read_text(encoding="utf-8"))
+
+            details = sorted(p.name for p in PUBLIC.glob(f"songpa-short-term-rental*-{lang}.html"))
+            self.assertTrue(details)
+            cards = re.findall(r'<article class="shortstay-listing">(.*?)</article>', index, re.DOTALL)
+            linked = {re.search(r'href="([^"]+)"', card).group(1) for card in cards}
+            self.assertEqual(linked, set(details))
+            for card in cards:
+                detail_name = re.search(r'href="([^"]+)"', card).group(1)
+                detail = (PUBLIC / detail_name).read_text(encoding="utf-8")
+                self.assertIn(f'href="short-term-rentals-{lang}.html"', detail)
+                card_price = re.search(r'shortstay-listing__price"><strong>([^<]+)</strong>', card).group(1)
+                detail_price = re.search(r'shortstay-price__amount">([^<]+)<', detail).group(1)
+                self.assertEqual(card_price, detail_price)
+                for fact in ("158-1", "52.55"):
+                    self.assertIn(fact, card)
+
+            lower = index.lower()
+            for word in ("hotel", "booking", "guaranteed", "check-in", "guest", "宿泊", "ゲスト", "チェックイン"):
+                self.assertNotIn(word, lower)
+            self.assertIn("11710-2018-00141", index)
+            self.assertIn('href="tel:050714025055"', index)
+
 
 if __name__ == "__main__":
     unittest.main()

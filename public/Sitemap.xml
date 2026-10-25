@@ -29,6 +29,22 @@
     <priority>0.65</priority>
   </url>
 
+  <!-- 송파 단기임대 영문 목록 -->
+  <url>
+    <loc>https://lottes.co.kr/short-term-rentals-en.html</loc>
+    <lastmod>2026-10-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- 송파 단기임대 일본어 목록 -->
+  <url>
+    <loc>https://lottes.co.kr/short-term-rentals-ja.html</loc>
+    <lastmod>2026-10-25</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+  </url>
+
   <!-- 송파 단기임대 영문 상세 -->
   <url>
     <loc>https://lottes.co.kr/songpa-short-term-rental-en.html</loc>
