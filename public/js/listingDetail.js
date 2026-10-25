@@ -9,6 +9,7 @@ import { buildAbsoluteUrl, renderJsonLd, updateSeoMeta } from './utils/seo.js';
 import { SAFE_CONTACT_TEL, getPhoneButtonLabel, getPublicContactPhone } from './utils/contactPhone.mjs';
 import { formatListingDisplayPrice } from './utils/propertyPrice.mjs';
 import { getListingDetailUrl } from './utils/listingRoutes.mjs';
+import { listingDescriptionPlainText, renderListingDescription } from './utils/listingDescription.mjs';
 import {
   getListingFreshness,
   getListingFreshnessCopy,
@@ -147,7 +148,7 @@ function renderDetail(listing) {
         </div>`);
     }
     // 확인 필요 안내가 이미 같은 내용을 말하므로 보관용 설명 문단은 생략합니다
-    descEl.textContent = freshnessCopy ? '' : getSafeListingDescription(listing, freshness, 'ko');
+    renderListingDescription(descEl, freshnessCopy ? '' : getSafeListingDescription(listing, freshness, 'ko'));
   }
   if (noteEl) noteEl.textContent = listing.contactNote || '';
 
@@ -213,7 +214,7 @@ function applySeo(listing, formattedPrice, freshness) {
     listing.title,
     location,
     formattedPrice,
-    getSafeListingDescription(listing, freshness, 'ko') || listing.property_type || '송파·강남 부동산 상세 정보'
+    listingDescriptionPlainText(getSafeListingDescription(listing, freshness, 'ko')) || listing.property_type || '송파·강남 부동산 상세 정보'
   ].filter(Boolean).join(' | ').slice(0, 160);
   const canonical = buildAbsoluteUrl(`listing-detail.html?id=${encodeURIComponent(listing.id || '')}`);
   const image = safeImageUrl(listing.images?.[0] || listing.image)

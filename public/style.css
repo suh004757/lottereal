@@ -3217,8 +3217,30 @@ h1 {
   font-size: 16px;
   line-height: 1.8;
   margin: 24px 0;
-  white-space: pre-wrap;
 }
+
+.lr-detail__description p { margin: 0 0 14px; }
+
+.lr-detail__description h3 {
+  margin: 28px 0 10px;
+  padding-top: 18px;
+  border-top: 1px solid var(--lr-border);
+  color: var(--lr-text);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.lr-detail__description ul {
+  margin: 0 0 14px;
+  padding-left: 20px;
+}
+
+.lr-detail__description li { margin-bottom: 6px; }
+
+.lr-detail__description li::marker { color: var(--lr-muted); }
+
+.lr-detail__description strong { color: var(--lr-text); }
 
 
 .lr-form {
