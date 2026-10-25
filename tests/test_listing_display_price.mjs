@@ -21,6 +21,12 @@ test('older monthly rows: price is the deposit, rent read from the description',
   );
 });
 
+test('short-term rows: price is the weekly rent, with the deposit when there is one', () => {
+  assert.equal(formatListingDisplayPrice({ property_type: '단기임대', price: 85, deposit: 33 }), '보증금 33만원 / 주 85만원');
+  assert.equal(formatListingDisplayPrice({ property_type: '단기임대', price: 85 }), '주 85만원');
+  assert.equal(formatListingDisplayPrice({ property_type: '단기임대' }, { emptyLabel: true }), '단기임대 문의');
+});
+
 test('sale and jeonse keep the type prefix; empty rows can ask for a call', () => {
   assert.equal(formatListingDisplayPrice({ property_type: '매매', price: 65000 }), '매매 6억 5,000만원');
   assert.equal(formatListingDisplayPrice({ property_type: '전세', price: 0 }), '');

@@ -49,6 +49,14 @@ export function formatListingDisplayPrice(listing = {}, { emptyLabel = false } =
   const price = toAmount(listing.price);
   const metadata = listing.metadata || {};
 
+  // 단기임대: price is the weekly rent, deposit is a small refundable deposit.
+  if (type.includes('단기')) {
+    if (!price) return emptyLabel ? '단기임대 문의' : '';
+    const deposit = toAmount(listing.deposit ?? metadata.deposit);
+    const weekly = `주 ${price.toLocaleString()}만원`;
+    return deposit ? `보증금 ${formatManwonAmount(deposit)} / ${weekly}` : weekly;
+  }
+
   if (type.includes('월세') || type === 'Monthly Rent') {
     const rawDeposit = listing.deposit ?? metadata.deposit;
     const hasKnownDeposit = hasExplicitAmount(rawDeposit);
