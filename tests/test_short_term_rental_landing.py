@@ -21,7 +21,7 @@ class ShortTermRentalLandingTests(unittest.TestCase):
 
     def test_pages_publish_verified_listing_facts_and_exact_public_photo_set(self):
         shared_facts = (
-            LISTING_ID, "KRW 950,000", "KRW 850,000", "KRW 100,000", "KRW 330,000",
+            LISTING_ID, "KRW 850,000", "KRW 750,000", "KRW 100,000", "KRW 330,000",
             "KRW 200,000", "52.55", "158-1", "2nd of 4 floors", "2004-05-19",
             "south-facing", "1 car", "Hanseong Baekje", "8 minutes", "Wi-Fi",
         )
@@ -29,7 +29,7 @@ class ShortTermRentalLandingTests(unittest.TestCase):
             self.assertIn(marker, self.en)
 
         japanese_facts = (
-            LISTING_ID, "950,000ウォン", "850,000ウォン", "100,000ウォン", "330,000ウォン",
+            LISTING_ID, "850,000ウォン", "750,000ウォン", "100,000ウォン", "330,000ウォン",
             "200,000ウォン", "52.55", "158-1", "2階／地上4階", "2004年5月19日",
             "南向き", "1台", "漢城百済駅", "徒歩約8分", "Wi-Fi",
         )
@@ -67,14 +67,14 @@ class ShortTermRentalLandingTests(unittest.TestCase):
 
     def test_weekly_price_and_known_contract_amount_are_labeled_without_hiding_charges(self):
         self.assertIn("WEEKLY RENT + MAINTENANCE", self.en)
-        self.assertIn("Known amount for a one-week contract: <strong>KRW 1,480,000</strong>", self.en)
+        self.assertIn("Known amount for a one-week contract: <strong>KRW 1,380,000</strong>", self.en)
         self.assertIn("refundable KRW 330,000 deposit", self.en)
         self.assertIn("KRW 200,000 cleaning fee", self.en)
         self.assertIn("Utilities are separate", self.en)
         self.assertNotIn("ONE-WEEK TOTAL", self.en)
 
         self.assertIn("週額（賃料＋管理費）", self.ja)
-        self.assertIn("1週間契約の既知費用：<strong>1,480,000ウォン</strong>", self.ja)
+        self.assertIn("1週間契約の既知費用：<strong>1,380,000ウォン</strong>", self.ja)
         self.assertIn("返還対象の保証金330,000ウォン", self.ja)
         self.assertIn("清掃費200,000ウォン", self.ja)
         self.assertIn("光熱水費は別途", self.ja)
