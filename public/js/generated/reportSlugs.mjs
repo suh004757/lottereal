@@ -70,5 +70,6 @@ export const EXPORTED_REPORT_SLUGS = new Set([
   "2026-10-19-songpa-youth-housing-finance-change",
   "2026-10-21-songpa-real-estate-broker-registration-check",
   "2026-10-23-songpa-jeonse-loan-rate-before-balance",
-  "2026-10-25-songpa-rental-move-in-day-checklist"
+  "2026-10-25-songpa-rental-move-in-day-checklist",
+  "2026-10-28-songpa-hospital-care-short-term-lease-checklist"
 ]);

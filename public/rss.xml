@@ -6,7 +6,14 @@
     <atom:link href="https://lottes.co.kr/rss.xml" rel="self" type="application/rss+xml"/>
     <description>송파·잠실 부동산 계약 사례와 공공 자료 기반 시장 리포트</description>
     <language>ko</language>
-    <lastBuildDate>Sun, 25 Oct 2026 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 28 Oct 2026 00:00:00 +0000</lastBuildDate>
+    <item>
+      <title>병원 통원·간병으로 몇 주 머물 집, 단기 임대차 전에 무엇을 확인할까요?</title>
+      <link>https://lottes.co.kr/reports/2026-10-28-songpa-hospital-care-short-term-lease-checklist.html</link>
+      <guid isPermaLink="true">https://lottes.co.kr/reports/2026-10-28-songpa-hospital-care-short-term-lease-checklist.html</guid>
+      <description>송파 방이·풍납·오륜 일대에서 치료나 간병 때문에 몇 주 단위로 집을 빌릴 때 일시사용 임대차의 의미, 보증금 반환, 비용 정산, 계단·주차 같은 이동 조건을 어떤 순서로 확인할지 정리했습니다.</description>
+      <pubDate>Wed, 28 Oct 2026 00:00:00 +0000</pubDate>
+    </item>
     <item>
       <title>송파 전월세 입주일, 잔금부터 집 상태 기록까지 무엇을 챙길까요?</title>
       <link>https://lottes.co.kr/reports/2026-10-25-songpa-rental-move-in-day-checklist.html</link>
@@ -279,13 +286,6 @@
       <guid isPermaLink="true">https://lottes.co.kr/reports/2026-03-08-jamsil-office-market-report.html</guid>
       <description>잠실 사무실을 알아볼 때 권역 평균보다 먼저 확인해야 할 임대 조건, 실제 공실, 잠실 스포츠·MICE 사업 진행 상황을 정리했습니다.</description>
       <pubDate>Sun, 27 Sep 2026 00:00:00 +0000</pubDate>
-    </item>
-    <item>
-      <title>송파 매매, 토지이용계획확인서는 등기부와 무엇이 다른가요?</title>
-      <link>https://lottes.co.kr/reports/2026-09-26-songpa-land-use-plan-check.html</link>
-      <guid isPermaLink="true">https://lottes.co.kr/reports/2026-09-26-songpa-land-use-plan-check.html</guid>
-      <description>송파·잠실·삼전·석촌에서 주택이나 건물을 계약하기 전 토지이용계획확인서로 볼 수 있는 제한과 등기부·건축물대장을 따로 확인해야 하는 이유를 정리했습니다.</description>
-      <pubDate>Sat, 26 Sep 2026 00:00:00 +0000</pubDate>
     </item>
   </channel>
 </rss>
