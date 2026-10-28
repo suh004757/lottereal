@@ -166,5 +166,44 @@ class ShortTermRentalLandingTests(unittest.TestCase):
             self.assertIn('href="tel:050714025055"', index)
 
 
+    def test_korean_page_mirrors_listing_facts_and_states_hospital_access_honestly(self):
+        ko = (PUBLIC / "songpa-short-term-rental.html").read_text(encoding="utf-8")
+        sitemap = (PUBLIC / "Sitemap.xml").read_text(encoding="utf-8")
+        self.assertIn('<html lang="ko">', ko)
+        self.assertEqual(sitemap.count("https://lottes.co.kr/songpa-short-term-rental.html"), 1)
+        self.assertIn('href="songpa-short-term-rental.html"', (PUBLIC / "listings.html").read_text(encoding="utf-8"))
+
+        for marker in (
+            LISTING_ID, "69만원", "59만원", "10만원", "33만원", "20만원", "122만원", "52.55", "158-1",
+            "2층 / 총 4층", "2004.05.19", "남향", "엘리베이터 없음", "즉시입주", "다세대주택",
+            "주택 단기 임대차", "11710-2018-00141", "183-01-01408", "서봉현", 'href="tel:050714025055"',
+        ):
+            self.assertIn(marker, ko)
+        expected = {PHOTO_PREFIX + name for name in PHOTO_NAMES}
+        self.assertEqual(set(re.findall(r'<img[^>]+src="(https://[^" ]+)"', ko)), expected)
+
+        hospital = re.search(r'<section class="shortstay-block" id="hospital">(.*?)</section>', ko, re.DOTALL).group(1)
+        for marker in ("서울아산병원", "추정치", "제휴 관계가 없습니다", "엘리베이터가 없는 2층"):
+            self.assertIn(marker, hospital)
+        for word in ("숙박", "입실", "체크인", "게스트", "호텔", "보장합니다"):
+            self.assertNotIn(word, ko)
+
+        pages = {"ko-KR": ko, "en": self.en, "ja": self.ja}
+        urls = {
+            "ko-KR": "https://lottes.co.kr/songpa-short-term-rental.html",
+            "en": "https://lottes.co.kr/songpa-short-term-rental-en.html",
+            "ja": "https://lottes.co.kr/songpa-short-term-rental-ja.html",
+        }
+        for html in pages.values():
+            for lang, url in urls.items():
+                self.assertIn(f'<link rel="alternate" hreflang="{lang}" href="{url}">', html)
+        for lang, html in pages.items():
+            self.assertIn(f'<link rel="canonical" href="{urls[lang]}">', html)
+        self.assertIn("Asan Medical Center", self.en)
+        self.assertIn("not affiliated", self.en)
+        self.assertIn("ソウル峨山病院", self.ja)
+        self.assertIn("提携関係はありません", self.ja)
+
+
 if __name__ == "__main__":
     unittest.main()
