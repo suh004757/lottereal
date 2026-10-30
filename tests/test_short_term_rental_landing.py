@@ -98,10 +98,10 @@ class ShortTermRentalLandingTests(unittest.TestCase):
             self.assertIn("27 Baekjegobun-ro 27-gil", html)
 
         self.assertIn("Multifamily housing", self.en)
-        self.assertIn("Available for immediate move-in", self.en)
+        self.assertIn("Available for move-in from November 6, 2026", self.en)
         self.assertIn("No elevator", self.en)
         self.assertIn("多世帯住宅", self.ja)
-        self.assertIn("即時入居可", self.ja)
+        self.assertIn("2026年11月6日から入居可", self.ja)
         self.assertIn("エレベーターなし", self.ja)
 
     def test_locale_discovery_sitemap_scoped_styles_and_listing_cta_wiring(self):
@@ -175,7 +175,7 @@ class ShortTermRentalLandingTests(unittest.TestCase):
 
         for marker in (
             LISTING_ID, "69만원", "59만원", "10만원", "33만원", "20만원", "122만원", "52.55", "158-1",
-            "2층 / 총 4층", "2004.05.19", "남향", "엘리베이터 없음", "즉시입주", "다세대주택",
+            "2층 / 총 4층", "2004.05.19", "남향", "엘리베이터 없음", "2026년 11월 6일부터 입주 가능", "다세대주택",
             "주택 단기 임대차", "11710-2018-00141", "183-01-01408", "서봉현", 'href="tel:050714025055"',
         ):
             self.assertIn(marker, ko)
