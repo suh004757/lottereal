@@ -1344,3 +1344,115 @@ textarea {
         grid-template-columns: 1fr;
     }
 }
+
+/* Listing availability (입주 일정) */
+.admin-availability {
+    margin-top: 24px;
+    padding: 24px;
+}
+
+.admin-availability[hidden] {
+    display: none;
+}
+
+.admin-availability__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.admin-availability__header h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.admin-availability__calendar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    margin: 16px 0;
+}
+
+.admin-availability .stay-calendar__month {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    text-align: center;
+    font-size: 13px;
+}
+
+.admin-availability .stay-calendar__month caption {
+    margin-bottom: 6px;
+    font-weight: 700;
+}
+
+.admin-availability .stay-calendar__day {
+    padding: 0;
+    border: 2px solid #fff;
+}
+
+.admin-availability .stay-calendar__day button {
+    width: 100%;
+    padding: 6px 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    font: inherit;
+    cursor: pointer;
+}
+
+.admin-availability .stay-calendar__day--open button {
+    background: #e7f4ec;
+    color: #14532d;
+}
+
+.admin-availability .stay-calendar__day--blocked button {
+    background: #e5e5e5;
+    color: #6b6b6b;
+    text-decoration: line-through;
+}
+
+.admin-availability .stay-calendar__day--selected button {
+    outline: 2px solid #174f3d;
+}
+
+.admin-availability .stay-calendar__day--past {
+    color: #b5b5b5;
+}
+
+.admin-availability .stay-calendar__legend {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 16px;
+    margin: 0;
+    font-size: 12px;
+}
+
+.admin-availability__form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px;
+}
+
+.admin-availability__form label {
+    display: grid;
+    gap: 4px;
+    font-size: 13px;
+}
+
+.admin-availability__list {
+    margin: 16px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.admin-availability__list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border-top: 1px solid rgba(148, 163, 184, 0.3);
+}

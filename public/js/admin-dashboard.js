@@ -36,6 +36,7 @@ import { listReports } from './services/reportAdapter.js';
 import { signOutAdmin, getCurrentSessionUser, refreshAdminSession } from './services/authService.js';
 import { buildAdminListingPayload } from './utils/adminListingPayload.mjs';
 import { createFormContextGeneration } from './utils/formContextGeneration.mjs';
+import { bindAvailabilityPanel, openAvailabilityPanel } from './adminAvailability.js';
 
 // ============================================
 // DOM 요소 참조
@@ -162,6 +163,7 @@ async function initAdminDashboard() {
     bindModal();
     bindPropertyForm();
     bindInquiryModal();
+    bindAvailabilityPanel();
     bindLogout();
     loadStats();
     loadRecent();
@@ -421,7 +423,8 @@ async function loadListingsAdmin() {
         closed: item.closed_at ? 'true' : 'false'
       });
       const editButton = createAdminButton('수정', 'admin-btn admin-btn--ghost', { edit: item.id });
-      actions.append(confirmButton, closeButton, editButton);
+      const scheduleButton = createAdminButton('입주 일정', 'admin-btn admin-btn--ghost', { schedule: item.id });
+      actions.append(confirmButton, closeButton, editButton, scheduleButton);
       actionCell.appendChild(actions);
       tr.appendChild(actionCell);
       listingsTbody.appendChild(tr);
@@ -464,6 +467,13 @@ async function loadListingsAdmin() {
         const id = btn.getAttribute('data-edit');
         const item = items.find((d) => `${d.id}` === `${id}`);
         if (item) openModal(item);
+      });
+    });
+
+    listingsTbody.querySelectorAll('[data-schedule]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const item = items.find((d) => `${d.id}` === btn.getAttribute('data-schedule'));
+        if (item) openAvailabilityPanel(item);
       });
     });
 

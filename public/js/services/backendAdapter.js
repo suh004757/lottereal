@@ -214,6 +214,42 @@ export async function setListingClosed(id, closed) {
   return data;
 }
 
+/**
+ * Admin: leased date ranges (starts_on..ends_on inclusive) that feed the public calendar.
+ */
+function privilegedSupabase() {
+  const provider = (APP_CONFIG.BACKEND_PROVIDER || 'mock').toLowerCase();
+  assertSupabasePrivilegedProvider(provider);
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase client unavailable');
+  return supabase;
+}
+
+export async function listUnavailablePeriods(listingId) {
+  const { data, error } = await privilegedSupabase()
+    .from('listing_unavailable_periods')
+    .select('id,listing_id,starts_on,ends_on')
+    .eq('listing_id', listingId)
+    .order('starts_on', { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function addUnavailablePeriod(listingId, startsOn, endsOn) {
+  const { error } = await privilegedSupabase()
+    .from('listing_unavailable_periods')
+    .insert({ listing_id: listingId, starts_on: startsOn, ends_on: endsOn });
+  if (error) throw error;
+}
+
+export async function deleteUnavailablePeriod(id) {
+  const { error } = await privilegedSupabase()
+    .from('listing_unavailable_periods')
+    .delete()
+    .eq('id', id);
+  if (error) throw error;
+}
+
 
 /**
  * Admin: list inquiries

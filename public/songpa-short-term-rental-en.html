@@ -60,7 +60,7 @@
       <div class="shortstay-head">
         <p class="lr-kicker">SEOUL · SONGPA · BANGI-DONG</p>
         <h1 class="shortstay-title">Furnished 3-bedroom home near Olympic Park</h1>
-        <p class="shortstay-subtitle">Short-term residential lease · minimum 1 week · available from November 6</p>
+        <p class="shortstay-subtitle">Short-term residential lease · minimum 1 week · <span data-shortstay-availability="3c04f5dd-dcb3-46ca-9332-e7cde6f9b421" data-variant="short">available from November 6</span></p>
       </div>
 
       <div class="shortstay-mosaic">
@@ -135,9 +135,14 @@
             <div><dt>Use approval date</dt><dd>2004-05-19</dd></div>
             <div><dt>Orientation</dt><dd>south-facing, based on the living room</dd></div>
             <div><dt>Parking</dt><dd>1 car</dd></div>
-            <div><dt>Move-in</dt><dd>Available for move-in from November 6, 2026</dd></div>
+            <div><dt>Move-in</dt><dd data-shortstay-availability="3c04f5dd-dcb3-46ca-9332-e7cde6f9b421">Available for move-in from November 6, 2026</dd></div>
             <div><dt>Transaction</dt><dd>Short-term residential lease</dd></div>
           </dl>
+          <div class="shortstay-calendar" data-shortstay-calendar="3c04f5dd-dcb3-46ca-9332-e7cde6f9b421" hidden>
+            <h3>Availability calendar</h3>
+            <div class="shortstay-calendar__grid" data-calendar-grid></div>
+            <p class="shortstay-calendar__note">Grey dates are already leased. We confirm dates again when you contact us.</p>
+          </div>
         </section>
 
         <section class="shortstay-block" id="photos">
@@ -208,6 +213,7 @@
 
   <script type="module" src="js/knowledgeWidget.js"></script>
   <script src="js/shortTermRentalInquiry.js"></script>
+  <script type="module" src="js/shortStayCalendar.js"></script>
   <script src="js/analyticsEvents.js"></script>
   <script src="js/mobileNav.js"></script>
   <script src="js/phoneHandoff.js"></script>

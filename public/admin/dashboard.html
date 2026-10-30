@@ -208,6 +208,21 @@
           </tbody>
         </table>
       </div>
+      <div class="admin-table-container admin-availability" id="availabilityPanel" hidden>
+        <div class="admin-availability__header">
+          <h2 id="availabilityTitle">입주 일정</h2>
+          <button type="button" class="admin-btn admin-btn--ghost" id="closeAvailabilityPanel">닫기</button>
+        </div>
+        <p class="admin-sub">계약된 기간을 추가하면 매물 페이지 달력과 "○월 ○일부터 입주 가능" 문구가 자동으로 바뀝니다. 달력에서 입주일과 퇴실일을 차례로 누르면 아래 칸이 채워집니다.</p>
+        <div class="admin-availability__calendar" data-availability-calendar></div>
+        <form class="admin-availability__form" id="availabilityForm">
+          <label>입주일 <input type="date" name="startsOn" required></label>
+          <label>퇴실일 (마지막 이용일) <input type="date" name="endsOn" required></label>
+          <button type="submit" class="admin-primary">기간 추가</button>
+        </form>
+        <p class="admin-message" id="availabilityMessage" role="status" aria-live="polite" hidden></p>
+        <ul class="admin-availability__list" data-availability-list></ul>
+      </div>
     </section>
 
     <section id="inquiries-section" class="admin-section">
