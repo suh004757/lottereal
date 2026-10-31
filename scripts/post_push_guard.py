@@ -41,7 +41,11 @@ def load_env(path: Path) -> dict[str, str]:
 
 
 def run(cmd: list[str], *, timeout: int = 180, env: dict[str, str] | None = None) -> tuple[int, str]:
-    result = subprocess.run(cmd, cwd=REPO, text=True, capture_output=True, timeout=timeout, env=env)
+    try:
+        result = subprocess.run(cmd, cwd=REPO, text=True, capture_output=True, timeout=timeout, env=env)
+    except subprocess.TimeoutExpired:
+        # Do not echo the exception: its command/output can contain credentials.
+        return 124, f"command timed out after {timeout} seconds"
     return result.returncode, ((result.stdout or "") + (result.stderr or ""))[-4000:]
 
 
@@ -105,7 +109,8 @@ def local_verification_commands() -> list[tuple[list[str], int, str]]:
             ([sys.executable, "scripts/maintenance_check.py"], 180, "maintenance_check"),
         ]
     return [
-        ([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"], 180, "unittest"),
+        # The canonical suite normally exceeds 180s; this remains bounded without skipping checks.
+        ([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"], 600, "unittest"),
         ([sys.executable, "-m", "py_compile", "scripts/lottereal_supabase.py", "scripts/maintenance_check.py", "scripts/post_push_guard.py"], 120, "py_compile"),
         (["node", "--check", "public/js/config/appConfig.js"], 60, "node_check_app_config"),
         (["node", "--check", "public/js/currentYear.js"], 60, "node_check_current_year"),
