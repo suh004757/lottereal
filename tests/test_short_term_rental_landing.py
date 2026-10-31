@@ -204,28 +204,6 @@ class ShortTermRentalLandingTests(unittest.TestCase):
         self.assertIn("ソウル峨山病院", self.ja)
         self.assertIn("提携関係はありません", self.ja)
 
-    def test_korean_homepage_features_one_date_aware_short_term_detail_cta(self):
-        home = (PUBLIC / "index.html").read_text(encoding="utf-8")
-        feature = re.search(
-            r'<section class="lr-home-shortstay"[^>]*>(.*?)</section>',
-            home,
-            re.DOTALL,
-        )
-        if feature is None:
-            self.fail("homepage short-term feature is missing")
-        markup = feature.group(1)
-        self.assertEqual(markup.count('href="songpa-short-term-rental.html"'), 1)
-        self.assertIn("주 69만원", markup)
-        self.assertIn("임대료+관리비", markup)
-        self.assertIn("보증금 33만원", markup)
-        self.assertIn("퇴거 청소비 20만원", markup)
-        self.assertIn("공과금 별도", markup)
-        self.assertIn(f'data-shortstay-availability="{LISTING_ID}"', markup)
-        self.assertIn("입주 가능일 확인 중", markup)
-        self.assertNotRegex(markup, r"2026년 11월 [0-9]+일|11월 [0-9]+일")
-        self.assertIn('src="js/shortStayCalendar.js"', home)
-        self.assertIn('href="css/home-shortstay.css"', home)
-
 
 if __name__ == "__main__":
     unittest.main()

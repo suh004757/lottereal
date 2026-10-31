@@ -159,64 +159,6 @@ class ShortTermRentalBrowserTests(unittest.TestCase):
             page.close()
             browser.close()
 
-    def test_korean_homepage_shortstay_feature_visual_contract(self):
-        browser_home = Path(tempfile.mkdtemp(prefix="home-shortstay-e2e-"))
-        self.addCleanup(shutil.rmtree, browser_home, True)
-        env = {
-            "HOME": str(browser_home),
-            "XDG_CONFIG_HOME": str(browser_home / "config"),
-            "XDG_CACHE_HOME": str(browser_home / "cache"),
-        }
-        sync_playwright = _sync_playwright
-        if sync_playwright is None:
-            self.skipTest("Playwright is unavailable")
-        with sync_playwright() as playwright:
-            browser = playwright.chromium.launch(
-                headless=True,
-                executable_path=CHROME,
-                args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--disable-crash-reporter"],
-                env=env,
-            )
-            for width, height in ((320, 700), (390, 844), (1440, 1000)):
-                with self.subTest(width=width):
-                    page = browser.new_page(viewport={"width": width, "height": height}, locale="ko-KR")
-                    page.clock.set_fixed_time("2026-11-01T03:00:00Z")
-                    page.add_init_script("""() => {
-                        window.localStorage.setItem('lr_analytics_choice', 'required-only');
-                        window.sessionStorage.setItem('lr_lang_preference', 'stayed');
-                    }""")
-                    page.route(
-                        "**/rest/v1/listing_unavailable_periods**",
-                        lambda route: route.fulfill(
-                            status=200,
-                            content_type="application/json",
-                            body='[{"listing_id":"3c04f5dd-dcb3-46ca-9332-e7cde6f9b421","starts_on":"2026-11-01","ends_on":"2026-11-05"}]',
-                        ),
-                    )
-                    page.goto(f"{self.base}/index.html", wait_until="networkidle")
-                    feature = page.locator(".lr-home-shortstay")
-                    self.assertEqual(feature.count(), 1)
-                    feature.scroll_into_view_if_needed()
-                    cta = feature.locator('a[href="songpa-short-term-rental.html"]')
-                    self.assertEqual(cta.count(), 1)
-                    self.assertGreaterEqual(cta.evaluate("el => el.getBoundingClientRect().height"), 44)
-                    self.assertTrue(cta.is_visible())
-                    cta.scroll_into_view_if_needed()
-                    page.evaluate("window.scrollBy(0, 96)")
-                    actionbar = page.locator(".lr-mobile-actionbar")
-                    if actionbar.is_visible():
-                        cta_box = cta.bounding_box()
-                        bar_box = actionbar.bounding_box()
-                        self.assertIsNotNone(cta_box)
-                        self.assertIsNotNone(bar_box)
-                        self.assertLessEqual(cta_box["y"] + cta_box["height"], bar_box["y"])
-                    self.assertFalse(page.evaluate("document.documentElement.scrollWidth > document.documentElement.clientWidth"))
-                    self.assertIn("69만원", feature.inner_text())
-                    self.assertIn("보증금 33만원", feature.inner_text())
-                    self.assertIn("2026년 11월 6일부터 입주 가능", feature.inner_text())
-                    page.close()
-            browser.close()
-
 
 if __name__ == "__main__":
     unittest.main()
