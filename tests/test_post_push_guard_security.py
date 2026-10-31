@@ -1,4 +1,8 @@
+import io
+import subprocess
+import sys
 import unittest
+from contextlib import redirect_stdout
 from unittest import mock
 
 from scripts import post_push_guard
@@ -9,6 +13,59 @@ OTHER = "b" * 40
 
 
 class PostPushRollbackSafetyTests(unittest.TestCase):
+    def test_full_suite_has_operational_timeout_budget_without_changing_scoped_budget(self):
+        with mock.patch.dict(post_push_guard.os.environ, {}, clear=True):
+            full_commands = post_push_guard.local_verification_commands()
+        with mock.patch.dict(post_push_guard.os.environ, {"LOTTEREAL_PUBLIC_CONTENT_ONLY": "1"}, clear=True):
+            scoped_commands = post_push_guard.local_verification_commands()
+
+        self.assertEqual(600, full_commands[0][1])
+        self.assertEqual(180, scoped_commands[0][1])
+
+    def test_timeout_becomes_sanitized_failure_and_triggers_rollback(self):
+        credential = "github_pat_must_not_escape"
+        expected_failure = {
+            "check": "unittest",
+            "exit_code": 124,
+            "output_tail": "command timed out after 600 seconds",
+        }
+        completed_revision = subprocess.CompletedProcess(
+            ["git", "rev-parse", "HEAD"], 0, stdout=EXPECTED + "\n", stderr=""
+        )
+        timeout = subprocess.TimeoutExpired(
+            ["python", "-m", "unittest", credential],
+            600,
+            output=credential,
+            stderr=f"credential={credential}",
+        )
+
+        stdout = io.StringIO()
+        with (
+            mock.patch.object(sys, "argv", ["post_push_guard.py", "--wait-seconds", "0"]),
+            mock.patch.object(post_push_guard, "load_env", return_value={"GITHUB_TOKEN": credential}),
+            mock.patch.object(post_push_guard, "fetch_live_config", return_value=(200, "safe", None)),
+            mock.patch.object(
+                post_push_guard,
+                "local_verification_commands",
+                return_value=[(["python", "-m", "unittest", credential], 600, "unittest")],
+            ),
+            mock.patch.object(post_push_guard.subprocess, "run", side_effect=[completed_revision, timeout]),
+            mock.patch.object(
+                post_push_guard,
+                "rollback",
+                return_value={"rolled_back": True},
+            ) as rollback,
+            redirect_stdout(stdout),
+        ):
+            exit_code = post_push_guard.main()
+
+        self.assertEqual(1, exit_code)
+        rollback.assert_called_once_with([expected_failure], {"GITHUB_TOKEN": credential}, EXPECTED)
+        rendered = stdout.getvalue()
+        self.assertNotIn(credential, rendered)
+        self.assertNotIn("TimeoutExpired", rendered)
+        self.assertIn("command timed out after 600 seconds", rendered)
+
     def test_refuses_rollback_when_local_head_is_not_failed_revision(self):
         calls = []
 
