@@ -9,7 +9,6 @@ import {
 import { refreshAdminSession } from './services/authService.js';
 import { formatAvailability, nextAvailableDate, seoulToday, toDayNumber } from './utils/shortStayAvailability.mjs';
 import { renderCalendarMonths } from './shortStayCalendarView.mjs';
-import { describeQuote, quoteLease } from './utils/leaseQuote.mjs';
 
 const panel = document.getElementById('availabilityPanel');
 const title = document.getElementById('availabilityTitle');
@@ -56,14 +55,6 @@ function render() {
   const summary = document.createElement('li');
   summary.textContent = `매물 페이지 표시: ${formatAvailability(nextAvailableDate(periods, today), today, 'ko', 'long')}`;
   listEl.appendChild(summary);
-  const [startsOn, endsOn] = selectedDates();
-  // Extensions can be shorter than a week, so the admin quote has no minimum.
-  const quote = endsOn ? quoteLease(startsOn, endsOn, { minDays: 1 }) : null;
-  if (quote?.ok) {
-    const amount = document.createElement('li');
-    amount.textContent = `선택 기간 금액: ${describeQuote(quote)} (보증금·청소비·공과금 제외)`;
-    listEl.appendChild(amount);
-  }
   periods.forEach((period) => {
     const li = document.createElement('li');
     const label = document.createElement('span');
