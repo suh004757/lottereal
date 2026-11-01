@@ -44,6 +44,19 @@ class ListingUnavailablePeriodsMigrationTest(unittest.TestCase):
                 self.assertIn(f'data-shortstay-calendar="{LISTING_ID}" hidden', html, name)
                 self.assertIn("data-calendar-grid", html, name)
 
+    def test_korean_page_offers_a_lease_request_that_stays_hidden_without_availability(self):
+        html = (PUBLIC / "songpa-short-term-rental.html").read_text(encoding="utf-8")
+        self.assertIn('<script type="module" src="js/leaseRequest.js"></script>', html)
+        section = re.search(r'<section[^>]*data-lease-request hidden>(.*?)</section>', html, re.S)
+        self.assertIsNotNone(section)
+        body = section.group(1)
+        self.assertIn(f'data-shortstay-calendar="{LISTING_ID}" hidden', body)
+        for name in ("startsOn", "endsOn", "phone", "privacyConsent", "website"):
+            self.assertIn(f'name="{name}"', body)
+        self.assertIn("결제를 받지 않으며", body)
+        for word in ("숙박", "입실", "체크인", "게스트", "호텔"):
+            self.assertNotIn(word, body)
+
 
 if __name__ == "__main__":
     unittest.main()

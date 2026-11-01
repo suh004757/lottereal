@@ -1,23 +1,9 @@
 // Public short-term listing pages: replace the static move-in text with the date
 // computed from listing_unavailable_periods and draw the availability calendar.
 // If the request fails the static text stays and the calendar stays hidden.
-import { APP_CONFIG } from './config/appConfig.js';
 import { formatAvailability, nextAvailableDate, seoulToday } from './utils/shortStayAvailability.mjs';
 import { renderCalendarMonths } from './shortStayCalendarView.mjs';
-
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
-
-async function fetchPeriods(listingIds, today) {
-  const url = new URL('/rest/v1/listing_unavailable_periods', APP_CONFIG.SUPABASE_URL);
-  url.searchParams.set('select', 'listing_id,starts_on,ends_on');
-  url.searchParams.set('listing_id', `in.(${listingIds.join(',')})`);
-  url.searchParams.set('ends_on', `gte.${today}`);
-  url.searchParams.set('order', 'starts_on.asc');
-  const response = await fetch(url, { headers: { apikey: APP_CONFIG.SUPABASE_KEY, Authorization: `Bearer ${APP_CONFIG.SUPABASE_KEY}` } });
-  if (!response.ok) throw new Error(`availability request failed: ${response.status}`);
-  const rows = await response.json();
-  return Array.isArray(rows) ? rows : [];
-}
+import { LISTING_UUID as UUID, fetchPeriods } from './shortStayPeriods.js';
 
 async function initShortStayAvailability() {
   const labels = [...document.querySelectorAll('[data-shortstay-availability]')];
@@ -44,6 +30,9 @@ async function initShortStayAvailability() {
     el.textContent = formatAvailability(nextAvailableDate(periodsFor(id), today), today, locale, el.dataset.variant || 'long');
   });
   calendars.forEach((el) => {
+    // A calendar inside a lease request form is drawn by leaseRequest.js, which
+    // makes the days selectable.
+    if (el.closest('[data-lease-request]')) return;
     const id = el.dataset.shortstayCalendar;
     const grid = el.querySelector('[data-calendar-grid]');
     if (!UUID.test(id || '') || !grid) return;
