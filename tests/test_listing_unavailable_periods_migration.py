@@ -57,6 +57,20 @@ class ListingUnavailablePeriodsMigrationTest(unittest.TestCase):
         for word in ("숙박", "입실", "체크인", "게스트", "호텔"):
             self.assertNotIn(word, body)
 
+    def test_request_is_reachable_from_the_top_and_the_mobile_bar(self):
+        html = (PUBLIC / "songpa-short-term-rental.html").read_text(encoding="utf-8")
+        hero = html.index('class="shortstay-hero-cta" data-lease-request-link hidden')
+        self.assertLess(hero, html.index('id="apply"'))
+        actionbar = html[html.index('class="lr-mobile-actionbar shortstay-actionbar"'):]
+        self.assertIn('<a href="#apply" data-lease-request-link hidden>', actionbar.split("</div>")[0])
+
+    def test_visitors_see_a_short_listing_number_not_the_database_id(self):
+        for name in ("songpa-short-term-rental.html", "songpa-short-term-rental-en.html", "songpa-short-term-rental-ja.html"):
+            html = (PUBLIC / name).read_text(encoding="utf-8")
+            text = re.sub(r"<[^>]+>", " ", re.sub(r"<(script|style)\b.*?</\1>", " ", html, flags=re.S))
+            self.assertNotIn(LISTING_ID, text, name)
+            self.assertIn("ST-01", text, name)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -5,6 +5,8 @@
 import { isDayBlocked, toDayNumber } from './shortStayAvailability.mjs';
 
 export const SHORTSTAY_LISTING_ID = '3c04f5dd-dcb3-46ca-9332-e7cde6f9b421';
+// What visitors and the office say on the phone; the UUID stays internal.
+export const SHORTSTAY_LISTING_CODE = 'ST-01';
 
 export const LEASE_TERMS = Object.freeze({
   weeklyRent: 590000,
@@ -85,7 +87,7 @@ export function buildLeaseRequestPayload({ startsOn, endsOn, name, phone, messag
 
   return {
     listingId: SHORTSTAY_LISTING_ID,
-    listingTitle: `방이동 단기임대 입주 신청 ${startsOn}~${endsOn} (${quote.days}일)`,
+    listingTitle: `${SHORTSTAY_LISTING_CODE} 방이동 단기임대 입주 신청 ${startsOn}~${endsOn} (${quote.days}일)`,
     name: cleanText(name, 80),
     phone: digits,
     email: '',

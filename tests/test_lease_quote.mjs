@@ -56,6 +56,7 @@ test('the request payload satisfies the public inquiry insert policy', () => {
   const payload = buildLeaseRequestPayload(REQUEST, LEASED);
   const meta = payload.metadata;
   assert.equal(payload.listingId, SHORTSTAY_LISTING_ID);
+  assert.match(payload.listingTitle, /^ST-01 /);
   assert.match(payload.phone, /^[0-9]{9,11}$/);
   assert.equal(payload.name, '홍길동');
   assert.ok(payload.listingTitle.trim() && payload.message.trim());

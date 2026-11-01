@@ -871,3 +871,33 @@
   font-size: 0.85rem;
   color: var(--shortstay-muted);
 }
+
+.shortstay-page .shortstay-hero-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin: 1rem 0 0;
+}
+
+.shortstay-page .shortstay-hero-cta span {
+  font-size: 0.9rem;
+  color: var(--shortstay-muted);
+}
+
+@media (max-width: 640px) {
+  .shortstay-page .shortstay-hero-cta .lr-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .shortstay-page .shortstay-actionbar a[data-lease-request-link] {
+    background: var(--lr-yellow, #f5b400);
+    color: var(--lr-ink-on-yellow, #1a1a1a);
+  }
+
+  .shortstay-page .shortstay-actionbar a[data-lease-request-link]:not([hidden]) ~ a {
+    background: transparent;
+    color: inherit;
+  }
+}
