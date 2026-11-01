@@ -764,3 +764,110 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Lease request ----------------------------------------------------------- */
+.shortstay-page [hidden] {
+  display: none !important;
+}
+
+.shortstay-page .shortstay-apply .shortstay-calendar {
+  margin-top: 1rem;
+}
+
+.shortstay-page .stay-calendar__day button {
+  width: 100%;
+  min-height: 2.25rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: inherit;
+  cursor: pointer;
+}
+
+.shortstay-page .stay-calendar__day--blocked button {
+  cursor: not-allowed;
+}
+
+.shortstay-page .stay-calendar__day--selected {
+  background: var(--intl-ink);
+  color: #fff;
+}
+
+.shortstay-page .shortstay-apply__form {
+  display: grid;
+  gap: 0.9rem;
+  max-width: 34rem;
+  margin-top: 1.5rem;
+}
+
+.shortstay-page .shortstay-apply__form label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.shortstay-page .shortstay-apply__form input:not([type="checkbox"]),
+.shortstay-page .shortstay-apply__form textarea {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--shortstay-line);
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 400;
+}
+
+.shortstay-page .shortstay-apply__dates {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.shortstay-page .shortstay-apply__quote {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border-radius: 8px;
+  background: #f4f4f2;
+  line-height: 1.6;
+}
+
+.shortstay-page .shortstay-apply__form .shortstay-apply__consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-weight: 400;
+}
+
+.shortstay-page .shortstay-apply__consent input {
+  margin-top: 0.3rem;
+}
+
+.shortstay-page .shortstay-apply__trap {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.shortstay-page .shortstay-apply__status {
+  margin: 0;
+  font-weight: 600;
+}
+
+.shortstay-page .shortstay-apply__status[data-state="error"] {
+  color: #b42318;
+}
+
+.shortstay-page .shortstay-apply__status[data-state="success"] {
+  color: #14532d;
+}
+
+.shortstay-page .shortstay-apply__fine {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--shortstay-muted);
+}

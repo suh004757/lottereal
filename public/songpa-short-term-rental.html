@@ -151,11 +151,31 @@
             <div><dt>입주가능일</dt><dd data-shortstay-availability="3c04f5dd-dcb3-46ca-9332-e7cde6f9b421">2026년 11월 6일부터 입주 가능</dd></div>
             <div><dt>거래 형태</dt><dd>주택 단기 임대차</dd></div>
           </dl>
+        </section>
+
+        <section class="shortstay-block shortstay-apply" id="apply" data-lease-request hidden>
+          <h2>입주 신청</h2>
+          <p class="shortstay-note">달력에서 입주일과 퇴거일을 차례로 누르면 예상 금액이 계산됩니다. 최소 7일부터 신청할 수 있고, 7일을 넘는 기간은 하루 단위로 정할 수 있습니다.</p>
           <div class="shortstay-calendar" data-shortstay-calendar="3c04f5dd-dcb3-46ca-9332-e7cde6f9b421" hidden>
             <h3>입주 가능 달력</h3>
             <div class="shortstay-calendar__grid" data-calendar-grid></div>
-            <p class="shortstay-calendar__note">회색 날짜는 이미 계약된 기간입니다. 일정은 문의하실 때 다시 확인해 드립니다.</p>
+            <p class="shortstay-calendar__note">회색 날짜는 이미 계약된 기간입니다. 퇴거일 다음 날부터 다음 입주가 가능합니다.</p>
           </div>
+          <form class="shortstay-apply__form" data-lease-request-form>
+            <div class="shortstay-apply__dates">
+              <label>입주일<input type="date" name="startsOn" required></label>
+              <label>퇴거일<input type="date" name="endsOn" required></label>
+            </div>
+            <p class="shortstay-apply__quote" data-lease-quote aria-live="polite">입주일과 퇴거일을 선택해 주세요.</p>
+            <label>이름<input name="name" autocomplete="name" maxlength="40"></label>
+            <label>연락처<input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="010-0000-0000" required></label>
+            <label>요청사항 (입주 인원, 주차 필요 여부 등)<textarea name="message" rows="3" maxlength="800"></textarea></label>
+            <label class="shortstay-apply__trap" aria-hidden="true">웹사이트<input name="website" type="text" tabindex="-1" autocomplete="off"></label>
+            <label class="shortstay-apply__consent"><input type="checkbox" name="privacyConsent" required><span>신청 확인과 회신을 위한 연락처 수집에 동의합니다. 자세한 내용은 <a href="privacy.html">개인정보처리방침</a>에서 확인할 수 있습니다.</span></label>
+            <button class="lr-btn lr-btn--primary" type="submit">입주 신청 보내기</button>
+            <p class="shortstay-apply__status" data-lease-status role="status" hidden></p>
+            <p class="shortstay-apply__fine">신청만으로 계약이 확정되지는 않습니다. 일정과 금액을 확인해 연락드린 뒤 계약서를 작성하고 입금하시면 확정됩니다. 사이트에서는 결제를 받지 않으며, 신청할 때 신분증이나 계좌 정보는 보내지 마세요.</p>
+          </form>
         </section>
 
         <section class="shortstay-block" id="photos">
@@ -195,8 +215,10 @@
         <strong class="shortstay-price__amount">69만원<small> / 주</small></strong>
         <p>임대료 59만원 + 관리비 10만원</p>
         <p class="shortstay-price__known">1주 계약 시 정해진 금액: <strong>122만원</strong> (반환되는 보증금 33만원, 퇴거 청소비 20만원 포함). 공과금은 별도입니다.</p>
+        <p class="shortstay-price__known">7일을 넘는 기간은 하루 9만 8천원(임대료 8만 4천원 + 관리비 1만 4천원)씩 더해집니다.</p>
         <div class="shortstay-price__actions">
-          <a class="lr-btn lr-btn--primary" href="tel:050714025055">0507-1402-5055 전화</a>
+          <a class="lr-btn lr-btn--primary" href="#apply" data-lease-request-link hidden>날짜 고르고 입주 신청</a>
+          <a class="lr-btn lr-btn--ghost" href="tel:050714025055">0507-1402-5055 전화</a>
           <a class="lr-btn lr-btn--ghost" href="contact.html#inquiry-options">문의 남기기</a>
         </div>
         <p class="shortstay-price__fine">입주 희망일, 기간, 인원, 주차 필요 여부를 알려 주시면 가능 여부와 전체 조건을 안내드립니다. 첫 문의에 신분증이나 계좌 정보는 보내지 마세요.</p>
@@ -221,6 +243,7 @@
   </div>
 
   <script type="module" src="js/shortStayCalendar.js"></script>
+  <script type="module" src="js/leaseRequest.js"></script>
   <script src="js/analyticsEvents.js"></script>
   <script src="js/mobileNav.js"></script>
   <script src="js/phoneHandoff.js"></script>
