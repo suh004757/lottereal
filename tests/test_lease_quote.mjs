@@ -99,3 +99,17 @@ test('extension payload is marked as an extension and skips deposit and cleaning
   assert.throws(() => buildLeaseRequestPayload({ ...REQUEST, startsOn: '2026-11-12', endsOn: '2026-11-13', kind: 'extension' }, LEASED), /다음 날부터/);
   assert.throws(() => buildLeaseRequestPayload({ ...REQUEST, startsOn: '2026-11-08', endsOn: '2026-11-14', kind: 'extension' }, LEASED), /6일까지/);
 });
+
+test('term example amounts on the KR listing page match quoteLease', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const html = await readFile(new URL('../public/songpa-short-term-rental.html', import.meta.url), 'utf8');
+  const rows = [...html.matchAll(/<tr data-term-days="(\d+)">.*?<td>(\d+)만원<\/td><td>(\d+)만원<\/td><\/tr>/g)];
+  assert.ok(rows.length >= 2);
+  for (const [, days, total, withFees] of rows) {
+    const end = new Date(Date.UTC(2026, 10, 8 + Number(days) - 1)).toISOString().slice(0, 10);
+    const quote = quoteLease('2026-11-08', end);
+    assert.equal(quote.days, Number(days));
+    assert.equal(Number(total) * 10000, quote.total);
+    assert.equal(Number(withFees) * 10000, quote.total + quote.deposit + quote.cleaning);
+  }
+});
