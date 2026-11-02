@@ -6,7 +6,14 @@
     <atom:link href="https://lottes.co.kr/rss.xml" rel="self" type="application/rss+xml"/>
     <description>송파·잠실 부동산 계약 사례와 공공 자료 기반 시장 리포트</description>
     <language>ko</language>
-    <lastBuildDate>Wed, 28 Oct 2026 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 02 Nov 2026 00:00:00 +0000</lastBuildDate>
+    <item>
+      <title>병원 통원으로 송파에 몇 주 머물 집을 찾는다면, 단기 임대를 고려하는 이유와 주변 부동산 상황</title>
+      <link>https://lottes.co.kr/reports/2026-11-02-songpa-hospital-visit-short-term-lease-reasons.html</link>
+      <guid isPermaLink="true">https://lottes.co.kr/reports/2026-11-02-songpa-hospital-visit-short-term-lease-reasons.html</guid>
+      <description>통원 치료나 간병으로 송파에 몇 주 머물 때 1주 단위 주택 임대차를 고려하는 이유와, 풍납동 모아타운 등 주변 부동산 소식에서 확인된 범위와 한계를 정리했습니다.</description>
+      <pubDate>Mon, 02 Nov 2026 00:00:00 +0000</pubDate>
+    </item>
     <item>
       <title>병원 통원·간병으로 몇 주 머물 집, 단기 임대차 전에 무엇을 확인할까요?</title>
       <link>https://lottes.co.kr/reports/2026-10-28-songpa-hospital-care-short-term-lease-checklist.html</link>
@@ -278,13 +285,6 @@
       <link>https://lottes.co.kr/reports/2026-09-27-jamsil-office-management-fee-details.html</link>
       <guid isPermaLink="true">https://lottes.co.kr/reports/2026-09-27-jamsil-office-management-fee-details.html</guid>
       <description>잠실·석촌·삼전에서 사무실을 구할 때 월세와 관리비를 나눠 보고, 2026년 시행된 상가 관리비 내역 제공 기준을 활용하는 방법을 정리했습니다.</description>
-      <pubDate>Sun, 27 Sep 2026 00:00:00 +0000</pubDate>
-    </item>
-    <item>
-      <title>2026년 3월 잠실 사무실 시장: 임대 조건과 개발 일정 확인법</title>
-      <link>https://lottes.co.kr/reports/2026-03-08-jamsil-office-market-report.html</link>
-      <guid isPermaLink="true">https://lottes.co.kr/reports/2026-03-08-jamsil-office-market-report.html</guid>
-      <description>잠실 사무실을 알아볼 때 권역 평균보다 먼저 확인해야 할 임대 조건, 실제 공실, 잠실 스포츠·MICE 사업 진행 상황을 정리했습니다.</description>
       <pubDate>Sun, 27 Sep 2026 00:00:00 +0000</pubDate>
     </item>
   </channel>
