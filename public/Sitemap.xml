@@ -8,7 +8,7 @@
   <!-- 홈 -->
   <url>
     <loc>https://lottes.co.kr/</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.00</priority>
   </url>
@@ -384,6 +384,11 @@
     <loc>https://lottes.co.kr/villas/songpa-dong.html</loc>
     <lastmod>2026-10-23</lastmod>
     <changefreq>weekly</changefreq>
+  </url>
+  <url>
+    <loc>https://lottes.co.kr/reports/2026-11-03-songpa-civil-defense-shelter-lookup-guide.html</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>monthly</changefreq>
   </url>
   <url>
     <loc>https://lottes.co.kr/reports/2026-11-02-songpa-hospital-visit-short-term-lease-reasons.html</loc>
