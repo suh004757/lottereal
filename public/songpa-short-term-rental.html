@@ -167,9 +167,15 @@
             <p class="shortstay-calendar__note">회색 날짜는 이미 계약된 기간입니다. 퇴거일 다음 날부터 다음 입주가 가능합니다.</p>
           </div>
           <form class="shortstay-apply__form" data-lease-request-form>
+            <fieldset class="shortstay-apply__kind">
+              <legend>신청 종류</legend>
+              <label><input type="radio" name="kind" value="new" checked><span>처음 신청 (7일 이상)</span></label>
+              <label><input type="radio" name="kind" value="extension"><span>지금 머무는 중 연장 (1~6일)</span></label>
+            </fieldset>
+            <p class="shortstay-note" data-lease-extension-hint hidden>현재 계약이 끝나는 다음 날부터 1~6일까지 연장을 신청할 수 있습니다. 기존 계약 때 쓰신 이름과 연락처로 신청해 주세요. 계약을 확인한 뒤 승인 또는 거절 여부를 연락드리며, 승인과 입금 전까지는 확정되지 않습니다.</p>
             <div class="shortstay-apply__dates">
-              <label>입주일<input type="date" name="startsOn" required></label>
-              <label>퇴거일<input type="date" name="endsOn" required></label>
+              <label><span data-lease-start-label>입주일</span><input type="date" name="startsOn" required></label>
+              <label><span data-lease-end-label>퇴거일</span><input type="date" name="endsOn" required></label>
             </div>
             <p class="shortstay-apply__quote" data-lease-quote aria-live="polite">입주일과 퇴거일을 선택해 주세요.</p>
             <label>이름<input name="name" autocomplete="name" maxlength="40"></label>

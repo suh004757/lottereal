@@ -19,6 +19,10 @@ export const LEASE_TERMS = Object.freeze({
   minDays: 7
 });
 
+// An extension adds days right after a lease that is already booked, so it is
+// capped below a full week; anything longer is a new request.
+export const EXTENSION_MAX_DAYS = LEASE_TERMS.minDays - 1;
+
 export function leaseDays(startsOn, endsOn) {
   const start = toDayNumber(startsOn);
   const end = toDayNumber(endsOn);
@@ -48,6 +52,23 @@ export function quoteLease(startsOn, endsOn, { minDays = LEASE_TERMS.minDays } =
   };
 }
 
+// Extensions are priced like the admin panel prices them (minDays 1) but carry
+// no deposit or cleaning fee: both were settled with the original lease.
+export function quoteExtension(startsOn, endsOn) {
+  const days = leaseDays(startsOn, endsOn);
+  if (!days) return { ok: false, reason: 'invalid' };
+  if (days > EXTENSION_MAX_DAYS) return { ok: false, reason: 'too_long', days };
+  const quote = quoteLease(startsOn, endsOn, { minDays: 1 });
+  return { ...quote, deposit: 0, cleaning: 0 };
+}
+
+// An extension must begin the day after an existing lease ends, on a free day.
+export function isExtensionStart(periods, date) {
+  const day = toDayNumber(date);
+  if (day === null) return false;
+  return isDayBlocked(day - 1, periods) && !isDayBlocked(day, periods);
+}
+
 export function rangeIsOpen(periods, startsOn, endsOn) {
   const start = toDayNumber(startsOn);
   const end = toDayNumber(endsOn);
@@ -74,11 +95,16 @@ function cleanText(value, maxLength) {
 // Builds a row for the existing inquiries table. The shape must satisfy the
 // inquiries_public_insert policy (inquiry_type, source_channel, callback_time,
 // privacy_consent, 9-11 digit phone), so no new table or policy is needed.
-export function buildLeaseRequestPayload({ startsOn, endsOn, name, phone, message, privacyConsent }, periods = []) {
+export function buildLeaseRequestPayload({ startsOn, endsOn, name, phone, message, privacyConsent, kind = 'new' }, periods = []) {
   if (privacyConsent !== true) throw new Error('연락처 수집 동의에 체크해 주세요.');
-  const quote = quoteLease(startsOn, endsOn);
+  const extension = kind === 'extension';
+  const quote = extension ? quoteExtension(startsOn, endsOn) : quoteLease(startsOn, endsOn);
   if (!quote.ok) {
+    if (extension && quote.reason === 'too_long') throw new Error(`연장은 ${EXTENSION_MAX_DAYS}일까지 신청할 수 있습니다. 더 길면 새 입주 신청을 이용해 주세요.`);
     throw new Error(quote.reason === 'too_short' ? '최소 7일부터 신청할 수 있습니다.' : '입주일과 퇴거일을 확인해 주세요.');
+  }
+  if (extension && !isExtensionStart(periods, startsOn)) {
+    throw new Error('연장은 현재 계약이 끝나는 다음 날부터 신청할 수 있습니다.');
   }
   if (!rangeIsOpen(periods, startsOn, endsOn)) throw new Error('선택한 기간에 이미 계약된 날짜가 있습니다.');
   const digits = String(phone || '').replace(/\D/g, '');
@@ -87,15 +113,15 @@ export function buildLeaseRequestPayload({ startsOn, endsOn, name, phone, messag
 
   return {
     listingId: SHORTSTAY_LISTING_ID,
-    listingTitle: `${SHORTSTAY_LISTING_CODE} 방이동 단기임대 입주 신청 ${startsOn}~${endsOn} (${quote.days}일)`,
+    listingTitle: `${SHORTSTAY_LISTING_CODE} 방이동 단기임대 ${extension ? '연장' : '입주'} 신청 ${startsOn}~${endsOn} (${quote.days}일)`,
     name: cleanText(name, 80),
     phone: digits,
     email: '',
     message: [
-      '문의 유형: 단기임대 입주 신청',
-      `기간: ${startsOn} 입주 ~ ${endsOn} 퇴거 (${quote.days}일)`,
+      extension ? '문의 유형: 단기임대 연장 신청 (기존 계약자 확인 필요)' : '문의 유형: 단기임대 입주 신청',
+      extension ? `연장 기간: ${startsOn} ~ ${endsOn} (${quote.days}일, 기존 계약 종료 다음 날부터)` : `기간: ${startsOn} 입주 ~ ${endsOn} 퇴거 (${quote.days}일)`,
       `예상 금액: ${describeQuote(quote)}`,
-      `별도: 보증금 ${formatWon(quote.deposit)}, 퇴거 청소비 ${formatWon(quote.cleaning)}, 공과금`,
+      extension ? '별도: 보증금·청소비 추가 없음, 공과금' : `별도: 보증금 ${formatWon(quote.deposit)}, 퇴거 청소비 ${formatWon(quote.cleaning)}, 공과금`,
       note ? `요청사항: ${note}` : ''
     ].filter(Boolean).join('\n'),
     metadata: {
@@ -106,7 +132,7 @@ export function buildLeaseRequestPayload({ startsOn, endsOn, name, phone, messag
       privacy_consent: true,
       locale: 'ko',
       entry_surface: 'shortstay-lease-request',
-      lease_request: { starts_on: startsOn, ends_on: endsOn, days: quote.days, quoted_total: quote.total }
+      lease_request: { kind: extension ? 'extension' : 'new', starts_on: startsOn, ends_on: endsOn, days: quote.days, quoted_total: quote.total }
     }
   };
 }

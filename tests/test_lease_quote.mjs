@@ -7,7 +7,10 @@ import {
   buildLeaseRequestPayload,
   leaseDays,
   quoteLease,
-  rangeIsOpen
+  rangeIsOpen,
+  EXTENSION_MAX_DAYS,
+  isExtensionStart,
+  quoteExtension
 } from '../public/js/utils/leaseQuote.mjs';
 
 const LEASED = [{ starts_on: '2026-10-30', ends_on: '2026-11-07' }];
@@ -67,7 +70,7 @@ test('the request payload satisfies the public inquiry insert policy', () => {
   assert.equal(meta.privacy_consent, true);
   assert.ok(Buffer.byteLength(JSON.stringify(meta)) <= 4000);
   assert.ok(Buffer.byteLength(payload.message) <= 4000);
-  assert.deepEqual(meta.lease_request, { starts_on: '2026-11-10', ends_on: '2026-11-19', days: 10, quoted_total: 984000 });
+  assert.deepEqual(meta.lease_request, { kind: 'new', starts_on: '2026-11-10', ends_on: '2026-11-19', days: 10, quoted_total: 984000 });
 });
 
 test('the payload is refused without consent, under seven days, or over leased days', () => {
@@ -75,4 +78,24 @@ test('the payload is refused without consent, under seven days, or over leased d
   assert.throws(() => buildLeaseRequestPayload({ ...REQUEST, endsOn: '2026-11-12' }, LEASED), /최소 7일/);
   assert.throws(() => buildLeaseRequestPayload({ ...REQUEST, startsOn: '2026-11-05' }, LEASED), /이미 계약/);
   assert.throws(() => buildLeaseRequestPayload({ ...REQUEST, phone: '12' }, LEASED), /연락처/);
+});
+
+test('an extension starts the day after an existing lease and is capped below a week', () => {
+  assert.equal(isExtensionStart(LEASED, '2026-11-08'), true);
+  assert.equal(isExtensionStart(LEASED, '2026-11-09'), false);
+  assert.equal(isExtensionStart(LEASED, '2026-11-07'), false);
+  assert.equal(EXTENSION_MAX_DAYS, 6);
+  assert.equal(quoteExtension('2026-11-08', '2026-11-10').total, 3 * (LEASE_TERMS.dailyRent + LEASE_TERMS.dailyMaintenance));
+  assert.equal(quoteExtension('2026-11-08', '2026-11-10').deposit, 0);
+  assert.equal(quoteExtension('2026-11-08', '2026-11-14').reason, 'too_long');
+});
+
+test('extension payload is marked as an extension and skips deposit and cleaning', () => {
+  const payload = buildLeaseRequestPayload({ ...REQUEST, startsOn: '2026-11-08', endsOn: '2026-11-10', kind: 'extension' }, LEASED);
+  assert.equal(payload.metadata.lease_request.kind, 'extension');
+  assert.equal(payload.metadata.lease_request.days, 3);
+  assert.match(payload.listingTitle, /연장 신청/);
+  assert.match(payload.message, /보증금·청소비 추가 없음/);
+  assert.throws(() => buildLeaseRequestPayload({ ...REQUEST, startsOn: '2026-11-12', endsOn: '2026-11-13', kind: 'extension' }, LEASED), /다음 날부터/);
+  assert.throws(() => buildLeaseRequestPayload({ ...REQUEST, startsOn: '2026-11-08', endsOn: '2026-11-14', kind: 'extension' }, LEASED), /6일까지/);
 });

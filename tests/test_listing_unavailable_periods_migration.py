@@ -51,8 +51,10 @@ class ListingUnavailablePeriodsMigrationTest(unittest.TestCase):
         self.assertIsNotNone(section)
         body = section.group(1)
         self.assertIn(f'data-shortstay-calendar="{LISTING_ID}" hidden', body)
-        for name in ("startsOn", "endsOn", "phone", "privacyConsent", "website"):
+        for name in ("kind", "startsOn", "endsOn", "phone", "privacyConsent", "website"):
             self.assertIn(f'name="{name}"', body)
+        self.assertIn('value="extension"', body)
+        self.assertIn("data-lease-extension-hint hidden", body)
         self.assertIn("결제를 받지 않으며", body)
         for word in ("숙박", "입실", "체크인", "게스트", "호텔"):
             self.assertNotIn(word, body)
