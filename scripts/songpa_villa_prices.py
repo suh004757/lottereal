@@ -275,7 +275,7 @@ def render_area_page(area: dict, slot: dict, months: list[str], as_of: str, sibl
 
     <section class="lr-section">
       <div class="lr-container">
-        <div class="lr-section__head"><div><p class="lr-kicker">면적대별 시세</p><h2>{e(umd)} 빌라 면적대별 전월세 중간값</h2><p class="lr-lead">방 개수는 공개자료에 없어 전용면적으로만 나눴습니다. 원룸·투룸 표기는 대략적인 기준입니다. 계약이 {MIN_COUNT}건 미만인 칸은 비워 두었습니다.</p></div></div>
+        <div class="lr-section__head"><div><p class="lr-kicker">면적대별 시세</p><h2>{e(umd)} 빌라 면적대별 전월세 중간값</h2><p class="lr-lead">방 개수는 공개자료에 없어 전용면적으로만 나눴습니다. 원룸·투룸 표기는 대략적인 기준입니다. 계약이 {MIN_COUNT}건 미만인 칸은 비워 두었습니다. 1년 단위 계약 전에 몇 주만 지낼 집이 필요하면 <a href="../songpa-short-term-rental.html">방이동 주 단위 단기임대</a>도 있습니다.</p></div></div>
         <div class="ap-table-wrap">
           <table class="ap-table">
             <thead><tr><th scope="col">면적대</th><th scope="col">월세 중간값</th><th scope="col">전세 중간값</th><th scope="col">월세 / 전세</th></tr></thead>
