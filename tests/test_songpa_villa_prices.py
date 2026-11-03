@@ -2,7 +2,9 @@ import json
 import re
 import sys
 import unittest
+from datetime import date, datetime, timezone
 from pathlib import Path
+from unittest.mock import patch
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "scripts"))
@@ -39,6 +41,34 @@ class ParseAndCollectTest(unittest.TestCase):
         areas = villa.collect([], None, self.config, previous)
         self.assertEqual(areas["samjeon"]["trades"], previous["samjeon"]["trades"])
         self.assertEqual(villa.collect([], [], self.config, previous)["samjeon"]["trades"], [])
+
+    def test_fetch_without_trade_access_records_only_successful_rent_provenance(self):
+        secret = "test-service-key-must-not-leak"
+        frozen = datetime(2026, 11, 3, 4, 5, 6, tzinfo=timezone.utc)
+
+        def fetch_month(key, lawd_cd, ym, endpoint, parser):
+            if endpoint == villa.TRADE_ENDPOINT:
+                raise RuntimeError("RTMS request failed: 403")
+            return []
+
+        with patch.object(apt, "load_key", return_value=secret), patch.object(apt, "fetch_month", side_effect=fetch_month):
+            data = villa.fetch(Path("unused.env"), date(2026, 11, 3), now=lambda: frozen)
+
+        self.assertEqual(data["source"], "국토교통부 연립다세대 전월세 실거래가 공개자료")
+        self.assertEqual(data["source_urls"], [villa.RENT_ENDPOINT])
+        self.assertTrue(all("?" not in url and "serviceKey" not in url for url in data["source_urls"]))
+        self.assertEqual(data["collected_at"], "2026-11-03T04:05:06+00:00")
+        self.assertFalse(data["trades_available"])
+        self.assertNotIn(secret, json.dumps(data, ensure_ascii=False))
+
+    def test_fetch_with_trade_access_records_both_successful_sources(self):
+        frozen = datetime(2026, 11, 3, 4, 5, 6, tzinfo=timezone.utc)
+        with patch.object(apt, "load_key", return_value="test-key"), patch.object(apt, "fetch_month", return_value=[]):
+            data = villa.fetch(Path("unused.env"), date(2026, 11, 3), now=lambda: frozen)
+
+        self.assertEqual(data["source"], "국토교통부 연립다세대 전월세·매매 실거래가 공개자료")
+        self.assertEqual(data["source_urls"], [villa.RENT_ENDPOINT, villa.TRADE_ENDPOINT])
+        self.assertTrue(data["trades_available"])
 
     def test_config_slugs_are_safe_and_unique(self):
         slugs = [a["slug"] for a in self.config["areas"]]
@@ -78,6 +108,44 @@ class SummaryTest(unittest.TestCase):
         self.assertEqual(summary["top"]["label"], small["label"])
 
 
+class RendererAvailabilityTest(unittest.TestCase):
+    def setUp(self):
+        self.area = {"umd": "삼전동", "slug": "samjeon"}
+        self.months = ["202609"]
+        self.slot = {
+            "rents": [rent(1, 40, 20000, 0), rent(2, 40, 22000, 0), rent(3, 40, 24000, 0)],
+            "trades": [
+                ["2026-09-03", 40, 2, 33000, 2018, "중개"],
+                ["2026-09-02", 40, 2, 32000, 2018, "중개"],
+                ["2026-09-01", 40, 2, 31000, 2018, "중개"],
+            ],
+        }
+
+    def test_unavailable_flag_suppresses_stale_trade_claims(self):
+        html = villa.render_area_page(self.area, self.slot, self.months, "2026-09-03", [], False)
+        self.assertNotIn("삼전동 빌라 매매 실거래", html)
+        self.assertNotIn("전세·월세·매매", html)
+        self.assertNotIn("해제(취소)된 매매는 뺐습니다", html)
+        self.assertIn("국토교통부 연립다세대 전월세 실거래가 공개자료", html)
+
+    def test_available_flag_renders_trade_section_and_both_source_types(self):
+        html = villa.render_area_page(self.area, self.slot, self.months, "2026-09-03", [], True)
+        self.assertIn("삼전동 빌라 매매 실거래", html)
+        self.assertIn("전세·월세·매매", html)
+        self.assertIn("국토교통부 연립다세대 전월세·매매 실거래가 공개자료", html)
+        self.assertIn("해제(취소)된 매매는 뺐습니다", html)
+
+    def test_legacy_data_without_flag_uses_rent_dates_and_suppresses_trade_claims(self):
+        legacy = {"months": self.months, "areas": {"samjeon": self.slot}}
+        legacy["areas"]["samjeon"]["trades"][0][0] = "2026-10-03"
+        outputs = villa.build_site(legacy, {"areas": [self.area]})
+        html = outputs[villa.PAGES / "samjeon.html"]
+
+        self.assertIn("2026.09.03 계약분까지 반영", html)
+        self.assertNotIn("삼전동 빌라 매매 실거래", html)
+        self.assertIn("국토교통부 연립다세대 전월세 실거래가 공개자료", html)
+
+
 class SitemapTest(unittest.TestCase):
     BASE = "<?xml version=\"1.0\"?>\n<urlset>\n  <url>\n    <loc>https://lottes.co.kr/</loc>\n  </url>\n</urlset>\n"
 
@@ -105,6 +173,15 @@ class GeneratedSiteTest(unittest.TestCase):
                  if not p.exists() or p.read_text(encoding="utf-8") != text]
         self.assertEqual(stale, [], "run: python3 scripts/songpa_villa_prices.py render")
         self.assertEqual({p.name for p in villa.PAGES.glob("*.html")}, {p.name for p in self.outputs if p.parent == villa.PAGES})
+
+    def test_unavailable_trades_are_not_claimed_in_public_source_notes(self):
+        self.assertFalse(self.data["trades_available"])
+        for path, html in self.outputs.items():
+            if path == villa.SITEMAP:
+                continue
+            self.assertIn("국토교통부 연립다세대 전월세 실거래가 공개자료", html)
+            self.assertNotIn("국토교통부 연립다세대 전월세·매매 실거래가 공개자료", html)
+            self.assertNotIn("매매 0건", html)
 
     def test_pages_are_listed_canonical_tracked_and_linked(self):
         pages = [p for p in self.outputs if p.parent == villa.PAGES]

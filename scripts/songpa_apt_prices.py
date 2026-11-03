@@ -23,7 +23,7 @@ import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 from collections import Counter, defaultdict
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
@@ -152,7 +152,7 @@ def collect_rents(rents: list[dict], config: dict, complexes: dict) -> dict:
     return complexes
 
 
-def fetch(env_path: Path, today: date) -> dict:
+def fetch(env_path: Path, today: date, now=None) -> dict:
     config = json.loads(CONFIG.read_text(encoding="utf-8"))
     key = load_key(env_path)
     months = month_window(today)
@@ -160,8 +160,11 @@ def fetch(env_path: Path, today: date) -> dict:
     for ym in months:
         trades.extend(fetch_month(key, config["lawd_cd"], ym))
         rents.extend(fetch_month(key, config["lawd_cd"], ym, RENT_ENDPOINT, parse_rent_xml))
-    return {"source": "국토교통부 아파트 매매·전월세 실거래가 공개자료", "lawd_cd": config["lawd_cd"],
-            "months": months, "complexes": collect_rents(rents, config, collect(trades, config))}
+    collected_at = (now or (lambda: datetime.now(timezone.utc)))().isoformat()
+    return {"source": "국토교통부 아파트 매매·전월세 실거래가 공개자료",
+            "source_urls": [ENDPOINT, RENT_ENDPOINT], "collected_at": collected_at,
+            "lawd_cd": config["lawd_cd"], "months": months,
+            "complexes": collect_rents(rents, config, collect(trades, config))}
 
 
 # ---------------------------------------------------------------- summarize
