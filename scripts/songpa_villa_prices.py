@@ -100,7 +100,7 @@ def collect(rents: list[dict], trades: list[dict] | None, config: dict, previous
     return areas
 
 
-def fetch(env_path: Path, today: date) -> dict:
+def fetch(env_path: Path, today: date, now=None) -> dict:
     config = json.loads(CONFIG.read_text(encoding="utf-8"))
     previous = json.loads(DATA.read_text(encoding="utf-8")).get("areas", {}) if DATA.exists() else {}
     key = apt.load_key(env_path)
@@ -116,8 +116,13 @@ def fetch(env_path: Path, today: date) -> dict:
                 if "403" not in str(error):
                     raise
                 trades = None  # trade API not activated for this key yet
-    return {"source": "국토교통부 연립다세대 전월세·매매 실거래가 공개자료", "lawd_cd": config["lawd_cd"],
-            "months": months, "trades_available": trades is not None,
+    trades_available = trades is not None
+    collected_at = (now or (lambda: apt.datetime.now(apt.timezone.utc)))().isoformat()
+    source = ("국토교통부 연립다세대 전월세·매매 실거래가 공개자료" if trades_available
+              else "국토교통부 연립다세대 전월세 실거래가 공개자료")
+    source_urls = [RENT_ENDPOINT, TRADE_ENDPOINT] if trades_available else [RENT_ENDPOINT]
+    return {"source": source, "source_urls": source_urls, "collected_at": collected_at,
+            "lawd_cd": config["lawd_cd"], "months": months, "trades_available": trades_available,
             "areas": collect(rents, trades, config, previous)}
 
 
@@ -181,12 +186,24 @@ def _money(value: int | None) -> str:
     return e(format_price(value)) if value else "—"
 
 
-def render_area_page(area: dict, slot: dict, months: list[str], as_of: str, siblings: list[dict]) -> str:
+def _sources_note(months: list[str], as_of: str, trades_available: bool = False) -> str:
+    source = ("국토교통부 연립다세대 전월세·매매 실거래가 공개자료" if trades_available
+              else "국토교통부 연립다세대 전월세 실거래가 공개자료")
+    note = apt._sources_note(months, as_of).replace(
+        "국토교통부 아파트 매매·전월세 실거래가 공개자료", source)
+    if not trades_available:
+        note = note.replace("실거래 신고는 계약 후 30일 안에 하므로 최근 한 달은 건수가 적게 보일 수 있고, 해제(취소)된 매매는 뺐습니다.",
+                            "실거래 신고는 계약 후 30일 안에 하므로 최근 한 달은 건수가 적게 보일 수 있습니다.")
+    return note
+
+
+def render_area_page(area: dict, slot: dict, months: list[str], as_of: str, siblings: list[dict],
+                     trades_available: bool = False) -> str:
     umd, slug = area["umd"], area["slug"]
     summary = summarize(slot, months, int(as_of[:4]))
     top = summary["top"]
     url = f"{SITE}/villas/{slug}.html"
-    has_sales = any(b["sale"] for b in summary["bands"])
+    has_sales = trades_available and any(b["sale"] for b in summary["bands"])
     kinds = "전세·월세·매매" if has_sales else "전세·월세"
     title = f"{umd} 빌라 {kinds} 실거래가 | 원룸·투룸 시세 | 송파구 | 롯데부동산"
     share = round(summary["wolse"] / summary["count"] * 100) if summary["count"] else 0
@@ -353,7 +370,7 @@ def render_area_page(area: dict, slot: dict, months: list[str], as_of: str, sibl
       </div>
     </section>
 
-{apt._sources_note(months, as_of).replace("국토교통부 아파트 매매·전월세 실거래가 공개자료", "국토교통부 연립다세대 전월세·매매 실거래가 공개자료")}
+{_sources_note(months, as_of, trades_available)}
     <section class="lr-section">
       <div class="lr-container lr-cta">
         <div><p class="lr-kicker">{e(cta_kicker)}</p><h2>{e(cta_title)}</h2><p class="lr-lead">{e(cta_where)} 실거래가에 없는 주차·엘리베이터·채광과 등기부 확인을 현장에서 함께 봐 드립니다. 주소·계약서 원문은 공개 입력창에 올리지 마세요.</p><div class="lr-actions"><a class="lr-btn lr-btn--primary" href="../contact.html#inquiry-options">{e(umd)} 빌라 상담 문의</a><a class="lr-btn lr-btn--ghost" href="../listings.html">현재 매물 보기</a></div></div>
@@ -365,7 +382,7 @@ def render_area_page(area: dict, slot: dict, months: list[str], as_of: str, sibl
     return apt._head(title, description, url, "../", ld) + body + apt._foot("../")
 
 
-def render_hub(rows: list[dict], months: list[str], as_of: str) -> str:
+def render_hub(rows: list[dict], months: list[str], as_of: str, trades_available: bool = False) -> str:
     url = f"{SITE}/{HUB_NAME}"
     total = sum(r["summary"]["count"] for r in rows)
     names = "·".join(r["umd"] for r in rows)
@@ -410,7 +427,7 @@ def render_hub(rows: list[dict], months: list[str], as_of: str) -> str:
       </div>
     </section>
 
-{apt._sources_note(months, as_of).replace("국토교통부 아파트 매매·전월세 실거래가 공개자료", "국토교통부 연립다세대 전월세·매매 실거래가 공개자료")}
+{_sources_note(months, as_of, trades_available)}
     <section class="lr-section">
       <div class="lr-container lr-cta">
         <div><p class="lr-kicker">{OFFICE_UMD} 현장 사무소</p><h2>송파 빌라, 현장에서 같이 확인하세요</h2><p class="lr-lead">실거래가에 없는 주차·엘리베이터·채광과 등기부 선순위는 현장과 서류로 확인해야 합니다. 주소·계약서 원문은 공개 입력창에 올리지 마세요.</p><div class="lr-actions"><a class="lr-btn lr-btn--primary" href="contact.html#inquiry-options">빌라 전월세 상담 문의</a><a class="lr-btn lr-btn--ghost" href="songpa-neighborhood-guide.html">송파 동네 선택 도우미</a></div></div>
@@ -426,6 +443,7 @@ def build_site(data: dict, config: dict) -> dict[Path, str]:
     """Pure: data + config -> {path: content} for every generated file."""
     months = data["months"]
     outputs: dict[Path, str] = {}
+    trades_available = data.get("trades_available") is True
     rows = []
     for area in config["areas"]:
         if not apt.SAFE_SLUG.match(area["slug"]):
@@ -433,7 +451,8 @@ def build_site(data: dict, config: dict) -> dict[Path, str]:
         slot = data["areas"].get(area["slug"])
         if not slot or not slot["rents"]:
             continue
-        as_of = max(r[0][0] for r in (slot["rents"], slot["trades"]) if r)
+        dated_rows = (slot["rents"], slot["trades"]) if trades_available else (slot["rents"],)
+        as_of = max(row[0] for rows in dated_rows for row in rows)
         rows.append({**area, "slot": slot, "as_of": as_of, "summary": summarize(slot, months, int(as_of[:4]))})
     if not rows:
         return outputs
@@ -441,9 +460,10 @@ def build_site(data: dict, config: dict) -> dict[Path, str]:
     entries = [(f"{SITE}/{HUB_NAME}", hub_as_of)]
     for row in rows:
         siblings = [{"slug": r["slug"], "umd": r["umd"], "count": r["summary"]["count"]} for r in rows if r is not row]
-        outputs[PAGES / f"{row['slug']}.html"] = render_area_page(row, row["slot"], months, row["as_of"], siblings)
+        outputs[PAGES / f"{row['slug']}.html"] = render_area_page(
+            row, row["slot"], months, row["as_of"], siblings, trades_available)
         entries.append((f"{SITE}/villas/{row['slug']}.html", row["as_of"]))
-    outputs[HUB] = render_hub(rows, months, hub_as_of)
+    outputs[HUB] = render_hub(rows, months, hub_as_of, trades_available)
     outputs[SITEMAP] = apt.update_sitemap(SITEMAP.read_text(encoding="utf-8"), entries, SITEMAP_PATTERN)
     return outputs
 

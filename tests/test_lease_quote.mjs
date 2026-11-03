@@ -116,3 +116,31 @@ for (const page of ['songpa-short-term-rental.html', 'songpa-short-term-rental-e
     }
   });
 }
+
+const localizedPricingCopy = [
+  {
+    page: 'songpa-short-term-rental-en.html',
+    fullWeek: /Each complete 7-day week is KRW 690,000/,
+    remainder: /after complete weeks are counted, any remaining days are KRW 98,000 per day/,
+    caveats: [/KRW 330,000 deposit is settled and returned after move-out/, /utilities are extra/],
+  },
+  {
+    page: 'songpa-short-term-rental-ja.html',
+    fullWeek: /7日間の各1週間は690,000ウォン/,
+    remainder: /満1週間単位で計算した後の残りの日数は、1日あたり98,000ウォン/,
+    caveats: [/保証金330,000ウォンは退去後に精算して返還/, /光熱費は別途/],
+  },
+];
+
+for (const { page, fullWeek, remainder, caveats } of localizedPricingCopy) {
+  test(`pricing footnote on ${page} describes whole weeks plus remainder days`, async () => {
+    const { readFile } = await import('node:fs/promises');
+    const html = await readFile(new URL(`../public/${page}`, import.meta.url), 'utf8');
+    const footnote = html.match(/<table class="shortstay-cost-table" data-term-examples>[\s\S]*?<\/table>\s*<p class="shortstay-note">([^<]+)<\/p>/)?.[1] ?? '';
+    assert.match(footnote, fullWeek);
+    assert.match(footnote, remainder);
+    for (const caveat of caveats) assert.match(footnote, caveat);
+    assert.equal(LEASE_TERMS.weeklyRent + LEASE_TERMS.weeklyMaintenance, 690000);
+    assert.equal(LEASE_TERMS.dailyRent + LEASE_TERMS.dailyMaintenance, 98000);
+  });
+}

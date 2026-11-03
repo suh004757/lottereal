@@ -23,6 +23,7 @@ CHROME = os.environ.get("LOTTEREAL_E2E_CHROME") or (
 LISTING_ID = "3c04f5dd-dcb3-46ca-9332-e7cde6f9b421"
 LISTING_TITLE = "Songpa Bangi-dong 3-bedroom short-term residential lease"
 INQUIRY_DRAFT = "I am asking about the Bangi-dong short-term residential lease: KRW 690,000 weekly rent and maintenance (KRW 590,000 rent + KRW 100,000 maintenance); known one-week contract amount KRW 1,220,000 including refundable KRW 330,000 deposit and KRW 200,000 cleaning fee; utilities separate."
+SCREENSHOT_DIR = Path(os.environ["LOTTEREAL_E2E_SCREENSHOT_DIR"]) if os.environ.get("LOTTEREAL_E2E_SCREENSHOT_DIR") else None
 
 
 class QuietHandler(SimpleHTTPRequestHandler):
@@ -90,6 +91,68 @@ class ShortTermRentalBrowserTests(unittest.TestCase):
                         self.assertLessEqual(metrics["height"], 240 if width == 1440 else 230)
                         lead_width = page.locator(lead_selector).evaluate("element => element.getBoundingClientRect().width")
                         self.assertLessEqual(lead_width, 720)
+                        page.close()
+            browser.close()
+
+    def test_native_date_fields_and_localized_detail_pages_fit_supported_widths(self):
+        browser_home = Path(tempfile.mkdtemp(prefix="shortstay-date-e2e-"))
+        self.addCleanup(shutil.rmtree, browser_home, True)
+        env = {
+            "HOME": str(browser_home),
+            "XDG_CONFIG_HOME": str(browser_home / "config"),
+            "XDG_CACHE_HOME": str(browser_home / "cache"),
+        }
+        if SCREENSHOT_DIR:
+            SCREENSHOT_DIR.mkdir(parents=True, exist_ok=True)
+        sync_playwright = _sync_playwright
+        if sync_playwright is None:
+            self.skipTest("Playwright is unavailable")
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                headless=True,
+                executable_path=CHROME,
+                args=["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--disable-crash-reporter"],
+                env=env,
+            )
+            routes = (
+                "songpa-short-term-rental.html",
+                "songpa-short-term-rental-en.html",
+                "songpa-short-term-rental-ja.html",
+            )
+            for width, height in ((320, 700), (390, 844), (1440, 1000)):
+                for route in routes:
+                    with self.subTest(route=route, width=width):
+                        page = browser.new_page(viewport={"width": width, "height": height})
+                        page.route("**/rest/v1/listing_unavailable_periods*", lambda request: request.fulfill(status=200, content_type="application/json", body="[]"))
+                        page.goto(f"{self.base}/{route}", wait_until="domcontentloaded")
+                        if route == "songpa-short-term-rental.html":
+                            page.locator("[data-lease-request]").wait_for(state="visible")
+                        if SCREENSHOT_DIR:
+                            page.screenshot(path=str(SCREENSHOT_DIR / f"{Path(route).stem}-{width}.png"), full_page=True)
+                        self.assertEqual(
+                            page.evaluate("document.documentElement.scrollWidth"),
+                            page.evaluate("document.documentElement.clientWidth"),
+                            (route, width),
+                        )
+                        if route == "songpa-short-term-rental.html":
+                            starts = page.locator('input[name="startsOn"]')
+                            ends = page.locator('input[name="endsOn"]')
+                            self.assertEqual(starts.get_attribute("type"), "date")
+                            self.assertEqual(ends.get_attribute("type"), "date")
+                            if width == 320:
+                                start = starts.get_attribute("min")
+                                self.assertRegex(start or "", r"^\d{4}-\d{2}-\d{2}$")
+                                end = page.evaluate("""start => {
+                                    const date = new Date(`${start}T00:00:00Z`);
+                                    date.setUTCDate(date.getUTCDate() + 6);
+                                    return date.toISOString().slice(0, 10);
+                                }""", start)
+                                starts.fill(start)
+                                ends.fill(end)
+                                ends.dispatch_event("change")
+                                quote = page.locator("[data-lease-quote]").inner_text()
+                                self.assertIn("7일", quote)
+                                self.assertIn("690,000원", quote)
                         page.close()
             browser.close()
 

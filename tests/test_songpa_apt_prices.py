@@ -2,8 +2,9 @@ import json
 import re
 import sys
 import unittest
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
+from unittest.mock import patch
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "scripts"))
@@ -59,6 +60,17 @@ class ParseAndCollectTest(unittest.TestCase):
                          [["2026-09-09", 59.96, 4, 50000, 250, "갱신"], ["2026-09-03", 84.8, 12, 150000, 0, "신규"]])
         self.assertEqual(collected["jamsil-els"]["trades"], [])
         self.assertNotIn("사용", json.dumps(collected, ensure_ascii=False))
+
+    def test_fetch_records_reproducible_public_provenance_without_key(self):
+        secret = "test-service-key-must-not-leak"
+        frozen = datetime(2026, 11, 3, 4, 5, 6, tzinfo=timezone.utc)
+        with patch.object(sap, "load_key", return_value=secret), patch.object(sap, "fetch_month", return_value=[]):
+            data = sap.fetch(Path("unused.env"), date(2026, 11, 3), now=lambda: frozen)
+
+        self.assertEqual(data["collected_at"], "2026-11-03T04:05:06+00:00")
+        self.assertEqual(data["source_urls"], [sap.ENDPOINT, sap.RENT_ENDPOINT])
+        self.assertTrue(all("?" not in url and "serviceKey" not in url for url in data["source_urls"]))
+        self.assertNotIn(secret, json.dumps(data, ensure_ascii=False))
 
     def test_config_slugs_are_safe_and_unique(self):
         slugs = [c["slug"] for c in self.config["complexes"]]
