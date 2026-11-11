@@ -6,7 +6,14 @@
     <atom:link href="https://lottes.co.kr/rss.xml" rel="self" type="application/rss+xml"/>
     <description>송파·잠실 부동산 계약 사례와 공공 자료 기반 시장 리포트</description>
     <language>ko</language>
-    <lastBuildDate>Tue, 03 Nov 2026 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 11 Nov 2026 00:00:00 +0000</lastBuildDate>
+    <item>
+      <title>법인 주택 거래신고, 왜 서류가 많을까요?</title>
+      <link>https://lottes.co.kr/reports/2026-11-11-corporate-home-transaction-reporting-documents.html</link>
+      <guid isPermaLink="true">https://lottes.co.kr/reports/2026-11-11-corporate-home-transaction-reporting-documents.html</guid>
+      <description>법인 주택 거래에서 회사 정보·거래 관계·매수자금 확인이 겹치는 이유를 설명합니다. 증빙서류를 당장 내기 어려운 경우와 별도 제출 기한도 구분했습니다.</description>
+      <pubDate>Wed, 11 Nov 2026 00:00:00 +0000</pubDate>
+    </item>
     <item>
       <title>송파 방이·풍납·오륜에서 민방위 대피시설 위치를 확인하는 방법</title>
       <link>https://lottes.co.kr/reports/2026-11-03-songpa-civil-defense-shelter-lookup-guide.html</link>
@@ -278,13 +285,6 @@
       <link>https://lottes.co.kr/reports/2026-10-08-jamsil-commercial-lease-business-registration-fixed-date.html</link>
       <guid isPermaLink="true">https://lottes.co.kr/reports/2026-10-08-jamsil-commercial-lease-business-registration-fixed-date.html</guid>
       <description>잠실·석촌·삼전에서 상가나 사무실을 임차할 때 사업자등록 신청, 건물 인도, 확정일자가 각각 어떤 역할을 하는지 계약 뒤 순서에 맞춰 정리했습니다.</description>
-      <pubDate>Thu, 08 Oct 2026 00:00:00 +0000</pubDate>
-    </item>
-    <item>
-      <title>잠실 사무실 계약, 사업자등록 주소는 무엇부터 확인할까요?</title>
-      <link>https://lottes.co.kr/reports/2026-10-02-jamsil-office-business-registration-address.html</link>
-      <guid isPermaLink="true">https://lottes.co.kr/reports/2026-10-02-jamsil-office-business-registration-address.html</guid>
-      <description>잠실·석촌·삼전에서 사무실이나 점포를 임차할 때 사업자등록 서류, 건축물대장, 업종별 인허가를 어떤 순서로 확인할지 정리했습니다.</description>
       <pubDate>Thu, 08 Oct 2026 00:00:00 +0000</pubDate>
     </item>
   </channel>

@@ -73,5 +73,6 @@ export const EXPORTED_REPORT_SLUGS = new Set([
   "2026-10-25-songpa-rental-move-in-day-checklist",
   "2026-10-28-songpa-hospital-care-short-term-lease-checklist",
   "2026-11-02-songpa-hospital-visit-short-term-lease-reasons",
-  "2026-11-03-songpa-civil-defense-shelter-lookup-guide"
+  "2026-11-03-songpa-civil-defense-shelter-lookup-guide",
+  "2026-11-11-corporate-home-transaction-reporting-documents"
 ]);
