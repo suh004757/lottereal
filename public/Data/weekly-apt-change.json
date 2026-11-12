@@ -3,56 +3,56 @@
   "source_url": "https://www.reb.or.kr/r-one/",
   "statbl_id": "T244183132827305",
   "metric": "주간 아파트 매매가격지수 → 전주 대비 변동률(%)",
-  "survey_date": "2026-11-02",
-  "previous_survey_date": "2026-10-26",
+  "survey_date": "2026-11-09",
+  "previous_survey_date": "2026-11-02",
   "regions": [
     {
       "label": "전국",
       "cls_fullnm": "전국",
-      "index": 101.434784089567,
-      "previous_index": 101.36712747077,
+      "index": 101.50752718428,
+      "previous_index": 101.434784089567,
       "change_pct": 0.07,
       "previous_change_pct": 0.07
     },
     {
       "label": "경기",
       "cls_fullnm": "경기",
-      "index": 103.237104658426,
-      "previous_index": 103.031792593656,
-      "change_pct": 0.2,
+      "index": 103.457184290108,
+      "previous_index": 103.237104658426,
+      "change_pct": 0.21,
       "previous_change_pct": 0.2
     },
     {
       "label": "서울",
       "cls_fullnm": "서울",
-      "index": 103.208960276901,
-      "previous_index": 103.136149429116,
+      "index": 103.282987915711,
+      "previous_index": 103.208960276901,
       "change_pct": 0.07,
-      "previous_change_pct": 0.09
+      "previous_change_pct": 0.07
     },
     {
       "label": "강남구",
       "cls_fullnm": "서울>강남지역>동남권>강남구",
-      "index": 96.3507977223614,
-      "previous_index": 96.7300409521072,
-      "change_pct": -0.39,
-      "previous_change_pct": -0.38
+      "index": 96.1096011656814,
+      "previous_index": 96.3507977223614,
+      "change_pct": -0.25,
+      "previous_change_pct": -0.39
     },
     {
       "label": "서초구",
       "cls_fullnm": "서울>강남지역>동남권>서초구",
-      "index": 97.0787309390995,
-      "previous_index": 97.4384527373939,
-      "change_pct": -0.37,
-      "previous_change_pct": -0.35
+      "index": 96.822084144441,
+      "previous_index": 97.0787309390995,
+      "change_pct": -0.26,
+      "previous_change_pct": -0.37
     },
     {
       "label": "송파구",
       "cls_fullnm": "서울>강남지역>동남권>송파구",
-      "index": 99.8987366064983,
-      "previous_index": 100.067539762306,
-      "change_pct": -0.17,
-      "previous_change_pct": -0.22
+      "index": 99.5539714027291,
+      "previous_index": 99.8987366064983,
+      "change_pct": -0.35,
+      "previous_change_pct": -0.17
     }
   ]
 }
