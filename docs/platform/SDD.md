@@ -1,6 +1,6 @@
 # SDD — 롯데부동산 자매 플랫폼 POC (확인 매물 + 계약 후 대시보드)
 
-- 문서 상태: **승인됨 (2026-11-27, 오너)**. 실행 에이전트는 이 문서만으로 끝까지 진행한다.
+- 문서 상태: **승인됨 (2026-11-27, 오너)**, 같은 날 개정 1: 운영 방향(§1.1), 확인 등급, D0 운영 DB 검토 추가. 실행 에이전트는 이 문서만으로 끝까지 진행한다.
 - 실행 에이전트: **GPT 6.2 SOL** (AGENTS.md 규칙 9의 SOL 모델). 설계·검토는 Claude가 맡는다.
 - 작업 저장소: `F:\Git\lottereal` (GitHub `suh004757/lottereal`, `main`). 서버 작업 공간: Hermes 컨테이너 `/opt/data/projects/lottereal`.
 - 상위 규칙: `AGENTS.md`가 이 문서보다 우선한다. 충돌하면 멈추고 기록한다.
@@ -9,7 +9,9 @@
 
 ## 0. 실행 에이전트에게 (먼저 읽기)
 
-1. **순서대로** 진행한다: P0 → M1 → M2 → M3 → M4 → M5. 각 마일스톤 끝의 "완료 조건"을 모두 만족해야 다음으로 간다.
+1. **순서대로** 진행한다: D0 → P0 → M1 → M2 → M3 → M4 → M5 (병렬 가능한 구간은 5번). 각 마일스톤 끝의 "완료 조건"을 모두 만족해야 다음으로 간다.
+   - **이 문서의 구현 세부(테이블·컬럼·RPC 이름, 마이그레이션 번호, 화면 구성)는 레포 마이그레이션 001~032만 보고 쓴 가정이다.** 운영 DB는 보지 못했다. D0에서 운영 DB를 읽기 전용으로 대조한 뒤, §1.1 운영 방향 안에서 현실에 맞게 고쳐서 진행한다.
+   - 고칠 때의 경계: §1.1을 지키고, 새 `pf_` 객체만 바꾸는 조정은 기록 후 바로 진행한다. **기존 운영 테이블(`property_listings`, `inquiries` 등)이나 운영 중인 문의 경로를 바꾸는 조정은 제안만 하고 H6에서 멈춘다.**
 2. **커밋 단위:** 마일스톤마다 1~3개 커밋, 메시지 앞에 `[verified]`. 끝에는 아래 trailer를 붙인다.
    ```
    Co-Authored-By: GPT 6.2 SOL
@@ -18,7 +20,13 @@
 3. **사람 게이트(§11):** 만나면 그 마일스톤의 나머지 중 게이트와 무관한 일만 끝내고, `docs/platform/STATUS.md`에 "대기: 무엇을, 누가" 를 적고 멈춘다. 추측으로 통과시키지 않는다.
 4. **매 작업 후** `docs/platform/STATUS.md`에 다음을 남긴다. 고객 개인정보는 넣지 않는다.
    - 날짜(KST), 마일스톤, 변경 파일, 실행한 검증과 결과, 남은 리스크, 다음 액션
-5. **금지:**
+5. **실행 도구 (Hermes에 omh = oh-my-hermes 설치됨, `/opt/data/plugins/omh`, 스킬은 `/opt/data/omh-store/skills`):**
+   - 전체 진행은 `dag-ulw`로 한다. 이 SDD를 승인된 계획으로 보고 다시 계획하지 않는다. 마일스톤을 노드로, 각 "완료 조건"을 그 노드의 VERIFY/STOP WHEN으로, 사람 게이트(§11)를 멈추는 노드로 둔다.
+   - 의존 순서: D0 → (P0 ∥ M1) → M2 → M3 → M4 → M5. P0(서버 잡)와 M1(마이그레이션)은 쓰기 범위가 겹치지 않아 병렬 가능하다. M2의 테스트·CSS처럼 서로 다른 파일만 쓰는 하위 작업도 병렬로 돌릴 수 있다.
+   - **같은 파일을 두 노드가 쓰지 않게** `write_scope`를 나눈다. 특히 `docs/platform/STATUS.md`, `docs/platform/SDD.md`, `public/js/admin-dashboard.js`, `supabase/migrations/`는 한 번에 한 노드만 쓴다. STATUS는 부모가 레이어 단위로 한 번에 적는다.
+   - D0과 M1의 마이그레이션 설계에는 `omh-relational-db`를 쓴다. 단계마다 잠금 동작과 롤백을 적는다.
+   - omh의 승인 우회·거버넌스 설정과 상관없이 AGENTS.md와 이 문서의 금지·게이트가 우선한다. omh 기능으로 사람 게이트를 자동 통과시키지 않는다.
+6. **금지:**
    - 기존 매물·문의 데이터 삭제
    - 기존 admin 기능 동작 변경. "추가"만 허용한다.
    - secret/service key를 브라우저 코드나 로그에 넣는 것
@@ -39,14 +47,33 @@
 - 계약 후에도 매물·계약 정보가 임대인/임차인 대시보드로 남는다. 대시보드는 주요 일정, 신고 항목, 수리 요청, 재등록을 다룬다.
 - 앱이 아니라 PC·모바일 웹이다.
 
+### 1.1 운영 방향 (오너 확정. 실행 에이전트가 바꾸지 않는다)
+
+1. **빈 상태로 열어도 된다.** 매물은 가족이 기존 매물 자료를 admin에서 플랫폼에 올려 채운다. 오픈 시점의 매물 수를 완료 조건으로 삼지 않는다.
+2. **전제: "중개 의뢰를 위해 직접 방문하거나 전화한 의뢰인"의 매물만 게시한다.** POC 동안 방문·전화 접촉이 없는 사람의 요청은 게시하지 않는다(등록 요청 폼으로만 들어온 건은 가족이 전화로 접촉한 뒤에야 게시 가능).
+3. **확인은 등급으로 구분해서 표시한다.** 이것이 플랫폼의 신뢰 레이어다.
+
+   | 등급 key | 표시 문구 (초안, H1 검토) | 의미 |
+   |---|---|---|
+   | `site_visit` | 롯데부동산 임장 확인 | 가족이 현장에 가서 매물과 거주 상태를 직접 봤다 |
+   | `owner_listed` | 소유자 직접 의뢰 | 임장 전. 소유자(또는 가족)가 방문·전화로 중개를 의뢰했다 |
+   | `tenant_listed` | 거주 임차인 의뢰 | 임장 전. 현재 거주 중인 임차인이 방문·전화로 내놓았다 |
+
+   - 등급은 매물마다 **가장 최근 확인 기록** 하나로 정한다. 임장을 다녀오면 `site_visit`로 올라간다.
+   - 확인일은 계속 표시하고, 30일이 지나면 등급과 상관없이 노출하지 않는다(A3).
+   - `tenant_listed`는 임대인의 중개 의뢰 또는 동의가 있어야 광고할 수 있는지 법적 쟁점이 있다. H1에서 답을 받기 전까지 admin 게시 시 "임대인 의뢰·동의 확인" 체크를 필수로 한다.
+4. **등록 요청 폼에 중개 의뢰 동의를 넣는다.** 개인정보 동의와 별개의 체크박스다. 문구 예: "이 매물의 중개를 롯데부동산에 의뢰하며, 확인 후 광고하는 데 동의합니다."
+5. **문의 경로는 바뀔 수 있다.** 플랫폼이 생기면 메인 사이트의 문의 동선(폼, 전화, 직방 유입)과 겹친다. 실행 에이전트는 D0에서 현재 경로를 정리하고 통합안을 제안한다. 적용은 H6 승인 후.
+
 **성공 지표:** 직방과 비교한다. 같은 달 기준이고, 월 단위로 §9 리포트에 쌓는다.
 
 | 지표 | 직방 | 플랫폼 |
 |---|---|---|
-| 월 문의 수 | `external_inquiry_receipts` (P0에서 수집 복구) | `inquiries` 중 `source_channel='platform'` + `pf_listing_requests` |
+| 월 문의 수 | `external_inquiry_receipts` (P0에서 수집 복구) | H6 전: 플랫폼 전화 버튼 클릭 + `pf_listing_requests`. H6 후: `inquiries` 중 `source_channel='platform'` 추가 |
 | 월 계약 수 | 오너 입력 (`pf_channel_monthly`) | 오너 입력 |
 | 문의당 / 계약당 비용 | 광고비 ÷ 건수 (오너 입력 광고비) | 운영비 ÷ 건수 |
-| 게시 매물 중 "30일 내 확인" 비율 | 해당 없음 | 100%가 목표. 미확인 매물은 노출하지 않는다 |
+| 게시 매물 확인 등급 분포 | 해당 없음 | `site_visit` / `owner_listed` / `tenant_listed` 건수와 `site_visit` 비율. 30일 넘은 매물은 노출 0이 원칙 |
+| 매물 공급 | 해당 없음 | 월 신규 게시 수 (admin 직접 게시 + 등록 요청 게시) |
 
 **하지 않는 것 (POC 범위 밖)**
 - 계약서·신분증 등 문서 파일 저장 (해킹 리스크. 오너 결정)
@@ -63,7 +90,7 @@
 |---|---|---|---|
 | A1 | POC는 같은 저장소 `public/platform/`에 두고 `https://lottes.co.kr/platform/`로 서빙한다 | 기존 JS 모듈(`../js/...`), CSP, Supabase 설정, 배포 파이프라인(`deploy-pages.yml`)을 그대로 쓴다. 도메인 구매나 새 저장소가 필요 없다 | M5에서 브랜드명·도메인이 확정되면 별도 저장소와 도메인으로 이전한다 (§10) |
 | A2 | 같은 Supabase 프로젝트를 쓰고, 새 테이블은 `pf_` 접두어를 붙인다 | 매물은 기존 `property_listings`를 재사용한다. admin의 확인/마감 흐름과 감사 로그가 이미 있다 | — |
-| A3 | "확인 매물" = `closed_at is null and last_verified_at >= now() - 30 days` | `public/js/utils/listingFreshness.mjs`의 기준과 같다. 플랫폼은 미확인 매물을 **아예 노출하지 않는다** (메인 사이트는 경고만 표시) | — |
+| A3 | "확인 매물" = `closed_at is null` **and** 플랫폼 확인 기록(`pf_listing_verifications`)이 있고 최신 기록이 30일 이내 | 메인 사이트의 "확인" 버튼(`last_verified_at`)은 "아직 있음"만 뜻해서 등급이 없다. 플랫폼 확인은 별도 append-only 테이블에 등급·접촉 경로와 함께 남기고, 기존 테이블은 건드리지 않는다. 미확인 매물은 **아예 노출하지 않는다** | D0에서 운영 DB에 쓸 만한 기존 필드가 발견되면 H6로 제안 |
 | A4 | 계정은 Supabase Auth 이메일 매직링크만 쓴다. 역할은 `pf_members`에 둔다 | 비밀번호 저장이 없다. admin 역할은 계속 `app_metadata.role='admin'` | 카카오 로그인은 POC 이후 |
 | A5 | 임대인·임차인은 **초대로만** 연결한다. admin이 계약을 만들고 일회용 초대 링크를 발급하면, 가족이 카톡으로 직접 전달한다 | 아무나 남의 계약에 붙을 수 없다. 자동 발송이 없다 | — |
 | A6 | 주요 일정과 신고 체크리스트는 **클라이언트 순수 함수**로 계산한다 | DB에 파생 데이터를 저장하지 않는다. 테스트하기 쉽다 | 리마인더 발송이 생기면 서버로 옮긴다 |
@@ -78,10 +105,12 @@
 [소유자]──등록요청(anon insert)──▶ pf_listing_requests ◀──알림 cron(service key)──▶ 오너 카카오
                                          │
 [가족/관리자] public/admin/dashboard.html 「등록 요청」 탭
-          └─ admin_publish_listing_request() ──▶ property_listings (+ last_verified_at, listing_state_audit)
+          └─ admin_publish_listing_request() ──▶ property_listings + pf_listing_verifications(등급)
+[가족/관리자] 「플랫폼 게시」 탭 (기존 매물로 채우기, 임장 후 등급 올리기)
+          └─ admin_record_listing_verification() ──▶ pf_listing_verifications
 
-[방문자] public/platform/index.html, listing.html ──(anon select, 확인 매물만)──▶ property_listings
-          └─ 문의 ──▶ inquiries (source_channel='platform')
+[방문자] public/platform/index.html, listing.html ──(anon select, 최신 확인 30일 이내만)──▶ property_listings ⋈ pf_listing_verifications
+          └─ 문의 ──▶ 전화 버튼 (H6 후 inquiries source_channel='platform')
 
 [관리자] 「계약 관리」 탭 ── admin_create_tenancy() ──▶ pf_tenancies + pf_invites(토큰 해시)
                                          └─ 초대 링크(#token) ── 가족이 카톡으로 전달
@@ -118,8 +147,9 @@
 | description | text | 0~1000자 |
 | owner_name | text | 1~30자 |
 | owner_phone | text | `^[0-9]{9,11}$` (기존 inquiries와 같다) |
-| owner_role | text | `in ('소유자','소유자 가족','기존 임대인')` |
+| owner_role | text | `in ('소유자','소유자 가족','거주 임차인')` |
 | privacy_consent | boolean | `= true` 필수 |
+| brokerage_consent | boolean | `= true` 필수. 중개 의뢰 동의 (§1.1-4) |
 | source | text | `in ('platform-request','relist')` |
 | tenancy_id | uuid null | `relist`일 때만 값이 있다. references `pf_tenancies` (035에서 FK 추가) |
 | status | text | `in ('new','reviewing','published','rejected')`, default `'new'` |
@@ -134,10 +164,18 @@
 ### 034 admin RPC (요청 처리)
 - `admin_list_listing_requests(status_filter text default null)` → setof. admin 확인 필수.
 - `admin_set_listing_request_status(request_id uuid, new_status text, reason text default null)`: `reviewing` 또는 `rejected`. 감사 기록을 남긴다.
-- `admin_publish_listing_request(request_id uuid, overrides jsonb)` → uuid (새 listing id):
+- `admin_publish_listing_request(request_id uuid, overrides jsonb, verification jsonb)` → uuid (새 listing id):
   - `property_listings`에 insert한다. 값은 요청 + overrides(title, price, 주소 표기, images 등 admin이 고친 값)이고, `contact_phone`은 기존 규칙대로 사무소 번호로 강제한다.
   - `last_verified_at = now()`, 요청 `status='published'`, `published_listing_id` 기록.
+  - `verification`으로 `pf_listing_verifications` 첫 행을 같은 트랜잭션에서 만든다. 없거나 규칙 위반이면 전체를 거부한다.
   - `listing_state_audit`에 `action='publish_from_request'`로 남긴다.
+- **`pf_listing_verifications`** (append-only. 플랫폼 노출의 유일한 근거):
+  - 컬럼: id, listing_id uuid references property_listings(id), tier(`site_visit`/`owner_listed`/`tenant_listed`/`withdrawn`), intake_channel(`방문`/`전화`, `withdrawn`이면 null), landlord_consent_confirmed boolean, note text(0~300, 개인정보 금지 안내), verified_by uuid, verified_at timestamptz default now().
+  - CHECK: `tier='tenant_listed'`이면 `landlord_consent_confirmed = true`.
+  - anon은 `listing_id, tier, verified_at`만 select 가능(column grant)하고 나머지는 admin만. insert는 RPC로만, update·delete는 없다.
+- `admin_record_listing_verification(listing_id uuid, tier text, intake_channel text, landlord_consent_confirmed boolean, note text)`: **기존 매물을 플랫폼에 올리는 경로.** 가족이 기존 매물 자료로 플랫폼을 채울 때와 임장 후 등급을 올릴 때 쓴다. `closed_at`이 있는 매물은 거부한다.
+- `admin_unlist_from_platform(listing_id uuid, reason text)`: `tier='withdrawn'` 행을 추가해 플랫폼 노출만 내린다(최신 행이 `withdrawn`이면 비노출). 메인 사이트 노출에는 영향이 없다.
+- 모든 확인 RPC는 `pf_request_audit`과 같은 방식으로 감사 행을 남긴다(D0 결과에 따라 `listing_state_audit` 재사용 여부 결정).
 - **감사 테이블 `pf_request_audit`:** request_id, actor_id, action, previous_status, new_status, created_at. admin select만 가능하고 append-only다.
 - 패턴은 `supabase/migrations/029_listing_rent_and_audit.sql`의 `admin_confirm_listing_available`과 같다: `security definer`, `set search_path = pg_catalog, public, auth`, admin 확인, `for update` 잠금.
 
@@ -168,9 +206,10 @@
   - 같은 tenancy에 열린(new/reviewing) relist가 있으면 거부한다.
 - **`pf_channel_monthly`**: month date(월 1일), channel(`zigbang`/`platform`/`other`), ad_spend_krw bigint ≥0, contracts int ≥0, note text, updated_by, updated_at, unique(month, channel). admin만 읽고 쓴다.
 
-### 037 inquiries 채널 확장
-- `inquiries`의 CHECK 제약 중 `source_channel` 허용 목록에 `'platform'`을 **추가만** 한다. 기존 값은 유지하고, 006·030·031을 먼저 읽는다.
-- 제약을 다시 만들 때 `not valid`로 먼저 추가한 뒤 `validate constraint` 하는 2단계로 한다. 기존 행이 어긋나는지 확인하는 쿼리 결과를 STATUS에 남긴다.
+### 037 inquiries 채널 확장 — **H6 승인 후에만**
+- 운영 중인 문의 폼의 제약을 바꾸므로 M1에서 다른 마이그레이션과 함께 적용하지 않는다. D0의 문의 경로 통합안(§1.1-5)과 묶어 H6에서 결정한다.
+- 승인 전까지 플랫폼 문의는 **전화 버튼(`phoneHandoff.js`)만** 둔다. 문의 지표는 M5 전까지 "플랫폼 페이지 전화 버튼 클릭 수"(기존 분석 이벤트 방식, D0에서 확인)로 대신한다.
+- 승인되면: `source_channel` 허용 목록에 `'platform'`을 **추가만** 한다. 기존 값은 유지하고, 006·030·031과 D0의 운영 제약 덤프를 먼저 읽는다. `not valid`로 추가한 뒤 `validate constraint` 하는 2단계로 하고, 기존 행 점검 쿼리 결과를 STATUS에 남긴다.
 
 **롤백:** `supabase/rollbacks/033_037_down.sql`을 작성하되 자동으로 실행하지 않는다. 내용은 새 테이블·함수 drop과 037의 원래 제약 복원이다.
 
@@ -190,17 +229,18 @@
 
 | 파일 | 내용 | 재사용 |
 |---|---|---|
-| `index.html` + `js/platformListings.mjs` | 확인 매물 목록. 필터(거래유형·지역·가격). 카드마다 "확인일" 배지. 미확인·마감 매물은 쿼리 단계에서 제외 | `../js/services/publicListingRepository.mjs`, `publicListingFields.mjs`, `utils/propertyPrice.mjs`(`formatListingDisplayPrice`), `utils/listingFreshness.mjs`, `publicRenderSecurity.mjs` |
-| `listing.html` | 상세. 사진·가격·확인일·문의(기존 inquiry 흐름, `source_channel='platform'`). 확인일이 30일을 넘었으면 "확인 중" 화면과 전화 버튼만 | `../js/inquiryMvp.js` 흐름, `utils/contactPhone.mjs` |
-| `request.html` + `js/listingRequestForm.mjs` | 소유자 등록 요청 폼. 거래유형별 필수 필드, 동의 체크, 제출 후 "가족이 확인 후 연락" 안내. 클라이언트 검증 규칙 = DB CHECK | 문의 폼의 동의 문구 패턴 |
+| `index.html` + `js/platformListings.mjs` | 확인 매물 목록. 필터(거래유형·지역·가격·확인 등급). 카드마다 등급 배지 + 확인일. 미확인·마감·`withdrawn` 매물은 쿼리 단계에서 제외. 매물 0건이면 빈 화면 대신 "매물 내놓기(request.html)·전화 상담" 안내 | `../js/services/publicListingRepository.mjs`, `publicListingFields.mjs`, `utils/propertyPrice.mjs`(`formatListingDisplayPrice`), `utils/listingFreshness.mjs`, `publicRenderSecurity.mjs` |
+| `listing.html` | 상세. 사진·가격·등급 배지·확인일과 등급 설명(무엇을 확인했는지 한 줄). 문의는 H6 전까지 전화 버튼만. 확인일이 30일을 넘었으면 "확인 중" 화면과 전화 버튼만 | `utils/contactPhone.mjs`, `../js/phoneHandoff.js` (H6 후 `../js/inquiryMvp.js` 흐름) |
+| `request.html` + `js/listingRequestForm.mjs` | 매물 내놓기 요청 폼. 거래유형별 필수 필드, 의뢰인 구분(소유자/소유자 가족/거주 임차인), **개인정보 동의 + 중개 의뢰 동의** 체크 2개. 제출 후 "롯데부동산이 전화로 확인한 뒤 게시합니다" 안내. 클라이언트 검증 규칙 = DB CHECK | 문의 폼의 동의 문구 패턴 |
 | `login.html` | 이메일 매직링크. `redirectTo`는 `/platform/dashboard.html` | `../js/services/authService.js`는 admin용 IP allowlist가 있으니 **쓰지 않는다**. 새 `js/platformAuth.mjs`로 supabase-js `signInWithOtp`만 사용 |
 | `invite.html` | URL fragment `#token=`을 읽고 로그인을 확인한다. 최초면 이름·약관 동의로 `pf_members`를 만든 뒤 `claim_invite`. 토큰은 처리 후 `history.replaceState`로 지운다 | |
 | `dashboard.html` + `js/tenancyDashboard.mjs` | 내 계약 목록 → 계약별로 주요 일정 타임라인, 신고 체크리스트, 수리 요청(임차인: 작성 / 임대인: 상태 변경), 재등록 버튼(임대인) | |
 | `js/tenancyKeyDates.mjs` | **순수 함수** (§6) | |
 
 admin 추가 (기존 기능은 건드리지 않음):
-- `public/admin/dashboard.html`에 탭 3개를 추가한다.
-  - **「등록 요청」:** 목록, 검토중/반려(사유)/게시. 게시 시 기존 매물 폼을 요청값으로 미리 채워 열고, 저장은 `admin_publish_listing_request`로 한다.
+- `public/admin/dashboard.html`에 탭 4개를 추가한다.
+  - **「등록 요청」:** 목록, 검토중/반려(사유)/게시. 게시 시 기존 매물 폼을 요청값으로 미리 채워 열고, 확인 등급·접촉 경로(방문/전화)·(임차인이면) 임대인 의뢰·동의 확인을 필수로 고른 뒤 `admin_publish_listing_request`로 저장한다.
+  - **「플랫폼 게시」:** 기존 매물 목록(마감 제외)에서 "플랫폼에 올리기"(등급·접촉 경로 선택 → `admin_record_listing_verification`), "임장 완료로 올리기", "플랫폼에서 내리기". 현재 등급과 확인일 경과일을 표시한다. 가족이 기존 매물 자료로 플랫폼을 채우는 주 경로다.
   - **「계약 관리」:** 계약 생성 → 초대 링크 2개 표시(복사 버튼, 한 번만 표시된다는 경고), 재발급, 종료.
   - **「채널 지표」:** 월별 광고비·계약 수 입력 (`pf_channel_monthly`).
 - 코드는 새 파일 `public/js/adminPlatform.js`로 분리하고, `admin-dashboard.js`에는 탭 등록 몇 줄만 넣는다.
@@ -261,6 +301,21 @@ admin 추가 (기존 기능은 건드리지 않음):
 
 ## 9. 마일스톤과 완료 조건
 
+### D0 — 운영 DB 검토와 현실안 (읽기 전용, 맨 먼저)
+- **할 일** (service key, Hermes에서. 쓰기·DDL 금지. 결과는 건수·스키마만, 개인정보 없음):
+  1. 운영 스키마 덤프: `information_schema.columns`, `pg_constraint`, `pg_policies`, 함수 목록에서 `property_listings`, `inquiries`, `listing_state_audit`, `external_inquiry_receipts`와 `pf_` 접두어 객체.
+  2. 레포 마이그레이션 001~032와 비교. 운영에만 있거나 레포에만 있는 컬럼·제약·정책·함수를 표로 만든다. 운영 마이그레이션 이력에 033 이후 번호가 이미 쓰였는지 확인한다.
+  3. 매물 현황(건수만): 전체 / `closed_at` 있음 / `last_verified_at` 30일 이내 / 30일 초과 / null, 거래유형별.
+  4. 문의 현황(건수만): `inquiries.source_channel`별 최근 90일 건수, 직방 receipts 최근 90일 건수.
+  5. 현재 문의 경로 목록: 메인 사이트의 폼·전화 버튼·직방 메일, 각각이 어디에 기록되는지(테이블·분석 이벤트·없음).
+- **산출물:** `docs/platform/db-review.md`
+  - 위 1~5의 결과
+  - **현실안:** 이 SDD에서 바꿔야 할 항목을 표로 정리한다. 열은 항목 / 원래 가정 / 운영 실제 / 조정안 / 분류.
+    - 분류 A, 바로 진행: §1.1 안이고 새 `pf_` 객체만 바뀐다. 이름·번호·컬럼 조정 등.
+    - 분류 B, H6 대기: 기존 테이블·운영 문의 경로를 바꾸거나 §1.1과 충돌한다.
+  - 문의 경로 통합안(§1.1-5): 플랫폼이 생긴 뒤 메인 사이트·플랫폼·직방 문의를 어떻게 받고 어떻게 세는지 1~2안.
+- **완료:** db-review.md가 커밋되고, 분류 A 조정이 이 SDD의 해당 절에 반영되며(변경 이력을 문서 상단에 한 줄), 분류 B는 STATUS에 "대기: H6"으로 남는다. 분류 B가 있어도 그와 무관한 다음 마일스톤은 진행한다.
+
 ### P0 — 직방 수집 복구 (선행, 서버)
 - **현상:** `external_inquiry_receipts`의 마지막 기록이 2026-10-23이다. 기존 Gmail→카카오 잡(id 11760874002e)이 jobs.json에서 사라졌고, 대체 잡 `e232043ac45c`가 receipts를 쓰는지 불명확하다. 그 잡은 Discord DM으로 보내고 있어 AGENTS.md와 충돌한다.
 - **할 일:**
@@ -270,29 +325,33 @@ admin 추가 (기존 기능은 건드리지 않음):
   4. Discord 경로는 오너 확인 전까지 그대로 두고 STATUS에 질문을 남긴다.
 - **완료:** 새 직방 문의 1건이 receipts에 기록된다. 공개 RPC `get_external_inquiry_activity`의 최신 날짜가 갱신된다. 오너 카카오 수신이 확인된다.
 
-### M1 — 데이터 계층 (033~037)
-- 마이그레이션 5개, 정적 테스트 5개, 롤백 SQL.
+### M1 — 데이터 계층 (033~036. 037은 H6 후)
+- 마이그레이션 4개, 정적 테스트 4개, 롤백 SQL. 번호와 세부는 D0 현실안을 따른다.
 - 적용 전에 `python -m unittest` 전체를 돌려 기준 대비 새 실패가 없어야 한다. 적용은 Hermes에서 한다.
 - 적용 후 스모크(service key, 테스트 행은 끝나고 정리):
-  - anon insert 성공 1건 / CHECK 위반 거부 1건
+  - anon insert 성공 1건 / CHECK 위반 거부 1건 (중개 의뢰 동의 false 포함)
   - anon select 거부
+  - `tenant_listed` + 임대인 동의 false 확인 기록 거부
+  - anon이 `pf_listing_verifications`의 `verified_by`·`note`를 읽으면 거부
   - admin RPC를 일반 사용자 JWT로 호출하면 거부
 - **완료:** 위 스모크 결과가 STATUS에 남고, 기존 사이트 스모크(매물 목록·문의 제출 폼 로드)가 정상이다. 문의는 실제로 제출하지 않는다.
 
 ### M2 — 확인 매물 사이트 + 등록 요청
 - `index.html`, `listing.html`, `request.html`, CSS, JS, 테스트를 만든다.
-  - `tests/test_platform_listings.mjs`: 미확인·마감 제외, 가격 표기, 확인일 문구
+  - `tests/test_platform_listings.mjs`: 미확인·마감·`withdrawn` 제외, 최신 기록 기준 등급 선택, 등급별 배지 문구, 가격 표기, 확인일 문구, 0건 안내
   - `tests/test_listing_request_form.mjs`: 거래유형별 필수값 = DB CHECK
   - `tests/test_platform_pages.py`: noindex, CSP, 필수 고지, "보증" 단어 없음
 - **완료:**
   - `node scripts/contrast_audit.mjs platform/index.html platform/listing.html platform/request.html` 실패 0
   - 360·390px 넘침 없음
-  - 테스트 매물이 목록에 보였다가, `last_verified_at`을 31일 전으로 바꾸면 사라진다 (테스트 데이터로만)
+  - 매물 0건 상태에서 index.html이 안내 화면을 보여준다
+  - 테스트 매물이 확인 기록 추가 후 목록에 보이고, 31일 전 확인 기록만 남은 테스트 매물은 보이지 않는다 (테스트 데이터로만)
 
 ### M3 — admin 탭 + 알림
-- `adminPlatform.js`, 탭 3개, `platform_request_notifier.py`, cron 등록.
+- `adminPlatform.js`, 탭 4개, `platform_request_notifier.py`, cron 등록.
 - **완료:**
-  - 테스트 요청 제출 → 5분 안에 오너 카카오 알림 → admin에서 게시 → 플랫폼 목록에 노출
+  - 테스트 요청 제출 → 5분 안에 오너 카카오 알림 → admin에서 등급을 골라 게시 → 플랫폼 목록에 등급 배지와 함께 노출
+  - 테스트 매물 1건을 「플랫폼 게시」 탭에서 `owner_listed`로 올렸다가 `site_visit`로 올리고, 내리기까지 확인
   - 감사 행 2개 확인. 테스트 요청과 매물은 마감 처리한다 (삭제 금지)
 
 ### M4 — 계약 대시보드
@@ -334,6 +393,7 @@ admin 추가 (기존 기능은 건드리지 않음):
 | H3 | Supabase Auth 설정: Site URL / Redirect URL에 `https://lottes.co.kr/platform/*` 추가, 이메일 발송 설정 확인(기본 SMTP는 시간당 발송 제한이 있음) | 오너 (Supabase 대시보드) | M4 로그인 |
 | H4 | 테스트용 이메일 계정 2~3개 준비 | 오너 | M4 완료 확인 |
 | H5 | 월별 광고비·계약 수 입력 (admin 「채널 지표」) | 오너·가족 | 지표 리포트의 비용 항목 |
+| H6 | D0 현실안의 분류 B 항목(기존 테이블·운영 문의 경로 변경, 037 포함)과 문의 경로 통합안 승인 | 오너 (Claude 검토 후) | 해당 항목만. 나머지는 진행 |
 
 ---
 
