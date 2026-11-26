@@ -1,6 +1,7 @@
 # SDD — 롯데부동산 자매 플랫폼 POC (확인 매물 + 계약 후 대시보드)
 
 - 문서 상태: **승인됨 (2026-11-27, 오너)**. 실행 에이전트는 이 문서만으로 끝까지 진행한다.
+- 실행 에이전트: **GPT 6.2 SOL** (AGENTS.md 규칙 9의 SOL 모델). 설계·검토는 Claude가 맡는다.
 - 작업 저장소: `F:\Git\lottereal` (GitHub `suh004757/lottereal`, `main`). 서버 작업 공간: Hermes 컨테이너 `/opt/data/projects/lottereal`.
 - 상위 규칙: `AGENTS.md`가 이 문서보다 우선한다. 충돌하면 멈추고 기록한다.
 
@@ -11,7 +12,7 @@
 1. **순서대로** 진행한다: P0 → M1 → M2 → M3 → M4 → M5. 각 마일스톤 끝의 "완료 조건"을 모두 만족해야 다음으로 간다.
 2. **커밋 단위:** 마일스톤마다 1~3개 커밋, 메시지 앞에 `[verified]`. 끝에는 아래 trailer를 붙인다.
    ```
-   Co-Authored-By: <executing agent>
+   Co-Authored-By: GPT 6.2 SOL
    ```
    push 후에는 `python3 scripts/post_push_guard.py`를 실행하고, 실패하면 AGENTS.md의 자동 롤백 규칙을 따른다.
 3. **사람 게이트(§11):** 만나면 그 마일스톤의 나머지 중 게이트와 무관한 일만 끝내고, `docs/platform/STATUS.md`에 "대기: 무엇을, 누가" 를 적고 멈춘다. 추측으로 통과시키지 않는다.
