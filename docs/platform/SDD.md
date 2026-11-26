@@ -3,7 +3,8 @@
 - 문서 상태: **승인됨 (2026-11-27, 오너)**. 같은 날 개정 1: 운영 방향(§1.1), 확인 등급, D0 운영 DB 검토. 개정 2: 프로젝트 목적, 지표 분리, 직방 기록·알림 분리, 독립 브랜드, 대리 접수(038·M3i), 스킬·외부 기준, 장기 구상. 실행 에이전트는 이 문서만으로 끝까지 진행한다.
 - 실행 에이전트: **GPT 6.2 SOL** (AGENTS.md 규칙 9의 SOL 모델). 설계·검토는 Claude가 맡는다.
 - 작업 저장소: `F:\Git\lottereal` (GitHub `suh004757/lottereal`, `main`). 서버 작업 공간: Hermes 컨테이너 `/opt/data/projects/lottereal`.
-- 상위 규칙: `AGENTS.md`가 이 문서보다 우선한다. 충돌하면 멈추고 기록한다.
+- 상위 규칙: `AGENTS.md`가 이 문서보다 우선한다. **목표는 오너가 자는 동안 끝까지 마치는 것이다.** 설계상 모순이나 충돌을 만나면 전체를 멈추지 않고 §0-8의 결정 규칙에 따라 진행하며, 기록해 두었다가 아침 보고에서 짚는다.
+- 서비스 이름: **잠실살이**. 주소는 `https://lottes.co.kr/jamsilsari/`이다(POC 동안. 도메인은 POC 후 오너가 구매).
 
 ---
 
@@ -13,7 +14,7 @@
    - **이 문서의 구현 세부(테이블·컬럼·RPC 이름, 마이그레이션 번호, 화면 구성)는 레포 마이그레이션 001~032만 보고 쓴 가정이다.** 운영 DB는 보지 못했다. D0에서 운영 DB를 읽기 전용으로 대조한 뒤, §1.1 운영 방향 안에서 현실에 맞게 고쳐서 진행한다.
    - 고칠 때의 경계: §1.1을 지키고, 새 `pf_` 객체만 바꾸는 조정은 기록 후 바로 진행한다. **기존 운영 테이블(`property_listings`, `inquiries` 등)이나 운영 중인 문의 경로를 바꾸는 조정은 제안만 하고 H6에서 멈춘다.**
 2. **커밋 단위:** 마일스톤마다 1~3개 커밋, 메시지 앞에 `[verified]`. 실행 에이전트 이름을 Co-Authored-By trailer로 붙일 필요는 없다. push 후에는 `python3 scripts/post_push_guard.py`를 실행하고, 실패하면 AGENTS.md의 자동 롤백 규칙을 따른다.
-3. **사람 게이트(§11):** 만나면 그 마일스톤의 나머지 중 게이트와 무관한 일만 끝내고, `docs/platform/STATUS.md`에 "대기: 무엇을, 누가" 를 적고 멈춘다. 추측으로 통과시키지 않는다.
+3. **사람 게이트(§11):** 게이트에 걸린 **그 항목만** 건너뛴다. `docs/platform/STATUS.md`에 "대기: 무엇을, 누가"를 적고, 게이트와 무관한 나머지 작업과 다음 마일스톤은 계속 진행한다. 게이트를 추측으로 통과시키지 않는다.
 4. **매 작업 후** `docs/platform/STATUS.md`에 다음을 남긴다. 고객 개인정보는 넣지 않는다.
    - 날짜(KST), 마일스톤, 변경 파일, 실행한 검증과 결과, 남은 리스크, 다음 액션
 5. **실행 도구 (Hermes에 omh = oh-my-hermes 설치됨, `/opt/data/plugins/omh`, 스킬은 `/opt/data/omh-store/skills`):**
@@ -36,12 +37,40 @@
    - 외부 것은 **패턴과 체크리스트를 참고**하는 것이 기본이다. 외부 코드를 그대로 복사하지 않는다(라이선스 확인 없이 금지).
    - 도구는 버전을 고정해 개발·검증 단계(Hermes 또는 CI)에서만 쓴다. 브라우저 런타임 의존성을 새로 추가하려면 이유를 STATUS에 쓰고 `public/js/vendor/` 해시 규칙을 따른다.
 
-7. **금지:**
+7. **비밀값 규칙 (예외 없음):**
+   - service key, Kakao·Google 토큰, `.env` 값은 Hermes의 `/opt/data/.env`에서 환경변수로만 읽는다.
+     - 레포 파일, 커밋 메시지, STATUS, 테스트 fixture, 로그, stdout에 쓰지 않는다. 마스킹 없는 출력도 금지다.
+   - 비밀값을 담아 요청을 보낼 수 있는 곳은 원래 그 값을 발급한 서비스뿐이다.
+     - 허용 목적지: 이 프로젝트의 Supabase, Kakao API, Google API.
+     - 다른 호스트로 가는 요청의 헤더, URL, 쿼리, 본문에 넣지 않는다. 외부 도구, 웹훅, 분석 서비스, 디버깅용 요청 덤프 서비스도 마찬가지다.
+     - URL 쿼리 문자열에는 어떤 비밀값도 넣지 않는다.
+   - 브라우저 코드에는 `appConfig.js`의 publishable/anon 키만 있다.
+   - **커밋 전 검사:** 매 커밋 전에 `gitleaks protect --staged`(버전 고정)와 `git diff --cached`에서 `sb_secret_|service_role|eyJhbGci` 패턴 grep을 실행한다. 하나라도 걸리면 커밋하지 않는다.
+     - 현재 `post_push_guard.py`는 배포된 `appConfig.js`만 검사하고 레포 전체는 보지 않는다. 그래서 이 검사를 반드시 따로 한다.
+     - M1에서 `.github/workflows/`에 gitleaks 단계를 추가해 CI에서도 막는다.
+   - **유출 사고 처리:** 비밀값이 push됐다면 revert만으로는 부족하다. git 기록에 남기 때문이다.
+     - 즉시 STATUS 맨 위에 "보안 사고: 키 로테이션 필요"를 적는다.
+     - 그 키를 쓰는 자동화를 멈추고, 나머지 작업도 중단한다. 이것만은 계속 진행하지 않는 예외다.
+     - 키 로테이션은 오너가 한다.
+8. **충돌·모순을 만났을 때의 결정 규칙 (멈추지 않고 끝까지 간다):**
+   - **절대 넘지 않는 선:** AGENTS.md 하드 레일, 7번 비밀값 규칙, 9번 금지 목록. 충돌하면 그 작업 조각만 하지 않는다. 대안이 있으면 대안으로 진행하고, 없으면 건너뛴다.
+   - **그 밖의 모순** (SDD끼리의 모순, SDD와 운영 현실의 차이, 모호한 요구): 다음 순서로 고른 선택지로 진행한다.
+     1. 되돌릴 수 있는가
+     2. 기존 사이트·데이터에 영향이 없는가
+     3. §1의 목적(조건 맞는 직접 문의, 계약 후 재사용)에 맞는가
+     4. 이 문서의 문구에 가까운가
+   - 모든 결정은 STATUS의 "결정 로그"에 적는다. 한 줄에 무엇이 충돌했는지, 무엇을 골랐는지, 왜 골랐는지, 되돌리는 법을 쓴다.
+   - 작업이 끝나면 STATUS 맨 위에 **아침 보고**를 쓴다.
+     - 완료된 것
+     - 오너가 볼 결정 로그 요약
+     - 대기 중인 게이트
+     - 위험
+9. **금지:**
    - 기존 매물·문의 데이터 삭제
    - 기존 admin 기능 동작 변경. "추가"만 허용한다.
-   - secret/service key를 브라우저 코드나 로그에 넣는 것
+   - secret/service key를 브라우저 코드, 레포, 로그, 외부 요청에 넣는 것 (7번)
    - 고객에게 자동으로 메시지 보내기
-   - `public/platform/`의 noindex를 M5 게이트 전에 해제하는 것
+   - `public/jamsilsari/`의 noindex를 M5 게이트 전에 해제하는 것
    - 메인 사이트 내비게이션에 플랫폼 링크를 넣는 것
 
 ---
@@ -118,7 +147,7 @@
 
 | # | 결정 | 이유 | 바꿀 조건 |
 |---|---|---|---|
-| A1 | POC는 같은 저장소 `public/platform/`에 두고 `https://lottes.co.kr/platform/`로 서빙한다. 단 **독립 서비스로 떼어낼 수 있게** 만든다: 플랫폼 코드는 `public/platform/` 안에만 두고, 공용 모듈(`../js/...`)은 `public/platform/js/shared.mjs` 한 파일에서만 import한다. CSS·디자인 토큰·브랜드도 플랫폼 자체 것을 쓴다 | 도메인 구매나 새 저장소 없이 CSP, Supabase 설정, 배포 파이프라인을 그대로 쓴다. 독립할 때는 폴더 하나와 `shared.mjs`만 옮기면 된다 | M5에서 브랜드명·도메인이 확정되면 별도 저장소와 도메인으로 이전한다 (§10) |
+| A1 | POC는 같은 저장소 `public/jamsilsari/`에 두고 `https://lottes.co.kr/jamsilsari/`로 서빙한다. 단 **독립 서비스로 떼어낼 수 있게** 만든다: 플랫폼 코드는 `public/jamsilsari/` 안에만 두고, 공용 모듈(`../js/...`)은 `public/jamsilsari/js/shared.mjs` 한 파일에서만 import한다. CSS·디자인 토큰·브랜드도 플랫폼 자체 것을 쓴다 | 도메인 구매나 새 저장소 없이 CSP, Supabase 설정, 배포 파이프라인을 그대로 쓴다. 독립할 때는 폴더 하나와 `shared.mjs`만 옮기면 된다 | M5에서 브랜드명·도메인이 확정되면 별도 저장소와 도메인으로 이전한다 (§10) |
 | A2 | 같은 Supabase 프로젝트를 쓰고, 새 테이블은 `pf_` 접두어를 붙인다 | 매물은 기존 `property_listings`를 재사용한다. admin의 확인/마감 흐름과 감사 로그가 이미 있다 | — |
 | A3 | "확인 매물" = `closed_at is null` **and** 플랫폼 확인 기록(`pf_listing_verifications`)이 있고 최신 기록이 30일 이내 | 메인 사이트의 "확인" 버튼(`last_verified_at`)은 "아직 있음"만 뜻해서 등급이 없다. 플랫폼 확인은 별도 append-only 테이블에 등급·접촉 경로와 함께 남기고, 기존 테이블은 건드리지 않는다. 미확인 매물은 **아예 노출하지 않는다** | D0에서 운영 DB에 쓸 만한 기존 필드가 발견되면 H6로 제안 |
 | A4 | 계정은 Supabase Auth 이메일 매직링크만 쓴다. 역할은 `pf_members`에 둔다 | 비밀번호 저장이 없다. admin 역할은 계속 `app_metadata.role='admin'` | 카카오 로그인은 POC 이후 |
@@ -140,12 +169,12 @@
 [가족/관리자] 「플랫폼 게시」 탭 (기존 매물로 채우기, 임장 후 등급 올리기)
           └─ admin_record_listing_verification() ──▶ pf_listing_verifications
 
-[방문자] public/platform/index.html, listing.html ──(anon select, 최신 확인 30일 이내만)──▶ property_listings ⋈ pf_listing_verifications
+[방문자] public/jamsilsari/index.html, listing.html ──(anon select, 최신 확인 30일 이내만)──▶ property_listings ⋈ pf_listing_verifications
           └─ 문의 ──▶ 전화 버튼 (H6 후 inquiries source_channel='platform')
 
 [관리자] 「계약 관리」 탭 ── admin_create_tenancy() ──▶ pf_tenancies + pf_invites(토큰 해시)
                                          └─ 초대 링크(#token) ── 가족이 카톡으로 전달
-[임대인/임차인] platform/login.html(매직링크) → invite.html(claim_invite) → dashboard.html
+[임대인/임차인] jamsilsari/login.html(매직링크) → invite.html(claim_invite) → dashboard.html
           ├─ 주요 일정·신고 체크리스트 (클라이언트 계산)
           ├─ 수리 요청 ── pf_repair_requests
           └─ 재등록 ── request_relist() ──▶ pf_listing_requests
@@ -265,11 +294,11 @@
 
 ---
 
-## 5. 화면 (public/platform/)
+## 5. 화면 (public/jamsilsari/)
 
 공통:
-- `public/platform/platform.css`는 **플랫폼 자체 디자인 토큰**(`--pf-*`)을 쓴다. 롯데부동산의 `--lr-*` 토큰과 롯데 노랑은 쓰지 않는다. 독립 브랜드(§1.1-6)이기 때문이다. 토큰과 시각 방향은 M2 착수 전에 `omh-design-orchestration`으로 정하고, `docs/platform/design.md`에 색·글꼴·레이아웃 원칙과 대비 검사 결과를 남긴다.
-- 브랜드 표기는 `public/platform/js/brand.mjs`의 상수 `BRAND_NAME`에서만 바꾼다. 값은 **"잠실살이"**다(오너 결정 2026-11-27. KIPRIS 국내 상표 "잠실살이" 0건 확인. 지명+설명어라 단독 등록은 어려울 수 있어 출원 방식은 독립 시점에 검토). "by 롯데부동산" 병기 여부도 H1·H2에서 정한다. 법정 표시 항목은 병기 여부와 상관없이 하단에 표시한다.
+- `public/jamsilsari/platform.css`는 **플랫폼 자체 디자인 토큰**(`--pf-*`)을 쓴다. 롯데부동산의 `--lr-*` 토큰과 롯데 노랑은 쓰지 않는다. 독립 브랜드(§1.1-6)이기 때문이다. 토큰과 시각 방향은 M2 착수 전에 `omh-design-orchestration`으로 정하고, `docs/platform/design.md`에 색·글꼴·레이아웃 원칙과 대비 검사 결과를 남긴다.
+- 브랜드 표기는 `public/jamsilsari/js/brand.mjs`의 상수 `BRAND_NAME`에서만 바꾼다. 값은 **"잠실살이"**다(오너 결정 2026-11-27. KIPRIS 국내 상표 "잠실살이" 0건 확인. 지명+설명어라 단독 등록은 어려울 수 있어 출원 방식은 독립 시점에 검토). "by 롯데부동산" 병기 여부도 H1·H2에서 정한다. 법정 표시 항목은 병기 여부와 상관없이 하단에 표시한다.
 - 모든 페이지 head:
   - `<meta name="robots" content="noindex,nofollow">` (M5 게이트까지)
   - 기존 페이지와 같은 CSP
@@ -283,7 +312,7 @@
 | `index.html` + `js/platformListings.mjs` | 확인 매물 목록. 필터(거래유형·지역·가격·확인 등급). 카드마다 등급 배지 + 확인일. 미확인·마감·`withdrawn` 매물은 쿼리 단계에서 제외. 매물 0건이면 빈 화면 대신 "매물 내놓기(request.html)·전화 상담" 안내 | `../js/services/publicListingRepository.mjs`, `publicListingFields.mjs`, `utils/propertyPrice.mjs`(`formatListingDisplayPrice`), `utils/listingFreshness.mjs`, `publicRenderSecurity.mjs` |
 | `listing.html` | 상세. 사진·가격·등급 배지·확인일과 등급 설명(무엇을 확인했는지 한 줄). 문의는 H6 전까지 전화 버튼만. 확인일이 30일을 넘었으면 "확인 중" 화면과 전화 버튼만 | `utils/contactPhone.mjs`, `../js/phoneHandoff.js` (H6 후 `../js/inquiryMvp.js` 흐름) |
 | `request.html` + `js/listingRequestForm.mjs` | 매물 내놓기 요청 폼. 거래유형별 필수 필드, 의뢰인 구분(소유자/소유자 가족/거주 임차인), **개인정보 동의 + 중개 의뢰 동의** 체크 2개. 제출 후 "롯데부동산이 전화로 확인한 뒤 게시합니다" 안내. 클라이언트 검증 규칙 = DB CHECK | 문의 폼의 동의 문구 패턴 |
-| `login.html` | 이메일 매직링크. `redirectTo`는 `/platform/dashboard.html` | `../js/services/authService.js`는 admin용 IP allowlist가 있으니 **쓰지 않는다**. 새 `js/platformAuth.mjs`로 supabase-js `signInWithOtp`만 사용 |
+| `login.html` | 이메일 매직링크. `redirectTo`는 `/jamsilsari/dashboard.html` | `../js/services/authService.js`는 admin용 IP allowlist가 있으니 **쓰지 않는다**. 새 `js/platformAuth.mjs`로 supabase-js `signInWithOtp`만 사용 |
 | `invite.html` | URL fragment `#token=`을 읽고 로그인을 확인한다. 최초면 이름·약관 동의로 `pf_members`를 만든 뒤 `claim_invite`. 토큰은 처리 후 `history.replaceState`로 지운다 | |
 | `dashboard.html` + `js/tenancyDashboard.mjs` | 내 계약 목록 → 계약별로 주요 일정 타임라인, 신고 체크리스트, 수리 요청(임차인: 작성 / 임대인: 상태 변경), 재등록 버튼(임대인) | |
 | `js/tenancyKeyDates.mjs` | **순수 함수** (§6) | |
@@ -406,7 +435,7 @@ admin 추가 (기존 기능은 건드리지 않음):
   - `tests/test_listing_request_form.mjs`: 거래유형별 필수값 = DB CHECK
   - `tests/test_platform_pages.py`: noindex, CSP, 필수 고지, "보증" 단어 없음
 - **완료:**
-  - `node scripts/contrast_audit.mjs platform/index.html platform/listing.html platform/request.html` 실패 0
+  - `node scripts/contrast_audit.mjs jamsilsari/index.html jamsilsari/listing.html jamsilsari/request.html` 실패 0
   - 360·390px 넘침 없음
   - 매물 0건 상태에서 index.html이 안내 화면을 보여준다
   - 테스트 매물이 확인 기록 추가 후 목록에 보이고, 31일 전 확인 기록만 남은 테스트 매물은 보이지 않는다 (테스트 데이터로만)
@@ -472,7 +501,7 @@ admin 추가 (기존 기능은 건드리지 않음):
 | H0 | 알림 정책: (1) 대체 잡의 Discord DM 경로를 유지할지(AGENTS.md와 충돌), (2) 직방 문의 카카오 알림을 다시 원하는지, (3) 플랫폼 새 등록 요청을 카카오로 알릴지. 답이 없으면 셋 다 "알림 없음"이 기본 | 오너 | 없음 (기본값으로 진행) |
 | H1 | Legal Bot 검토: 브랜드 사용·표시광고 필수 항목(공인중개사법 §18·§18-2), 소유자 요청 매물의 광고 책임과 플랫폼 모니터링 의무(§18-3), "확인 매물" 문구, 수수료 문구(§32), 수리 요청이 주택임대관리업에 해당하지 않는지, 개인정보 처리 | 오너 → Legal Bot (legalbot 프로필, 이 저장소 밖) | M5 공개 |
 | H2 | 브랜드명: **잠실살이로 결정됨**(2026-11-27). 남은 것은 H1의 브랜드 사용·표시광고 검토 통과뿐이다. 호스팅은 POC 동안 `lottes.co.kr` 하위 경로를 유지하고, 별도 도메인은 오너가 이름 선점용으로만 살 수 있다(연결은 §10 독립 시점) | 오너 | M5 공개 |
-| H3 | Supabase Auth 설정: Site URL / Redirect URL에 `https://lottes.co.kr/platform/*` 추가, 이메일 발송 설정 확인(기본 SMTP는 시간당 발송 제한이 있음) | 오너 (Supabase 대시보드) | M4 로그인 |
+| H3 | Supabase Auth 설정: Site URL / Redirect URL에 `https://lottes.co.kr/jamsilsari/*` 추가, 이메일 발송 설정 확인(기본 SMTP는 시간당 발송 제한이 있음) | 오너 (Supabase 대시보드) | M4 로그인 |
 | H4 | 테스트용 이메일 계정 2~3개 준비 | 오너 | M4 완료 확인 |
 | H5 | 월별 광고비·계약 수 입력 (admin 「채널 지표」) | 오너·가족 | 지표 리포트의 비용 항목 |
 | H6 | D0 대조표의 "승인 필요" 항목(기존 테이블·공개 범위·운영 문의 경로 변경, 037, 게시의 메인 사이트 노출 포함)과 문의 경로 통합안 승인 | 오너 (Claude 검토 후) | 해당 항목만. 나머지는 진행 |
