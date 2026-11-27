@@ -1,0 +1,232 @@
+/* 잠실살이 — 동네 매물장. 흰 종이, 볼펜 남색, 인주 도장. */
+:root {
+  --paper:#ffffff; --lake:#eef3f1; --lake-deep:#dfe8e4;
+  --ink:#17233a; --muted:#56627a; --line:#d8dee5;
+  --pen:#1f45a6; --seal:#c2312a;
+  --warn-bg:#fff0d4; --warn-ink:#7a4a00;
+  --display:'Hahmlet','Noto Serif KR',serif;
+  --text:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+  font:400 100%/1.65 var(--text);
+  color:var(--ink); background:var(--paper);
+}
+*,*::before,*::after {box-sizing:border-box}
+body {margin:0; min-height:100vh; display:flex; flex-direction:column; word-break:keep-all; overflow-wrap:anywhere}
+body > main {flex:1}
+[hidden] {display:none !important}
+img {max-width:100%; display:block}
+a {color:var(--pen); text-underline-offset:.22em; text-decoration-thickness:1px}
+:focus-visible {outline:3px solid var(--pen); outline-offset:3px}
+.skip {position:absolute; top:0; left:1rem; padding:.6rem .9rem; background:var(--ink); color:#fff; transform:translateY(-130%); z-index:20}
+.skip:focus {transform:none}
+.wrap {width:min(100% - 2rem, 72rem); margin-inline:auto}
+h1,h2,h3,p {margin:0 0 .6rem}
+h1,h2,h3 {font-family:var(--display); font-weight:700; line-height:1.28; letter-spacing:-.02em}
+h1 {font-size:clamp(2rem,6vw,3.4rem)}
+h2 {font-size:1.45rem}
+h3 {font-size:1.15rem}
+.fine {font-size:.875rem; color:var(--muted)}
+
+/* 머리 */
+.site-head {position:sticky; top:0; z-index:10; background:rgba(255,255,255,.94); backdrop-filter:blur(8px); border-bottom:1px solid var(--line)}
+.head-row {display:flex; align-items:center; gap:1rem; min-height:60px}
+.brand {display:inline-flex; align-items:center; gap:.55rem; min-height:44px; text-decoration:none; color:var(--ink);
+  font-family:var(--display); font-weight:800; font-size:1.35rem; letter-spacing:-.03em}
+.brand::before {content:'잠\A실'; white-space:pre; display:grid; place-items:center; width:2.1rem; height:2.1rem; border:2px solid var(--seal); border-radius:.3rem;
+  color:var(--seal); font-size:.74rem; line-height:1.02; letter-spacing:0; text-align:center; transform:rotate(-4deg)}
+nav {display:flex; gap:.2rem; margin-left:auto}
+nav a {display:inline-flex; align-items:center; min-height:44px; padding-inline:.7rem; color:var(--ink); text-decoration:none; font-size:.94rem; font-weight:500; border-radius:999px}
+nav a:hover {background:var(--lake)}
+nav a[aria-current] {background:var(--ink); color:#fff}
+@media (max-width:40rem) {
+  .head-row {flex-wrap:wrap; gap:0; padding-top:.25rem}
+  nav {margin-left:0; width:100%; justify-content:space-between; padding-bottom:.35rem}
+  nav a {padding-inline:.6rem; font-size:.9rem}
+}
+
+/* 버튼·입력 */
+button,.button,input:not([type=checkbox]):not([type=radio]),select,textarea {font:inherit; min-height:46px; max-width:100%; color:var(--ink); background:var(--paper);
+  border:1px solid #8d97a6; border-radius:.5rem; padding:.5rem .8rem}
+button,.button {display:inline-flex; align-items:center; justify-content:center; gap:.4rem; font-weight:600; text-decoration:none; cursor:pointer; border-color:var(--ink)}
+button:hover,.button:hover {background:var(--lake)}
+.primary,.button.primary {background:var(--ink); color:#fff; border-color:var(--ink)}
+.primary:hover,.button.primary:hover {background:#24365a}
+button:disabled,button[aria-disabled=true] {cursor:default; opacity:.6}
+input:disabled {background:#f1f3f5; color:var(--muted)}
+label {font-weight:600; font-size:.94rem; min-width:0}
+label :is(input:not([type=checkbox]),select,textarea) {display:block; width:100%; margin-top:.3rem; font-weight:400}
+.panel {background:var(--paper); border:1px solid var(--line); border-radius:.75rem; padding:1.25rem}
+.actions {display:flex; flex-wrap:wrap; gap:.5rem; margin:.75rem 0 0}
+
+/* 첫 화면 */
+.lake-hero {position:relative; isolation:isolate; color:#fff; min-height:clamp(22rem,58vh,34rem); display:flex; align-items:flex-end;
+  background:#2c4a55 url('../img/bg-img/slide1.jpg') center 70% / cover}
+.lake-hero::before {content:''; position:absolute; inset:0; z-index:-1; background:linear-gradient(180deg,rgba(14,28,40,.05) 0%,rgba(14,28,40,.55) 34%,rgba(14,28,40,.88) 100%)}
+.lake-hero .wrap {padding-block:2.5rem 2.75rem; position:relative}
+.lake-hero h1 {font-size:clamp(2rem,5.4vw,3.2rem); max-width:15em; text-wrap:balance; margin-bottom:.8rem; text-shadow:0 1px 18px rgba(0,0,0,.25)}
+.lake-hero p {max-width:31rem; font-size:1.05rem; color:#eef3f6}
+.lake-hero .actions .button:not(.primary) {background:transparent; color:#fff; border-color:rgba(255,255,255,.8)}
+.lake-hero .actions .button:not(.primary):hover {background:rgba(255,255,255,.14)}
+.lake-hero .actions .primary {background:#fff; color:var(--ink); border-color:#fff}
+.stamp.hero-seal {position:absolute; right:0; bottom:2.4rem; transform:rotate(-9deg)}
+.hero-seal.stamp {--size:7.4rem; color:#fff; border-color:#fff; background:rgba(194,49,42,.86)}
+.hero-seal.stamp::after {border-color:rgba(255,255,255,.55)}
+@media (max-width:40rem) { .lake-hero {min-height:36rem} .stamp.hero-seal {right:.2rem; bottom:auto; top:-6.4rem} .hero-seal.stamp {--size:5.6rem} }
+@media (prefers-reduced-motion:no-preference) {
+  .hero-seal {animation:press .55s cubic-bezier(.2,.9,.25,1.2) .35s both}
+  @keyframes press {from {opacity:0; transform:rotate(-9deg) scale(1.6)} to {opacity:1; transform:rotate(-9deg) scale(1)}}
+}
+
+/* 도장 */
+.stamp {--size:5.2rem; position:relative; display:grid; place-content:center; text-align:center; width:var(--size); height:var(--size);
+  border:2.5px solid var(--seal); border-radius:50%; color:var(--seal); font-family:var(--display); font-weight:800; line-height:1.15;
+  font-size:calc(var(--size) * .15); transform:rotate(-8deg); background:rgba(255,255,255,.9)}
+.stamp::after {content:''; position:absolute; inset:4px; border:1px solid currentColor; border-radius:50%; opacity:.6}
+.stamp b {font-size:calc(var(--size) * .2); font-variant-numeric:tabular-nums; letter-spacing:-.02em}
+.stamp.pen {border-radius:.4rem; color:var(--pen); border-color:var(--pen); border-style:solid; transform:rotate(-3deg)}
+.stamp.pen::after {border-radius:.2rem}
+.stamp.old {color:#7d8594; border-color:#7d8594; transform:rotate(-8deg)}
+
+/* 검색 조건 */
+.filters {display:grid; gap:.9rem; padding:1.2rem 0 1rem; border-bottom:1px solid var(--line)}
+.types {display:flex; gap:.4rem; border:0; padding:0 0 .2rem; margin:0; overflow-x:auto; scrollbar-width:none}
+.types label {flex:none}
+.types legend {position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0)}
+.types label {position:relative}
+.types input {position:absolute; opacity:0; inset:0; margin:0; cursor:pointer}
+.types span {display:inline-flex; align-items:center; min-height:44px; padding:0 1.05rem; border:1px solid var(--line); border-radius:999px; font-weight:600; background:var(--paper)}
+.types input:checked + span {background:var(--ink); border-color:var(--ink); color:#fff}
+.types input:focus-visible + span {outline:3px solid var(--pen); outline-offset:2px}
+.more-filters {display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.6rem; align-items:end}
+.more-filters p {grid-column:1/-1; margin:0}
+@media (min-width:48rem) {.more-filters {grid-template-columns:1fr 1fr 1fr auto} .more-filters p {grid-column:auto / span 4}}
+.listing-head {display:flex; align-items:baseline; justify-content:space-between; gap:1rem; flex-wrap:wrap; padding-top:2.25rem}
+.listing-head h2 {margin:0}
+#count {margin:0; font-size:.94rem; color:var(--muted)}
+#message:empty,#count:empty {display:none}
+#message {margin:1rem 0 0}
+
+/* 매물장 행 */
+.cards {list-style:none; margin:0 0 2rem; padding:0}
+.card {position:relative; display:grid; grid-template-columns:1fr; gap:.9rem; padding:1.4rem 0; border-bottom:1px solid var(--line)}
+.card-photo {position:relative; margin:0; aspect-ratio:4/3; border-radius:.6rem; overflow:hidden; background:var(--lake)}
+.card-photo img {width:100%; height:100%; object-fit:cover}
+.card-photo.none {display:grid; place-items:center; color:var(--muted); font-family:var(--display); font-size:1.2rem}
+.card .stamp {position:absolute; right:.6rem; top:.6rem; --size:4.6rem}
+.card-body {min-width:0}
+.card-kind {font-size:.875rem; color:var(--muted); margin-bottom:.15rem; display:flex; gap:.6rem}
+.card-kind strong {color:var(--ink); font-weight:600}
+.card h2,.card h3 {font-size:1.3rem; margin:0 0 .35rem}
+.card h2 a,.card h3 a {color:var(--ink); text-decoration:none}
+.card h2 a::after,.card h3 a::after {content:''; position:absolute; inset:0; z-index:1}
+.card h2 a:hover,.card h3 a:hover {text-decoration:underline}
+.price {font-family:var(--display); font-weight:800; font-size:1.55rem; letter-spacing:-.02em; font-variant-numeric:tabular-nums; margin:0 0 .35rem}
+.checked {font-size:.9rem; color:var(--muted); margin:0}
+.checked time {color:var(--ink); font-weight:600}
+.tags {display:flex; flex-wrap:wrap; gap:.35rem; margin:.5rem 0 0; padding:0; list-style:none}
+.tag {font-size:.82rem; padding:.15rem .55rem; border-radius:.3rem; background:var(--lake); color:var(--ink)}
+.tag.warn {background:var(--warn-bg); color:var(--warn-ink); font-weight:600}
+.tag.only {background:#e6ecfa; color:var(--pen); font-weight:600}
+.fav {position:relative; z-index:2; justify-self:start; min-height:44px; border-color:var(--line); font-weight:500}
+.fav::before {content:''; width:1.05rem; height:1.05rem; background:currentColor;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.8 4.5c2.2 0 3.8 1.2 5.2 3 1.4-1.8 3-3 5.2-3 3.8 0 5.9 3.9 4.4 7.3C19.5 16.4 12 21 12 21z' fill='none' stroke='black' stroke-width='2'/%3E%3C/svg%3E") center/contain no-repeat}
+.fav[aria-pressed=true] {color:var(--seal); border-color:var(--seal)}
+.fav[aria-pressed=true]::before {mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.8 4.5c2.2 0 3.8 1.2 5.2 3 1.4-1.8 3-3 5.2-3 3.8 0 5.9 3.9 4.4 7.3C19.5 16.4 12 21 12 21z'/%3E%3C/svg%3E")}
+@media (min-width:44rem) {
+  .card {grid-template-columns:15rem minmax(0,1fr) auto; align-items:start; gap:1.5rem}
+  .card .stamp {position:static; --size:5.2rem; margin:.2rem .4rem 0 0}
+  .card-aside {display:grid; justify-items:center; gap:.8rem; grid-column:3; grid-row:1 / span 2}
+}
+.card-aside {display:contents}
+@media (min-width:44rem) {.card-aside {display:grid}}
+
+/* 비어 있을 때 */
+.empty-ledger {display:grid; gap:1.5rem; padding:2.5rem 0; border-bottom:1px solid var(--line)}
+.empty-ledger h2 {font-size:clamp(1.5rem,4vw,2rem)}
+.empty-ledger p {max-width:34rem; color:var(--muted)}
+.detail-layout aside .panel .button {width:100%; justify-content:flex-start; margin-top:.4rem; border-color:var(--line)}
+.contact-slip .actions .button,.contact-slip .actions button {width:auto}
+
+/* 동네 자료 */
+.towns {padding:2.5rem 0 1rem}
+.towns h2 {margin-bottom:.3rem}
+.towns > p {color:var(--muted)}
+.town-list {list-style:none; padding:0; margin:1.1rem 0 0; display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,13rem),1fr)); gap:.6rem}
+.town-list a {display:flex; flex-direction:column; justify-content:center; min-height:4.6rem; padding:.7rem 1rem; border-radius:.6rem; background:var(--lake);
+  text-decoration:none; color:var(--ink)}
+.town-list a:hover {background:var(--lake-deep)}
+.town-list strong {font-family:var(--display); font-size:1.1rem}
+.town-list span {font-size:.85rem; color:var(--muted)}
+
+/* 거래완료 */
+#completed {padding:1.5rem 0}
+.badge.complete {background:#e4e5e1; color:#373934; border-color:#c9cbc4}
+
+/* 상세 */
+.page-intro {padding:1.6rem 0 1rem}
+.page-intro h1 {font-size:clamp(1.7rem,5vw,2.6rem)}
+.back {display:inline-flex; align-items:center; min-height:44px; font-size:.94rem; color:var(--muted); text-decoration:none}
+.back:hover {color:var(--ink); text-decoration:underline}
+.detail-top {display:flex; gap:1.25rem; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; margin-bottom:1.2rem}
+.detail-top .stamp {--size:5.6rem; flex:none}
+.detail-layout {display:grid; gap:1.25rem; align-items:start; margin-bottom:2rem}
+.detail-layout aside {display:grid; gap:1rem}
+.photos {display:grid; gap:.5rem; grid-template-columns:repeat(2,1fr)}
+.photos img {width:100%; aspect-ratio:4/3; object-fit:cover; border-radius:.6rem; background:var(--lake)}
+.photos img:first-child {grid-column:1/-1}
+.no-photo {display:grid; place-items:center; min-height:14rem; border-radius:.6rem; background:var(--lake); color:var(--muted)}
+.contact-slip {background:var(--ink); color:#fff; border-color:var(--ink)}
+.contact-slip h2 {color:#fff}
+.contact-slip .primary {background:#fff; color:var(--ink); border-color:#fff}
+.contact-slip .fav {background:transparent; color:#fff; border-color:rgba(255,255,255,.6)}
+.contact-slip .fav[aria-pressed=true] {color:#ffb3ad; border-color:#ffb3ad}
+@media (min-width:52rem) {.detail-layout {grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)} .detail-layout aside {position:sticky; top:76px}}
+dl {margin:0} dl div {display:flex; justify-content:space-between; gap:1rem; border-bottom:1px solid var(--line); padding:.5rem 0}
+dl div:last-child {border-bottom:0; font-weight:700}
+dd {text-align:right; margin:0; font-variant-numeric:tabular-nums}
+
+/* 폼 */
+.form-stack {display:grid; gap:1rem; max-width:42rem}
+fieldset {border:0; min-inline-size:0; padding:0; margin:0; display:grid; gap:.7rem}
+legend {font-family:var(--display); font-size:1.2rem; font-weight:700; margin-bottom:.4rem}
+.check {display:flex; align-items:center; min-height:44px; gap:.55rem}
+.check input {width:1.2rem; height:1.2rem; flex:none; accent-color:var(--ink)}
+.field-error,[aria-invalid=true] {color:var(--seal)}
+[aria-invalid=true] {border-color:var(--seal) !important}
+.field-error {display:block; font-size:.875rem}
+.closed-slip {display:grid; gap:.4rem; max-width:40rem; margin-top:.5rem; padding:1.5rem; border-radius:.75rem; background:var(--lake)}
+.closed-slip h2 {margin:0}
+
+/* 공통 하단 */
+.intro {padding:2rem 0 1.25rem}
+.intro p {color:var(--muted); max-width:36rem}
+main > section > h2 {margin-top:1.8rem}
+.map {min-height:21rem; margin:1rem 0}
+footer {margin-top:3rem; background:var(--ink); color:#c9d1dd; padding:2rem 0 2.4rem; font-size:.875rem}
+footer strong {color:#fff; font-family:var(--display); font-size:1rem; display:block; margin-bottom:.4rem}
+footer p {margin:0 0 .2rem}
+footer a {color:#fff; display:inline-flex; min-height:44px; align-items:center}
+.lr-phone-toast {display:none; position:fixed; inset:auto 1rem 1rem auto; padding:.8rem; gap:.6rem; align-items:center; flex-wrap:wrap; max-width:calc(100% - 2rem); background:var(--paper); border:1px solid var(--ink); border-radius:.6rem; z-index:30}
+.lr-phone-toast.is-open {display:flex}
+
+/* 계약 대시보드 (기존 구조 유지) */
+.contract-page {width:min(100% - 2rem, 61rem)}
+.contract-state {max-width:39rem}
+.contract-identity {font-weight:700; padding-block:.65rem; border-block:1px solid var(--line)}
+.contract-grid,.contract-side {display:grid; gap:.85rem; min-width:0; align-content:start}
+.contract-grid {margin-top:.85rem; align-items:start}
+.contract-summary {grid-column:1/-1}
+.contract-dates {list-style:none; padding:0; margin:1rem 0 0; border-inline-start:2px solid var(--line)}
+.contract-dates li {padding:0 0 1rem .9rem; position:relative}
+.contract-dates li:last-child {padding-bottom:0}
+.contract-dates li::before {content:''; position:absolute; inset:.45rem auto auto -.37rem; width:.62rem; height:.62rem; border-radius:50%; background:var(--seal)}
+.contract-date {font-weight:700; font-variant-numeric:tabular-nums; color:var(--ink)}
+.contract-reference {display:inline-flex; min-height:44px; align-items:center; font-size:.875rem}
+.contract-links {display:grid}
+.contract-repairs article {padding:.7rem 0; border-top:1px solid var(--line)}
+.repair-body {white-space:pre-wrap}
+.contract-form {margin-top:.8rem; gap:.65rem}
+.contract-form button {justify-self:start}
+.contract-form-message:empty {display:none}
+.contract-form-message {margin:.25rem 0; font-weight:600}
+.badge {display:inline-block; font-size:.85rem; padding:.12rem .5rem; background:var(--lake); border-radius:.3rem}
+@media (min-width:47rem) {.contract-grid {grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}

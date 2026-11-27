@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'none'; script-src 'self' https://www.googletagmanager.com https://wcs.pstatic.net; script-src-attr 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://itcztvceelfvppjwhmvl.supabase.co https://www.google-analytics.com https://region1.google-analytics.com https://wcs.naver.com; form-action 'self'; upgrade-insecure-requests">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>매물 찾기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@500;700;800&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="platform.css">
+<script defer src="../js/phoneHandoff.js"></script>
+<script type="module" src="js/page.mjs"></script>
+</head>
+<body data-page="index">
+<a class="skip" href="#main">본문으로 이동</a>
+<header class="site-head"><div class="wrap head-row">
+<a href="index.html" class="brand" data-brand>잠실살이</a>
+<nav aria-label="잠실살이 메뉴"><a href="index.html" aria-current="page">매물 찾기</a><a href="me.html">찜한 매물</a><a href="request.html">집 내놓기</a><a href="login.html" data-auth-link hidden>로그인</a></nav>
+</div></header>
+<main id="main" tabindex="-1">
+<section class="lake-hero" aria-labelledby="hero-title"><div class="wrap">
+<h1 id="hero-title">잠실에서 살 집,<br> 누가 언제 확인했는지 적어 둡니다</h1>
+<p>잠실동, 신천동, 송파동 매물만 다룹니다. 중개사무소가 현장에 다녀온 매물인지, 집주인이 맡긴 매물인지 구분하고 마지막 확인 날짜를 함께 보여드려요.</p>
+<div class="actions"><a class="button primary" href="#listings">매물 보기</a><a class="button" href="tel:050714025055">원하는 조건 전화로 말하기</a></div>
+<p class="stamp hero-seal" id="hero-seal" aria-hidden="true">동네 매물장<b data-latest>잠실</b></p>
+</div></section>
+<div class="wrap">
+<div class="listing-head" id="listings"><h2>지금 볼 수 있는 매물</h2><p id="count" role="status"></p></div>
+<p id="message" role="status"></p>
+<form id="filters" class="filters" aria-label="매물 검색 조건" hidden>
+<fieldset class="types"><legend>거래 유형</legend>
+<label><input type="radio" name="type" value="" checked><span>전체</span></label><label><input type="radio" name="type" value="매매"><span>매매</span></label><label><input type="radio" name="type" value="전세"><span>전세</span></label><label><input type="radio" name="type" value="월세"><span>월세</span></label><label><input type="radio" name="type" value="단기임대"><span>단기임대</span></label>
+</fieldset>
+<div class="more-filters">
+<label>동<select name="district"><option value="">전체</option></select></label>
+<label>확인 방식<select name="tier"><option value="">전체</option></select></label>
+<label>최대 가격 (만원)<input type="number" name="maxPrice" min="0" step="any" inputmode="decimal" disabled></label>
+<button type="reset">조건 지우기</button>
+<p id="price-help" class="fine">금액으로 찾으려면 거래 유형을 먼저 고르세요.</p>
+</div></form>
+<button id="map-button" type="button" aria-controls="map" aria-expanded="false" hidden>지도 보기</button>
+<section id="map" class="map" aria-label="동별 매물 위치" hidden></section>
+<div id="results" class="cards"></div><section id="completed" hidden aria-label="거래완료"></section>
+<section class="towns" aria-labelledby="towns-title"><h2 id="towns-title">단지별 실거래 먼저 보기</h2>
+<p>매물을 보기 전에 단지 시세 흐름을 확인해 보세요.</p>
+<ul class="town-list">
+<li><a href="../apartments/jamsil-els.html"><strong>잠실엘스</strong><span>잠실동 실거래 요약</span></a></li>
+<li><a href="../apartments/ricenz.html"><strong>리센츠</strong><span>잠실동 실거래 요약</span></a></li>
+<li><a href="../apartments/trizium.html"><strong>트리지움</strong><span>잠실동 실거래 요약</span></a></li>
+<li><a href="../apartments/lake-palace.html"><strong>레이크팰리스</strong><span>잠실동 실거래 요약</span></a></li>
+<li><a href="../apartments/jamsil-jugong-5.html"><strong>잠실주공5단지</strong><span>잠실동 실거래 요약</span></a></li>
+<li><a href="../apartments/helio-city.html"><strong>헬리오시티</strong><span>가락동 실거래 요약</span></a></li>
+</ul></section>
+</div>
+</main>
+<footer><div class="wrap disclosure"><strong>롯데공인중개사사무소</strong>
+<p>개업공인중개사 서봉현</p><p>중개사무소등록번호 11710-2018-00141</p>
+<p>서울특별시 송파구 백제고분로27길 27 101호</p><p>대표전화 <a href="tel:050714025055">0507-1402-5055</a></p>
+</div></footer>
+</body>
+</html>
