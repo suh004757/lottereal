@@ -18,6 +18,20 @@
   <link rel="stylesheet" href="../style.css">
   <link rel="stylesheet" href="../css/admin.css">
   <link rel="stylesheet" href="../css/admin-dashboard.css">
+  <style>
+    .pf-mobile-nav { display: none; }
+    .pf-admin-panel { overflow-wrap: anywhere; }
+    .pf-admin-panel fieldset, #pf-request-verification { min-inline-size: 0; margin-block: 1rem; padding: 0.75rem; border: 1px solid var(--admin-border); border-radius: 0.5rem; background: var(--admin-card); }
+    .pf-admin-panel legend, #pf-request-verification legend { font-weight: 700; }
+    .pf-admin-panel label, #pf-request-fields label { display: block; min-width: 0; margin-block: 0.25rem; }
+    .pf-admin-panel :is(input, select), #pf-request-fields :is(input, select) { max-width: 100%; }
+    .pf-admin-panel input[type="checkbox"], #pf-request-fields input[type="checkbox"] { width: auto; }
+    .pf-admin-panel button { margin-block: 0.25rem; margin-inline-end: 0.35rem; }
+    @media (max-width: 1024px) {
+      .pf-mobile-nav { display: flex; flex-wrap: wrap; gap: 0.35rem 1rem; margin-bottom: 1rem; }
+      .pf-mobile-nav a { display: inline-flex; align-items: center; min-height: 44px; text-decoration: underline; }
+    }
+  </style>
 </head>
 
 <body class="admin-dashboard-shell">
@@ -82,6 +96,11 @@
         </svg>
         <span>시장 리포트</span>
       </a>
+      <a href="#pf-requests" class="admin-nav__item" data-section="pf-requests">등록 요청</a>
+      <a href="#pf-listings" class="admin-nav__item" data-section="pf-listings">플랫폼 게시</a>
+      <a href="#pf-contracts" class="admin-nav__item" data-section="pf-contracts">계약 관리</a>
+      <a href="#pf-metrics" class="admin-nav__item" data-section="pf-metrics">채널 지표</a>
+      <a href="#pf-intake" class="admin-nav__item" data-section="pf-intake">대리 접수</a>
     </nav>
     <div class="admin-sidebar__footer">
       <button type="button" id="logoutBtn" class="admin-logout-btn">
@@ -96,6 +115,10 @@
   </aside>
 
   <main class="admin-main">
+    <nav class="pf-mobile-nav" aria-label="잠실살이 관리">
+      <a href="#dashboard">대시보드</a><a href="#pf-requests">등록 요청</a><a href="#pf-listings">플랫폼 게시</a>
+      <a href="#pf-contracts">계약 관리</a><a href="#pf-metrics">채널 지표</a><a href="#pf-intake">대리 접수</a>
+    </nav>
     <section id="dashboard-section" class="admin-section active">
       <div class="admin-section__header">
         <div>
@@ -354,6 +377,29 @@
         </aside>
       </div>
     </section>
+    <section id="pf-requests-section" class="admin-section" aria-labelledby="pf-requests-title">
+      <div class="admin-section__header"><h1 id="pf-requests-title">등록 요청</h1></div>
+      <p id="pf-request-count" role="status">새 요청 미확인 · 대리 접수 집계 미연결</p>
+      <div id="pf-requests-body" class="pf-admin-panel"></div>
+    </section>
+    <section id="pf-listings-section" class="admin-section" aria-labelledby="pf-listings-title">
+      <div class="admin-section__header"><h1 id="pf-listings-title">플랫폼 게시</h1></div>
+      <p>기존 매물의 플랫폼 확인 이력만 추가합니다. 메인 사이트의 매물 정보는 바뀌지 않습니다.</p>
+      <div id="pf-listings-body" class="pf-admin-panel"></div>
+    </section>
+    <section id="pf-contracts-section" class="admin-section" aria-labelledby="pf-contracts-title">
+      <div class="admin-section__header"><h1 id="pf-contracts-title">계약 관리</h1></div>
+      <p>회원 연결은 초대로만 진행되며 링크는 자동 발송되지 않습니다. 초대 수락 화면은 별도 단계에서 연결됩니다.</p>
+      <div id="pf-contracts-body" class="pf-admin-panel"></div>
+    </section>
+    <section id="pf-metrics-section" class="admin-section" aria-labelledby="pf-metrics-title">
+      <div class="admin-section__header"><h1 id="pf-metrics-title">채널 지표</h1></div>
+      <div id="pf-metrics-body" class="pf-admin-panel"></div>
+    </section>
+    <section id="pf-intake-section" class="admin-section" aria-labelledby="pf-intake-title">
+      <div class="admin-section__header"><h1 id="pf-intake-title">대리 접수</h1></div>
+      <p>대리 접수함은 아직 연결되지 않았습니다.</p>
+    </section>
   </main>
 
   <div id="dashboard-preview-modal" class="preview-modal">
@@ -407,11 +453,11 @@
             <label>가격(숫자)</label>
             <input type="number" name="price" placeholder="숫자만 입력">
           </div>
-          <div>
+          <div data-legacy-listing-field>
             <label>주소</label>
             <input type="text" name="address" placeholder="주소">
           </div>
-          <div>
+          <div data-legacy-listing-field>
             <label>도시</label>
             <input type="text" name="city" placeholder="예: 서울">
           </div>
@@ -419,28 +465,33 @@
             <label>구/군</label>
             <input type="text" name="district" placeholder="예: 송파구">
           </div>
-          <div>
+          <div data-legacy-listing-field>
             <label>연락처 이름</label>
             <input type="text" name="contactName" placeholder="담당자 이름">
           </div>
-          <div>
+          <div data-legacy-listing-field>
             <label>공개 안심번호</label>
             <input type="text" name="contactPhone" value="0507-1402-5055" readonly>
           </div>
-          <div>
+          <div data-legacy-listing-field>
             <label>연락처 이메일</label>
             <input type="email" name="contactEmail" placeholder="email@example.com">
           </div>
-          <div style="grid-column:1/-1;">
+          <div style="grid-column:1/-1;" data-legacy-listing-field>
             <label>설명</label>
             <textarea name="description" rows="4" placeholder="매물 상세 설명"></textarea>
           </div>
-          <div style="grid-column:1/-1;">
+          <div style="grid-column:1/-1;" data-legacy-listing-field>
             <label>매물 이미지 (최대 10개, 각 5MB 이하)</label>
             <input type="file" id="propertyImages" name="images" accept="image/*" multiple>
             <div id="imagePreview" class="admin-image-preview"></div>
           </div>
         </div>
+        <fieldset id="pf-request-verification" hidden>
+          <legend>플랫폼 게시 확인</legend>
+          <p id="pf-publish-hold">H6 승인 전에는 새 매물을 게시할 수 없습니다. 이 화면에서 기존 매물은 저장되지 않습니다.</p>
+          <div id="pf-request-fields"></div>
+        </fieldset>
         <div id="propertyFormMessage" class="admin-message" aria-live="polite" hidden></div>
         <div class="admin-modal__footer">
           <button type="button" class="admin-btn admin-btn--ghost" id="cancelModal">취소</button>

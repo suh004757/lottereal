@@ -37,6 +37,11 @@ import { signOutAdmin, getCurrentSessionUser, refreshAdminSession } from './serv
 import { buildAdminListingPayload } from './utils/adminListingPayload.mjs';
 import { createFormContextGeneration } from './utils/formContextGeneration.mjs';
 import { bindAvailabilityPanel, openAvailabilityPanel } from './adminAvailability.js';
+import { createAdminPlatformApi, mountAdminPlatform } from './adminPlatform.js';
+
+let platformAdmin;
+let platformApi;
+let platformRequest = null;
 
 // ============================================
 // DOM 요소 참조
@@ -159,6 +164,8 @@ async function initAdminDashboard() {
       return;
     }
     setAdminIdentity(currentAdmin);
+    platformApi = createAdminPlatformApi(getSupabaseClient(), requirePlatformAdmin);
+    platformAdmin = mountAdminPlatform({ api: platformApi, openRequest: openPlatformRequest });
     bindNav();
     bindModal();
     bindPropertyForm();
@@ -265,6 +272,8 @@ function activateSection(section) {
   sections.forEach((item) => item.classList.remove('active'));
   targetItem.classList.add('active');
   target.classList.add('active');
+  if (section !== 'pf-requests' && platformRequest) closeModal();
+  platformAdmin?.activate(section);
   return true;
 }
 
@@ -626,8 +635,9 @@ function bindModal() {
   if (transactionTypeSelect && depositField) {
     transactionTypeSelect.addEventListener('change', (e) => {
       const value = e.target.value || '';
-      depositField.style.display = (value === '전세' || value === '월세') ? 'block' : 'none';
-      if (monthlyRentField) monthlyRentField.style.display = value === '월세' ? 'block' : 'none';
+      const shortStay = platformRequest && value === '단기임대';
+      depositField.style.display = (value === '전세' || value === '월세' || shortStay) ? 'block' : 'none';
+      if (monthlyRentField) monthlyRentField.style.display = (value === '월세' || shortStay) ? 'block' : 'none';
     });
   }
 
@@ -663,6 +673,8 @@ function bindInquiryModal() {
 function bindLogout() {
   if (!logoutBtn) return;
   logoutBtn.addEventListener('click', async () => {
+    platformAdmin?.activate('');
+    if (platformRequest) closeModal();
     try {
       await signOutAdmin();
     } catch (err) {
@@ -711,6 +723,12 @@ function closeModal() {
   propertyImageGeneration += 1;
   propertyImagesPending = false;
   togglePropertyFormDisabled(false);
+  if (platformRequest) {
+    platformRequest = null;
+    setPlatformModalMode(false);
+    depositField.style.display = 'none';
+    monthlyRentField.style.display = 'none';
+  }
   propertyModal?.classList.remove('active');
   document.body.style.overflow = '';
   propertyForm?.reset();
@@ -721,6 +739,37 @@ function closeModal() {
   clearPropertyFormMessage();
   propertyModalReturnFocus?.focus?.();
   propertyModalReturnFocus = null;
+}
+
+function setPlatformModalMode(enabled) {
+  propertyForm.querySelectorAll('[data-legacy-listing-field]').forEach(field => { field.hidden = enabled; });
+  document.getElementById('pf-request-verification').hidden = !enabled;
+  const shortStay = transactionTypeSelect.querySelector('[data-platform-option]');
+  if (enabled && !shortStay) {
+    const option = new Option('단기임대', '단기임대');
+    option.dataset.platformOption = '';
+    transactionTypeSelect.add(option);
+  } else if (!enabled) {
+    shortStay?.remove();
+    document.getElementById('pf-request-fields').replaceChildren();
+  }
+  propertyModal.querySelector('.admin-modal__header .admin-sub').hidden = enabled;
+  const submit = propertyForm.querySelector('[type="submit"]');
+  submit.textContent = enabled ? '플랫폼 게시' : '저장';
+  submit.disabled = enabled && !platformApi.canPublish;
+}
+
+function openPlatformRequest(request) {
+  openModal();
+  setPlatformModalMode(true);
+  platformRequest = {
+    id: request.id,
+    readVerification: platformAdmin.prepareRequestFields(document.getElementById('pf-request-fields'), request.ownerRole)
+  };
+  document.getElementById('modalTitle').textContent = '등록 요청 게시 초안';
+  document.getElementById('pf-publish-hold').hidden = platformApi.canPublish;
+  for (const [key, value] of Object.entries(request.draft)) propertyForm.elements.namedItem(key).value = value;
+  transactionTypeSelect.dispatchEvent(new Event('change'));
 }
 
 function trapModalFocus(event, modal) {
@@ -1033,6 +1082,29 @@ function bindPropertyForm() {
   if (!propertyForm) return;
   propertyForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (platformRequest) {
+      const request = platformRequest;
+      if (request.saving) return;
+      if (!platformApi.canPublish) {
+        setPropertyFormMessage('H6 승인 전에는 새 매물을 게시할 수 없습니다.', 'info');
+        return;
+      }
+      request.saving = true;
+      const values = Object.fromEntries(new FormData(propertyForm));
+      const confirmation = request.readVerification();
+      propertyForm.querySelector('[type="submit"]').disabled = true;
+      try {
+        await platformApi.publish(request.id, values, confirmation);
+        if (platformRequest === request) closeModal();
+        platformAdmin.refreshRequests();
+      } catch {
+        if (platformRequest === request) setPropertyFormMessage('게시 결과를 확인할 수 없습니다. 입력값과 요청 상태를 확인해 주세요.', 'error');
+      } finally {
+        request.saving = false;
+        if (platformRequest === request) propertyForm.querySelector('[type="submit"]').disabled = false;
+      }
+      return;
+    }
     if (propertyImagesPending) {
       setPropertyFormMessage('이미지 처리가 끝날 때까지 기다려 주세요.', 'info');
       return;
@@ -1102,6 +1174,17 @@ async function requireCurrentAdmin() {
     throw new Error('관리자 권한을 다시 확인할 수 없습니다. 다시 로그인해 주세요.');
   }
   return user;
+}
+
+// Existing auth owns session refresh. Coalesce parallel read checks; M1 enforces
+// admin independently on every RPC and RLS read.
+let platformRoleCheck;
+function requirePlatformAdmin() {
+  platformRoleCheck ??= getCurrentSessionUser().then(user => {
+    if (user?.app_metadata?.role !== 'admin') throw new Error('관리자 권한이 필요합니다.');
+    return user;
+  }).finally(() => { platformRoleCheck = null; });
+  return platformRoleCheck;
 }
 
 /**
