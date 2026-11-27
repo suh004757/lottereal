@@ -160,6 +160,10 @@
   line-height: 1.75;
 }
 
+.shortstay-page:lang(en) .shortstay-lead {
+  max-inline-size: min(70ch, 720px);
+}
+
 .shortstay-page .shortstay-block {
   padding: 2rem 0 0;
   margin-top: 2rem;
