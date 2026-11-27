@@ -7,6 +7,7 @@
   - 개정 4: 비회원 무료 조회, 구글 로그인·찜, 매물 상태 표시
   - 개정 5: 가입 공개 순서(`property-images` 차단 항목), 거래완료 기본 OFF, 1·2차 리뷰 반영
   - 개정 6: 동네 정보·비용 투명성, 지도, 일괄 올리기, 거래완료 상세 주소 차단, 중복 게재 미확인 안내, 보안 보강(스팸 상한, 메일 인증, 출력 이스케이프)
+  - 개정 7 (2026-11-27 KST, D0 분류 A 반영): 플랫폼 전용 거래유형·공개 조회 범위·감사 기록과 지표 출처·분모를 현 로컬 후보에 맞췄다. 분류 B와 H6 승인 조건은 그대로다.
 - 실행 에이전트는 이 문서만으로 끝까지 진행한다.
 - 실행 에이전트: **GPT 6.2 SOL** (AGENTS.md 규칙 9의 SOL 모델). 설계·검토는 Claude가 맡는다.
 - 작업 저장소: `F:\Git\lottereal` (GitHub `suh004757/lottereal`, `main`). 서버 작업 공간: Hermes 컨테이너 `/opt/data/projects/lottereal`.
@@ -164,6 +165,8 @@
 - 집계가 끊긴 기간(예: 직방 receipts 2026-10-23 이후)은 0이 아니라 **"미확인"**으로 표시한다. 분모가 미확인이면 비용 지표도 "미확인"이다.
 - 품질 지표(성과 지표 아님): 노출 매물 중 "재확인 필요" 비율, 거래 완료 후 `closed_at` 반영까지 걸린 일수. 둘 다 낮을수록 좋다.
 
+**D0 분류 A 지표 기준** ([운영 대조표](db-review.md)): 플랫폼 공급은 `pf_listing_requests`의 등록 요청과 `pf_listing_verifications`의 확인 등급을 기준으로 센다. 신규 게시는 확인된 월별 게시 건수만 입력한다. 재확인 기록을 신규 게시로 세지 않는다. `site_visit` 비율의 분모는 같은 집계에서 확인 등급이 집계된 매물 수다. H6 전에는 가족이 기록한 실제 통화만 플랫폼 문의로 집계한다. 전화 클릭은 행동 신호로 따로 표시하며, §4-037의 클릭 수는 문의 집계의 대용으로 쓰지 않는다. 직방 receipts는 알림 건수만 뜻하고 수집 공백은 `미확인`이다. 현 036의 `pf_channel_monthly`는 광고비·계약 수를 저장한다. 적합 문의·방문 약속은 확인된 별도 수기 집계만 오프라인 리포트에 입력하고, 없으면 `미확인`으로 둔다. 계약당 비용은 같은 기간의 광고비와 양수 계약 수가 모두 확인됐을 때만 산출한다. 운영 집계는 미검증이다.
+
 **하지 않는 것 (POC 범위 밖)**
 - 계약서·신분증 등 문서 파일 저장 (해킹 리스크. 오너 결정)
 - 결제, 에스크로, 전자계약, 네이티브 앱
@@ -254,19 +257,21 @@
 ### 034 admin RPC (요청 처리)
 - `admin_list_listing_requests(status_filter text default null)` → setof. admin 확인 필수.
 - `admin_set_listing_request_status(request_id uuid, new_status text, reason text default null)`: `reviewing` 또는 `rejected`. 감사 기록을 남긴다.
-- `admin_publish_listing_request(request_id uuid, overrides jsonb, verification jsonb)` → uuid (새 listing id):
+- `admin_publish_listing_request(request_id uuid, overrides jsonb, verification jsonb)` → uuid (새 listing id): 아래 공유 게시 흐름은 **분류 B / H6 대기** 설계다. 현 034는 관리자 확인 후 게시를 거부하며 공유 테이블에 쓰지 않는다.
   - `property_listings`에 insert한다. 값은 요청 + overrides(title, price, 주소 표기, images 등 admin이 고친 값)이고, `contact_phone`은 기존 규칙대로 사무소 번호로 강제한다.
   - `last_verified_at = now()`, 요청 `status='published'`, `published_listing_id` 기록.
   - `verification`으로 `pf_listing_verifications` 첫 행을 같은 트랜잭션에서 만든다. 없거나 규칙 위반이면 전체를 거부한다.
   - `listing_state_audit`에 `action='publish_from_request'`로 남긴다.
 - **`pf_listing_verifications`** (append-only. 플랫폼 노출의 유일한 근거):
   - 컬럼: id, listing_id uuid references property_listings(id), tier(`site_visit`/`owner_listed`/`tenant_listed`/`withdrawn`), intake_channel(`방문`/`전화`, `withdrawn`이면 null), landlord_consent_confirmed boolean, listing_scope(`exclusive` 잠실살이 단독 / `shared` 다른 중개사무소·플랫폼에도 있음 / `unknown`, default `unknown`. `unknown`은 배지 없이 일반 안내만), note text(0~300, 개인정보 금지 안내), verified_by uuid, verified_at timestamptz default now().
+  - **D0 분류 A:** 운영 `property_listings`에 거래유형 열이 없으므로 `transaction_type`(선택, `매매`/`전세`/`월세`/`단기임대`)은 확인 기록에 둔다. 기존 `property_type`은 물건 유형이고 `last_verified_at`은 플랫폼 확인 등급이 아니다. 기존 테이블 필드나 데이터를 변경하지 않는다.
   - CHECK: `tier='tenant_listed'`이면 `landlord_consent_confirmed = true`.
   - anon은 `listing_id, tier, listing_scope, verified_at`만 select 가능(column grant)하고 나머지는 admin만. insert는 RPC로만, update·delete는 없다.
-- `admin_record_listing_verification(listing_id uuid, tier text, intake_channel text, landlord_consent_confirmed boolean, listing_scope text, note text)`: **기존 매물을 플랫폼에 올리는 경로.** 가족이 기존 매물 자료로 플랫폼을 채울 때와 임장 후 등급을 올릴 때 쓴다. `closed_at`이 있는 매물은 거부한다.
+  - 목록·상세는 `pf_public_listing_verifications`에서 위 공개 필드와 `transaction_type`만 읽는다. 미마감 매물의 최신 기록만 대상으로 하며, 확인 기록이 없거나 최신 기록이 `withdrawn`이면 제외한다. `verified_by`·`note` 등 내부 필드는 이 뷰에 없다.
+- `admin_record_listing_verification(listing_id uuid, tier text, intake_channel text, landlord_consent_confirmed boolean, listing_scope text, note text, transaction_type text default null)`: **기존 공개 매물을 플랫폼에 올리는 경로.** 가족이 기존 매물 자료로 플랫폼을 채울 때와 임장 후 등급을 올릴 때 쓴다. `closed_at`이 있는 매물은 거부한다. 거래유형을 생략하면 이전 확인 기록의 값을 잇는다.
 - `admin_unlist_from_platform(listing_id uuid, reason text)`: `tier='withdrawn'` 행을 추가해 플랫폼 노출만 내린다(최신 행이 `withdrawn`이면 비노출). 메인 사이트 노출에는 영향이 없다.
-- 모든 확인 RPC는 `pf_request_audit`과 같은 방식으로 감사 행을 남긴다(D0 결과에 따라 `listing_state_audit` 재사용 여부 결정).
-- **감사 테이블 `pf_request_audit`:** request_id, actor_id, action, previous_status, new_status, created_at. admin select만 가능하고 append-only다.
+- **D0 분류 A 감사:** 현 034의 요청 상태 변경·확인·내리기는 `pf_request_audit`에만 기록한다. 기존 `listing_state_audit`의 action 제약을 바꾸거나 재사용하지 않는다. 위 공유 게시 감사 경로도 H6 대기이며 현재 실행되지 않는다.
+- **감사 테이블 `pf_request_audit`:** id, request_id, listing_id, verification_id, actor_id, action, previous_status, new_status, created_at. `request_status`는 요청에, `verify_listing`·`unlist_listing`은 매물과 확인 기록에 연결한다. admin select만 가능하고 append-only다.
 - 패턴은 `supabase/migrations/029_listing_rent_and_audit.sql`의 `admin_confirm_listing_available`과 같다: `security definer`, `set search_path = pg_catalog, public, auth`, admin 확인, `for update` 잠금.
 
 ### 035 계약·초대·회원
@@ -334,7 +339,7 @@
   - 색채와 톤은 참고로 이어받아도 되지만 의무는 아니다.
   - 기존 CSS(`style.css`, `mobile.css`)는 import하지 않는다.
   - 기존 JS 재사용은 데이터·보안 로직(가격 포맷, 렌더 보안, 저장소 조회)에 한정하고, UI 컴포넌트는 새로 만든다.
-- `public/jamsilsari/platform.css`는 자체 디자인 토큰(`--js-*`)을 쓴다. 토큰과 시각 방향은 M2 착수 전에 `omh-design-orchestration`으로 정한다.
+- `public/jamsilsari/platform.css`는 자체 디자인 토큰을 쓴다. **시각 기준은 `docs/platform/design.md` 개정 2(동네 매물장: 인주 도장, 석촌호수 첫 화면, 장부 줄 목록, Hahmlet + IBM Plex Sans KR)로 고정한다(오너 승인 2026-11-27).** 이 기준을 바꾸거나 히어로·도장·글꼴을 빼려면 오너 승인이 필요하다. 접근성 하한은 기준을 지키는 범위 안에서 맞춘다.
   - `docs/platform/design.md`에 색, 글꼴, 레이아웃 원칙, 핵심 화면 와이어프레임, 대비 검사 결과를 남긴다.
   - 동네 서비스다운 따뜻함과 정보의 정확함이 함께 느껴지는 방향을 우선한다.
 - 하위 경로에 있으므로 메인 사이트와 공유하는 것은 법정 표시 항목, CSP, 배포 파이프라인뿐이다.
@@ -365,7 +370,7 @@ admin 추가 (기존 기능은 건드리지 않음):
   - **「등록 요청」:** 목록, 검토중/반려(사유)/게시. 게시 시 기존 매물 폼을 요청값으로 미리 채워 열고, 확인 등급·접촉 경로(방문/전화)·(임차인이면) 임대인 의뢰·동의 확인을 필수로 고른 뒤 `admin_publish_listing_request`로 저장한다.
   - **「플랫폼 게시」:** **여러 건을 골라 한 번에 올리기**를 지원한다(초기 매물 채우기용). 일괄 올리기도 매물마다 확인 기록 한 행씩 만들고, 등급·접촉 경로·중복 여부는 한 번 고르면 선택한 전체에 적용한다(각각 수정 가능). 기존 매물은 이미 중개 의뢰를 받은 건이므로 기본 등급은 `owner_listed`, 접촉 경로는 가족이 고른다. 기존 매물 목록(마감 제외)에서 "플랫폼에 올리기"(등급·접촉 경로 선택 → `admin_record_listing_verification`), "임장 완료로 올리기", "플랫폼에서 내리기". 현재 등급과 확인일 경과일을 표시한다. 가족이 기존 매물 자료로 플랫폼을 채우는 주 경로다.
   - **「계약 관리」:** 계약 생성 → 초대 링크 2개 표시(복사 버튼, 한 번만 표시된다는 경고), 재발급, 종료.
-  - **「채널 지표」:** 월별 광고비, 적합 문의, 방문 약속, 계약 수 입력 (`pf_channel_monthly`에 컬럼 추가: `fit_inquiries`, `visits` int ≥0 null. null은 "미확인"이다).
+  - **「채널 지표」:** 현 036과 관리자 화면은 월별 광고비·계약 수만 저장한다. 적합 문의·방문 약속은 DB에 저장하지 않으며, 확인된 별도 수기 집계가 있을 때만 리포트에 입력한다(§1).
   - **「대리 접수」:** `pf_intake_items` 목록. 원문과 파싱 결과를 나란히 보여준다. 등록 요청으로 변환 / 찾는 사람으로 처리 / 버리기.
 - 탭이 5개가 되므로 부모님이 쓰기 쉽게 「등록 요청」 탭 하나에 "새 요청 N · 대리 접수 N" 요약을 맨 위에 둔다.
 - 코드는 새 파일 `public/js/adminPlatform.js`로 분리하고, `admin-dashboard.js`에는 탭 등록 몇 줄만 넣는다.
