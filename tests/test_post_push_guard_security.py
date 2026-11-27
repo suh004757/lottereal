@@ -1,4 +1,8 @@
+import io
+import json
+import subprocess
 import unittest
+from contextlib import redirect_stdout
 from unittest import mock
 
 from scripts import post_push_guard
@@ -6,6 +10,34 @@ from scripts import post_push_guard
 
 EXPECTED = "a" * 40
 OTHER = "b" * 40
+
+
+class PostPushVerificationTimeoutTests(unittest.TestCase):
+    def test_default_unittest_budget_covers_observed_full_suite_runtime(self):
+        with mock.patch.dict(post_push_guard.os.environ, {"LOTTEREAL_PUBLIC_CONTENT_ONLY": "0"}):
+            commands = post_push_guard.local_verification_commands()
+        command, budget, _ = commands[0]
+        self.assertIn("discover", command)
+        self.assertGreaterEqual(budget, 300)
+
+    def test_timeout_reaches_rollback_without_printing_command_or_partial_output(self):
+        command = ["fixture-check", "synthetic-command-value"]
+        error = subprocess.TimeoutExpired(command, 3, output=b"synthetic-stdout", stderr=b"synthetic-stderr")
+        output = io.StringIO()
+        with (
+            mock.patch.object(post_push_guard.sys, "argv", ["post_push_guard.py"]),
+            mock.patch.object(post_push_guard, "load_env", return_value={}),
+            mock.patch.object(post_push_guard, "fetch_live_config", return_value=(200, "", None)),
+            mock.patch.object(post_push_guard, "local_verification_commands", return_value=[(command, 3, "unittest")]),
+            mock.patch.object(post_push_guard, "run", side_effect=[(0, EXPECTED), error]),
+            mock.patch.object(post_push_guard, "rollback", return_value={"rolled_back": True}) as rollback,
+            redirect_stdout(output),
+        ):
+            self.assertEqual(post_push_guard.main(), 1)
+        failures = [{"check": "unittest", "exit_code": 124, "error": "timeout", "timeout_seconds": 3}]
+        rollback.assert_called_once_with(failures, {}, EXPECTED)
+        self.assertEqual(json.loads(output.getvalue())["failures"], failures)
+        self.assertNotIn("synthetic-", output.getvalue())
 
 
 class PostPushRollbackSafetyTests(unittest.TestCase):

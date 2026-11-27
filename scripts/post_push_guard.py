@@ -105,7 +105,8 @@ def local_verification_commands() -> list[tuple[list[str], int, str]]:
             ([sys.executable, "scripts/maintenance_check.py"], 180, "maintenance_check"),
         ]
     return [
-        ([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"], 180, "unittest"),
+        # Full discovery includes browser tests; the Linux suite has taken ~200s.
+        ([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"], 300, "unittest"),
         ([sys.executable, "-m", "py_compile", "scripts/lottereal_supabase.py", "scripts/maintenance_check.py", "scripts/post_push_guard.py"], 120, "py_compile"),
         (["node", "--check", "public/js/config/appConfig.js"], 60, "node_check_app_config"),
         (["node", "--check", "public/js/currentYear.js"], 60, "node_check_current_year"),
@@ -117,7 +118,12 @@ def run_local_verification() -> list[dict[str, str | int]]:
     failures: list[dict[str, str | int]] = []
     commands = local_verification_commands()
     for cmd, timeout, name in commands:
-        code, output = run(cmd, timeout=timeout)
+        try:
+            code, output = run(cmd, timeout=timeout)
+        except subprocess.TimeoutExpired:
+            # Exception details and partial output can contain credentials.
+            failures.append({"check": name, "exit_code": 124, "error": "timeout", "timeout_seconds": timeout})
+            continue
         if code != 0:
             failures.append({"check": name, "exit_code": code, "output_tail": output})
     return failures
