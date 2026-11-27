@@ -125,6 +125,10 @@ class ShortTermRentalLandingTests(unittest.TestCase):
         self.assertIn('src="js/shortTermRentalInquiry.js"', self.en)
         self.assertIn('data-shortstay-inquiry', self.en)
         self.assertNotIn('data-open-guided-inquiry', self.en)
+        self.assertIn(
+            ".shortstay-page--en .shortstay-lead {\n  max-width: min(62ch, 720px);\n}",
+            css,
+        )
         self.assertNotIn('data-shortstay-inquiry', self.ja)
         self.assertIn('href="contact.html#inquiry-options"', self.ja)
 
