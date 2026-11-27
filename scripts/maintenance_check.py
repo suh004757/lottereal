@@ -177,6 +177,89 @@ def check_vendor_integrity() -> list[str]:
     return errors
 
 
+NO_REFERRER_PAGES = {
+    "404.html",
+    "redirect/zigbang-inquiry.html",
+    "jamsilsari/dashboard.html",
+    "jamsilsari/invite.html",
+    "jamsilsari/login.html",
+}
+
+
+class ReferrerPolicyParser(HTMLParser):
+    """Collect referrer declarations and check their position in the authored head."""
+
+    EXTRA_TEXT_ELEMENTS = {"title", "textarea", "noscript", "noframes", "xmp", "iframe", "noembed"}
+    HEAD_TAGS = {"base", "link", "meta", "noscript", "noframes", "script", "style", "template", "title"}
+    RESOURCE_ATTRIBUTES = {"link": "href", "script": "src", "img": "src", "iframe": "src"}
+
+    def __init__(self):
+        super().__init__()
+        self.phase = "before_head"
+        self.template_depth = 0
+        self.seen_resource = False
+        self.declarations: list[tuple[list[str | None], list[str | None], bool, bool]] = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag in self.EXTRA_TEXT_ELEMENTS:
+            self.set_cdata_mode(tag)
+        if not self.template_depth:
+            if self.phase == "before_head" and tag == "head":
+                self.phase = "in_head"
+            elif self.phase == "before_head" and tag != "html":
+                self.phase = "after_head"
+            elif self.phase == "in_head" and tag not in self.HEAD_TAGS:
+                self.phase = "after_head"
+            if any(name == self.RESOURCE_ATTRIBUTES.get(tag) for name, _ in attrs):
+                self.seen_resource = True
+        if tag == "template":
+            self.template_depth += 1
+        if tag == "meta":
+            names = [value for name, value in attrs if name == "name"]
+            if any((value or "").lower() == "referrer" for value in names):
+                contents = [value for name, value in attrs if name == "content"]
+                in_head = self.phase == "in_head" and not self.template_depth
+                self.declarations.append((names, contents, in_head, self.seen_resource))
+
+    def handle_startendtag(self, tag, attrs):
+        # A slash does not close a non-void HTML element.
+        self.handle_starttag(tag, attrs)
+        if tag in HTMLParser.CDATA_CONTENT_ELEMENTS:
+            self.set_cdata_mode(tag)
+
+    def handle_endtag(self, tag):
+        if self.template_depth:
+            if tag == "template":
+                self.template_depth -= 1
+        elif tag in ("head", "body", "html", "br"):
+            self.phase = "after_head"
+
+    def handle_data(self, data):
+        if not self.template_depth and not self.cdata_elem and data.strip(" \t\r\n\f\ufeff"):
+            self.phase = "after_head"
+
+
+def check_referrer_policy(html: Path, source: str) -> str | None:
+    parser = ReferrerPolicyParser()
+    parser.feed(source)
+    parser.close()
+    if not parser.declarations:
+        return "referrer policy missing"
+    if len(parser.declarations) != 1:
+        return "referrer policy must be declared exactly once"
+    names, contents, in_head, after_resource = parser.declarations[0]
+    if not in_head:
+        return "referrer policy must be inside head"
+    if after_resource:
+        return "referrer policy appears after an external resource"
+    expected = "strict-origin-when-cross-origin"
+    if html.is_relative_to(PUBLIC) and html.relative_to(PUBLIC).as_posix() in NO_REFERRER_PAGES:
+        expected = "no-referrer"
+    if len(names) != 1 or contents != [expected]:
+        return f"referrer policy must declare {expected} with a single name and content"
+    return None
+
+
 def check_html_security_policy() -> list[str]:
     errors: list[str] = []
     verification_file = "naver8cf28dd9c8569f7f73da84b1adf5a2fb.html"
@@ -195,20 +278,18 @@ def check_html_security_policy() -> list[str]:
             errors.append(f"charset declaration is too late: {relative}")
         elif not document_head or charset.group(0) not in document_head.group(0):
             errors.append(f"charset declaration must be inside head: {relative}")
+        referrer_error = check_referrer_policy(html, source)
+        if referrer_error:
+            errors.append(f"{referrer_error}: {relative}")
         if html == not_found_file:
             if "script-src 'none'" not in source or "form-action 'none'" not in source:
                 errors.append(f"404 CSP missing or weakened: {relative}")
-            if '<meta name="referrer" content="no-referrer">' not in source:
-                errors.append(f"404 referrer policy missing: {relative}")
         elif html == redirect_file:
             if "default-src 'none'; script-src 'self'; base-uri 'none'; form-action 'none'" not in source:
                 errors.append(f"redirect CSP missing or weakened: {relative}")
-            if '<meta name="referrer" content="no-referrer">' not in source:
-                errors.append(f"redirect referrer policy missing: {relative}")
         else:
             expected = ADMIN_CSP if html.parent == PUBLIC / "admin" else PUBLIC_CSP
             marker = f'<meta http-equiv="Content-Security-Policy" content="{expected}">'
-            referrer_marker = '<meta name="referrer" content="strict-origin-when-cross-origin">'
             first_script = re.search(r"<script\b", source, re.IGNORECASE)
             first_external = re.search(
                 r"<(?:script\b[^>]*\bsrc\s*=|link\b[^>]*\bhref\s*=|img\b[^>]*\bsrc\s*=|iframe\b[^>]*\bsrc\s*=)",
@@ -224,12 +305,6 @@ def check_html_security_policy() -> list[str]:
                 errors.append(f"CSP appears after a script: {relative}")
             if marker in source and first_external and source.index(marker) > first_external.start():
                 errors.append(f"CSP appears after an external resource: {relative}")
-            if referrer_marker not in source:
-                errors.append(f"referrer policy missing: {relative}")
-            elif not head or referrer_marker not in head.group(0):
-                errors.append(f"referrer policy must be inside head: {relative}")
-            elif first_external and source.index(referrer_marker) > first_external.start():
-                errors.append(f"referrer policy appears after an external resource: {relative}")
 
         if re.search(r"\son[a-z]+\s*=", source, re.IGNORECASE):
             errors.append(f"inline event handler present: {relative}")

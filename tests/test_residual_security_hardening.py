@@ -40,6 +40,9 @@ EXCLUDED_HTML = {
     PUBLIC / 'naver8cf28dd9c8569f7f73da84b1adf5a2fb.html',
     PUBLIC / 'redirect' / 'zigbang-inquiry.html',
 }
+JAMSILSARI_NO_REFERRER = {
+    PUBLIC / 'jamsilsari' / name for name in ('dashboard.html', 'invite.html', 'login.html')
+}
 
 
 def deployed_html():
@@ -80,8 +83,9 @@ class ResidualSecurityHardeningTest(unittest.TestCase):
                 source,
                 str(html.relative_to(ROOT)),
             )
+            referrer = 'no-referrer' if html in JAMSILSARI_NO_REFERRER else 'strict-origin-when-cross-origin'
             self.assertIn(
-                '<meta name="referrer" content="strict-origin-when-cross-origin">',
+                f'<meta name="referrer" content="{referrer}">',
                 source,
                 str(html.relative_to(ROOT)),
             )
@@ -247,6 +251,44 @@ class ResidualSecurityHardeningTest(unittest.TestCase):
                 errors = module.check_html_security_policy()
         self.assertTrue(any('CSP appears after an external resource' in error for error in errors), errors)
         self.assertTrue(any('referrer policy appears after an external resource' in error for error in errors), errors)
+
+    def test_referrer_gate_enforces_exact_path_policy_and_placement(self):
+        module = load_maintenance_module()
+        strict = '<meta name="referrer" content="strict-origin-when-cross-origin">'
+        private = '<META CONTENT="no-referrer" NAME="Referrer" />'
+        weak = '<meta name="referrer" content="unsafe-url">'
+        csp = f'<meta http-equiv="Content-Security-Policy" content="{module.PUBLIC_CSP}">'
+        prefix = '<!doctype html><html><head><meta charset="utf-8">' + csp
+        cases = (
+            ('ordinary accepted', 'jamsilsari/me.html', strict, '', True),
+            ('private accepted', 'jamsilsari/invite.html', private, '', True),
+            ('missing', 'jamsilsari/me.html', '', '', False),
+            ('identical duplicate', 'jamsilsari/me.html', strict * 2, '', False),
+            ('conflicting duplicate in body', 'jamsilsari/me.html', strict, weak, False),
+            ('attribute duplicate', 'jamsilsari/me.html', strict[:-1] + ' content="unsafe-url">', '', False),
+            ('comment only', 'jamsilsari/me.html', '<!-- ' + strict + ' -->', '', False),
+            ('template only', 'jamsilsari/me.html', '<template>' + strict + '</template>', '', False),
+            ('title text only', 'jamsilsari/me.html', '<title>' + strict + '</title>', '', False),
+            ('body only', 'jamsilsari/me.html', '', strict, False),
+            ('head already closed implicitly', 'jamsilsari/me.html', '<div></div>' + strict, '', False),
+            ('after resource', 'jamsilsari/me.html', '<link rel="stylesheet" href="style.css">' + strict, '', False),
+            ('weaker private policy', 'jamsilsari/invite.html', strict, '', False),
+            ('weaker ordinary policy', 'jamsilsari/me.html', weak, '', False),
+            ('same basename elsewhere', 'other/invite.html', private, '', False),
+        )
+        for label, relative, head, body, accepted in cases:
+            with self.subTest(label=label), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                public = root / 'public'
+                page = public / relative
+                page.parent.mkdir(parents=True)
+                page.write_text(prefix + head + '</head><body>' + body + '</body></html>', encoding='utf-8')
+                with patch.object(module, 'REPO', root), patch.object(module, 'PUBLIC', public):
+                    errors = module.check_html_security_policy()
+                if accepted:
+                    self.assertEqual(errors, [])
+                else:
+                    self.assertTrue(any(error.startswith('referrer policy') for error in errors), errors)
 
     def test_policy_gate_rejects_late_charset(self):
         module = load_maintenance_module()
